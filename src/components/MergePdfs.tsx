@@ -14,12 +14,14 @@ import {
   X,
   CheckCircle2,
   GripVertical,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const MAX_FILES = 20;
+const MIN_DISPLAY_FILES = 4;
 const MAX_FILE_SIZE_MB = 100;
 const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -41,7 +43,7 @@ export function MergePdfs() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
 
   const onDrop = useCallback(
@@ -98,27 +100,27 @@ export function MergePdfs() {
     isCancelled.current = true;
   };
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    setIsDragging(true);
+    setDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
   };
   
   const handleDragEnd = () => {
-    if (dragItem.current === null || dragOverItem.current === null) {
-      setIsDragging(false);
-      dragItem.current = null;
-      dragOverItem.current = null;
-      return;
-    };
-    
-    const filesCopy = [...files];
-    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
-    filesCopy.splice(dragOverItem.current, 0, draggedItemContent);
-    
+    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
+        const filesCopy = [...files];
+        const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+        filesCopy.splice(dragOverItem.current, 0, draggedItemContent);
+        setFiles(filesCopy);
+    }
     dragItem.current = null;
     dragOverItem.current = null;
-    setIsDragging(false);
-    setFiles(filesCopy);
+    setDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    dragOverItem.current = index;
   };
 
   const processFileChunk = (
@@ -227,6 +229,7 @@ export function MergePdfs() {
   
   const filesRemaining = MAX_FILES - files.length;
   const sizeRemaining = (MAX_TOTAL_SIZE_BYTES - totalSize) / (1024*1024);
+  const displayFileCount = Math.max(MIN_DISPLAY_FILES, files.length);
 
   return (
     <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
@@ -250,7 +253,7 @@ export function MergePdfs() {
           <div
             {...getRootProps()}
             className={cn(
-              "relative flex flex-col items-center justify-center p-8 rounded-xl border transition-colors duration-300 cursor-pointer bg-muted/20",
+              "relative flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed transition-colors duration-300 cursor-pointer bg-muted/20",
               "hover:border-primary/50 hover:bg-muted/40",
               isDragActive && "border-primary bg-primary/10 shadow-inner"
             )}
@@ -284,26 +287,46 @@ export function MergePdfs() {
             </div>
           </div>
 
-          {files.length > 0 && (
-            <div className="mt-8 animate-in fade-in duration-500">
+          <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {files.map((pdfFile, index) => {
+              <div className="space-y-3 max-h-[260px] overflow-y-auto pr-2">
+                {[...Array(displayFileCount)].map((_, index) => {
+                  const pdfFile = files[index];
+
+                  if (!pdfFile) {
+                    return (
+                        <div
+                          key={`placeholder-${index}`}
+                          className="flex items-center p-3 rounded-md border border-dashed bg-muted/20 opacity-50"
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <GripVertical className="w-5 h-5 text-muted-foreground/50" />
+                            <FileIcon className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
+                            <span className="text-sm font-medium text-muted-foreground/80">
+                                Add a file
+                            </span>
+                          </div>
+                        </div>
+                    );
+                  }
+
                   const isBeingDragged = dragItem.current === index;
-                  const isDragTarget = isDragging && dragOverItem.current === index;
+                  const isDragTarget = dragging && dragOverItem.current === index;
+                  
                   return (
                     <div
                       key={pdfFile.id}
                       draggable
-                      onDragStart={() => handleDragStart(index)}
+                      onDragStart={(e) => handleDragStart(e, index)}
                       onDragEnter={() => (dragOverItem.current = index)}
                       onDragEnd={handleDragEnd}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={(e) => handleDragOver(e, index)}
                       className={cn(
                         'flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-all duration-300 ease-in-out cursor-grab',
                         isBeingDragged && 'shadow-2xl scale-105 opacity-70 z-10',
-                        !isBeingDragged && isDragTarget && 'bg-primary/20',
+                        !isBeingDragged && isDragTarget && 'bg-primary/20 ring-2 ring-primary',
+                        !dragging && 'transition-transform'
                       )}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
@@ -344,7 +367,7 @@ export function MergePdfs() {
                         <Button
                           variant="destructive"
                           size="lg"
-                          className="w-full sm:w-auto text-base font-bold bg-[#ff0000] text-white hover:bg-[#ff3333]"
+                          className="w-full sm:w-auto text-base font-bold bg-red-600 text-white hover:bg-red-700"
                           onClick={handleCancel}
                         >
                           <X className="mr-2 h-4 w-4" />
@@ -352,14 +375,13 @@ export function MergePdfs() {
                         </Button>
                     </div>
                 ) : (
-                    <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
-                        <Download className="mr-2 h-5 w-5" />
-                        Merge & Download
-                    </Button>
+                  <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
+                      <CheckCircle className="mr-2 h-5 w-5" />
+                      Merge {files.length > 0 ? files.length : ''} PDFs
+                  </Button>
                 )}
               </div>
             </div>
-          )}
         </>
       )}
     </div>
