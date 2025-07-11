@@ -342,14 +342,11 @@ export function MergePdfs() {
                         className={cn(
                           'relative flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
                           isDragging && 'shadow-2xl scale-105 opacity-50 z-10',
-                          dragging && isDragOver && 'bg-primary/10'
+                          dragging && isDragOver && 'ring-2 ring-primary'
                         )}
-                        style={{
-                          transform: isDragging ? "translateY(5px)" : "translateY(0)",
-                        }}
                       >
-                        {dragging && isDragOver && (
-                          <div className="absolute top-0 left-0 w-full h-[2px] bg-primary -translate-y-1/2"></div>
+                        {dragging && isDragOver && dragItem.current !== index && (
+                           <div className="absolute top-0 left-0 w-full h-[2px] bg-primary -translate-y-1/2"></div>
                         )}
                         <div className="flex items-center gap-3 overflow-hidden">
                           <GripVertical className="w-5 h-5 text-muted-foreground flex-shrink-0" />
@@ -369,8 +366,8 @@ export function MergePdfs() {
                         >
                           <X className="w-4 h-4" />
                         </Button>
-                        {dragging && isDragOver && (
-                          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary translate-y-1/2"></div>
+                        {dragging && isDragOver && dragItem.current !== index && (
+                           <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary translate-y-1/2"></div>
                         )}
                       </div>
                     );
