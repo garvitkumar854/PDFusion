@@ -33,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, GripVertical, Trash2, Combine, Scan, Loader2, FilePlus } from "lucide-react";
 
-// Configure PDF.js worker
+// Configure PDF.js worker to use the local file.
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 type PDFFile = {
@@ -63,6 +63,8 @@ export function PDFusionApp() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // This ensures that drag-and-drop functionality only runs on the client,
+    // preventing hydration errors with react-beautiful-dnd.
     setIsClient(true);
   }, []);
 
@@ -251,11 +253,12 @@ export function PDFusionApp() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div className="order-2 lg:order-1">
+        {isClient ? (
           <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="pages" direction="horizontal" isDropDisabled={!isClient}>
+            <Droppable droppableId="pages" direction="horizontal">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {isClient && orderedPages.map((page, index) => {
+                  {orderedPages.map((page, index) => {
                     const file = files.find((f) => f.id === page.fileId);
                     if (!file) return null;
                     return (
@@ -298,6 +301,13 @@ export function PDFusionApp() {
               )}
             </Droppable>
           </DragDropContext>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[2/2.8] w-full" />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="order-1 lg:order-2">
