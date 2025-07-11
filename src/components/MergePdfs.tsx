@@ -41,6 +41,8 @@ export function MergePdfs() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -96,13 +98,26 @@ export function MergePdfs() {
     isCancelled.current = true;
   };
 
-  const handleDragSort = () => {
-    if (dragItem.current === null || dragOverItem.current === null) return;
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+    setIsDragging(true);
+  };
+  
+  const handleDragEnd = () => {
+    if (dragItem.current === null || dragOverItem.current === null) {
+      setIsDragging(false);
+      dragItem.current = null;
+      dragOverItem.current = null;
+      return;
+    };
+    
     const filesCopy = [...files];
     const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
     filesCopy.splice(dragOverItem.current, 0, draggedItemContent);
+    
     dragItem.current = null;
     dragOverItem.current = null;
+    setIsDragging(false);
     setFiles(filesCopy);
   };
 
@@ -274,38 +289,44 @@ export function MergePdfs() {
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
               <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {files.map((pdfFile, index) => (
-                  <div
-                    key={pdfFile.id}
-                    draggable
-                    onDragStart={() => (dragItem.current = index)}
-                    onDragEnter={() => (dragOverItem.current = index)}
-                    onDragEnd={handleDragSort}
-                    onDragOver={(e) => e.preventDefault()}
-                    className={cn('flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow cursor-grab',
-                      dragItem.current === index ? 'shadow-lg opacity-50' : ''
-                    )}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <GripVertical className="w-5 h-5 text-muted-foreground" />
-                      <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                        {pdfFile.file.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
-                      </span>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
-                      onClick={() => removeFile(pdfFile.id)}
+                {files.map((pdfFile, index) => {
+                  const isBeingDragged = dragItem.current === index;
+                  const isDragTarget = isDragging && dragOverItem.current === index;
+                  return (
+                    <div
+                      key={pdfFile.id}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragEnter={() => (dragOverItem.current = index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={cn(
+                        'flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-all duration-300 ease-in-out cursor-grab',
+                        isBeingDragged && 'shadow-2xl scale-105 opacity-70 z-10',
+                        !isBeingDragged && isDragTarget && 'bg-primary/20',
+                      )}
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <GripVertical className="w-5 h-5 text-muted-foreground" />
+                        <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                        <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                          {pdfFile.file.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
+                        onClick={() => removeFile(pdfFile.id)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
               
               <div className="mt-6">
