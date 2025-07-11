@@ -137,7 +137,8 @@ export function MergePdfs() {
            return;
         }
         const pdfFile = files[i];
-        const sourcePdf = await PDFDocument.load(await pdfFile.file.arrayBuffer());
+        const sourcePdfBytes = await pdfFile.file.arrayBuffer();
+        const sourcePdf = await PDFDocument.load(sourcePdfBytes);
         const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
         setMergeProgress(((i + 1) / files.length) * 100);
@@ -247,8 +248,7 @@ export function MergePdfs() {
 
           {files.length > 0 && (
             <div className="mt-8 animate-in fade-in duration-500">
-              <h2 className="text-xl font-semibold mb-1">Uploaded Files ({files.length})</h2>
-              <p className="text-sm text-muted-foreground mb-4 italic">"The secret of getting ahead is getting started." – Mark Twain</p>
+              <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
               {isClient && (
                 <DragDropContext onDragEnd={onDragEnd}>
@@ -300,7 +300,8 @@ export function MergePdfs() {
                         <p className="text-sm font-medium text-primary">Merging... {Math.round(mergeProgress)}%</p>
                         <Button
                           variant="destructive"
-                          className="w-full sm:w-auto text-base bg-[#ff0000] text-white hover:bg-[#ff3333]"
+                          size="lg"
+                          className="w-full text-base font-bold bg-[#ff0000] text-white hover:bg-[#ff3333]"
                           onClick={handleCancel}
                         >
                           <X className="mr-2 h-4 w-4" />
@@ -321,5 +322,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
