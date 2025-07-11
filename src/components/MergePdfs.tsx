@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -13,8 +13,8 @@ import {
   PackageCheck,
   X,
   CheckCircle,
-  GripVertical,
   Info,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -36,17 +36,14 @@ export function MergePdfs() {
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
+  const [progressStatus, setProgressStatus] = useState("Merging...");
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const isCancelled = useRef(false);
   const { toast } = useToast();
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const [dragging, setDragging] = useState(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -104,6 +101,7 @@ export function MergePdfs() {
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
+    setDragging(true);
     e.dataTransfer.effectAllowed = 'move';
   };
   
@@ -116,6 +114,7 @@ export function MergePdfs() {
     }
     dragItem.current = null;
     dragOverItem.current = null;
+    setDragging(false);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -123,7 +122,9 @@ export function MergePdfs() {
   };
   
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    dragOverItem.current = index;
+    if (dragItem.current !== null) {
+      dragOverItem.current = index;
+    }
   };
 
   const processFileChunk = (
@@ -181,7 +182,10 @@ export function MergePdfs() {
     isCancelled.current = false;
     
     try {
+      setProgressStatus("Preparing...");
       const mergedPdf = await PDFDocument.create();
+      
+      setProgressStatus(`Processing ${files.length} files...`);
       for (let i = 0; i < files.length; i++) {
         if (isCancelled.current) {
           throw new Error("Cancelled");
@@ -195,6 +199,7 @@ export function MergePdfs() {
         return;
       }
 
+      setProgressStatus("Finalizing PDF...");
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -305,95 +310,102 @@ export function MergePdfs() {
             </div>
           </div>
 
-          <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
-              
-              <div 
-                className="space-y-3 max-h-[17rem] overflow-y-auto pr-2"
-                onDragOver={handleDragOver}
-              >
-                {files.map((pdfFile, index) => {
-                  const isDragging = dragItem.current === index;
-                  const isDragOver = dragOverItem.current === index;
+          {files.length > 0 && (
+            <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
+                
+                <div 
+                  className="space-y-3 max-h-[17rem] overflow-y-auto pr-2"
+                  onDragOver={handleDragOver}
+                >
+                  {files.map((pdfFile, index) => {
+                    const isDragging = dragItem.current === index;
+                    const isDragOver = dragOverItem.current === index;
 
-                  return (
-                    <div
-                      key={pdfFile.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragEnter={(e) => handleDragEnter(e, index)}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={handleDragOver}
-                      className={cn(
-                        'flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
-                        isDragging ? 'shadow-2xl scale-105 opacity-50 z-10' : 'z-0',
-                        isDragOver && !isDragging && 'bg-primary/20 ring-2 ring-primary',
-                      )}
-                      style={{
-                        transform: isDragging ? "translateY(5px)" : "translateY(0)",
-                      }}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <GripVertical className="w-5 h-5 text-muted-foreground" />
-                        <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                        <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                          {pdfFile.file.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
-                        </span>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
-                        onClick={() => removeFile(pdfFile.id)}
+                    return (
+                      <div
+                        key={pdfFile.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragEnter={(e) => handleDragEnter(e, index)}
+                        onDragEnd={handleDragEnd}
+                        className={cn(
+                          'relative flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
+                          isDragging && 'shadow-2xl scale-105 opacity-50 z-10',
+                          dragging && isDragOver && 'ring-2 ring-primary bg-primary/10'
+                        )}
+                        style={{
+                          transform: isDragging ? "translateY(5px)" : "translateY(0)",
+                        }}
                       >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className="mt-6">
-                {isMerging ? (
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <div className="w-full">
-                            <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
-                              <div 
-                                className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
-                                style={{ width: `${mergeProgress}%` }}
-                              ></div>
-                            </div>
-                            <p className="text-sm font-medium text-primary text-center mt-2">Merging... {Math.round(mergeProgress)}%</p>
+                        {dragging && isDragOver && (
+                          <div className="absolute top-0 left-0 w-full h-[2px] bg-primary -translate-y-1/2"></div>
+                        )}
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <GripVertical className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                          <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                          <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                            {pdfFile.file.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
+                          </span>
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="lg"
-                          className="w-full sm:w-auto text-base font-bold bg-red-600 text-white hover:bg-red-700"
-                          onClick={handleCancel}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
+                          onClick={() => removeFile(pdfFile.id)}
                         >
-                          <X className="mr-2 h-4 w-4" />
-                          Cancel
+                          <X className="w-4 h-4" />
                         </Button>
-                    </div>
-                ) : (
-                  <>
-                    <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
-                        <CheckCircle className="mr-2 h-5 w-5" />
-                        Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
-                    </Button>
-                    {files.length === 1 && (
-                      <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground animate-in fade-in duration-300">
-                        <Info className="w-4 h-4" />
-                        <span>Add at least one more PDF to merge files.</span>
+                        {dragging && isDragOver && (
+                          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary translate-y-1/2"></div>
+                        )}
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
+                    );
+                  })}
+                </div>
             </div>
+          )}
+              
+          <div className="mt-6">
+            {isMerging ? (
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-full">
+                        <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
+                          <div 
+                            className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
+                            style={{ width: `${mergeProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-sm font-medium text-primary text-center mt-2">{progressStatus} {Math.round(mergeProgress)}%</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="lg"
+                      className="w-full sm:w-auto text-base font-bold bg-red-600 text-white hover:bg-red-700"
+                      onClick={handleCancel}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                </div>
+            ) : (
+              <>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
+                </Button>
+                {files.length === 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground animate-in fade-in duration-300">
+                    <Info className="w-4 h-4" />
+                    <span>Add at least one more PDF to merge files.</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
