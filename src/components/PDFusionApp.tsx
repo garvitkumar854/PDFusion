@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, GripVertical, Trash2, Combine, Scan, Loader2, FilePlus, Download } from "lucide-react";
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 type PDFFile = {
   id: string;
