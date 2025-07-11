@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -8,18 +8,18 @@ import {
   File as FileIcon,
   HardDrive,
   Database,
-  Loader2,
   Trash2,
   Download,
-  PackageCheck
+  PackageCheck,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 
 const MAX_FILES = 20;
-const MAX_FILE_SIZE_MB = 25;
-const MAX_TOTAL_SIZE_MB = 50;
+const MAX_FILE_SIZE_MB = 100;
+const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
@@ -33,6 +33,7 @@ export function MergePdfs() {
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
+  const isCancelled = useRef(false);
 
   const { toast } = useToast();
 
@@ -52,6 +53,10 @@ export function MergePdfs() {
         }
         if (currentSize + file.size > MAX_TOTAL_SIZE_BYTES) {
           toast({ variant: "destructive", title: "Total size limit exceeded", description: `Adding "${file.name}" would exceed the ${MAX_TOTAL_SIZE_MB}MB total size limit.` });
+          continue;
+        }
+        if (!file.type.includes('pdf')) {
+          toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.` });
           continue;
         }
 
@@ -82,6 +87,10 @@ export function MergePdfs() {
     }
   };
 
+  const handleCancel = () => {
+    isCancelled.current = true;
+  };
+  
   const handleMerge = async () => {
     if (files.length < 2) {
       toast({
@@ -93,11 +102,17 @@ export function MergePdfs() {
     }
     setIsMerging(true);
     setMergeProgress(0);
+    isCancelled.current = false;
 
     try {
       const mergedPdf = await PDFDocument.create();
 
       for (let i = 0; i < files.length; i++) {
+        if (isCancelled.current) {
+           toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
+           setIsMerging(false);
+           return;
+        }
         const pdfFile = files[i];
         const sourcePdf = await PDFDocument.load(await pdfFile.file.arrayBuffer());
         const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
@@ -105,12 +120,18 @@ export function MergePdfs() {
         setMergeProgress(((i + 1) / files.length) * 100);
       }
 
+      if (isCancelled.current) {
+        toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
+        setIsMerging(false);
+        return;
+      }
+
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "merged_document.pdf";
+      link.download = "PDFusion_merged.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -135,6 +156,7 @@ export function MergePdfs() {
       });
     } finally {
       setIsMerging(false);
+      setMergeProgress(0);
     }
   };
   
@@ -142,21 +164,23 @@ export function MergePdfs() {
   const sizeRemaining = (MAX_TOTAL_SIZE_BYTES - totalSize) / (1024*1024);
 
   return (
-    <div>
+    <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
       <div
         {...getRootProps()}
-        className={`flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed  transition-colors cursor-pointer
+        className={`flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer
         ${isDragActive ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-muted/50"}`}
       >
         <input {...getInputProps()} />
-        <UploadCloud className="w-12 h-12 text-primary mb-4" />
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <UploadCloud className="w-8 h-8 text-primary" />
+        </div>
         <p className="text-lg font-semibold text-foreground">
-          Drop PDFs here or tap to browse
+          Drop PDFs here or <span className="text-primary">browse files</span>
         </p>
         <p className="text-sm text-muted-foreground mt-1">
           {filesRemaining} files remaining - {sizeRemaining.toFixed(1)}MB available
         </p>
-        <div className="flex items-center gap-6 text-xs text-muted-foreground mt-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-muted-foreground mt-6">
           <div className="flex items-center gap-2">
             <FileIcon className="w-4 h-4" />
             Max {MAX_FILES} files
@@ -173,17 +197,17 @@ export function MergePdfs() {
       </div>
 
       {files.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Uploaded Files ({files.length})</h2>
-          <div className="space-y-3">
+        <div className="mt-8 animate-in fade-in duration-500">
+          <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
+          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
             {files.map((pdfFile) => (
-              <div key={pdfFile.id} className="flex items-center justify-between p-3 rounded-md border bg-card">
-                <div className="flex items-center gap-3">
-                   <FileIcon className="w-5 h-5 text-primary" />
-                   <span className="text-sm font-medium">{pdfFile.file.name}</span>
-                   <span className="text-xs text-muted-foreground">({(pdfFile.file.size / (1024*1024)).toFixed(2)} MB)</span>
+              <div key={pdfFile.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/30 hover:bg-muted/60 transition-colors">
+                <div className="flex items-center gap-3 overflow-hidden">
+                   <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                   <span className="text-sm font-medium truncate" title={pdfFile.file.name}>{pdfFile.file.name}</span>
+                   <span className="text-xs text-muted-foreground flex-shrink-0">({(pdfFile.file.size / (1024*1024)).toFixed(2)} MB)</span>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeFile(pdfFile.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0" onClick={() => removeFile(pdfFile.id)}>
                     <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -192,11 +216,20 @@ export function MergePdfs() {
           <div className="mt-6">
             {isMerging ? (
                 <div className="flex flex-col items-center gap-4">
-                    <Progress value={mergeProgress} className="w-full h-2" />
+                    <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
+                        style={{ width: `${mergeProgress}%` }}
+                      ></div>
+                    </div>
                     <p className="text-sm font-medium text-primary">Merging... {Math.round(mergeProgress)}%</p>
+                    <Button variant="destructive" className="w-full sm:w-auto" onClick={handleCancel}>
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
                 </div>
             ) : (
-                <Button size="lg" className="w-full" onClick={handleMerge} disabled={isMerging}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
                     <Download className="mr-2 h-5 w-5" />
                     Merge & Download
                 </Button>

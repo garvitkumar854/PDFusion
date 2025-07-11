@@ -1,12 +1,16 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { Inter } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const poppins = Poppins({ 
+  subsets: ['latin'], 
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins' 
+})
 
 export const metadata: Metadata = {
-  title: 'Merge PDFs',
+  title: 'PDFusion',
   description: 'Merge and manage your PDF files with ease.',
 };
 
@@ -16,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={poppins.variable}>
       <body className="font-sans antialiased">
         {children}
         <Toaster />
