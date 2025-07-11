@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -151,7 +152,7 @@ export function MergePdfs() {
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      setMergedPdfUrl(url); // Set the URL for the success screen
+      setMergedPdfUrl(url);
       
       toast({
         title: "Merge Successful!",
