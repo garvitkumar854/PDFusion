@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const MAX_FILES = 20;
 const MAX_FILE_SIZE_MB = 100;
@@ -220,32 +221,38 @@ export function MergePdfs() {
         <>
           <div
             {...getRootProps()}
-            className={`flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer
-            ${isDragActive ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-muted/50"}`}
+            className={cn(
+              "relative flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed transition-colors duration-300 cursor-pointer bg-muted/20",
+              "hover:border-primary/50 hover:bg-muted/40",
+              isDragActive && "border-primary bg-primary/10 shadow-inner"
+            )}
           >
             <input {...getInputProps()} />
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <UploadCloud className="w-8 h-8 text-primary" />
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 border-8 border-primary/5">
+                  <UploadCloud className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-xl font-semibold text-foreground mb-2">
+                Drop PDFs here or <span className="text-primary font-bold">browse your files</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Drag and drop files to start merging.
+              </p>
             </div>
-            <p className="text-lg font-semibold text-foreground">
-              Drop PDFs here or <span className="text-primary">browse files</span>
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filesRemaining} files remaining - {sizeRemaining.toFixed(1)}MB available
-            </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-muted-foreground mt-6">
-              <div className="flex items-center gap-2">
-                <FileIcon className="w-4 h-4" />
-                Max {MAX_FILES} files
-              </div>
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4" />
-                {MAX_FILE_SIZE_MB} MB/file
-              </div>
-              <div className="flex items-center gap-2">
-                <Database className="w-4 h-4" />
-                {MAX_TOTAL_SIZE_MB} MB total
-              </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs text-muted-foreground mt-6 py-4 px-2 rounded-lg bg-muted/30">
+            <div className="flex items-center justify-center gap-2">
+              <FileIcon className="w-4 h-4 text-primary" />
+              <span>Max {MAX_FILES} files</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <HardDrive className="w-4 h-4 text-primary" />
+              <span>{MAX_FILE_SIZE_MB} MB per file</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <Database className="w-4 h-4 text-primary" />
+              <span>{MAX_TOTAL_SIZE_MB} MB total</span>
             </div>
           </div>
 
