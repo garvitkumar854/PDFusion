@@ -12,9 +12,8 @@ import {
   Download,
   PackageCheck,
   X,
-  CheckCircle2,
-  GripVertical,
   CheckCircle,
+  GripVertical,
   Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -254,7 +253,7 @@ export function MergePdfs() {
     <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
       {mergedPdfUrl ? (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500">
-            <CheckCircle2 className="w-20 h-20 text-green-500 mb-6" />
+            <CheckCircle className="w-20 h-20 text-green-500 mb-6" />
             <h2 className="text-2xl font-bold text-foreground mb-2">PDF merged successfully!</h2>
             <p className="text-muted-foreground mb-8">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -310,11 +309,15 @@ export function MergePdfs() {
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
               <div 
-                className="space-y-3 min-h-[17rem] max-h-[17rem] overflow-y-auto pr-2"
+                className={cn(
+                  "space-y-3 max-h-[17rem] overflow-y-auto pr-2",
+                  files.length > 0 && "min-h-[17rem]"
+                )}
                 onDragOver={handleDragOver}
               >
                 {files.map((pdfFile, index) => {
                   const isDragging = dragItem.current === index;
+                  const isDragOver = dragOverItem.current === index;
 
                   return (
                     <div
@@ -327,7 +330,7 @@ export function MergePdfs() {
                       className={cn(
                         'flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
                         isDragging ? 'shadow-2xl scale-105 opacity-50 z-10' : 'z-0',
-                        !isDragging && dragOverItem.current === index && 'bg-primary/20 ring-2 ring-primary',
+                        isDragOver && !isDragging && 'bg-primary/20 ring-2 ring-primary',
                       )}
                       style={{
                         transform: isDragging ? "translateY(5px)" : "translateY(0)",
