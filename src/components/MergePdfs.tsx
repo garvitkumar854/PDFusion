@@ -249,7 +249,7 @@ export function MergePdfs() {
               <h2 className="text-xl font-semibold mb-1">Uploaded Files ({files.length})</h2>
               <p className="text-sm text-muted-foreground mb-4 italic">"The secret of getting ahead is getting started." – Mark Twain</p>
               
-              {isClient ? (
+              {isClient && (
                 <DragDropContext onDragEnd={onDragEnd}>
                   <Droppable droppableId="pdf-files">
                     {(provided) => (
@@ -285,17 +285,6 @@ export function MergePdfs() {
                     )}
                   </Droppable>
                 </DragDropContext>
-              ) : (
-                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                    {files.map((pdfFile) => (
-                      <div key={pdfFile.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                            <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                            <span className="text-sm font-medium truncate">{pdfFile.file.name}</span>
-                        </div>
-                      </div>
-                    ))}
-                 </div>
               )}
               
               <div className="mt-6">
