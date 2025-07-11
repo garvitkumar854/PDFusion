@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const MAX_FILES = 20;
-const MIN_DISPLAY_FILES = 4;
 const MAX_FILE_SIZE_MB = 100;
 const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -43,8 +42,6 @@ export function MergePdfs() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const [dragging, setDragging] = useState(false);
-
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -102,7 +99,6 @@ export function MergePdfs() {
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    setDragging(true);
     e.dataTransfer.effectAllowed = 'move';
   };
   
@@ -115,11 +111,13 @@ export function MergePdfs() {
     }
     dragItem.current = null;
     dragOverItem.current = null;
-    setDragging(false);
   };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault();
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); 
+  };
+  
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragOverItem.current = index;
   };
 
@@ -128,22 +126,39 @@ export function MergePdfs() {
     fileIndex: number,
     onProgress: (progress: number) => void
   ): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (isCancelled.current) {
         return reject(new Error("Cancelled"));
       }
 
       const pdfFile = files[fileIndex];
-      const sourcePdfBytes = await pdfFile.file.arrayBuffer();
-      const sourcePdf = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
-      
-      const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
-      copiedPages.forEach((page) => mergedPdf.addPage(page));
-      
-      const progress = ((fileIndex + 1) / files.length) * 100;
-      onProgress(progress);
+      const reader = new FileReader();
 
-      setTimeout(() => resolve(), 0);
+      reader.onload = async (event) => {
+        try {
+          if (isCancelled.current) {
+            return reject(new Error("Cancelled"));
+          }
+          const sourcePdfBytes = event.target?.result as ArrayBuffer;
+          const sourcePdf = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
+          
+          const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+          
+          const progress = ((fileIndex + 1) / files.length) * 100;
+          onProgress(progress);
+          
+          setTimeout(() => resolve(), 0); 
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error(`Failed to read file: ${pdfFile.file.name}`));
+      };
+      
+      reader.readAsArrayBuffer(pdfFile.file);
     });
   };
   
@@ -159,10 +174,9 @@ export function MergePdfs() {
     setIsMerging(true);
     setMergeProgress(0);
     isCancelled.current = false;
+    const mergedPdf = await PDFDocument.create();
 
     try {
-      const mergedPdf = await PDFDocument.create();
-      
       for (let i = 0; i < files.length; i++) {
         if (isCancelled.current) {
           throw new Error("Cancelled");
@@ -229,7 +243,6 @@ export function MergePdfs() {
   
   const filesRemaining = MAX_FILES - files.length;
   const sizeRemaining = (MAX_TOTAL_SIZE_BYTES - totalSize) / (1024*1024);
-  const displayFileCount = Math.max(MIN_DISPLAY_FILES, files.length);
 
   return (
     <div className="bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
@@ -290,43 +303,25 @@ export function MergePdfs() {
           <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
-              <div className="space-y-3 max-h-[260px] overflow-y-auto pr-2">
-                {[...Array(displayFileCount)].map((_, index) => {
-                  const pdfFile = files[index];
+              <div 
+                className="space-y-3 max-h-[15.5rem] overflow-y-auto pr-2"
+                onDragOver={handleDragOver}
+              >
+                {files.map((pdfFile, index) => {
+                  const isDragging = dragItem.current === index;
+                  const isDragOver = dragOverItem.current === index;
 
-                  if (!pdfFile) {
-                    return (
-                        <div
-                          key={`placeholder-${index}`}
-                          className="flex items-center p-3 rounded-md border border-dashed bg-muted/20 opacity-50"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <GripVertical className="w-5 h-5 text-muted-foreground/50" />
-                            <FileIcon className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
-                            <span className="text-sm font-medium text-muted-foreground/80">
-                                Add a file
-                            </span>
-                          </div>
-                        </div>
-                    );
-                  }
-
-                  const isBeingDragged = dragItem.current === index;
-                  const isDragTarget = dragging && dragOverItem.current === index;
-                  
                   return (
                     <div
                       key={pdfFile.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}
-                      onDragEnter={() => (dragOverItem.current = index)}
+                      onDragEnter={(e) => handleDragEnter(e, index)}
                       onDragEnd={handleDragEnd}
-                      onDragOver={(e) => handleDragOver(e, index)}
                       className={cn(
-                        'flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-all duration-300 ease-in-out cursor-grab',
-                        isBeingDragged && 'shadow-2xl scale-105 opacity-70 z-10',
-                        !isBeingDragged && isDragTarget && 'bg-primary/20 ring-2 ring-primary',
-                        !dragging && 'transition-transform'
+                        'flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
+                        isDragging ? 'shadow-2xl scale-105 opacity-70 z-10' : 'z-0',
+                        !isDragging && isDragOver && 'bg-primary/20 ring-2 ring-primary',
                       )}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
