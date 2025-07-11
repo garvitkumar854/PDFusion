@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   GripVertical,
   CheckCircle,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +43,11 @@ export function MergePdfs() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -174,9 +180,9 @@ export function MergePdfs() {
     setIsMerging(true);
     setMergeProgress(0);
     isCancelled.current = false;
-    const mergedPdf = await PDFDocument.create();
-
+    
     try {
+      const mergedPdf = await PDFDocument.create();
       for (let i = 0; i < files.length; i++) {
         if (isCancelled.current) {
           throw new Error("Cancelled");
@@ -304,12 +310,11 @@ export function MergePdfs() {
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
               <div 
-                className="space-y-3 max-h-[15.5rem] overflow-y-auto pr-2"
+                className="space-y-3 min-h-[17rem] max-h-[17rem] overflow-y-auto pr-2"
                 onDragOver={handleDragOver}
               >
                 {files.map((pdfFile, index) => {
                   const isDragging = dragItem.current === index;
-                  const isDragOver = dragOverItem.current === index;
 
                   return (
                     <div
@@ -318,11 +323,15 @@ export function MergePdfs() {
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragEnter={(e) => handleDragEnter(e, index)}
                       onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
                       className={cn(
                         'flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
-                        isDragging ? 'shadow-2xl scale-105 opacity-70 z-10' : 'z-0',
-                        !isDragging && isDragOver && 'bg-primary/20 ring-2 ring-primary',
+                        isDragging ? 'shadow-2xl scale-105 opacity-50 z-10' : 'z-0',
+                        !isDragging && dragOverItem.current === index && 'bg-primary/20 ring-2 ring-primary',
                       )}
+                      style={{
+                        transform: isDragging ? "translateY(5px)" : "translateY(0)",
+                      }}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         <GripVertical className="w-5 h-5 text-muted-foreground" />
@@ -370,10 +379,18 @@ export function MergePdfs() {
                         </Button>
                     </div>
                 ) : (
-                  <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
-                      <CheckCircle className="mr-2 h-5 w-5" />
-                      Merge {files.length > 0 ? files.length : ''} PDFs
-                  </Button>
+                  <>
+                    <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
+                        <CheckCircle className="mr-2 h-5 w-5" />
+                        Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
+                    </Button>
+                    {files.length === 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground animate-in fade-in duration-300">
+                        <Info className="w-4 h-4" />
+                        <span>Add at least one more PDF to merge files.</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
