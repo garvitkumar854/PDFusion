@@ -197,7 +197,6 @@ export function MergePdfs() {
         if (isCancelled.current) {
           throw new Error("Cancelled");
         }
-        // Cycle through status messages
         const messageIndex = i % statusMessages.length;
         setProgressStatus(statusMessages[messageIndex]);
         await processFileChunk(mergedPdf, i, setMergeProgress);
@@ -325,7 +324,8 @@ export function MergePdfs() {
                 <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
                 
                 <div 
-                  className="space-y-3 max-h-[17rem] overflow-y-auto pr-2"
+                  className="space-y-3 pr-2 overflow-y-auto"
+                  style={{ maxHeight: files.length > 0 ? '17rem' : '0' }}
                   onDragOver={handleDragOver}
                 >
                   {files.map((pdfFile, index) => {
@@ -342,7 +342,7 @@ export function MergePdfs() {
                         className={cn(
                           'relative flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
                           isDragging && 'shadow-2xl scale-105 opacity-50 z-10',
-                          dragging && isDragOver && 'ring-2 ring-primary bg-primary/10'
+                          dragging && isDragOver && 'bg-primary/10'
                         )}
                         style={{
                           transform: isDragging ? "translateY(5px)" : "translateY(0)",
@@ -422,5 +422,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
