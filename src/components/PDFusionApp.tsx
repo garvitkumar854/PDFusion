@@ -31,10 +31,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, GripVertical, Trash2, Combine, Scan, Loader2, FilePlus, Download } from "lucide-react";
+import { UploadCloud, GripVertical, Trash2, Combine, Scan, Loader2, FilePlus } from "lucide-react";
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 
 type PDFFile = {
@@ -67,7 +67,7 @@ export function PDFusionApp() {
     setIsClient(true);
   }, []);
 
-  const handleFileChange = async (selectedFiles: FileList | null) => {
+  const handleFileChange = useCallback(async (selectedFiles: FileList | null) => {
     if (!selectedFiles || selectedFiles.length === 0) return;
     setIsLoading(true);
 
@@ -100,16 +100,16 @@ export function PDFusionApp() {
     setFiles((prev) => [...prev, ...newFiles]);
     setOrderedPages((prev) => [...prev, ...newPageItems]);
     setIsLoading(false);
-  };
+  }, [toast]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     handleFileChange(e.dataTransfer.files);
-  };
+  }, [handleFileChange]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -348,8 +348,8 @@ export function PDFusionApp() {
           </AlertDialogHeader>
           <ScrollArea className="max-h-60 pr-4">
             <div className="space-y-4">
-              {scanResults?.analysisResults.map((result) => (
-                <div key={result.fileName}>
+              {scanResults?.analysisResults.map((result, index) => (
+                <div key={result.fileName + index}>
                   <p className="font-semibold">{result.fileName}</p>
                   {result.issues.length > 0 ? (
                     <ul className="list-disc pl-5 text-sm text-destructive">
