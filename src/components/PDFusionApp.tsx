@@ -251,55 +251,53 @@ export function PDFusionApp() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div className="order-2 lg:order-1">
-          {isClient && (
-            <DragDropContext onDragEnd={onDragEnd}>
-              <Droppable droppableId="pages" direction="horizontal">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {orderedPages.map((page, index) => {
-                      const file = files.find((f) => f.id === page.fileId);
-                      if (!file) return null;
-                      return (
-                        <Draggable key={page.id} draggableId={page.id} index={index}>
-                          {(provided) => (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                              <Card className="group relative overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1">
-                                <CardContent className="p-0 aspect-[2/2.8]">
-                                    <Document file={file.file} loading={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
-                                        <Page pageNumber={page.pageIndex + 1} scale={0.5} renderTextLayer={false} renderAnnotationLayer={false} />
-                                    </Document>
-                                </CardContent>
-                                <CardFooter className="p-2 bg-background/80 backdrop-blur-sm text-xs justify-between items-center">
-                                    <p className="truncate text-muted-foreground">{file.name}</p>
-                                    <p className="font-bold">p.{page.pageIndex + 1}</p>
-                                </CardFooter>
-                                <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => deletePage(page.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Delete Page</TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                                <div className="absolute top-1/2 -left-1 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <GripVertical className="text-muted-foreground"/>
-                                </div>
-                              </Card>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          )}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="pages" direction="horizontal" isDropDisabled={!isClient}>
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {isClient && orderedPages.map((page, index) => {
+                    const file = files.find((f) => f.id === page.fileId);
+                    if (!file) return null;
+                    return (
+                      <Draggable key={page.id} draggableId={page.id} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <Card className="group relative overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1">
+                              <CardContent className="p-0 aspect-[2/2.8]">
+                                  <Document file={file.file} loading={<div className="w-full h-full flex items-center justify-center"><Skeleton className="w-full h-full" /></div>}>
+                                      <Page pageNumber={page.pageIndex + 1} scale={0.5} renderTextLayer={false} renderAnnotationLayer={false} />
+                                  </Document>
+                              </CardContent>
+                              <CardFooter className="p-2 bg-background/80 backdrop-blur-sm text-xs justify-between items-center">
+                                  <p className="truncate text-muted-foreground">{file.name}</p>
+                                  <p className="font-bold">p.{page.pageIndex + 1}</p>
+                              </CardFooter>
+                              <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <TooltipProvider>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                              <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => deletePage(page.id)}>
+                                                  <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Delete Page</TooltipContent>
+                                      </Tooltip>
+                                  </TooltipProvider>
+                              </div>
+                              <div className="absolute top-1/2 -left-1 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <GripVertical className="text-muted-foreground"/>
+                              </div>
+                            </Card>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
       </div>
 
       <div className="order-1 lg:order-2">
