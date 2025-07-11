@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, "use client";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -31,12 +32,12 @@ const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
-type PDFFile = {
+export type PDFFile = {
   id: string;
   file: File;
 };
 
-export function MergePdfs() {
+export default function MergePdfs() {
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
@@ -44,6 +45,11 @@ export function MergePdfs() {
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const isCancelled = useRef(false);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -260,46 +266,48 @@ export function MergePdfs() {
             <div className="mt-8 animate-in fade-in duration-500">
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="pdf-files">
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                      {files.map((pdfFile, index) => (
-                        <Draggable key={pdfFile.id} draggableId={pdfFile.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
-                            >
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
-                                <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                                <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                                  {pdfFile.file.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                  ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
-                                </span>
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
-                                onClick={() => removeFile(pdfFile.id)}
+              {isClient &&
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="pdf-files">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        {files.map((pdfFile, index) => (
+                          <Draggable key={pdfFile.id} draggableId={pdfFile.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={cn('flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow', snapshot.isDragging ? 'shadow-lg' : '')}
                               >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+                                  <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                                  <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                                    {pdfFile.file.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                                    ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
+                                  onClick={() => removeFile(pdfFile.id)}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              }
               
               <div className="mt-6">
                 {isMerging ? (
@@ -334,4 +342,5 @@ export function MergePdfs() {
       )}
     </div>
   );
-}
+
+    

@@ -1,5 +1,5 @@
 import { Layers } from 'lucide-react';
-import PdfLoader from '@/components/PdfLoader';
+import MergePdfs from '@/components/MergePdfs';
 
 export default function Home() {
   return (
@@ -14,7 +14,7 @@ export default function Home() {
       </header>
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <PdfLoader />
+          <MergePdfs />
         </div>
       </main>
       <footer className="py-4">
