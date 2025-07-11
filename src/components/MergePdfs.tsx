@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 import {
   UploadCloud,
   File as FileIcon,
@@ -13,6 +19,7 @@ import {
   PackageCheck,
   X,
   CheckCircle2,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,8 +42,12 @@ export function MergePdfs() {
   const [mergeProgress, setMergeProgress] = useState(0);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const isCancelled = useRef(false);
-
   const { toast } = useToast();
+  
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -90,6 +101,16 @@ export function MergePdfs() {
 
   const handleCancel = () => {
     isCancelled.current = true;
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+    const items = Array.from(files);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setFiles(items);
   };
   
   const handleMerge = async () => {
@@ -225,21 +246,58 @@ export function MergePdfs() {
 
           {files.length > 0 && (
             <div className="mt-8 animate-in fade-in duration-500">
-              <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {files.map((pdfFile) => (
-                  <div key={pdfFile.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/30 hover:bg-muted/60 transition-colors">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span className="text-sm font-medium truncate" title={pdfFile.file.name}>{pdfFile.file.name}</span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">({(pdfFile.file.size / (1024*1024)).toFixed(2)} MB)</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0" onClick={() => removeFile(pdfFile.id)}>
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-xl font-semibold mb-1">Uploaded Files ({files.length})</h2>
+              <p className="text-sm text-muted-foreground mb-4 italic">"The secret of getting ahead is getting started." – Mark Twain</p>
+              
+              {isClient ? (
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="pdf-files">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        {files.map((pdfFile, index) => (
+                          <Draggable key={pdfFile.id} draggableId={pdfFile.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                              >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+                                  <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                                  <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                                    {pdfFile.file.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                                    ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0" onClick={() => removeFile(pdfFile.id)}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              ) : (
+                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    {files.map((pdfFile) => (
+                      <div key={pdfFile.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">{pdfFile.file.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+              )}
+              
               <div className="mt-6">
                 {isMerging ? (
                     <div className="flex flex-col items-center gap-4">
@@ -250,7 +308,7 @@ export function MergePdfs() {
                           ></div>
                         </div>
                         <p className="text-sm font-medium text-primary">Merging... {Math.round(mergeProgress)}%</p>
-                        <Button variant="destructive" className="w-full sm:w-auto text-base" onClick={handleCancel}>
+                        <Button variant="destructive" className="w-full sm:w-auto text-base bg-red-600 text-white hover:bg-red-700" onClick={handleCancel}>
                           <X className="mr-2 h-4 w-4" />
                           Cancel
                         </Button>
