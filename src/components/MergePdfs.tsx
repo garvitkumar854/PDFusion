@@ -181,15 +181,25 @@ export function MergePdfs() {
     setMergeProgress(0);
     isCancelled.current = false;
     
+    const statusMessages = [
+        "Reading files...",
+        "Analyzing page structures...",
+        "Stitching documents...",
+        "Optimizing layout...",
+        "Compiling assets...",
+    ];
+
     try {
       setProgressStatus("Preparing...");
       const mergedPdf = await PDFDocument.create();
       
-      setProgressStatus(`Processing ${files.length} files...`);
       for (let i = 0; i < files.length; i++) {
         if (isCancelled.current) {
           throw new Error("Cancelled");
         }
+        // Cycle through status messages
+        const messageIndex = i % statusMessages.length;
+        setProgressStatus(statusMessages[messageIndex]);
         await processFileChunk(mergedPdf, i, setMergeProgress);
       }
 
@@ -384,7 +394,8 @@ export function MergePdfs() {
                     <Button
                       variant="destructive"
                       size="lg"
-                      className="w-full sm:w-auto text-base font-bold bg-red-600 text-white hover:bg-red-700"
+                      className="w-full sm:w-auto text-base font-bold text-white"
+                      style={{ backgroundColor: "#ff3d3d" }}
                       onClick={handleCancel}
                     >
                       <X className="mr-2 h-4 w-4" />
