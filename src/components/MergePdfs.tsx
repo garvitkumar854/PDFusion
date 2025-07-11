@@ -281,7 +281,7 @@ export function MergePdfs() {
               
               {isClient && (
                 <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="pdf-files">
+                  <Droppable droppableId="pdf-files" isDropDisabled={false}>
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2">
                         {files.map((pdfFile, index) => (
@@ -358,3 +358,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
