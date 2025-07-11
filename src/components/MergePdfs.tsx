@@ -309,10 +309,7 @@ export function MergePdfs() {
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
               <div 
-                className={cn(
-                  "space-y-3 max-h-[17rem] overflow-y-auto pr-2",
-                  files.length > 0 && "min-h-[17rem]"
-                )}
+                className="space-y-3 max-h-[17rem] overflow-y-auto pr-2"
                 onDragOver={handleDragOver}
               >
                 {files.map((pdfFile, index) => {
