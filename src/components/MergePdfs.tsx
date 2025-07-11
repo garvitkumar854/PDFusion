@@ -297,7 +297,11 @@ export function MergePdfs() {
                           ></div>
                         </div>
                         <p className="text-sm font-medium text-primary">Merging... {Math.round(mergeProgress)}%</p>
-                        <Button variant="destructive" className="w-full sm:w-auto text-base bg-red-600 text-white hover:bg-red-700" onClick={handleCancel}>
+                        <Button
+                          variant="destructive"
+                          className="w-full sm:w-auto text-base bg-[#ff0000] text-white hover:bg-[#ff3333]"
+                          onClick={handleCancel}
+                        >
                           <X className="mr-2 h-4 w-4" />
                           Cancel
                         </Button>
