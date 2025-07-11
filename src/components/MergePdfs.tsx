@@ -5,12 +5,6 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
-import {
   UploadCloud,
   File as FileIcon,
   HardDrive,
@@ -44,11 +38,9 @@ export function MergePdfs() {
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const isCancelled = useRef(false);
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -104,14 +96,14 @@ export function MergePdfs() {
     isCancelled.current = true;
   };
 
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-    const items = Array.from(files);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    setFiles(items);
+  const handleDragSort = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const filesCopy = [...files];
+    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+    filesCopy.splice(dragOverItem.current, 0, draggedItemContent);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setFiles(filesCopy);
   };
 
   const processFileChunk = (
@@ -134,7 +126,6 @@ export function MergePdfs() {
       const progress = ((fileIndex + 1) / files.length) * 100;
       onProgress(progress);
 
-      // Yield to the main thread
       setTimeout(() => resolve(), 0);
     });
   };
@@ -156,6 +147,9 @@ export function MergePdfs() {
       const mergedPdf = await PDFDocument.create();
       
       for (let i = 0; i < files.length; i++) {
+        if (isCancelled.current) {
+          throw new Error("Cancelled");
+        }
         await processFileChunk(mergedPdf, i, setMergeProgress);
       }
 
@@ -279,48 +273,40 @@ export function MergePdfs() {
             <div className="mt-8 animate-in fade-in duration-500">
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
-              {isClient && (
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="pdf-files" isDropDisabled={false} isCombineEnabled={false}>
-                    {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                        {files.map((pdfFile, index) => (
-                          <Draggable key={pdfFile.id} draggableId={pdfFile.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={cn('flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow', snapshot.isDragging ? 'shadow-lg' : '')}
-                              >
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
-                                  <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                                  <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                                    {pdfFile.file.name}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                                    ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
-                                  </span>
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
-                                  onClick={() => removeFile(pdfFile.id)}
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {files.map((pdfFile, index) => (
+                  <div
+                    key={pdfFile.id}
+                    draggable
+                    onDragStart={() => (dragItem.current = index)}
+                    onDragEnter={() => (dragOverItem.current = index)}
+                    onDragEnd={handleDragSort}
+                    onDragOver={(e) => e.preventDefault()}
+                    className={cn('flex items-center justify-between p-3 rounded-md border bg-muted/30 transition-shadow cursor-grab',
+                      dragItem.current === index ? 'shadow-lg opacity-50' : ''
                     )}
-                  </Droppable>
-                </DragDropContext>
-              )}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <GripVertical className="w-5 h-5 text-muted-foreground" />
+                      <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                        {pdfFile.file.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
+                      onClick={() => removeFile(pdfFile.id)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
               
               <div className="mt-6">
                 {isMerging ? (
