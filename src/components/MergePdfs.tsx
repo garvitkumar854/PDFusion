@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, "use client";
-import { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -37,7 +36,7 @@ export type PDFFile = {
   file: File;
 };
 
-export default function MergePdfs() {
+export function MergePdfs() {
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
@@ -147,7 +146,7 @@ export default function MergePdfs() {
         
         const progress = ((i + 1) / totalFiles) * 100;
         setMergeProgress(progress);
-        await new Promise(resolve => setTimeout(resolve, 0)); 
+        await new Promise(resolve => setTimeout(resolve, 50)); 
       }
 
       if (isCancelled.current) {
@@ -228,7 +227,7 @@ export default function MergePdfs() {
           <div
             {...getRootProps()}
             className={cn(
-              "relative flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed transition-colors duration-300 cursor-pointer bg-muted/20",
+              "relative flex flex-col items-center justify-center p-8 rounded-xl border transition-colors duration-300 cursor-pointer bg-muted/20",
               "hover:border-primary/50 hover:bg-muted/40",
               isDragActive && "border-primary bg-primary/10 shadow-inner"
             )}
@@ -242,7 +241,7 @@ export default function MergePdfs() {
                 Drop PDFs here or <span className="text-primary font-bold">browse your files</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                Drag and drop files to start merging.
+                {filesRemaining} files remaining - {sizeRemaining.toFixed(1)}MB available
               </p>
             </div>
           </div>
@@ -342,5 +341,4 @@ export default function MergePdfs() {
       )}
     </div>
   );
-
-    
+}
