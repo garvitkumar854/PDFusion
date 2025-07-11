@@ -113,6 +113,31 @@ export function MergePdfs() {
     items.splice(result.destination.index, 0, reorderedItem);
     setFiles(items);
   };
+
+  const processFileChunk = (
+    mergedPdf: PDFDocument,
+    fileIndex: number,
+    onProgress: (progress: number) => void
+  ): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      if (isCancelled.current) {
+        return reject(new Error("Cancelled"));
+      }
+
+      const pdfFile = files[fileIndex];
+      const sourcePdfBytes = await pdfFile.file.arrayBuffer();
+      const sourcePdf = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
+      
+      const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
+      
+      const progress = ((fileIndex + 1) / files.length) * 100;
+      onProgress(progress);
+
+      // Yield to the main thread
+      setTimeout(() => resolve(), 0);
+    });
+  };
   
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -129,24 +154,9 @@ export function MergePdfs() {
 
     try {
       const mergedPdf = await PDFDocument.create();
-      const totalFiles = files.length;
-
-      for (let i = 0; i < totalFiles; i++) {
-        if (isCancelled.current) {
-           toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
-           setIsMerging(false);
-           return;
-        }
-        const pdfFile = files[i];
-        const sourcePdfBytes = await pdfFile.file.arrayBuffer();
-        const sourcePdf = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
-        
-        const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
-        
-        const progress = ((i + 1) / totalFiles) * 100;
-        setMergeProgress(progress);
-        await new Promise(resolve => setTimeout(resolve, 50)); 
+      
+      for (let i = 0; i < files.length; i++) {
+        await processFileChunk(mergedPdf, i, setMergeProgress);
       }
 
       if (isCancelled.current) {
@@ -166,17 +176,21 @@ export function MergePdfs() {
         action: <div className="p-1 rounded-full bg-green-500"><PackageCheck className="w-5 h-5 text-white" /></div>
       });
 
-    } catch (error) {
-      console.error("Merge failed:", error);
-      let errorMessage = "An error occurred while merging the PDFs.";
-      if (error instanceof Error) {
-        errorMessage = `An error occurred: ${error.message}. One of your PDFs might be encrypted or corrupted.`;
+    } catch (error: any) {
+      if (error.message === 'Cancelled') {
+        toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
+      } else {
+        console.error("Merge failed:", error);
+        let errorMessage = "An error occurred while merging the PDFs.";
+        if (error instanceof Error) {
+          errorMessage = `An error occurred: ${error.message}. One of your PDFs might be encrypted or corrupted.`;
+        }
+        toast({
+          variant: "destructive",
+          title: "Merge Failed",
+          description: errorMessage,
+        });
       }
-      toast({
-        variant: "destructive",
-        title: "Merge Failed",
-        description: errorMessage,
-      });
     } finally {
       setIsMerging(false);
       setMergeProgress(0);
@@ -265,7 +279,7 @@ export function MergePdfs() {
             <div className="mt-8 animate-in fade-in duration-500">
               <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
               
-              {isClient &&
+              {isClient && (
                 <DragDropContext onDragEnd={onDragEnd}>
                   <Droppable droppableId="pdf-files">
                     {(provided) => (
@@ -306,22 +320,24 @@ export function MergePdfs() {
                     )}
                   </Droppable>
                 </DragDropContext>
-              }
+              )}
               
               <div className="mt-6">
                 {isMerging ? (
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
-                          <div 
-                            className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
-                            style={{ width: `${mergeProgress}%` }}
-                          ></div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="w-full">
+                            <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
+                              <div 
+                                className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
+                                style={{ width: `${mergeProgress}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-sm font-medium text-primary text-center mt-2">Merging... {Math.round(mergeProgress)}%</p>
                         </div>
-                        <p className="text-sm font-medium text-primary">Merging... {Math.round(mergeProgress)}%</p>
                         <Button
                           variant="destructive"
                           size="lg"
-                          className="w-full text-base font-bold bg-[#ff0000] text-white hover:bg-[#ff3333]"
+                          className="w-full sm:w-auto text-base font-bold bg-[#ff0000] text-white hover:bg-[#ff3333]"
                           onClick={handleCancel}
                         >
                           <X className="mr-2 h-4 w-4" />
