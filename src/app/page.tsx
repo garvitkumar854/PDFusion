@@ -1,4 +1,4 @@
-import { ArrowRight, FilePlus2, Wand2, Download, Layers } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
