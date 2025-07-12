@@ -302,11 +302,11 @@ export function MergePdfs() {
                             Drop PDF files here
                         </p>
                         <p className="text-sm text-muted-foreground">or click to browse</p>
-                        <Button type="button" onClick={open} className="mt-4">
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Choose Files
-                        </Button>
                     </div>
+                    <Button type="button" onClick={open} className="mt-4">
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Choose Files
+                    </Button>
                     <div className="text-xs text-muted-foreground text-center absolute bottom-4 w-full px-2">
                       <div className="flex flex-col items-center">
                         <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
@@ -344,8 +344,9 @@ export function MergePdfs() {
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
+                        style={{ willChange: 'transform' }}
                         className={cn(
-                            'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-300',
+                            'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-transform duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                         )}
                         >
@@ -435,7 +436,7 @@ export function MergePdfs() {
                                         onClick={handleCancel}
                                         >
                                         <X className="mr-2 h-4 w-4" />
-                                        Cancel
+                                        Cancel Merge
                                     </Button>
                                 </div>
                             </div>
