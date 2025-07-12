@@ -322,7 +322,12 @@ export function MergePdfs() {
                 <CardTitle>Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleClearAll} 
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm"
+              >
                 <X className="w-4 h-4 mr-2" />
                 Clear All
               </Button>
