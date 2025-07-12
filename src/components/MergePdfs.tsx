@@ -338,18 +338,16 @@ export function MergePdfs() {
                     )}
                 >
                     <input {...getInputProps()} />
-                    <div className="flex flex-col items-center text-center gap-1">
-                        <UploadCloud className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-2" />
-                        <p className="text-base sm:text-lg font-semibold text-foreground">
-                            Drop PDF files here
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">or click the button below</p>
-                    </div>
+                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+                        Drop PDF files here
+                    </p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
                     <Button type="button" onClick={open} className="mt-4">
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Choose Files
                     </Button>
-                    <div className="text-xs text-muted-foreground text-center absolute bottom-4 w-full px-2">
+                    <div className="absolute bottom-4 w-full px-2 text-center text-xs text-muted-foreground mt-2">
                       <div className="flex flex-col items-center">
                         <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
                         <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
@@ -361,7 +359,7 @@ export function MergePdfs() {
 
         {files.length > 0 && (
           <Card className="bg-white dark:bg-card shadow-lg">
-            <CardHeader className="flex flex-row items-start sm:items-center justify-between pb-2 pr-4">
+            <CardHeader className="flex-row items-center justify-between pb-2 pr-4 sm:flex">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
@@ -370,7 +368,7 @@ export function MergePdfs() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md mt-1 sm:mt-0"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md mt-2 sm:mt-0"
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
                 Clear All
@@ -393,7 +391,7 @@ export function MergePdfs() {
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <FileIcon className="w-6 h-6 sm:w-8 sm:h-8 text-destructive flex-shrink-0" />
+                            <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                             <div className="flex flex-col overflow-hidden">
                             <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
                                 {pdfFile.file.name}
@@ -403,16 +401,16 @@ export function MergePdfs() {
                             </span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                            <Badge variant="outline" className="hidden sm:inline-flex text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-500/30">
+                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                            <Badge variant="outline" className="hidden text-green-600 border-green-200 sm:inline-flex bg-green-50 dark:bg-green-900/20 dark:border-green-500/30">
                             <CheckCircle className="w-3.5 h-3.5 mr-1" />
                             Ready
                             </Badge>
-                            <GripVertical className="w-5 h-5 text-muted-foreground/70 cursor-grab" />
+                            <GripVertical className="w-5 h-5 cursor-grab text-muted-foreground/70" />
                             <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
+                            className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
                             onClick={() => removeFile(pdfFile.id)}
                             >
                             <X className="w-4 h-4" />
@@ -444,7 +442,7 @@ export function MergePdfs() {
                 <div className="space-y-4">
                     {isMerging ? (
                         <>
-                             <div className="p-4 rounded-lg border bg-primary/5">
+                             <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-5 h-5 text-primary animate-spin" />
