@@ -117,14 +117,14 @@ export default function Home() {
                   className="duration-700"
                   delay={index * 150}
               >
-                <Card className="text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:border-[0.25px] hover:border-primary">
+                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:border-[0.25px] hover:border-primary">
                   <CardContent className="p-6">
                     <div className="flex flex-col items-start gap-4">
                       <div className={`p-3 rounded-lg ${feature.bgColor}`}>
                         {feature.icon}
                       </div>
                       <div className="space-y-1">
-                        <h3 className="text-lg font-bold text-foreground">{feature.title}</h3>
+                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                         <p className="text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
@@ -161,14 +161,14 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 150}
                     >
-                      <Card className="bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-[0.25px] hover:border-primary">
+                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-[0.25px] hover:border-primary">
                         <CardContent className="p-0">
                           <div className="flex flex-col items-start gap-4">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
                               {feature.icon}
                             </div>
                             <div className="space-y-2">
-                              <h3 className="text-xl font-bold text-foreground">{feature.title}</h3>
+                              <h3 className="text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-2">
