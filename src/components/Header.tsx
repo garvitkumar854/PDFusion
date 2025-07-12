@@ -88,8 +88,8 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <Button variant="ghost">Sign In</Button>
-          <Button>Sign Up</Button>
+          <Button variant="ghost" className="transition-colors">Sign In</Button>
+          <Button className="transition-colors">Sign Up</Button>
         </div>
 
         <div className="md:hidden">
@@ -101,7 +101,7 @@ export default function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                    <div className="p-4">
+                    <div className="p-4 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-8">
                             <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
                                 <div className="bg-primary p-2 rounded-md">
@@ -125,9 +125,9 @@ export default function Header() {
                                 />
                             ))}
                         </nav>
-                        <div className="mt-8 pt-6 border-t flex flex-col gap-4">
-                            <Button variant="ghost" className="w-full justify-start text-lg">Sign In</Button>
-                            <Button className="w-full justify-start text-lg">Sign Up</Button>
+                        <div className="mt-auto pt-6 border-t flex flex-col gap-4">
+                            <Button variant="ghost" size="lg" className="w-full justify-start text-lg">Sign In</Button>
+                            <Button size="lg" className="w-full justify-start text-lg">Sign Up</Button>
                         </div>
                     </div>
                 </SheetContent>
