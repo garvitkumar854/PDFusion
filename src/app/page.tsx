@@ -139,7 +139,7 @@ export default function Home() {
                   className="duration-700"
                   style={{ animationDelay: `${index * 150}ms` }}
               >
-                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border hover:border-primary">
+                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border hover:border-primary bg-white">
                   <CardContent className="p-6">
                     <div className="flex flex-col items-start gap-4">
                       <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -184,7 +184,7 @@ export default function Home() {
                     className="duration-700 h-full"
                     delay={index * 150}
                     >
-                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                    <Card className="group bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                         <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -229,7 +229,7 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 150}
                     >
-                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col">
+                      <Card className="group bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col">
                         <CardContent className="p-0 flex-grow">
                           <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
