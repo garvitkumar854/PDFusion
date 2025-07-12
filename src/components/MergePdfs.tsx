@@ -95,7 +95,7 @@ export function MergePdfs() {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
       }
     },
-    [files, totalSize, toast]
+    [files.length, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -308,8 +308,10 @@ export function MergePdfs() {
                         </Button>
                     </div>
                     <div className="text-xs text-muted-foreground text-center mt-4 absolute bottom-4 w-full px-2">
+                      <div>
                         <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
                         <p className="mt-1">Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
+                      </div>
                     </div>
                 </div>
             </CardContent>
