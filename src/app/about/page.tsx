@@ -116,7 +116,7 @@ export default function AboutPage() {
                     className="duration-700"
                     delay={index * 150}
                     >
-                    <Card className="group bg-white text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                    <Card className="group bg-white text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full dark:bg-card">
                         <CardContent className="p-0 flex-grow">
                             <div className="flex flex-col items-start gap-4 h-full">
                                 <div className={`p-3 rounded-lg ${feature.bgColor}`}>
