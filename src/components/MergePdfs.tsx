@@ -6,7 +6,6 @@ import {
   UploadCloud,
   File as FileIcon,
   Download,
-  PackageCheck,
   X,
   CheckCircle,
   GripVertical,
@@ -281,16 +280,16 @@ export function MergePdfs() {
     <div className="space-y-6">
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Upload PDF Files</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Upload & Merge</CardTitle>
                 <CardDescription>
-                  Drag and drop your PDF files here or click to browse
+                  Drag & drop files, reorder them, and click merge.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div
                     {...getRootProps()}
                     className={cn(
-                    "relative flex flex-col items-center justify-center p-6 sm:p-10 pt-8 sm:pt-12 pb-12 sm:pb-16 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-card",
+                    "relative flex flex-col items-center justify-center p-6 sm:p-10 pt-8 sm:pt-12 pb-12 sm:pb-16 rounded-lg border-2 border-dashed transition-colors duration-300",
                     "hover:border-primary/50",
                     isDragActive && "border-primary bg-primary/10"
                     )}
@@ -301,7 +300,7 @@ export function MergePdfs() {
                         <p className="text-base sm:text-lg font-semibold text-foreground">
                             Drop PDF files here
                         </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">or click to browse</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">or click the button below</p>
                     </div>
                     <Button type="button" onClick={open} className="mt-4">
                         <FolderOpen className="mr-2 h-4 w-4" />
@@ -399,24 +398,6 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div>
-                    <h3 className="text-sm font-medium text-foreground mb-2">Summary</h3>
-                    <div className="space-y-2 text-sm rounded-md border p-4 bg-muted/20">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Files:</span>
-                            <span className="font-medium">{files.length}/{MAX_FILES}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Size:</span>
-                            <span className="font-medium">{formatBytes(totalSize)}/{MAX_TOTAL_SIZE_MB}MB</span>
-                        </div>
-                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Est. Output:</span>
-                            <span className="font-medium">{files.length > 0 ? formatBytes(totalSize) : '0 Bytes'}</span>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="space-y-4">
                     {isMerging ? (
                         <>
