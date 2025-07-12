@@ -89,7 +89,7 @@ export default function Home() {
                 Get Started <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
-            <Button asChild size="lg" className="font-bold text-foreground hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-lg transition-all">
+            <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-lg transition-all">
               <Link href="#">Learn more</Link>
             </Button>
           </div>
