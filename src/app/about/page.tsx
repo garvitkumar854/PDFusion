@@ -7,37 +7,37 @@ import Image from "next/image";
 
 const whyChooseUsFeatures = [
     {
-      icon: <FileText className="w-8 h-8 text-blue-500" />,
+      icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF Merging Made Simple',
       description: 'Our intuitive interface makes merging PDFs as easy as drag and drop. No technical knowledge required.',
     },
     {
-      icon: <Shield className="w-8 h-8 text-green-500" />,
+      icon: <Shield className="w-8 h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Privacy First',
       description: 'Your files never leave your browser. We process everything locally to ensure maximum security.',
     },
     {
-      icon: <Zap className="w-8 h-8 text-yellow-500" />,
+      icon: <Zap className="w-8 h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
       description: 'Built with modern technology to handle your PDFs quickly and efficiently.',
     },
     {
-      icon: <Users className="w-8 h-8 text-purple-500" />,
+      icon: <Users className="w-8 h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'User-Centric Design',
       description: 'Every feature is designed with our users in mind, making the experience smooth and enjoyable.',
     },
     {
-      icon: <Code2 className="w-8 h-8 text-gray-500" />,
+      icon: <Code2 className="w-8 h-8 text-gray-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-gray-100 dark:bg-gray-900/20',
       title: 'Open Source',
       description: 'Our code is open source, allowing for transparency and community contributions.',
     },
     {
-      icon: <Heart className="w-8 h-8 text-red-500" />,
+      icon: <Heart className="w-8 h-8 text-red-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-red-100 dark:bg-red-900/20',
       title: 'Made with Love',
       description: "We're passionate about creating tools that make your life easier.",
@@ -115,7 +115,7 @@ export default function AboutPage() {
                     className="duration-700"
                     delay={index * 150}
                     >
-                    <Card className="group bg-white dark:bg-white text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                    <Card className="group text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                             <div className="flex flex-col items-start gap-4 h-full">
                                 <div className={`p-3 rounded-lg ${feature.bgColor}`}>
