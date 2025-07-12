@@ -263,7 +263,7 @@ export default function Home() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-700"
           >
-            <div className="bg-card border rounded-2xl p-8 lg:p-10">
+            <div className="bg-white border rounded-2xl p-8 lg:p-10">
               <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
                 <div className="text-center lg:text-left">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
