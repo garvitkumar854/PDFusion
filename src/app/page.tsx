@@ -148,7 +148,7 @@ export default function Home() {
                   Why Choose Our PDF Merger?
                 </div>
                 <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                  Experience the <span className="text-primary">Future of PDF Merging</span>
+                  Experience the <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Future of PDF Merging</span>
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
                   Discover the most intuitive and powerful PDF merging tool available online. Built with cutting-edge technology for the best user experience.
