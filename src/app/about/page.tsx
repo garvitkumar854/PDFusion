@@ -2,29 +2,30 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users } from "lucide-react";
+import { Sparkles, Users, Zap, ShieldCheck, FileText } from "lucide-react";
 import Image from "next/image";
 
-const teamMembers = [
-  {
-    name: "John Doe",
-    role: "Lead Developer",
-    avatar: "https://placehold.co/100x100.png",
-    hint: "man portrait"
-  },
-  {
-    name: "Jane Smith",
-    role: "UI/UX Designer",
-    avatar: "https://placehold.co/100x100.png",
-    hint: "woman portrait"
-  },
-  {
-    name: "Peter Jones",
-    role: "Project Manager",
-    avatar: "https://placehold.co/100x100.png",
-    hint: "man portrait glasses"
-  },
+const whyChooseUsFeatures = [
+    {
+      icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      title: 'Secure & Private',
+      description: 'Your files are processed locally and never stored on our servers.',
+    },
+    {
+      icon: <Zap className="w-8 h-8 text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Lightning Fast',
+      description: 'Merge your PDFs in seconds with our optimized processing engine.',
+    },
+    {
+      icon: <FileText className="w-8 h-8 text-blue-500" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      title: 'Advanced Features',
+      description: 'Powerful tools to handle your PDF needs like page reordering and rotation.',
+    },
 ];
+
 
 export default function AboutPage() {
   return (
@@ -77,32 +78,37 @@ export default function AboutPage() {
                 className="duration-700"
             >
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-                  <Users className="w-4 h-4" />
-                  Our Team
+                  <Sparkles className="w-4 h-4" />
+                  Why Choose Us?
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                  Meet the Innovators
+                  The PDFusion Advantage
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
-                  We are a passionate team of developers and designers dedicated to creating the best PDF tools.
+                  Discover why millions of users trust PDFusion for their document management needs.
                 </p>
             </AnimateOnScroll>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center">
-                {teamMembers.map((member, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                {whyChooseUsFeatures.map((feature, index) => (
                     <AnimateOnScroll
                     key={index}
                     animation="animate-in fade-in-0 slide-in-from-bottom-12"
                     className="duration-700"
                     delay={index * 150}
                     >
-                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col items-center">
-                        <Avatar className="w-24 h-24 mb-4 border-2 border-primary/20 group-hover:border-primary transition-colors">
-                            <Image src={member.avatar} alt={member.name} width={100} height={100} data-ai-hint={member.hint} />
-                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <h3 className="text-xl font-bold text-foreground mb-1">{member.name}</h3>
-                        <p className="text-primary font-medium">{member.role}</p>
+                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                        <CardContent className="p-0 flex-grow">
+                            <div className="flex flex-col items-start gap-4 h-full">
+                                <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                                {feature.icon}
+                                </div>
+                                <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                                <p className="text-muted-foreground">{feature.description}</p>
+                                </div>
+                            </div>
+                        </CardContent>
                     </Card>
                     </AnimateOnScroll>
                 ))}
