@@ -81,9 +81,9 @@ export default function ContactPage() {
                         <div className={`p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
                           {method.icon}
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0">
                           <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
-                          <p className="text-sm text-muted-foreground">{method.details}</p>
+                          <p className="text-sm text-muted-foreground break-all">{method.details}</p>
                         </div>
                       </CardContent>
                     </Card>
