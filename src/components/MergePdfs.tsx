@@ -285,9 +285,6 @@ export function MergePdfs() {
                 <CardDescription>
                   Drag and drop your PDF files here or click to browse
                 </CardDescription>
-                 <div className="text-sm text-muted-foreground">
-                  Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}
-                </div>
             </CardHeader>
             <CardContent>
                 <div
@@ -310,9 +307,10 @@ export function MergePdfs() {
                             Choose Files
                         </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground text-center mt-4 absolute bottom-4">
-                        Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files
-                    </p>
+                    <div className="text-xs text-muted-foreground text-center mt-4 absolute bottom-4 w-full px-2">
+                        <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
+                        <p className="mt-1">Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
+                    </div>
                 </div>
             </CardContent>
         </Card>
