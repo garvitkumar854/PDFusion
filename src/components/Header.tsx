@@ -16,8 +16,6 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/merger", label: "Merge PDF" },
-  { href: "#", label: "About" },
-  { href: "#", label: "Contact" },
 ];
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
