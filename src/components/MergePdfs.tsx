@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { mergePdfs, type MergePdfsInput } from "@/ai/flows/merge-pdfs-flow";
+import { PDFDocument } from "pdf-lib";
 
 
 const MAX_FILES = 20;
@@ -30,22 +30,6 @@ const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 export type PDFFile = {
   id: string;
   file: File;
-};
-
-// Helper to convert a File to a Base64 Data URI
-const fileToDataUri = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-      } else {
-        reject(new Error('Failed to read file as Data URI.'));
-      }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
 };
 
 
@@ -156,61 +140,71 @@ export function MergePdfs() {
       });
       return;
     }
+
     setIsMerging(true);
     setMergeProgress(0);
     setProgressStatus("Preparing files...");
     isCancelled.current = false;
-    
+
     try {
-      // 1. Convert files to data URIs
-      const fileDataPromises = files.map(pdfFile =>
-        fileToDataUri(pdfFile.file).then(dataUri => ({
-          name: pdfFile.file.name,
-          dataUri,
-        }))
-      );
+      const mergedPdf = await PDFDocument.create();
+      let filesProcessed = 0;
+
+      for (const pdfFile of files) {
+        if (isCancelled.current) {
+            throw new Error("Cancelled");
+        }
+
+        const progress = (filesProcessed / files.length) * 100;
+        setMergeProgress(progress);
+        setProgressStatus(`Processing ${pdfFile.file.name}...`);
+
+        try {
+            const fileBytes = await pdfFile.file.arrayBuffer();
+            const sourcePdf = await PDFDocument.load(fileBytes, { ignoreEncryption: true });
+            const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+        } catch (error) {
+            console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
+            toast({
+                variant: 'destructive',
+                title: 'Skipped File',
+                description: `Could not process "${pdfFile.file.name}". It might be corrupted or encrypted.`,
+            });
+            continue; // Skip to the next file
+        } finally {
+            filesProcessed++;
+        }
+      }
       
-      setMergeProgress(25);
-      setProgressStatus("Uploading files...");
-
-      if (isCancelled.current) throw new Error("Cancelled");
+      if (isCancelled.current) {
+        throw new Error("Cancelled");
+      }
       
-      const fileData = await Promise.all(fileDataPromises);
-      
-      if (isCancelled.current) throw new Error("Cancelled");
+      if (mergedPdf.getPageCount() === 0) {
+        throw new Error("Merge failed. All source PDFs might be corrupted or encrypted.");
+      }
 
-      setMergeProgress(50);
-      setProgressStatus("Merging on server...");
-
-      // 2. Call the server-side flow
-      const input: MergePdfsInput = { files: fileData };
-      const result = await mergePdfs(input);
-
-      if (isCancelled.current) throw new Error("Cancelled");
-
-      // 3. Process the result
-      setMergeProgress(90);
+      setMergeProgress(100);
       setProgressStatus("Finalizing...");
-      
-      // Convert base64 back to a blob for download URL
-      const fetchRes = await fetch(result.mergedPdfDataUri);
-      const blob = await fetchRes.blob();
+
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       setMergedPdfUrl(url);
-      
+
       toast({
         title: "Merge Successful!",
         description: "Your PDF is ready to be downloaded.",
         action: <div className="p-1 rounded-full bg-green-500"><PackageCheck className="w-5 h-5 text-white" /></div>
       });
-
     } catch (error: any) {
       if (error.message !== 'Cancelled') {
         console.error("Merge failed:", error);
         toast({
           variant: "destructive",
           title: "Merge Failed",
-          description: error.message || "An unexpected error occurred on the server.",
+          description: error.message || "An unexpected error occurred during the merge process.",
         });
       }
     } finally {
@@ -397,3 +391,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
