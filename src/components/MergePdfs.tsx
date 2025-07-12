@@ -59,6 +59,7 @@ export function MergePdfs() {
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
+  const [targetProgress, setTargetProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState(MERGE_STAGES[0]);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
@@ -69,6 +70,21 @@ export function MergePdfs() {
   const [isDragging, setIsDragging] = useState(false);
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    let progressInterval: NodeJS.Timeout;
+    if (isMerging) {
+      progressInterval = setInterval(() => {
+        setMergeProgress(prev => {
+          if (prev < targetProgress) {
+            return Math.min(prev + 1, targetProgress);
+          }
+          return prev;
+        });
+      }, 50); 
+    }
+    return () => clearInterval(progressInterval);
+  }, [isMerging, targetProgress]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -177,6 +193,7 @@ export function MergePdfs() {
 
     setIsMerging(true);
     setMergeProgress(0);
+    setTargetProgress(0);
     setProgressStatus(MERGE_STAGES[0]);
     isCancelled.current = false;
     setMergedPdfUrl(null);
@@ -201,7 +218,7 @@ export function MergePdfs() {
         }
 
         const progressIncrement = (1 / files.length) * 100;
-        setMergeProgress(prev => Math.min(prev + progressIncrement, 95));
+        setTargetProgress(prev => Math.min(prev + progressIncrement, 95));
 
         try {
             const fileBytes = await pdfFile.file.arrayBuffer();
@@ -231,8 +248,20 @@ export function MergePdfs() {
         throw new Error("Merge failed. All source PDFs might be corrupted or encrypted.");
       }
 
-      setMergeProgress(100);
+      setTargetProgress(100);
       setProgressStatus("Finalizing...");
+      
+      // Wait for the progress bar to reach 100%
+      await new Promise(resolve => {
+        const checkProgress = () => {
+          if (mergeProgress >= 99) {
+            resolve(true);
+          } else {
+            setTimeout(checkProgress, 100);
+          }
+        };
+        checkProgress();
+      });
 
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
@@ -256,6 +285,7 @@ export function MergePdfs() {
     } finally {
       setIsMerging(false);
       setMergeProgress(0);
+      setTargetProgress(0);
     }
   };
 
