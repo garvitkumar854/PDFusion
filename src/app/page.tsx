@@ -176,15 +176,15 @@ export default function Home() {
                 </p>
             </AnimateOnScroll>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left grid-auto-rows-fr">
                 {advancedFeatures.map((feature, index) => (
                     <AnimateOnScroll
                     key={index}
                     animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                    className="duration-700"
+                    className="duration-700 h-full"
                     delay={index * 150}
                     >
-                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col">
+                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                         <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
