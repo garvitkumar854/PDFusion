@@ -112,7 +112,7 @@ export default function Home() {
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll
-            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            animation="animate-in fade-in-0"
             className="duration-700 delay-300"
           >
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -122,7 +122,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-primary/10 rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary w-full sm:w-auto">
-                <Link href="#">Learn more</Link>
+                <Link href="/about">Learn more</Link>
               </Button>
             </div>
           </AnimateOnScroll>
@@ -137,7 +137,7 @@ export default function Home() {
                   key={index}
                   animation="animate-in fade-in-0"
                   className="duration-700"
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  delay={index * 200}
               >
                 <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border hover:border-primary bg-white dark:bg-card">
                   <CardContent className="p-6">
@@ -161,8 +161,8 @@ export default function Home() {
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4 text-center">
             <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                className="duration-700"
+                animation="animate-in fade-in-0"
+                className="duration-500"
             >
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
                   <Wand2 className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function Home() {
       <section className="pb-20 md:pb-32">
          <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-700"
+              className="duration-500"
           >
             <div className="container mx-auto px-4 text-center">
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
@@ -225,9 +225,9 @@ export default function Home() {
                   {futureFeatures.map((feature, index) => (
                     <AnimateOnScroll
                       key={index}
-                      animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                      animation="animate-in fade-in-0"
                       className="duration-700"
-                      delay={index * 150}
+                      delay={index * 250}
                     >
                       <Card className="group bg-white dark:bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">

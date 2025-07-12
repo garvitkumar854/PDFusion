@@ -75,8 +75,8 @@ export default function AboutPage() {
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4 max-w-4xl">
             <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                className="duration-700"
+                animation="animate-in fade-in-0"
+                className="duration-700 delay-200"
             >
                 <Card className="bg-card/50 dark:bg-card/20 p-8 border border-primary/20 shadow-lg">
                     <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
@@ -94,7 +94,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 text-center">
             <AnimateOnScroll
                 animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                className="duration-700"
+                className="duration-500"
             >
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
                   <Sparkles className="w-4 h-4" />
@@ -116,7 +116,7 @@ export default function AboutPage() {
                     className="duration-700"
                     delay={index * 150}
                     >
-                    <Card className="group bg-white text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full dark:bg-card">
+                    <Card className="group bg-white dark:bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                             <div className="flex flex-col items-start gap-4 h-full">
                                 <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -138,7 +138,7 @@ export default function AboutPage() {
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4 text-center">
           <AnimateOnScroll
-              animation="animate-in fade-in-0 slide-in-from-bottom-12"
+              animation="animate-in fade-in-0"
               className="duration-700"
           >
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
@@ -173,25 +173,36 @@ export default function AboutPage() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <AnimateOnScroll
-            animation="animate-in fade-in-0 slide-in-from-bottom-12"
-            className="duration-700"
-          >
-            <Card className="bg-white dark:bg-[hsl(223,73%,11%)] text-center p-8 sm:p-12 rounded-2xl shadow-xl border border-primary/20">
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-                Ready to <span className="text-primary">Try It Out?</span>
-              </h2>
-              <p className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
-                Experience the simplicity of PDFusion for yourself.
-              </p>
-              <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group">
-                <Link href="/merger">
-                  Start Merging PDFs
-                  <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </Link>
-              </Button>
-            </Card>
-          </AnimateOnScroll>
+          <div className="bg-white dark:bg-[hsl(223,73%,11%)] rounded-2xl p-8 lg:p-10 overflow-hidden shadow-xl border border-primary/20">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-left-12"
+                className="duration-700 w-full lg:w-auto"
+              >
+                <div className="text-center lg:text-left">
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+                    Ready to <span className="text-primary">Try It Out?</span>
+                  </h2>
+                  <p className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
+                    Experience the simplicity of PDFusion for yourself.
+                  </p>
+                </div>
+              </AnimateOnScroll>
+              <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-right-12"
+                className="duration-700 w-full lg:w-auto"
+              >
+                <div className="flex-shrink-0">
+                  <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
+                    <Link href="/merger">
+                      Start Merging PDFs
+                      <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </Link>
+                  </Button>
+                </div>
+              </AnimateOnScroll>
+            </div>
+          </div>
         </div>
       </section>
     </>
