@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers, Menu, X } from 'lucide-react';
+import { Layers, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -117,10 +117,6 @@ export default function Header() {
                                   </span>
                                 </h1>
                             </Link>
-                            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                                <X className="h-6 w-6" />
-                                <span className="sr-only">Close menu</span>
-                            </Button>
                         </div>
                         <nav className="flex flex-col gap-6 items-start px-2 mb-6">
                              {navLinks.map((link) => (
