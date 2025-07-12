@@ -335,7 +335,7 @@ export function MergePdfs() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="space-y-2 max-h-[24rem] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[20rem] overflow-y-auto pr-2">
                     {files.map((pdfFile, index) => (
                         <div
                         key={pdfFile.id}
