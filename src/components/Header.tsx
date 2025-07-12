@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ThemeToggler } from './ThemeToggler';
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -91,6 +92,7 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggler />
           <Button variant="ghost" className="transition-colors">Sign In</Button>
           <Button className="transition-colors">Sign Up</Button>
         </div>
@@ -130,6 +132,10 @@ export default function Header() {
                             ))}
                         </nav>
                         <div className="mt-auto pt-6 border-t flex flex-col gap-4">
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-semibold">Switch Theme</span>
+                              <ThemeToggler />
+                            </div>
                             <Button variant="ghost" size="lg" className="w-full justify-center text-lg">Sign In</Button>
                             <Button size="lg" className="w-full justify-center text-lg">Sign Up</Button>
                         </div>

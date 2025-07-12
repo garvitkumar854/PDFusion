@@ -259,7 +259,7 @@ export function MergePdfs() {
 
   if (mergedPdfUrl) {
     return (
-        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white p-6 sm:p-8 rounded-xl shadow-lg border">
+        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
             <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
@@ -278,7 +278,7 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        <Card className="bg-white shadow-lg">
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload & Merge</CardTitle>
                 <CardDescription>
@@ -317,7 +317,7 @@ export function MergePdfs() {
         </Card>
 
         {files.length > 0 && (
-          <Card className="bg-white shadow-lg">
+          <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader className="flex flex-row items-start sm:items-center justify-between pb-2 pr-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
@@ -361,7 +361,7 @@ export function MergePdfs() {
                             </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                            <Badge variant="outline" className="hidden sm:inline-flex text-green-600 border-green-200 bg-green-50">
+                            <Badge variant="outline" className="hidden sm:inline-flex text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-500/30">
                             <CheckCircle className="w-3.5 h-3.5 mr-1" />
                             Ready
                             </Badge>
@@ -382,7 +382,7 @@ export function MergePdfs() {
           </Card>
         )}
 
-        <Card className="bg-white shadow-lg">
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Merge Settings</CardTitle>
             </CardHeader>

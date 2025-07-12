@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White */
+    --background: 0 0% 100%;
     --foreground: 240 5% 15%;
-    --card: 240 5% 99%; /* Slightly off-white for contrast */
+    --card: 0 0% 99%;
     --card-foreground: 240 5% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 5% 15%;
-    --primary: 221 83% 53%; /* Blue from image */
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 5% 90%;
     --secondary-foreground: 240 5% 15%;
@@ -23,14 +23,14 @@
     --border: 240 6% 88%;
     --input: 240 6% 88%;
     --ring: 221 83% 53%;
-    --radius: 1rem; /* Adjusted from 25px to be more consistent with theme */
+    --radius: 1rem;
   }
   .dark {
-    --background: 240 5% 10%;
+    --background: 217 60% 7%; /* #040D1F */
     --foreground: 0 0% 98%;
-    --card: 240 4% 12%;
+    --card: 217 60% 12%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 4% 12%;
+    --popover: 217 60% 7%;
     --popover-foreground: 0 0% 98%;
     --primary: 221 83% 63%;
     --primary-foreground: 240 5% 15%;

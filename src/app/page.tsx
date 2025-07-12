@@ -11,38 +11,38 @@ export default function Home() {
       icon: <FilePlus2 className="w-6 h-6 text-blue-600 transition-transform group-hover:scale-110" />,
       title: 'Upload PDFs',
       description: 'Drag and drop multiple PDF files',
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
     },
     {
       icon: <Wand2 className="w-6 h-6 text-purple-600 transition-transform group-hover:scale-110" />,
       title: 'Merge & Edit',
       description: 'Combine, reorder, and edit pages',
-      bgColor: 'bg-purple-100',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
     },
     {
       icon: <Download className="w-6 h-6 text-green-600 transition-transform group-hover:scale-110" />,
       title: 'Download',
       description: 'Get your merged PDF instantly',
-      bgColor: 'bg-green-100',
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
     },
   ];
 
   const advancedFeatures = [
     {
       icon: <Lock className="w-6 h-6 text-red-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-red-100',
+      bgColor: 'bg-red-100 dark:bg-red-900/20',
       title: 'Privacy First',
       description: 'Your documents never leave your device. Complete privacy and security guaranteed.',
     },
     {
       icon: <Globe className="w-6 h-6 text-purple-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-purple-100',
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Works Everywhere',
       description: 'Access from any device, anywhere. No downloads or installations required.',
     },
     {
       icon: <Smartphone className="w-6 h-6 text-blue-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Mobile Friendly',
       description: 'Optimized for touch devices. Perfect for on-the-go PDF management.',
     },
@@ -51,21 +51,21 @@ export default function Home() {
   const futureFeatures = [
     {
       icon: <Zap className="w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-yellow-100',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
       description: 'Merge your PDFs in seconds with our optimized processing engine',
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
       icon: <ShieldCheck className="w-6 h-6 text-green-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-green-100',
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
     },
     {
       icon: <FileText className="w-6 h-6 text-blue-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Advanced Features',
       description: 'Powerful tools to handle your PDF needs',
       points: ['Page reordering', 'Rotation support', 'Preview thumbnails'],
@@ -121,7 +121,7 @@ export default function Home() {
                   Get Started <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary w-full sm:w-auto">
+              <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-primary/10 rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary w-full sm:w-auto">
                 <Link href="#">Learn more</Link>
               </Button>
             </div>
@@ -139,7 +139,7 @@ export default function Home() {
                   className="duration-700"
                   style={{ animationDelay: `${index * 150}ms` }}
               >
-                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border hover:border-primary bg-white">
+                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border hover:border-primary bg-white dark:bg-card">
                   <CardContent className="p-6">
                     <div className="flex flex-col items-start gap-4">
                       <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -184,7 +184,7 @@ export default function Home() {
                     className="duration-700 h-full"
                     delay={index * 150}
                     >
-                    <Card className="group bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                    <Card className="group bg-white dark:bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                         <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -229,7 +229,7 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 150}
                     >
-                      <Card className="group bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col">
+                      <Card className="group bg-white dark:bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                           <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -263,7 +263,7 @@ export default function Home() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-700"
           >
-            <div className="bg-white border rounded-2xl p-8 lg:p-10">
+            <div className="bg-white dark:bg-card border rounded-2xl p-8 lg:p-10">
               <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
                 <div className="text-center lg:text-left">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
