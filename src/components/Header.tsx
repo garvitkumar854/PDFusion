@@ -72,7 +72,7 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="py-4 border-b bg-background sticky top-0 z-50">
+    <header className="py-4 border-b bg-background/80 sticky top-0 z-50 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <div className="bg-primary p-2 rounded-md">
@@ -81,7 +81,7 @@ export default function Header() {
           <h1 className="text-xl font-bold tracking-tight">PDFusion</h1>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <NavLink key={link.href + link.label} href={link.href} label={link.label} currentPath={pathname} />
           ))}
