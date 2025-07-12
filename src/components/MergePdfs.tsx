@@ -50,12 +50,16 @@ export function MergePdfs() {
   const [progressStatus, setProgressStatus] = useState("Merging...");
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
-  const isCancelled = useRef(false);
-  const { toast } = useToast();
   
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const isCancelled = useRef(false);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-
+  
+  const { toast } = useToast();
+  
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
       let currentFiles = [...files];
@@ -118,13 +122,18 @@ export function MergePdfs() {
     setIsMerging(false); // Immediately stop the UI merging state
     toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
   };
-
+  
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    // We need to re-render to apply the is-dragging style
-    setFiles(prev => [...prev]);
+    setDraggingIndex(index);
   };
-  
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    if (draggingIndex === null) return;
+    dragOverItem.current = index;
+    setDragOverIndex(index);
+  };
+
   const handleDragEnd = () => {
     if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
         const filesCopy = [...files];
@@ -134,20 +143,12 @@ export function MergePdfs() {
     }
     dragItem.current = null;
     dragOverItem.current = null;
-    // We need to re-render to remove dragging styles
-    setFiles(prev => [...prev]);
+    setDraggingIndex(null);
+    setDragOverIndex(null);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); 
-  };
-  
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    if (dragItem.current !== null) {
-      dragOverItem.current = index;
-       // We need to re-render to apply the is-drag-over style
-      setFiles(prev => [...prev]);
-    }
   };
   
   const handleMerge = async () => {
@@ -252,9 +253,6 @@ export function MergePdfs() {
     setTotalSize(0);
     setMergedPdfUrl(null);
   };
-  
-  const estOutput = isMerging ? mergeProgress : files.length > 0 ? totalSize : 0;
-
 
   if (mergedPdfUrl) {
     return (
@@ -333,8 +331,8 @@ export function MergePdfs() {
                 onDragOver={handleDragOver}
               >
                 {files.map((pdfFile, index) => {
-                  const isDragging = dragItem.current === index;
-                  const isDragOver = dragOverItem.current === index;
+                  const isDragging = draggingIndex === index;
+                  const isDragOver = dragOverIndex === index;
 
                   return (
                     <div
@@ -344,7 +342,7 @@ export function MergePdfs() {
                       onDragEnter={(e) => handleDragEnter(e, index)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-200',
+                        'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-300',
                         isDragging ? 'shadow-lg scale-105 opacity-80 z-10' : 'shadow-sm',
                         isDragOver && !isDragging && 'ring-2 ring-primary'
                       )}
