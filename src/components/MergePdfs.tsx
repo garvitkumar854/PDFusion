@@ -79,6 +79,9 @@ export function MergePdfs() {
           if (prev < targetProgress) {
             return Math.min(prev + 1, targetProgress);
           }
+          if(prev >= 100) {
+            clearInterval(progressInterval);
+          }
           return prev;
         });
       }, 50); 
@@ -250,18 +253,6 @@ export function MergePdfs() {
 
       setTargetProgress(100);
       setProgressStatus("Finalizing...");
-      
-      // Wait for the progress bar to reach 100%
-      await new Promise(resolve => {
-        const checkProgress = () => {
-          if (mergeProgress >= 99) {
-            resolve(true);
-          } else {
-            setTimeout(checkProgress, 100);
-          }
-        };
-        checkProgress();
-      });
 
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
