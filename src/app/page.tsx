@@ -1,7 +1,8 @@
-import { ArrowRight, FilePlus2, Wand2, Download } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import CheckIcon from '@/components/CheckIcon';
 
 export default function Home() {
   const features = [
@@ -22,6 +23,30 @@ export default function Home() {
       title: 'Download',
       description: 'Get your merged PDF instantly',
       bgColor: 'bg-green-100',
+    },
+  ];
+
+  const futureFeatures = [
+    {
+      icon: <Zap className="w-6 h-6 text-yellow-500" />,
+      bgColor: 'bg-yellow-100',
+      title: 'Lightning Fast',
+      description: 'Merge your PDFs in seconds with our optimized processing engine',
+      points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
+    },
+    {
+      icon: <ShieldCheck className="w-6 h-6 text-green-500" />,
+      bgColor: 'bg-green-100',
+      title: 'Secure & Private',
+      description: 'Your files are processed locally and never stored on our servers',
+      points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
+    },
+    {
+      icon: <FileText className="w-6 h-6 text-blue-500" />,
+      bgColor: 'bg-blue-100',
+      title: 'Advanced Features',
+      description: 'Powerful tools to handle your PDF needs',
+      points: ['Page reordering', 'Rotation support', 'Preview thumbnails'],
     },
   ];
 
@@ -92,6 +117,48 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="pb-20 md:pb-32">
+        <div className="container mx-auto px-4 text-center">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+              <Wand2 className="w-4 h-4" />
+              Why Choose Our PDF Merger?
+            </div>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+              Experience the <span className="text-primary">Future of PDF Merging</span>
+            </h2>
+            <p className="max-w-3xl mx-auto text-muted-foreground md:text-lg mb-12">
+              Discover the most intuitive and powerful PDF merging tool available online. Built with cutting-edge technology for the best user experience.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+              {futureFeatures.map((feature, index) => (
+                <Card key={index} className="bg-card shadow-sm hover:shadow-lg transition-shadow duration-300 border-border/50 p-6 rounded-xl">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col items-start gap-4">
+                      <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                        {feature.icon}
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-foreground">{feature.title}</h3>
+                        <p className="text-muted-foreground">{feature.description}</p>
+                      </div>
+                      <ul className="space-y-3 mt-2">
+                        {feature.points.map(point => (
+                          <li key={point} className="flex items-center gap-3">
+                            <CheckIcon className="w-5 h-5 text-primary" />
+                            <span className="text-muted-foreground">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+        </div>
+      </section>
+
     </>
   );
 }

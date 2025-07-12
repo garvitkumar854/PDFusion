@@ -28,7 +28,7 @@ const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: s
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-sm font-medium transition-colors",
+            "group relative py-2 text-sm font-semibold transition-colors",
             isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
         )}
         >
@@ -51,7 +51,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-lg font-medium transition-colors w-fit",
+            "group relative py-2 text-lg font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
