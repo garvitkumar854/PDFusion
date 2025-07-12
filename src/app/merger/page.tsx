@@ -14,7 +14,11 @@ export default function MergerPage() {
               Back to Home
             </Link>
           </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Merge PDFs</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+              Merge PDFs
+            </span>
+          </h1>
         </div>
       </div>
       <main className="flex-1 w-full">
