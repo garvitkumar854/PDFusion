@@ -275,13 +275,18 @@ export function MergePdfs() {
         <Card>
             <CardHeader>
                 <CardTitle>Upload PDF Files</CardTitle>
-                <CardDescription>Drag and drop your PDF files here or click to browse</CardDescription>
+                <CardDescription>
+                  Drag and drop your PDF files here or click to browse
+                </CardDescription>
+                 <div className="text-sm text-muted-foreground">
+                  Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}
+                </div>
             </CardHeader>
             <CardContent>
                 <div
                     {...getRootProps()}
                     className={cn(
-                    "relative flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-background/50",
+                    "relative flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-card",
                     "hover:border-primary/50",
                     isDragActive && "border-primary bg-primary/10"
                     )}
@@ -442,5 +447,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
