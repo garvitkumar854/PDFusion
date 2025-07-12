@@ -1,4 +1,4 @@
-import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -244,7 +244,7 @@ export default function Home() {
                                 <li key={point} className="flex items-center gap-3">
                                   <CheckIcon className="w-5 h-5 text-primary" />
                                   <span className="text-muted-foreground">{point}</span>
-                                </li>
+                                li>
                               ))}
                             </ul>
                           </div>
@@ -255,6 +255,39 @@ export default function Home() {
                 </div>
             </div>
           </AnimateOnScroll>
+      </section>
+
+      <section className="pb-20 md:pb-32">
+        <div className="container mx-auto px-4">
+          <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-700"
+          >
+            <div className="bg-card border rounded-2xl p-8 lg:p-10">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div className="text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                    <Wand2 className="w-4 h-4" />
+                    Ready to get started?
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
+                    Ready to merge your <span className="text-primary">PDFs?</span>
+                  </h2>
+                  <p className="max-w-xl text-muted-foreground text-base">
+                    Start combining your PDF files now with our easy-to-use tool. No registration required, completely free, and secure.
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto">
+                    <Link href="/merger">
+                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </AnimateOnScroll>
+        </div>
       </section>
 
     </>
