@@ -100,7 +100,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:border-primary">
+              <Card key={index} className="text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:border-[0.75px] hover:border-primary">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-start gap-4">
                     <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -133,7 +133,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
               {futureFeatures.map((feature, index) => (
-                <Card key={index} className="bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-primary">
+                <Card key={index} className="bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-[0.75px] hover:border-primary">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-start gap-4">
                       <div className={`p-3 rounded-lg ${feature.bgColor}`}>
