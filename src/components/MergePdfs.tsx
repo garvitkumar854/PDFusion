@@ -53,22 +53,19 @@ export function MergePdfs() {
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
   const isCancelled = useRef(false);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const { toast } = useToast();
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
-      let currentFiles = [...files];
       let currentSize = totalSize;
 
       const newFiles = acceptedFiles.filter(file => {
-        if (currentFiles.length + 1 > MAX_FILES) {
+        if (files.length + newFiles.length > MAX_FILES) {
           toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
           return false;
         }
@@ -84,6 +81,7 @@ export function MergePdfs() {
           toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.` });
           return false;
         }
+        currentSize += file.size;
         return true;
       });
 
@@ -127,26 +125,32 @@ export function MergePdfs() {
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    setDraggingIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Use a timeout to allow the browser to render the drag image before we change styles
+    setTimeout(() => {
+        setIsDragging(true);
+    }, 0);
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    if (draggingIndex === null) return;
+    e.preventDefault(); // This is necessary to allow dropping
+    if (dragItem.current === null || dragItem.current === index) {
+      return;
+    }
     dragOverItem.current = index;
-    setDragOverIndex(index);
+    
+    // Reorder the list for visual feedback
+    const filesCopy = [...files];
+    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+    filesCopy.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setFiles(filesCopy);
   };
 
   const handleDragEnd = () => {
-    if (dragItem.current !== null && dragOverItem.current !== null && dragItem.current !== dragOverItem.current) {
-        const filesCopy = [...files];
-        const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
-        filesCopy.splice(dragOverItem.current, 0, draggedItemContent);
-        setFiles(filesCopy);
-    }
+    setIsDragging(false);
     dragItem.current = null;
     dragOverItem.current = null;
-    setDraggingIndex(null);
-    setDragOverIndex(null);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -333,56 +337,49 @@ export function MergePdfs() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver}>
-              <div 
-                className="space-y-2 pr-2 max-h-[24rem] overflow-y-auto"
-              >
-                {files.map((pdfFile, index) => {
-                  const isDragging = draggingIndex === index;
-                  const isDragOver = dragOverIndex === index;
-
-                  return (
-                    <div
-                      key={pdfFile.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragEnter={(e) => handleDragEnter(e, index)}
-                      onDragEnd={handleDragEnd}
-                      className={cn(
-                        'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-300',
-                        isDragging ? 'shadow-lg scale-105 opacity-80 z-10' : 'shadow-sm',
-                        isDragOver && !isDragging && 'ring-2 ring-primary'
-                      )}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <FileIcon className="w-8 h-8 text-destructive flex-shrink-0" />
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                            {pdfFile.file.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatBytes(pdfFile.file.size)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                          Ready
-                        </Badge>
-                        <GripVertical className="w-5 h-5 text-muted-foreground/70 cursor-grab" />
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
-                          onClick={() => removeFile(pdfFile.id)}
+                <div className="space-y-2 max-h-[24rem] overflow-y-auto">
+                    {files.map((pdfFile, index) => (
+                        <div
+                        key={pdfFile.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragEnter={(e) => handleDragEnter(e, index)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={cn(
+                            'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-300',
+                            isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                        )}
                         >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <FileIcon className="w-8 h-8 text-destructive flex-shrink-0" />
+                            <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                                {pdfFile.file.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                {formatBytes(pdfFile.file.size)}
+                            </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                            <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                            Ready
+                            </Badge>
+                            <GripVertical className="w-5 h-5 text-muted-foreground/70 cursor-grab" />
+                            <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
+                            onClick={() => removeFile(pdfFile.id)}
+                            >
+                            <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                        </div>
+                    ))}
+                </div>
             </CardContent>
           </Card>
         )}
