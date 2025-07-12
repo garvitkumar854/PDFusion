@@ -47,8 +47,8 @@ export default function ContactPage() {
   return (
     <section className="py-20 md:py-32">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          <div className="text-center lg:text-left">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
+          <div className="text-center lg:text-left lg:col-span-3">
             <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-500"
@@ -96,7 +96,7 @@ export default function ContactPage() {
           
           <AnimateOnScroll
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
-            className="duration-700"
+            className="duration-700 lg:col-span-2"
             delay={300}
           >
             <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card/20">
