@@ -1,4 +1,4 @@
-import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,6 +24,27 @@ export default function Home() {
       title: 'Download',
       description: 'Get your merged PDF instantly',
       bgColor: 'bg-green-100',
+    },
+  ];
+
+  const advancedFeatures = [
+    {
+      icon: <Lock className="w-6 h-6 text-red-500" />,
+      bgColor: 'bg-red-100',
+      title: 'Privacy First',
+      description: 'Your documents never leave your device. Complete privacy and security guaranteed.',
+    },
+    {
+      icon: <Globe className="w-6 h-6 text-purple-500" />,
+      bgColor: 'bg-purple-100',
+      title: 'Works Everywhere',
+      description: 'Access from any device, anywhere. No downloads or installations required.',
+    },
+    {
+      icon: <Smartphone className="w-6 h-6 text-blue-500" />,
+      bgColor: 'bg-blue-100',
+      title: 'Mobile Friendly',
+      description: 'Optimized for touch devices. Perfect for on-the-go PDF management.',
     },
   ];
 
@@ -136,6 +157,52 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="pb-20 md:pb-32">
+        <div className="container mx-auto px-4 text-center">
+            <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                className="duration-700"
+            >
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                  <Wand2 className="w-4 h-4" />
+                  More Than Just Merging
+                </div>
+                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+                  Everything You Need for <span className="text-primary">PDF Management</span>
+                </h2>
+                <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
+                  Our comprehensive toolset goes beyond simple merging to provide a complete PDF solution.
+                </p>
+            </AnimateOnScroll>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                {advancedFeatures.map((feature, index) => (
+                    <AnimateOnScroll
+                    key={index}
+                    animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                    className="duration-700"
+                    delay={index * 150}
+                    >
+                    <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-primary">
+                        <CardContent className="p-0">
+                        <div className="flex flex-col items-start gap-4">
+                            <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                            {feature.icon}
+                            </div>
+                            <div className="space-y-2">
+                            <h3 className="text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                            <p className="text-muted-foreground">{feature.description}</p>
+                            </div>
+                        </div>
+                        </CardContent>
+                    </Card>
+                    </AnimateOnScroll>
+                ))}
+            </div>
+        </div>
+      </section>
+
 
       <section className="pb-20 md:pb-32">
          <AnimateOnScroll
