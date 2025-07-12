@@ -117,8 +117,8 @@ export default function Home() {
           >
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all w-full sm:w-auto">
-                <Link href="/merger">
-                  Get Started <ArrowRight className="ml-2 w-5 h-5" />
+                <Link href="/merger" className="group">
+                  Get Started <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary w-full sm:w-auto">
@@ -280,7 +280,7 @@ export default function Home() {
                 <div className="flex-shrink-0">
                   <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
                     <Link href="/merger" className="group">
-                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                     </Link>
                   </Button>
                 </div>
