@@ -327,10 +327,9 @@ export function MergePdfs() {
                 Clear All
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent onDragOver={handleDragOver}>
               <div 
-                className="space-y-2 pr-2 overflow-y-auto max-h-[24rem]"
-                onDragOver={handleDragOver}
+                className="space-y-2 pr-2 max-h-[24rem] overflow-y-auto"
               >
                 {files.map((pdfFile, index) => {
                   const isDragging = draggingIndex === index;
