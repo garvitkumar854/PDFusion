@@ -264,7 +264,7 @@ export function MergePdfs() {
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold">
+                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-green-500 hover:bg-green-600">
                     <Download className="mr-2 h-5 w-5" />
                     Download PDF
                 </Button>
