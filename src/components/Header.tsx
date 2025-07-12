@@ -10,6 +10,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -18,8 +20,56 @@ const navLinks = [
   { href: "#", label: "Contact" },
 ];
 
+const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
+  const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
+
+  return (
+    <Link
+        href={href}
+        onClick={onClick}
+        className={cn(
+            "group relative py-2 text-sm font-medium transition-colors",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+        )}
+        >
+        <span>{label}</span>
+        <span
+            className={cn(
+            "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+            isActive ? "w-full" : "w-0 group-hover:w-full"
+            )}
+        />
+    </Link>
+  );
+};
+
+const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
+  const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
+
+  return (
+    <Link
+        href={href}
+        onClick={onClick}
+        className={cn(
+            "group relative py-2 text-lg font-medium transition-colors w-fit",
+             isActive ? "text-primary" : "text-foreground hover:text-primary"
+        )}
+        >
+        <span>{label}</span>
+         <span
+            className={cn(
+            "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+            isActive ? "w-full" : "w-0 group-hover:w-full"
+            )}
+        />
+    </Link>
+  );
+};
+
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="py-4 border-b bg-background sticky top-0 z-50">
@@ -33,9 +83,7 @@ export default function Header() {
         
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
-            <Link key={link.href + link.label} href={link.href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-              {link.label}
-            </Link>
+            <NavLink key={link.href + link.label} href={link.href} label={link.label} currentPath={pathname} />
           ))}
         </nav>
 
@@ -68,9 +116,13 @@ export default function Header() {
                         </div>
                         <nav className="flex flex-col gap-6 items-start">
                              {navLinks.map((link) => (
-                                <Link key={link.href + link.label} href={link.href} className="text-lg font-medium text-foreground hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
-                                {link.label}
-                                </Link>
+                                <MobileNavLink 
+                                  key={link.href + link.label} 
+                                  href={link.href} 
+                                  label={link.label} 
+                                  currentPath={pathname} 
+                                  onClick={() => setIsOpen(false)} 
+                                />
                             ))}
                         </nav>
                         <div className="mt-8 pt-6 border-t flex flex-col gap-4">
