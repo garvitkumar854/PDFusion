@@ -12,6 +12,7 @@ import {
   GripVertical,
   Layers,
   FolderOpen,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ import { PDFDocument } from "pdf-lib";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 100;
@@ -47,7 +49,7 @@ export function MergePdfs() {
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
-  const [progressStatus, setProgressStatus] = useState("Merging...");
+  const [progressStatus, setProgressStatus] = useState("Combining documents...");
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
@@ -163,7 +165,7 @@ export function MergePdfs() {
 
     setIsMerging(true);
     setMergeProgress(0);
-    setProgressStatus("Preparing files...");
+    setProgressStatus("Combining documents...");
     isCancelled.current = false;
     setMergedPdfUrl(null);
 
@@ -178,7 +180,7 @@ export function MergePdfs() {
 
         const progress = (filesProcessed / files.length) * 100;
         setMergeProgress(progress);
-        setProgressStatus(`Processing ${pdfFile.file.name}...`);
+        setProgressStatus(`Processing file ${filesProcessed + 1} of ${files.length}`);
 
         try {
             const fileBytes = await pdfFile.file.arrayBuffer();
@@ -415,28 +417,31 @@ export function MergePdfs() {
                     </div>
                 </div>
 
-                <div>
+                <div className="space-y-4">
                     {isMerging ? (
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <div className="w-full">
-                                <div className="w-full relative h-2.5 rounded-full overflow-hidden bg-primary/20">
-                                <div 
-                                    className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
-                                    style={{ width: `${mergeProgress}%` }}
-                                ></div>
-                                </div>
-                                <p className="text-sm font-medium text-primary text-center mt-2">{progressStatus} {Math.round(mergeProgress)}%</p>
-                            </div>
+                        <>
                             <Button
-                            variant="destructive"
-                            size="lg"
-                            className="w-full sm:w-auto text-base font-bold"
-                            onClick={handleCancel}
-                            >
-                            <X className="mr-2 h-4 w-4" />
-                            Cancel
+                                variant="destructive"
+                                size="lg"
+                                className="w-full text-base font-bold"
+                                onClick={handleCancel}
+                                >
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel Merge
                             </Button>
-                        </div>
+
+                            <div className="p-4 rounded-lg border bg-primary/10">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                        <p className="text-sm font-medium text-primary">Combining documents...</p>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
+                                </div>
+                                <Progress value={mergeProgress} className="h-2" />
+                                <p className="text-xs text-muted-foreground text-center mt-2">{progressStatus}</p>
+                            </div>
+                        </>
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
                             <Layers className="mr-2 h-5 w-5" />
