@@ -13,7 +13,7 @@ export default function Footer() {
     <footer className="py-6 border-t bg-background">
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm text-muted-foreground">
-          © {currentYear || new Date().getFullYear()} PDFusion. All rights reserved. Built with ❤️.
+          © {currentYear ? currentYear : '...'} PDFusion. All rights reserved. Built with ❤️.
         </p>
       </div>
     </footer>
