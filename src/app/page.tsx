@@ -124,7 +124,7 @@ export default function Home() {
                         {feature.icon}
                       </div>
                       <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
+                        <h3 className="text-lg font-bold text-foreground">{feature.title}</h3>
                         <p className="text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
