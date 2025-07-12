@@ -5,36 +5,36 @@ import Link from 'next/link';
 
 const contactMethods = [
   {
-    icon: <Mail className="w-8 h-8 text-blue-400" />,
+    icon: <Mail className="w-8 h-8 text-blue-500 dark:text-blue-400" />,
     title: 'Email Us',
     description: 'Send us an email anytime',
     href: 'mailto:support@pdfusion.com',
     details: 'support@pdfusion.com',
-    bgColor: 'bg-blue-900/20 hover:bg-blue-900/40',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200/60 dark:hover:bg-blue-900/40',
   },
   {
-    icon: <MessageSquare className="w-8 h-8 text-green-400" />,
+    icon: <MessageSquare className="w-8 h-8 text-green-500 dark:text-green-400" />,
     title: 'Live Chat',
     description: 'Get instant help',
     href: '#',
     details: 'Available 24/7',
-    bgColor: 'bg-green-900/20 hover:bg-green-900/40',
+    bgColor: 'bg-green-100 dark:bg-green-900/20 hover:bg-green-200/60 dark:hover:bg-green-900/40',
   },
   {
-    icon: <Phone className="w-8 h-8 text-purple-400" />,
+    icon: <Phone className="w-8 h-8 text-purple-500 dark:text-purple-400" />,
     title: 'Call Us',
     description: 'Speak with our team',
     href: 'tel:+15551234567',
     details: '+1 (555) 123-4567',
-    bgColor: 'bg-purple-900/20 hover:bg-purple-900/40',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200/60 dark:hover:bg-purple-900/40',
   },
   {
-    icon: <MapPin className="w-8 h-8 text-orange-400" />,
+    icon: <MapPin className="w-8 h-8 text-orange-500 dark:text-orange-400" />,
     title: 'Office',
     description: 'Visit our headquarters',
     href: '#',
     details: 'San Francisco, CA',
-    bgColor: 'bg-orange-900/20 hover:bg-orange-900/40',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/20 hover:bg-orange-200/60 dark:hover:bg-orange-900/40',
   },
 ];
 
