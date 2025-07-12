@@ -2,27 +2,45 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users, Zap, ShieldCheck, FileText } from "lucide-react";
+import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart } from "lucide-react";
 import Image from "next/image";
 
 const whyChooseUsFeatures = [
     {
-      icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+      icon: <FileText className="w-8 h-8 text-blue-500" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      title: 'PDF Merging Made Simple',
+      description: 'Our intuitive interface makes merging PDFs as easy as drag and drop. No technical knowledge required.',
+    },
+    {
+      icon: <Shield className="w-8 h-8 text-green-500" />,
       bgColor: 'bg-green-100 dark:bg-green-900/20',
-      title: 'Secure & Private',
-      description: 'Your files are processed locally and never stored on our servers.',
+      title: 'Privacy First',
+      description: 'Your files never leave your browser. We process everything locally to ensure maximum security.',
     },
     {
       icon: <Zap className="w-8 h-8 text-yellow-500" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
-      description: 'Merge your PDFs in seconds with our optimized processing engine.',
+      description: 'Built with modern technology to handle your PDFs quickly and efficiently.',
     },
     {
-      icon: <FileText className="w-8 h-8 text-blue-500" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-      title: 'Advanced Features',
-      description: 'Powerful tools to handle your PDF needs like page reordering and rotation.',
+      icon: <Users className="w-8 h-8 text-purple-500" />,
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
+      title: 'User-Centric Design',
+      description: 'Every feature is designed with our users in mind, making the experience smooth and enjoyable.',
+    },
+    {
+      icon: <Code2 className="w-8 h-8 text-gray-500" />,
+      bgColor: 'bg-gray-100 dark:bg-gray-900/20',
+      title: 'Open Source',
+      description: 'Our code is open source, allowing for transparency and community contributions.',
+    },
+    {
+      icon: <Heart className="w-8 h-8 text-red-500" />,
+      bgColor: 'bg-red-100 dark:bg-red-900/20',
+      title: 'Made with Love',
+      description: "We're passionate about creating tools that make your life easier.",
     },
 ];
 
@@ -79,17 +97,17 @@ export default function AboutPage() {
             >
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
                   <Sparkles className="w-4 h-4" />
-                  Why Choose Us?
+                  Why Choose Our Tool?
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                  The PDFusion Advantage
+                  Why Choose <span className="text-primary">Our Tool?</span>
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
-                  Discover why millions of users trust PDFusion for their document management needs.
+                  Discover what makes our PDF merger the best choice for your document needs.
                 </p>
             </AnimateOnScroll>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
                 {whyChooseUsFeatures.map((feature, index) => (
                     <AnimateOnScroll
                     key={index}
