@@ -1,4 +1,4 @@
-import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone, ArrowUpRight, Compass, Scissors, FileCheck2, BarChart3, Settings, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,6 +72,20 @@ export default function Home() {
     },
   ];
 
+    const managementFeatures = [
+    { icon: <Compass className="w-8 h-8 text-primary" />, title: 'Navigate & View' },
+    { icon: <Scissors className="w-8 h-8 text-primary" />, title: 'Split & Extract' },
+    { icon: <FileCheck2 className="w-8 h-8 text-primary" />, title: 'Organize Pages' },
+    { icon: <BarChart3 className="w-8 h-8 text-primary" />, title: 'Compress PDF' },
+  ];
+
+  const moreFeatures = [
+    { title: 'Easy to Use', description: 'Intuitive interface for effortless PDF management.' },
+    { title: 'Secure', description: 'Your files are processed locally and never stored on our servers.' },
+    { title: 'Free', description: 'Enjoy our services for free, without any hidden charges.' },
+    { title: '24/7 Support', description: 'Our team is here to help you anytime, any day.' },
+  ];
+
   return (
     <>
       <section className="py-20 md:py-32">
@@ -116,7 +130,7 @@ export default function Home() {
             className="duration-700 delay-300"
           >
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all w-full sm:w-auto">
+              <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all w-full sm:w-auto hover:bg-primary">
                 <Link href="/merger" className="group">
                   Get Started <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -240,11 +254,10 @@ export default function Home() {
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-2">
-                              {feature.points.map(point => (
-                                <li key={point} className="flex items-center gap-3">
+                              {futureFeatures.map(point => (
+                                <li key={point.title} className="flex items-center gap-3">
                                   <CheckIcon className="w-5 h-5 text-primary" />
-                                  <span className="text-muted-foreground">{point}</span>
-                                </li>
+                                  <span className="text-muted-foreground">{point.title}</span></li>
                               ))}
                             </ul>
                           </div>
@@ -255,6 +268,68 @@ export default function Home() {
                 </div>
             </div>
           </AnimateOnScroll>
+      </section>
+
+      <section className="pb-20 md:pb-32 bg-background">
+        <div className="container mx-auto px-4">
+          <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-700"
+          >
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+                Complete <span className="text-primary">PDF Management</span>
+              </h2>
+              <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                One tool to handle all your PDF needs. Merge, split, compress, and more.
+              </p>
+            </div>
+          </AnimateOnScroll>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            {managementFeatures.map((feature, index) => (
+              <AnimateOnScroll
+                key={index}
+                animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                className="duration-700"
+                delay={index * 100}
+              >
+                <div className="text-center p-4">
+                  <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mx-auto mb-4">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
+                </div>
+              </AnimateOnScroll>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+            {moreFeatures.map((feature, index) => (
+              <AnimateOnScroll
+                key={index}
+                animation="animate-in fade-in-0"
+                className="duration-700"
+                delay={200 + index * 100}
+              >
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground">
+                      {index === 0 && <Settings className="w-6 h-6" />}
+                      {index === 1 && <ShieldCheck className="w-6 h-6" />}
+                      {index === 2 && <Zap className="w-6 h-6" />}
+                      {index === 3 && <LifeBuoy className="w-6 h-6" />}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">{feature.title}</h3>
+                    <p className="mt-1 text-muted-foreground">{feature.description}</p>
+                  </div>
+                </div>
+              </AnimateOnScroll>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="pb-20 md:pb-32">
