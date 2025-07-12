@@ -332,7 +332,7 @@ export function MergePdfs() {
                 <div
                     {...getRootProps()}
                     className={cn(
-                    "relative flex flex-col items-center justify-center p-6 sm:p-10 pt-8 sm:pt-12 pb-12 sm:pb-16 rounded-lg border-2 border-dashed transition-colors duration-300",
+                    "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                     "hover:border-primary/50",
                     isDragActive && "border-primary bg-primary/10"
                     )}
@@ -347,11 +347,11 @@ export function MergePdfs() {
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Choose Files
                     </Button>
-                    <div className="absolute bottom-4 w-full px-2 text-center text-xs text-muted-foreground mt-2">
-                      <div className="flex flex-col items-center">
-                        <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
-                        <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
-                      </div>
+                    <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
+                        <div className="flex flex-col items-center">
+                            <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
+                            <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -359,7 +359,7 @@ export function MergePdfs() {
 
         {files.length > 0 && (
           <Card className="bg-white dark:bg-card shadow-lg">
-            <CardHeader className="flex-row items-center justify-between pb-2 pr-4 sm:flex">
+            <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
@@ -368,7 +368,7 @@ export function MergePdfs() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md mt-2 sm:mt-0"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md -ml-2 sm:ml-0"
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
                 Clear All
