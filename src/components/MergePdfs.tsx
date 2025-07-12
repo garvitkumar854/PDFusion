@@ -415,6 +415,7 @@ export function MergePdfs() {
                                         variant="destructive"
                                         size="sm"
                                         onClick={handleCancel}
+                                        className="w-full"
                                         >
                                         <X className="mr-2 h-4 w-4" />
                                         Cancel Merge

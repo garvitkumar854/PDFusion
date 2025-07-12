@@ -76,7 +76,11 @@ export default function Header() {
           <div className="bg-primary p-2 rounded-md">
             <Layers className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">PDFusion</h1>
+          <h1 className="text-xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+              PDFusion
+            </span>
+          </h1>
         </Link>
         
         <nav className="hidden md:flex items-center gap-8">
@@ -98,21 +102,25 @@ export default function Header() {
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0">
+                <SheetContent side="top" className="h-auto p-0">
                     <div className="p-6 flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-8">
+                        <div className="flex justify-between items-center mb-6">
                             <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
                                 <div className="bg-primary p-2 rounded-md">
                                     <Layers className="w-6 h-6 text-primary-foreground" />
                                 </div>
-                                <h1 className="text-xl font-bold tracking-tight">PDFusion</h1>
+                                <h1 className="text-xl font-bold tracking-tight">
+                                  <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                                    PDFusion
+                                  </span>
+                                </h1>
                             </Link>
                             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                                 <X className="h-6 w-6" />
                                 <span className="sr-only">Close menu</span>
                             </Button>
                         </div>
-                        <nav className="flex flex-col gap-6 items-start px-2">
+                        <nav className="flex flex-col gap-6 items-start px-2 mb-6">
                              {navLinks.map((link) => (
                                 <MobileNavLink 
                                   key={link.href + link.label} 
