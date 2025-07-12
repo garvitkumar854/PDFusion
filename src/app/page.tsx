@@ -62,7 +62,7 @@ export default function Home() {
             <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               ✨ The Ultimate PDF Merger
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
               Merge PDFs with{' '}
               <span className="relative inline-block">
                 <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Ease</span>
