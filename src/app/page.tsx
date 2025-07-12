@@ -278,9 +278,9 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex-shrink-0">
-                  <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto">
-                    <Link href="/merger">
-                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5" />
+                  <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
+                    <Link href="/merger" className="group">
+                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
                 </div>
