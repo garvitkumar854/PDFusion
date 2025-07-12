@@ -18,7 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PDFDocument } from "pdf-lib";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 100;
@@ -60,36 +61,36 @@ export function MergePdfs() {
       let currentFiles = [...files];
       let currentSize = totalSize;
 
-      for (const file of acceptedFiles) {
-        if (currentFiles.length >= MAX_FILES) {
+      const newFiles = acceptedFiles.filter(file => {
+        if (currentFiles.length + 1 > MAX_FILES) {
           toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
-          break;
+          return false;
         }
         if (file.size > MAX_FILE_SIZE_BYTES) {
           toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
-          continue;
+          return false;
         }
         if (currentSize + file.size > MAX_TOTAL_SIZE_BYTES) {
           toast({ variant: "destructive", title: "Total size limit exceeded", description: `Adding "${file.name}" would exceed the ${MAX_TOTAL_SIZE_MB}MB total size limit.` });
-          continue;
+          return false;
         }
         if (!file.type.includes('pdf')) {
           toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.` });
-          continue;
+          return false;
         }
+        return true;
+      });
 
-        currentFiles.push({ id: `${file.name}-${Date.now()}`, file });
-        currentSize += file.size;
-      }
+      const filesToAdd = newFiles.map(file => ({ id: `${file.name}-${Date.now()}`, file }));
       
-      setFiles(currentFiles);
-      setTotalSize(currentSize);
+      setFiles(prev => [...prev, ...filesToAdd]);
+      setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
 
       if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file type", description: "Some files were not PDFs and were ignored." });
+        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
       }
     },
-    [files, totalSize, toast]
+    [files.length, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -105,6 +106,11 @@ export function MergePdfs() {
       setTotalSize(prev => prev - fileToRemove.file.size);
       setFiles(prev => prev.filter(f => f.id !== fileId));
     }
+  };
+  
+  const handleClearAll = () => {
+    setFiles([]);
+    setTotalSize(0);
   };
 
   const handleCancel = () => {
@@ -153,6 +159,7 @@ export function MergePdfs() {
     setMergeProgress(0);
     setProgressStatus("Preparing files...");
     isCancelled.current = false;
+    setMergedPdfUrl(null);
 
     try {
       const mergedPdf = await PDFDocument.create();
@@ -179,7 +186,6 @@ export function MergePdfs() {
                 title: 'Skipped File',
                 description: `Could not process "${pdfFile.file.name}". It might be corrupted or encrypted.`,
             });
-            continue; // Skip to the next file
         } finally {
             filesProcessed++;
         }
@@ -190,7 +196,7 @@ export function MergePdfs() {
       }
       
       if (mergedPdf.getPageCount() === 0) {
-        toast({ variant: 'destructive', title: 'Merge Failed', description: "All source PDFs might be corrupted or encrypted." });
+        toast({ variant: 'destructive', title: 'Merge Failed', description: "No valid pages were found. All source PDFs might be corrupted or encrypted." });
         throw new Error("Merge failed. All source PDFs might be corrupted or encrypted.");
       }
 
@@ -205,7 +211,7 @@ export function MergePdfs() {
       toast({
         title: "Merge Successful!",
         description: "Your PDF is ready to be downloaded.",
-        action: <div className="p-1 rounded-full bg-green-500"><PackageCheck className="w-5 h-5 text-white" /></div>
+        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       if (error.message !== 'Cancelled') {
@@ -269,7 +275,7 @@ export function MergePdfs() {
         <Card>
             <CardHeader>
                 <CardTitle>Upload PDF Files</CardTitle>
-                <p className="text-sm text-muted-foreground">Drag and drop your PDF files here or click to browse</p>
+                <CardDescription>Drag and drop your PDF files here or click to browse</CardDescription>
             </CardHeader>
             <CardContent>
                 <div
@@ -296,59 +302,76 @@ export function MergePdfs() {
                  <p className="text-xs text-muted-foreground text-center mt-2">
                     Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files
                 </p>
-
-                {files.length > 0 && (
-                <div className="mt-6">
-                    <div 
-                    className="space-y-2 pr-2 overflow-y-auto"
-                    style={{ maxHeight: files.length > 0 ? '17rem' : '0' }}
-                    onDragOver={handleDragOver}
-                    >
-                    {files.map((pdfFile, index) => {
-                        const isDragging = dragItem.current === index;
-                        const isDragOver = dragOverItem.current === index;
-
-                        return (
-                        <div
-                            key={pdfFile.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, index)}
-                            onDragEnter={(e) => handleDragEnter(e, index)}
-                            onDragEnd={handleDragEnd}
-                            className={cn(
-                            'relative group flex items-center justify-between p-3 rounded-lg border bg-muted/20 cursor-grab transition-shadow duration-300',
-                            isDragging && 'shadow-lg scale-105 opacity-80 z-10',
-                            isDragOver && 'ring-2 ring-primary'
-                            )}
-                        >
-                            <div className="flex items-center gap-3 overflow-hidden">
-                            <GripVertical className="w-5 h-5 text-muted-foreground/70 flex-shrink-0 transition-opacity group-hover:opacity-100 md:opacity-0" />
-                            <FileIcon className="w-6 h-6 text-primary flex-shrink-0" />
-                            <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                                {pdfFile.file.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                {formatBytes(pdfFile.file.size)}
-                                </span>
-                            </div>
-                            </div>
-                            <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground/70 hover:bg-red-100 hover:text-destructive flex-shrink-0" 
-                            onClick={() => removeFile(pdfFile.id)}
-                            >
-                            <X className="w-4 h-4" />
-                            </Button>
-                        </div>
-                        );
-                    })}
-                    </div>
-                </div>
-                )}
             </CardContent>
         </Card>
+
+        {files.length > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Uploaded Files ({files.length})</CardTitle>
+                <CardDescription>Drag to reorder merge sequence</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground">
+                <X className="w-4 h-4 mr-2" />
+                Clear All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div 
+                className="space-y-2 pr-2 overflow-y-auto max-h-[24rem]"
+                onDragOver={handleDragOver}
+              >
+                {files.map((pdfFile, index) => {
+                  const isDragging = dragItem.current === index;
+                  const isDragOver = dragOverItem.current === index;
+
+                  return (
+                    <div
+                      key={pdfFile.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragEnter={(e) => handleDragEnter(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-200',
+                        isDragging ? 'shadow-lg scale-105 opacity-80 z-10' : 'shadow-sm',
+                        isDragOver && 'ring-2 ring-primary'
+                      )}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <FileIcon className="w-8 h-8 text-destructive flex-shrink-0" />
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                            {pdfFile.file.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatBytes(pdfFile.file.size)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                          Ready
+                        </Badge>
+                        <GripVertical className="w-5 h-5 text-muted-foreground/70 cursor-grab" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
+                          onClick={() => removeFile(pdfFile.id)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
             <CardHeader>
@@ -362,12 +385,13 @@ export function MergePdfs() {
                         value={outputFilename} 
                         onChange={(e) => setOutputFilename(e.target.value)}
                         className="mt-1"
+                        placeholder="e.g., merged_document.pdf"
                     />
                 </div>
                 
                 <div>
                     <h3 className="text-sm font-medium text-foreground mb-2">Summary</h3>
-                    <div className="space-y-1 text-sm rounded-md border p-3 bg-muted/20">
+                    <div className="space-y-2 text-sm rounded-md border p-4 bg-muted/20">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Files:</span>
                             <span className="font-medium">{files.length}/{MAX_FILES}</span>
@@ -378,7 +402,7 @@ export function MergePdfs() {
                         </div>
                          <div className="flex justify-between">
                             <span className="text-muted-foreground">Est. Output:</span>
-                            <span className="font-medium">{formatBytes(estOutput)}</span>
+                            <span className="font-medium">{files.length > 0 ? formatBytes(totalSize) : '0 Bytes'}</span>
                         </div>
                     </div>
                 </div>
@@ -418,3 +442,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
