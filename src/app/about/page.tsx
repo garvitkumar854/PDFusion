@@ -133,6 +133,42 @@ export default function AboutPage() {
             </div>
         </div>
       </section>
+
+      <section className="pb-20 md:pb-32">
+        <div className="container mx-auto px-4 text-center">
+          <AnimateOnScroll
+              animation="animate-in fade-in-0 slide-in-from-bottom-12"
+              className="duration-700"
+          >
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                <Sparkles className="w-4 h-4" />
+                From the Creator
+              </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-12">
+                A Note from the <span className="text-primary">Creator</span>
+              </h2>
+          </AnimateOnScroll>
+
+          <AnimateOnScroll
+              animation="animate-in fade-in-0 slide-in-from-bottom-12"
+              className="duration-700 delay-150"
+          >
+            <Card className="max-w-2xl mx-auto bg-card/50 dark:bg-card/20 p-8 border border-primary/20 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
+              <Avatar className="w-24 h-24 border-4 border-primary/50">
+                <AvatarImage src="https://placehold.co/150x150.png" alt="Garvit Kumar" data-ai-hint="male portrait" />
+                <AvatarFallback>GK</AvatarFallback>
+              </Avatar>
+              <div className="text-center sm:text-left">
+                <h3 className="text-2xl font-bold text-foreground">Garvit Kumar</h3>
+                <p className="text-primary font-semibold mb-2">Creator & Developer</p>
+                <p className="text-muted-foreground">
+                  "I built PDFusion with a simple goal: to create a beautiful, fast, and private tool that solves a common problem. I hope you find it as useful as I do. Thank you for your support!"
+                </p>
+              </div>
+            </Card>
+          </AnimateOnScroll>
+        </div>
+      </section>
     </>
   );
 }
