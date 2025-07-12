@@ -177,7 +177,7 @@ export default function AboutPage() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-700"
           >
-            <Card className="bg-card/90 dark:bg-[hsl(223,73%,11%)] text-center p-8 sm:p-12 rounded-2xl shadow-xl border border-primary/20">
+            <Card className="bg-white dark:bg-[hsl(223,73%,11%)] text-center p-8 sm:p-12 rounded-2xl shadow-xl border border-primary/20">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
                 Ready to <span className="text-primary">Try It Out?</span>
               </h2>
