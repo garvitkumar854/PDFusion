@@ -118,7 +118,7 @@ export default function Home() {
                   className="duration-700"
                   style={{ animationDelay: `${index * 150}ms` }}
               >
-                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:border-[0.1px] hover:border-primary">
+                <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 hover:shadow-[0_0_0_0.1px_hsl(var(--primary))]">
                   <CardContent className="p-6">
                     <div className="flex flex-col items-start gap-4">
                       <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -162,7 +162,7 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 150}
                     >
-                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:border-[0.1px] hover:border-primary">
+                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 p-6 rounded-xl hover:shadow-[0_0_0_0.1px_hsl(var(--primary))]">
                         <CardContent className="p-0">
                           <div className="flex flex-col items-start gap-4">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
