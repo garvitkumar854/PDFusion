@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
@@ -103,6 +104,7 @@ export default function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="top" className="h-auto p-0">
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <div className="p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-6">
                             <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
