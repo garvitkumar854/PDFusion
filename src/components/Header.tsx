@@ -28,7 +28,7 @@ const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: s
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-sm font-semibold transition-colors",
+            "group relative py-2 font-semibold transition-colors",
             isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
         )}
         >
