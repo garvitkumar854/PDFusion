@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
@@ -363,8 +362,7 @@ export function MergePdfs() {
                     <Button
                       variant="destructive"
                       size="lg"
-                      className="w-full sm:w-auto text-base font-bold text-white"
-                      style={{ backgroundColor: "#ff3d3d" }}
+                      className="w-full sm:w-auto text-base font-bold"
                       onClick={handleCancel}
                     >
                       <X className="mr-2 h-4 w-4" />
@@ -391,5 +389,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
