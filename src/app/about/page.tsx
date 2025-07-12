@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight } from "lucide-react";
-import Image from "next/image";
 import Link from 'next/link';
 
 const whyChooseUsFeatures = [
@@ -183,7 +182,7 @@ export default function AboutPage() {
                   <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
                     Ready to <span className="text-primary">Try It Out?</span>
                   </h2>
-                  <p className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
+                  <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
                     Experience the simplicity of PDFusion for yourself.
                   </p>
                 </div>
