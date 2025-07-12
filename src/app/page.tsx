@@ -1,4 +1,4 @@
-import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone, ArrowUpRight, Compass, Scissors, FileCheck2, BarChart3, Settings, LifeBuoy } from 'lucide-react';
+import { ArrowRight, FilePlus2, Wand2, Download, Zap, ShieldCheck, FileText, Lock, Globe, Smartphone, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -289,7 +289,6 @@ export default function Home() {
           </AnimateOnScroll>
         </div>
       </section>
-
     </>
   );
 }
