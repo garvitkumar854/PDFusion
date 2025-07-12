@@ -182,7 +182,7 @@ export default function AboutPage() {
                 Ready to <span className="text-primary">Try It Out?</span>
               </h2>
               <p className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
-                Experience the simplicity of PDF Merger for yourself.
+                Experience the simplicity of PDFusion for yourself.
               </p>
               <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group">
                 <Link href="/merger">
