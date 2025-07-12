@@ -3,7 +3,6 @@
 
 import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
-import { PDFDocument } from "pdf-lib";
 import {
   UploadCloud,
   File as FileIcon,
@@ -19,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { mergePdfs, type MergePdfsInput } from "@/ai/flows/merge-pdfs-flow";
+
 
 const MAX_FILES = 20;
 const MAX_FILE_SIZE_MB = 100;
@@ -30,6 +31,23 @@ export type PDFFile = {
   id: string;
   file: File;
 };
+
+// Helper to convert a File to a Base64 Data URI
+const fileToDataUri = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as Data URI.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 
 export function MergePdfs() {
   const [files, setFiles] = useState<PDFFile[]>([]);
@@ -97,6 +115,8 @@ export function MergePdfs() {
 
   const handleCancel = () => {
     isCancelled.current = true;
+    setIsMerging(false); // Immediately stop the UI merging state
+    toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -126,47 +146,6 @@ export function MergePdfs() {
       dragOverItem.current = index;
     }
   };
-
-  const processFileChunk = (
-    mergedPdf: PDFDocument,
-    fileIndex: number,
-    onProgress: (progress: number) => void
-  ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (isCancelled.current) {
-        return reject(new Error("Cancelled"));
-      }
-
-      const pdfFile = files[fileIndex];
-      const reader = new FileReader();
-
-      reader.onload = async (event) => {
-        try {
-          if (isCancelled.current) {
-            return reject(new Error("Cancelled"));
-          }
-          const sourcePdfBytes = event.target?.result as ArrayBuffer;
-          const sourcePdf = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
-          
-          const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
-          copiedPages.forEach((page) => mergedPdf.addPage(page));
-          
-          const progress = ((fileIndex + 1) / files.length) * 100;
-          onProgress(progress);
-          
-          setTimeout(() => resolve(), 0); 
-        } catch (err) {
-          reject(err);
-        }
-      };
-
-      reader.onerror = () => {
-        reject(new Error(`Failed to read file: ${pdfFile.file.name}`));
-      };
-      
-      reader.readAsArrayBuffer(pdfFile.file);
-    });
-  };
   
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -179,38 +158,43 @@ export function MergePdfs() {
     }
     setIsMerging(true);
     setMergeProgress(0);
+    setProgressStatus("Preparing files...");
     isCancelled.current = false;
     
-    const statusMessages = [
-        "Reading files...",
-        "Analyzing page structures...",
-        "Stitching documents...",
-        "Optimizing layout...",
-        "Compiling assets...",
-    ];
-
     try {
-      setProgressStatus("Preparing...");
-      const mergedPdf = await PDFDocument.create();
+      // 1. Convert files to data URIs
+      const fileDataPromises = files.map(pdfFile =>
+        fileToDataUri(pdfFile.file).then(dataUri => ({
+          name: pdfFile.file.name,
+          dataUri,
+        }))
+      );
       
-      for (let i = 0; i < files.length; i++) {
-        if (isCancelled.current) {
-          throw new Error("Cancelled");
-        }
-        const messageIndex = i % statusMessages.length;
-        setProgressStatus(statusMessages[messageIndex]);
-        await processFileChunk(mergedPdf, i, setMergeProgress);
-      }
+      setMergeProgress(25);
+      setProgressStatus("Uploading files...");
 
-      if (isCancelled.current) {
-        toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
-        setIsMerging(false);
-        return;
-      }
+      if (isCancelled.current) throw new Error("Cancelled");
+      
+      const fileData = await Promise.all(fileDataPromises);
+      
+      if (isCancelled.current) throw new Error("Cancelled");
 
-      setProgressStatus("Finalizing PDF...");
-      const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
+      setMergeProgress(50);
+      setProgressStatus("Merging on server...");
+
+      // 2. Call the server-side flow
+      const input: MergePdfsInput = { files: fileData };
+      const result = await mergePdfs(input);
+
+      if (isCancelled.current) throw new Error("Cancelled");
+
+      // 3. Process the result
+      setMergeProgress(90);
+      setProgressStatus("Finalizing...");
+      
+      // Convert base64 back to a blob for download URL
+      const fetchRes = await fetch(result.mergedPdfDataUri);
+      const blob = await fetchRes.blob();
       const url = URL.createObjectURL(blob);
       setMergedPdfUrl(url);
       
@@ -221,18 +205,12 @@ export function MergePdfs() {
       });
 
     } catch (error: any) {
-      if (error.message === 'Cancelled') {
-        toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
-      } else {
+      if (error.message !== 'Cancelled') {
         console.error("Merge failed:", error);
-        let errorMessage = "An error occurred while merging the PDFs.";
-        if (error instanceof Error) {
-          errorMessage = `An error occurred: ${error.message}. One of your PDFs might be encrypted or corrupted.`;
-        }
         toast({
           variant: "destructive",
           title: "Merge Failed",
-          description: errorMessage,
+          description: error.message || "An unexpected error occurred on the server.",
         });
       }
     } finally {
