@@ -121,7 +121,8 @@ export function MergePdfs() {
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    e.dataTransfer.effectAllowed = 'move';
+    // We need to re-render to apply the is-dragging style
+    setFiles(prev => [...prev]);
   };
   
   const handleDragEnd = () => {
@@ -133,6 +134,8 @@ export function MergePdfs() {
     }
     dragItem.current = null;
     dragOverItem.current = null;
+    // We need to re-render to remove dragging styles
+    setFiles(prev => [...prev]);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -142,6 +145,8 @@ export function MergePdfs() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     if (dragItem.current !== null) {
       dragOverItem.current = index;
+       // We need to re-render to apply the is-drag-over style
+      setFiles(prev => [...prev]);
     }
   };
   
@@ -341,7 +346,7 @@ export function MergePdfs() {
                       className={cn(
                         'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-200',
                         isDragging ? 'shadow-lg scale-105 opacity-80 z-10' : 'shadow-sm',
-                        isDragOver && 'ring-2 ring-primary'
+                        isDragOver && !isDragging && 'ring-2 ring-primary'
                       )}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
