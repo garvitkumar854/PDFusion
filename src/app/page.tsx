@@ -8,19 +8,19 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 export default function Home() {
   const features = [
     {
-      icon: <FilePlus2 className="w-6 h-6 text-blue-600" />,
+      icon: <FilePlus2 className="w-6 h-6 text-blue-600 transition-transform group-hover:scale-110" />,
       title: 'Upload PDFs',
       description: 'Drag and drop multiple PDF files',
       bgColor: 'bg-blue-100',
     },
     {
-      icon: <Wand2 className="w-6 h-6 text-purple-600" />,
+      icon: <Wand2 className="w-6 h-6 text-purple-600 transition-transform group-hover:scale-110" />,
       title: 'Merge & Edit',
       description: 'Combine, reorder, and edit pages',
       bgColor: 'bg-purple-100',
     },
     {
-      icon: <Download className="w-6 h-6 text-green-600" />,
+      icon: <Download className="w-6 h-6 text-green-600 transition-transform group-hover:scale-110" />,
       title: 'Download',
       description: 'Get your merged PDF instantly',
       bgColor: 'bg-green-100',
@@ -29,19 +29,19 @@ export default function Home() {
 
   const advancedFeatures = [
     {
-      icon: <Lock className="w-6 h-6 text-red-500" />,
+      icon: <Lock className="w-6 h-6 text-red-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-red-100',
       title: 'Privacy First',
       description: 'Your documents never leave your device. Complete privacy and security guaranteed.',
     },
     {
-      icon: <Globe className="w-6 h-6 text-purple-500" />,
+      icon: <Globe className="w-6 h-6 text-purple-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-purple-100',
       title: 'Works Everywhere',
       description: 'Access from any device, anywhere. No downloads or installations required.',
     },
     {
-      icon: <Smartphone className="w-6 h-6 text-blue-500" />,
+      icon: <Smartphone className="w-6 h-6 text-blue-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-blue-100',
       title: 'Mobile Friendly',
       description: 'Optimized for touch devices. Perfect for on-the-go PDF management.',
@@ -50,21 +50,21 @@ export default function Home() {
 
   const futureFeatures = [
     {
-      icon: <Zap className="w-6 h-6 text-yellow-500" />,
+      icon: <Zap className="w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-yellow-100',
       title: 'Lightning Fast',
       description: 'Merge your PDFs in seconds with our optimized processing engine',
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-6 h-6 text-green-500" />,
+      icon: <ShieldCheck className="w-6 h-6 text-green-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-green-100',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
     },
     {
-      icon: <FileText className="w-6 h-6 text-blue-500" />,
+      icon: <FileText className="w-6 h-6 text-blue-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-blue-100',
       title: 'Advanced Features',
       description: 'Powerful tools to handle your PDF needs',
@@ -73,10 +73,10 @@ export default function Home() {
   ];
 
     const managementFeatures = [
-    { icon: <Compass className="w-8 h-8 text-primary" />, title: 'Navigate & View' },
-    { icon: <Scissors className="w-8 h-8 text-primary" />, title: 'Split & Extract' },
-    { icon: <FileCheck2 className="w-8 h-8 text-primary" />, title: 'Organize Pages' },
-    { icon: <BarChart3 className="w-8 h-8 text-primary" />, title: 'Compress PDF' },
+    { icon: <Compass className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />, title: 'Navigate & View' },
+    { icon: <Scissors className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />, title: 'Split & Extract' },
+    { icon: <FileCheck2 className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />, title: 'Organize Pages' },
+    { icon: <BarChart3 className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />, title: 'Compress PDF' },
   ];
 
   const moreFeatures = [
@@ -183,7 +183,7 @@ export default function Home() {
                   More Than Just Merging
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                  Everything You Need for <span className="text-primary">PDF Management</span>
+                  Everything You Need for <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDF Management</span>
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
                   Our comprehensive toolset goes beyond simple merging to provide a complete PDF solution.
@@ -243,21 +243,22 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 150}
                     >
-                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary">
-                        <CardContent className="p-0">
-                          <div className="flex flex-col items-start gap-4">
+                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col">
+                        <CardContent className="p-0 flex-grow">
+                          <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
                               {feature.icon}
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex-grow">
                               <h3 className="text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
-                            <ul className="space-y-3 mt-2">
-                              {futureFeatures.map(point => (
-                                <li key={point.title} className="flex items-center gap-3">
+                            <ul className="space-y-3 mt-4">
+                              {feature.points.map((point, pointIndex) => (
+                                <li key={pointIndex} className="flex items-center gap-3">
                                   <CheckIcon className="w-5 h-5 text-primary" />
-                                  <span className="text-muted-foreground">{point.title}</span></li>
+                                  <span className="text-muted-foreground">{point}</span>
+                                </li>
                               ))}
                             </ul>
                           </div>
@@ -278,7 +279,7 @@ export default function Home() {
           >
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-                Complete <span className="text-primary">PDF Management</span>
+                Complete <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDF Management</span>
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
                 One tool to handle all your PDF needs. Merge, split, compress, and more.
@@ -294,7 +295,7 @@ export default function Home() {
                 className="duration-700"
                 delay={index * 100}
               >
-                <div className="text-center p-4">
+                <div className="group text-center p-4">
                   <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mx-auto mb-4">
                     {feature.icon}
                   </div>
@@ -315,10 +316,10 @@ export default function Home() {
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground">
-                      {index === 0 && <Settings className="w-6 h-6" />}
-                      {index === 1 && <ShieldCheck className="w-6 h-6" />}
-                      {index === 2 && <Zap className="w-6 h-6" />}
-                      {index === 3 && <LifeBuoy className="w-6 h-6" />}
+                      {index === 0 && <Settings className="w-6 h-6 transition-transform group-hover:scale-110" />}
+                      {index === 1 && <ShieldCheck className="w-6 h-6 transition-transform group-hover:scale-110" />}
+                      {index === 2 && <Zap className="w-6 h-6 transition-transform group-hover:scale-110" />}
+                      {index === 3 && <LifeBuoy className="w-6 h-6 transition-transform group-hover:scale-110" />}
                     </div>
                   </div>
                   <div>
@@ -346,7 +347,7 @@ export default function Home() {
                     Ready to get started?
                   </div>
                   <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-                    Ready to merge your <span className="text-primary">PDFs?</span>
+                    Ready to merge your <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDFs?</span>
                   </h2>
                   <p className="max-w-xl text-muted-foreground text-base">
                     Start combining your PDF files now with our easy-to-use tool. No registration required, completely free, and secure.
