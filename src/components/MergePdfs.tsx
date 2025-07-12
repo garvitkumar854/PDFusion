@@ -62,6 +62,7 @@ export function MergePdfs() {
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
+      
       if (files.length + acceptedFiles.length > MAX_FILES) {
         toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
         return;
@@ -298,13 +299,13 @@ export function MergePdfs() {
                     )}
                 >
                     <input {...getInputProps()} />
-                    <div className="flex flex-col items-center text-center gap-4">
-                        <UploadCloud className="w-12 h-12 text-muted-foreground" />
+                    <div className="flex flex-col items-center text-center gap-1">
+                        <UploadCloud className="w-12 h-12 text-muted-foreground mb-2" />
                         <p className="text-lg font-semibold text-foreground">
                             Drop PDF files here
                         </p>
                         <p className="text-sm text-muted-foreground">or click to browse</p>
-                        <Button type="button" onClick={open} className="mt-2">
+                        <Button type="button" onClick={open} className="mt-4">
                             <FolderOpen className="mr-2 h-4 w-4" />
                             Choose Files
                         </Button>
@@ -418,26 +419,25 @@ export function MergePdfs() {
                 <div className="space-y-4">
                     {isMerging ? (
                         <>
-                            <Button
-                                variant="destructive"
-                                size="lg"
-                                className="w-full text-base font-bold"
-                                onClick={handleCancel}
-                                >
-                                <X className="mr-2 h-4 w-4" />
-                                Cancel Merge
-                            </Button>
-
-                            <div className="p-4 rounded-lg border bg-primary/10">
+                             <div className="p-4 rounded-lg border bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary">Combining documents...</p>
+                                        <p className="text-sm font-medium text-primary">{progressStatus}</p>
                                     </div>
                                     <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                                 </div>
                                 <Progress value={mergeProgress} className="h-2" />
-                                <p className="text-xs text-muted-foreground text-center mt-2">{progressStatus}</p>
+                                <div className="flex justify-end mt-4">
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={handleCancel}
+                                        >
+                                        <X className="mr-2 h-4 w-4" />
+                                        Cancel
+                                    </Button>
+                                </div>
                             </div>
                         </>
                     ) : (
