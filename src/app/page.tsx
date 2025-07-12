@@ -65,7 +65,7 @@ export default function Home() {
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground mb-4">
               Merge PDFs with{' '}
               <span className="relative inline-block">
-                <span className="relative text-primary">Ease</span>
+                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Ease</span>
                 <svg
                   className="absolute -bottom-2 left-0 w-full"
                   viewBox="0 0 100 12"
