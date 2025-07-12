@@ -338,19 +338,17 @@ export function MergePdfs() {
                     )}
                 >
                     <input {...getInputProps()} />
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex flex-col items-center text-center gap-1">
-                            <UploadCloud className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-2" />
-                            <p className="text-base sm:text-lg font-semibold text-foreground">
-                                Drop PDF files here
-                            </p>
-                            <p className="text-xs sm:text-sm text-muted-foreground">or click the button below</p>
-                        </div>
-                        <Button type="button" onClick={open} className="mt-4">
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Choose Files
-                        </Button>
+                    <div className="flex flex-col items-center text-center gap-1">
+                        <UploadCloud className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-2" />
+                        <p className="text-base sm:text-lg font-semibold text-foreground">
+                            Drop PDF files here
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">or click the button below</p>
                     </div>
+                    <Button type="button" onClick={open} className="mt-4">
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Choose Files
+                    </Button>
                     <div className="text-xs text-muted-foreground text-center absolute bottom-4 w-full px-2">
                       <div className="flex flex-col items-center">
                         <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
