@@ -62,13 +62,13 @@ export function MergePdfs() {
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
+      if (files.length + acceptedFiles.length > MAX_FILES) {
+        toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
+        return;
+      }
+      
       let currentSize = totalSize;
-
       const newFiles = acceptedFiles.filter(file => {
-        if (files.length + newFiles.length > MAX_FILES) {
-          toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
-          return false;
-        }
         if (file.size > MAX_FILE_SIZE_BYTES) {
           toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
           return false;
@@ -94,7 +94,7 @@ export function MergePdfs() {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
       }
     },
-    [files.length, totalSize, toast]
+    [files, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -126,20 +126,17 @@ export function MergePdfs() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
-    // Use a timeout to allow the browser to render the drag image before we change styles
     setTimeout(() => {
         setIsDragging(true);
     }, 0);
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault(); // This is necessary to allow dropping
+    e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) {
       return;
     }
     dragOverItem.current = index;
-    
-    // Reorder the list for visual feedback
     const filesCopy = [...files];
     const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
     filesCopy.splice(index, 0, draggedItemContent);
@@ -321,7 +318,7 @@ export function MergePdfs() {
 
         {files.length > 0 && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 pr-4">
               <div>
                 <CardTitle>Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
@@ -336,8 +333,8 @@ export function MergePdfs() {
                 Clear All
               </Button>
             </CardHeader>
-            <CardContent onDragOver={handleDragOver}>
-                <div className="space-y-2 max-h-[24rem] overflow-y-auto">
+            <CardContent onDragOver={handleDragOver} className="p-4">
+              <div className="space-y-2 max-h-[24rem] overflow-y-auto pr-2">
                     {files.map((pdfFile, index) => (
                         <div
                         key={pdfFile.id}
@@ -348,7 +345,7 @@ export function MergePdfs() {
                         onDragOver={(e) => e.preventDefault()}
                         className={cn(
                             'group flex items-center justify-between p-3 rounded-lg border bg-card cursor-grab transition-all duration-300',
-                            isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                             isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
