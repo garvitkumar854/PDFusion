@@ -1,3 +1,4 @@
+
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send } from "lucide-react";
@@ -76,14 +77,14 @@ export default function ContactPage() {
                   delay={150 * (index + 1)}
                 >
                   <Link href={method.href}>
-                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left">
+                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left hover:shadow-lg">
                       <CardContent className="p-0 flex items-start gap-4">
                         <div className={`p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
                           {method.icon}
                         </div>
                         <div className="space-y-1 min-w-0">
                           <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
-                          <p className="text-sm text-muted-foreground break-all">{method.details}</p>
+                          <p className="text-sm text-muted-foreground truncate">{method.details}</p>
                         </div>
                       </CardContent>
                     </Card>
