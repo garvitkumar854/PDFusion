@@ -2,8 +2,9 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart } from "lucide-react";
+import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
+import Link from 'next/link';
 
 const whyChooseUsFeatures = [
     {
@@ -165,6 +166,30 @@ export default function AboutPage() {
                   "I built PDFusion with a simple goal: to create a beautiful, fast, and private tool that solves a common problem. I hope you find it as useful as I do. Thank you for your support!"
                 </p>
               </div>
+            </Card>
+          </AnimateOnScroll>
+        </div>
+      </section>
+
+      <section className="pb-20 md:pb-32">
+        <div className="container mx-auto px-4">
+          <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-700"
+          >
+            <Card className="bg-card/90 dark:bg-[hsl(223,73%,11%)] text-center p-8 sm:p-12 rounded-2xl shadow-xl border border-primary/20">
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+                Ready to <span className="text-primary">Try It Out?</span>
+              </h2>
+              <p className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
+                Experience the simplicity of PDF Merger for yourself.
+              </p>
+              <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group">
+                <Link href="/merger">
+                  Start Merging PDFs
+                  <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </Link>
+              </Button>
             </Card>
           </AnimateOnScroll>
         </div>
