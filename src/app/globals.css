@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 240 10% 97%; /* Light grey */
+    --background: 240 100% 99%; /* Very light, almost white-blue */
     --foreground: 240 5% 15%;
     --card: 0 0% 100%;
     --card-foreground: 240 5% 15%;
@@ -23,7 +23,7 @@
     --border: 240 6% 88%;
     --input: 240 6% 88%;
     --ring: 221 83% 53%;
-    --radius: 25px;
+    --radius: 1rem; /* Adjusted from 25px to be more consistent with theme */
   }
   .dark {
     --background: 240 5% 10%;
