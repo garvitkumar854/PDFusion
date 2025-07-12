@@ -59,7 +59,7 @@ export default function Home() {
             No file size limits, no watermarks, completely free.
           </p>
           <div className="flex justify-center items-center gap-4">
-            <Button asChild size="lg" className="font-bold">
+            <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all">
               <Link href="/merger">
                 Get Started <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
