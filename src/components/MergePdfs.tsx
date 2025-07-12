@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -28,6 +28,17 @@ const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
+const MERGE_STAGES = [
+    "Initializing merge engine...",
+    "Analyzing PDF structures...",
+    "Copying pages from documents...",
+    "Combining documents together...",
+    "Optimizing new file size...",
+    "Adding document metadata...",
+    "Finalizing merged document...",
+    "Almost there..."
+];
+
 export type PDFFile = {
   id: string;
   file: File;
@@ -48,7 +59,7 @@ export function MergePdfs() {
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
-  const [progressStatus, setProgressStatus] = useState("Combining documents...");
+  const [progressStatus, setProgressStatus] = useState(MERGE_STAGES[0]);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
@@ -166,22 +177,31 @@ export function MergePdfs() {
 
     setIsMerging(true);
     setMergeProgress(0);
-    setProgressStatus("Combining documents...");
+    setProgressStatus(MERGE_STAGES[0]);
     isCancelled.current = false;
     setMergedPdfUrl(null);
 
     try {
       const mergedPdf = await PDFDocument.create();
       let filesProcessed = 0;
+      let stageIndex = 0;
+
+      const progressInterval = setInterval(() => {
+        if (isCancelled.current) {
+            clearInterval(progressInterval);
+            return;
+        }
+        stageIndex = (stageIndex + 1) % (MERGE_STAGES.length -1);
+        setProgressStatus(MERGE_STAGES[stageIndex]);
+      }, 1500 + Math.random() * 500);
 
       for (const pdfFile of files) {
         if (isCancelled.current) {
             throw new Error("Cancelled");
         }
 
-        const progress = (filesProcessed / files.length) * 100;
-        setMergeProgress(progress);
-        setProgressStatus(`Processing file ${filesProcessed + 1} of ${files.length}`);
+        const progressIncrement = (1 / files.length) * 100;
+        setMergeProgress(prev => Math.min(prev + progressIncrement, 95));
 
         try {
             const fileBytes = await pdfFile.file.arrayBuffer();
@@ -199,6 +219,8 @@ export function MergePdfs() {
             filesProcessed++;
         }
       }
+
+      clearInterval(progressInterval);
       
       if (isCancelled.current) {
         throw new Error("Cancelled");
@@ -405,7 +427,7 @@ export function MergePdfs() {
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary">{progressStatus}</p>
+                                        <p className="text-sm font-medium text-primary transition-all duration-300">{progressStatus}</p>
                                     </div>
                                     <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                                 </div>
