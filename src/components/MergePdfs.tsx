@@ -259,7 +259,7 @@ export function MergePdfs() {
 
   if (mergedPdfUrl) {
     return (
-        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-card p-6 sm:p-8 rounded-xl shadow-sm border">
+        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white p-6 sm:p-8 rounded-xl shadow-lg border">
             <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
@@ -278,7 +278,7 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        <Card>
+        <Card className="bg-white shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload & Merge</CardTitle>
                 <CardDescription>
@@ -317,7 +317,7 @@ export function MergePdfs() {
         </Card>
 
         {files.length > 0 && (
-          <Card>
+          <Card className="bg-white shadow-lg">
             <CardHeader className="flex flex-row items-start sm:items-center justify-between pb-2 pr-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
@@ -382,7 +382,7 @@ export function MergePdfs() {
           </Card>
         )}
 
-        <Card>
+        <Card className="bg-white shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Merge Settings</CardTitle>
             </CardHeader>
