@@ -290,7 +290,7 @@ export function MergePdfs() {
                 <div
                     {...getRootProps()}
                     className={cn(
-                    "relative flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-card",
+                    "relative flex flex-col items-center justify-center p-10 pt-12 pb-16 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-card",
                     "hover:border-primary/50",
                     isDragActive && "border-primary bg-primary/10"
                     )}
@@ -307,7 +307,7 @@ export function MergePdfs() {
                             Choose Files
                         </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground text-center mt-4 absolute bottom-4 w-full px-2">
+                    <div className="text-xs text-muted-foreground text-center absolute bottom-4 w-full px-2">
                       <div className="flex flex-col items-center">
                         <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
                         <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
@@ -335,7 +335,7 @@ export function MergePdfs() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-4">
-              <div className="space-y-2 max-h-[24rem] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[24rem] overflow-y-auto pr-2">
                     {files.map((pdfFile, index) => (
                         <div
                         key={pdfFile.id}
