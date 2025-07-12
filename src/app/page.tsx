@@ -83,7 +83,7 @@ export default function Home() {
                 </svg>
               </span>
             </h1>
-            <p className="max-w-2xl mx-auto text-muted-foreground md:text-lg mb-8">
+            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
               Combine multiple PDF files into one document quickly and securely.
               <br />
               No file size limits, no watermarks, completely free.
@@ -93,13 +93,13 @@ export default function Home() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-700 delay-300"
           >
-            <div className="flex justify-center items-center gap-4">
-              <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+              <Button asChild size="lg" className="font-bold rounded-[30px] hover:scale-105 hover:shadow-lg transition-all w-full sm:w-auto">
                 <Link href="/merger">
                   Get Started <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary">
+              <Button asChild size="lg" variant="outline" className="font-bold text-foreground bg-transparent hover:bg-[#E9EFFD] rounded-[30px] hover:scale-105 hover:shadow-md transition-all hover:text-primary w-full sm:w-auto">
                 <Link href="#">Learn more</Link>
               </Button>
             </div>
@@ -149,7 +149,7 @@ export default function Home() {
                 <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                   Experience the <span className="text-primary">Future of PDF Merging</span>
                 </h2>
-                <p className="max-w-3xl mx-auto text-muted-foreground md:text-lg mb-12">
+                <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
                   Discover the most intuitive and powerful PDF merging tool available online. Built with cutting-edge technology for the best user experience.
                 </p>
 

@@ -100,8 +100,8 @@ export default function Header() {
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                    <div className="p-4 flex flex-col h-full">
+                <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0">
+                    <div className="p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-8">
                             <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
                                 <div className="bg-primary p-2 rounded-md">
@@ -114,7 +114,7 @@ export default function Header() {
                                 <span className="sr-only">Close menu</span>
                             </Button>
                         </div>
-                        <nav className="flex flex-col gap-6 items-start">
+                        <nav className="flex flex-col gap-6 items-start px-2">
                              {navLinks.map((link) => (
                                 <MobileNavLink 
                                   key={link.href + link.label} 
@@ -126,8 +126,8 @@ export default function Header() {
                             ))}
                         </nav>
                         <div className="mt-auto pt-6 border-t flex flex-col gap-4">
-                            <Button variant="ghost" size="lg" className="w-full justify-start text-lg">Sign In</Button>
-                            <Button size="lg" className="w-full justify-start text-lg">Sign Up</Button>
+                            <Button variant="ghost" size="lg" className="w-full justify-center text-lg">Sign In</Button>
+                            <Button size="lg" className="w-full justify-center text-lg">Sign Up</Button>
                         </div>
                     </div>
                 </SheetContent>
