@@ -1,7 +1,11 @@
 import AnimateOnScroll from "@/components/AnimateOnScroll";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Mail, MessageSquare, Phone, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send } from "lucide-react";
 import Link from 'next/link';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const contactMethods = [
   {
@@ -41,50 +45,106 @@ const contactMethods = [
 export default function ContactPage() {
   return (
     <section className="py-20 md:py-32">
-      <div className="container mx-auto px-4 text-center">
-        <AnimateOnScroll
-          animation="animate-in fade-in-0 slide-in-from-bottom-12"
-          className="duration-500"
-        >
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-            <Sparkles className="w-4 h-4" />
-            Get In Touch
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
-            Contact{' '}
-            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-              Us
-            </span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-            Have a question or need help? We're here to assist you with any inquiries about our PDF merger tool.
-          </p>
-        </AnimateOnScroll>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16 text-center">
-          {contactMethods.map((method, index) => (
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="text-center lg:text-left">
             <AnimateOnScroll
-              key={index}
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-700"
-              delay={150 * (index + 1)}
+              className="duration-500"
             >
-              <Link href={method.href}>
-                <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-6 border border-border/20 rounded-2xl flex flex-col items-center justify-center text-center">
-                  <CardContent className="p-0 flex flex-col items-center gap-4">
-                    <div className={`p-4 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
-                      {method.icon}
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
-                      <p className="text-sm text-muted-foreground">{method.description}</p>
-                      <p className="text-base font-semibold text-foreground pt-2">{method.details}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                <Sparkles className="w-4 h-4" />
+                Get In Touch
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+                Contact{' '}
+                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                  Us
+                </span>
+              </h1>
+              <p className="max-w-2xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg">
+                Have a question or need help? We're here to assist you with any inquiries about our PDF merger tool.
+              </p>
             </AnimateOnScroll>
-          ))}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-12 text-left">
+              {contactMethods.map((method, index) => (
+                <AnimateOnScroll
+                  key={index}
+                  animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                  className="duration-700"
+                  delay={150 * (index + 1)}
+                >
+                  <Link href={method.href}>
+                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left">
+                      <CardContent className="p-0 flex items-start gap-4">
+                        <div className={`p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
+                          {method.icon}
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
+                          <p className="text-sm text-muted-foreground">{method.details}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </AnimateOnScroll>
+              ))}
+            </div>
+          </div>
+          
+          <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-700"
+            delay={300}
+          >
+            <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card/20">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">Send a Message</CardTitle>
+                <CardDescription>We'll get back to you as soon as possible.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label htmlFor="first-name" className="font-medium">First Name</label>
+                      <Input id="first-name" placeholder="John" />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="last-name" className="font-medium">Last Name</label>
+                      <Input id="last-name" placeholder="Doe" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="font-medium">Email</label>
+                    <Input id="email" type="email" placeholder="john.doe@example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="help-topic" className="font-medium">How can we help?</label>
+                    <Select>
+                      <SelectTrigger id="help-topic">
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General Inquiry</SelectItem>
+                        <SelectItem value="support">Technical Support</SelectItem>
+                        <SelectItem value="feedback">Feedback & Suggestions</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="message" className="font-medium">Message</label>
+                    <Textarea id="message" placeholder="Type your message here..." rows={5} />
+                  </div>
+                  <Button type="submit" size="lg" className="w-full font-bold text-base">
+                    <Send className="mr-2 h-5 w-5" />
+                    Send Message
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </AnimateOnScroll>
         </div>
       </div>
     </section>
