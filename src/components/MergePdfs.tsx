@@ -44,7 +44,6 @@ export function MergePdfs() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const [dragging, setDragging] = useState(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -104,7 +103,6 @@ export function MergePdfs() {
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
-    setDragging(true);
     e.dataTransfer.effectAllowed = 'move';
   };
   
@@ -117,7 +115,6 @@ export function MergePdfs() {
     }
     dragItem.current = null;
     dragOverItem.current = null;
-    setDragging(false);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -239,7 +236,7 @@ export function MergePdfs() {
       {mergedPdfUrl ? (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500">
             <CheckCircle className="w-20 h-20 text-green-500 mb-6" />
-            <h2 className="text-2xl font-bold text-foreground mb-2">PDF merged successfully!</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold">
@@ -247,7 +244,7 @@ export function MergePdfs() {
                     Download PDF
                 </Button>
                 <Button size="lg" variant="outline" onClick={handleMergeMore} className="w-full sm:w-auto text-base">
-                    Merge more
+                    Merge More
                 </Button>
             </div>
         </div>
@@ -256,46 +253,44 @@ export function MergePdfs() {
           <div
             {...getRootProps()}
             className={cn(
-              "relative flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed transition-colors duration-300 cursor-pointer bg-muted/20",
-              "hover:border-primary/50 hover:bg-muted/40",
-              isDragActive && "border-primary bg-primary/10 shadow-inner"
+              "relative flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors duration-300 cursor-pointer bg-muted/40",
+              "hover:border-primary/50 hover:bg-muted/60",
+              isDragActive && "border-primary bg-primary/10"
             )}
           >
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 border-8 border-primary/5">
-                  <UploadCloud className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-xl font-semibold text-foreground mb-2">
-                Drop PDFs here or <span className="text-primary font-bold">browse your files</span>
+            <div className="flex flex-col items-center text-center gap-2">
+              <UploadCloud className="w-12 h-12 text-primary" />
+              <p className="text-lg font-semibold text-foreground">
+                Drop your PDFs here or <span className="text-primary font-bold">click to browse</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                {filesRemaining} files remaining - {sizeRemaining.toFixed(1)}MB available
+                {filesRemaining} files remaining &bull; {sizeRemaining.toFixed(1)}MB available
               </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs text-muted-foreground mt-6 py-4 px-2 rounded-lg bg-muted/30">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs text-muted-foreground mt-4 py-3 px-2 rounded-lg bg-muted/40">
             <div className="flex items-center justify-center gap-2">
               <FileIcon className="w-4 h-4 text-primary" />
               <span>Max {MAX_FILES} files</span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <HardDrive className="w-4 h-4 text-primary" />
-              <span>{MAX_FILE_SIZE_MB} MB per file</span>
+              <span>{MAX_FILE_SIZE_MB}MB per file</span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <Database className="w-4 h-4 text-primary" />
-              <span>{MAX_TOTAL_SIZE_MB} MB total</span>
+              <span>{MAX_TOTAL_SIZE_MB}MB total</span>
             </div>
           </div>
 
           {files.length > 0 && (
             <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">Uploaded Files ({files.length})</h2>
+                <h2 className="text-xl font-semibold mb-4 text-foreground">Uploaded Files ({files.length})</h2>
                 
                 <div 
-                  className="space-y-3 pr-2 overflow-y-auto"
+                  className="space-y-2 pr-2 overflow-y-auto"
                   style={{ maxHeight: files.length > 0 ? '17rem' : '0' }}
                   onDragOver={handleDragOver}
                 >
@@ -311,35 +306,31 @@ export function MergePdfs() {
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         className={cn(
-                          'relative flex items-center justify-between p-3 rounded-md border bg-muted/30 cursor-grab transition-all duration-300',
-                          isDragging && 'shadow-2xl scale-105 opacity-50 z-10',
-                          dragging && isDragOver && 'ring-2 ring-primary'
+                          'relative group flex items-center justify-between p-3 rounded-lg border bg-muted/40 cursor-grab transition-shadow duration-300',
+                          isDragging && 'shadow-lg scale-105 opacity-80 z-10',
+                          isDragOver && 'ring-2 ring-primary'
                         )}
                       >
-                        {dragging && isDragOver && dragItem.current !== index && (
-                           <div className="absolute top-0 left-0 w-full h-[2px] bg-primary -translate-y-1/2"></div>
-                        )}
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <GripVertical className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                          <FileIcon className="w-5 h-5 text-primary flex-shrink-0" />
-                          <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
-                            {pdfFile.file.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
-                            ({(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB)
-                          </span>
+                          <GripVertical className="w-5 h-5 text-muted-foreground/70 flex-shrink-0 transition-opacity group-hover:opacity-100 md:opacity-0" />
+                          <FileIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
+                              {pdfFile.file.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB
+                            </span>
+                          </div>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-destructive flex-shrink-0" 
+                          className="h-8 w-8 text-muted-foreground/70 hover:bg-red-100 hover:text-destructive flex-shrink-0" 
                           onClick={() => removeFile(pdfFile.id)}
                         >
                           <X className="w-4 h-4" />
                         </Button>
-                        {dragging && isDragOver && dragItem.current !== index && (
-                           <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary translate-y-1/2"></div>
-                        )}
                       </div>
                     );
                   })}
@@ -347,11 +338,11 @@ export function MergePdfs() {
             </div>
           )}
               
-          <div className="mt-6">
+          <div className="mt-8">
             {isMerging ? (
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="w-full">
-                        <div className="w-full relative h-3 rounded-full overflow-hidden bg-primary/20">
+                        <div className="w-full relative h-2.5 rounded-full overflow-hidden bg-primary/20">
                           <div 
                             className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out" 
                             style={{ width: `${mergeProgress}%` }}
@@ -372,10 +363,10 @@ export function MergePdfs() {
             ) : (
               <>
                 <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
-                    <CheckCircle className="mr-2 h-5 w-5" />
+                    <PackageCheck className="mr-2 h-5 w-5" />
                     Merge {files.length > 1 ? `${files.length} PDFs` : 'PDFs'}
                 </Button>
-                {files.length === 1 && (
+                {files.length > 0 && files.length < 2 && (
                   <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground animate-in fade-in duration-300">
                     <Info className="w-4 h-4" />
                     <span>Add at least one more PDF to merge files.</span>
