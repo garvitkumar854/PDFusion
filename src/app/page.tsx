@@ -259,12 +259,12 @@ export default function Home() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <AnimateOnScroll
-            animation="animate-in fade-in-0 slide-in-from-bottom-12"
-            className="duration-700"
-          >
-            <div className="bg-white dark:bg-card border rounded-2xl p-8 lg:p-10">
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="bg-white dark:bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-left-12"
+                className="duration-700 w-full lg:w-auto"
+              >
                 <div className="text-center lg:text-left">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
                     <Wand2 className="w-4 h-4" />
@@ -277,6 +277,11 @@ export default function Home() {
                     Start combining your PDF files now with our easy-to-use tool. No registration required, completely free, and secure.
                   </p>
                 </div>
+              </AnimateOnScroll>
+              <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-right-12"
+                className="duration-700 w-full lg:w-auto"
+              >
                 <div className="flex-shrink-0">
                   <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg hover:scale-105 transition-all group">
                     <Link href="/merger">
@@ -284,9 +289,9 @@ export default function Home() {
                     </Link>
                   </Button>
                 </div>
-              </div>
+              </AnimateOnScroll>
             </div>
-          </AnimateOnScroll>
+          </div>
         </div>
       </section>
     </>
