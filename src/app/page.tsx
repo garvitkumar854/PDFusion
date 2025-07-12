@@ -221,7 +221,7 @@ export default function Home() {
                   Discover the most intuitive and powerful PDF merging tool available online. Built with cutting-edge technology for the best user experience.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left grid-auto-rows-fr">
                   {futureFeatures.map((feature, index) => (
                     <AnimateOnScroll
                       key={index}
