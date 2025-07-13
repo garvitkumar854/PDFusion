@@ -75,7 +75,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="pb-20 md:pb-32">
+      <section id="services" className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
           <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -201,8 +201,8 @@ export default function Home() {
               >
                 <div className="flex-shrink-0">
                   <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg hover:scale-105 transition-all group">
-                    <Link href="/merger">
-                      Start Merging <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    <Link href="#services">
+                      Explore PDF Tools <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                     </Link>
                   </Button>
                 </div>
