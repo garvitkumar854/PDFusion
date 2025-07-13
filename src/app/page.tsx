@@ -115,8 +115,8 @@ export default function Home() {
                   delay={index * 200}
               >
                 <Link href={service.href} className="h-full block">
-                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
-                    <CardHeader className="flex-row items-center gap-4 p-4 md:p-6">
+                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col p-4 md:p-6">
+                    <CardHeader className="flex-row items-center gap-4 p-0">
                       <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
@@ -124,7 +124,7 @@ export default function Home() {
                         {service.title}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-grow p-4 md:p-6 pt-0">
+                    <CardContent className="flex-grow p-0 pt-4">
                       <p className="text-muted-foreground text-sm">{service.description}</p>
                     </CardContent>
                   </Card>
