@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFImage, PDFName } from 'pdf-lib';
 
 const CompressPdfInputSchema = z.object({
   pdfDataUri: z
@@ -56,27 +56,38 @@ const compressPdfFlow = ai.defineFlow(
       const pdfBytes = Buffer.from(pdfDataUri.split(',')[1], 'base64');
       const originalSize = pdfBytes.length;
 
-      const pdfDoc = await PDFDocument.load(pdfBytes, { 
-        // Some PDFs have objects that are not properly structured, this can help
+      const pdfDoc = await PDFDocument.load(pdfBytes, {
         ignoreEncryption: true,
-        updateMetadata: false 
+        updateMetadata: false
       });
       
       const imageQuality = getImageQuality(compressionLevel);
-      const images = pdfDoc.getImages();
-      
-      // We are primarily targeting JPG images as they are common and compress well.
-      // Other image formats like PNG are not re-compressed to avoid quality issues
-      // with lossless formats.
-      for (const image of images) {
-        if (image.isJpg) {
-            try {
-                const compressedImage = await pdfDoc.embedJpg(image.jpgBytes!, { quality: imageQuality });
-                image.ref.set(compressedImage.ref);
-            } catch (e) {
-                console.warn('Could not re-compress an image. Skipping it.', e);
-            }
-        }
+
+      const pages = pdfDoc.getPages();
+      for (const page of pages) {
+          const resources = page.node.Resources();
+          if (!resources) continue;
+
+          const xobjects = resources.get(PDFName.of('XObject'));
+          if (!xobjects || !('asDict' in xobjects)) continue;
+          
+          const xobjectDict = xobjects.asDict();
+          const imageNames = xobjectDict.keys();
+
+          for (const imageName of imageNames) {
+              const imageStream = xobjectDict.get(imageName);
+              if (!imageStream || !('asStream' in imageStream)) continue;
+              
+              try {
+                  const image = await PDFImage.of(imageStream.asStream(), pdfDoc);
+                  if (image.isJpg) {
+                      const compressedImage = await pdfDoc.embedJpg(image.jpgBytes!, { quality: imageQuality });
+                      xobjectDict.set(imageName, compressedImage.ref);
+                  }
+              } catch (e) {
+                  console.warn(`Could not process an image resource (${imageName.toString()}). Skipping it.`, e);
+              }
+          }
       }
 
       // save() will automatically remove unused objects, helping to reduce file size.
