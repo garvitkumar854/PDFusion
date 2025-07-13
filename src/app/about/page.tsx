@@ -125,7 +125,7 @@ export default function AboutPage() {
                                 {feature.icon}
                                 </div>
                                 <div className="space-y-2">
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold group-hover:text-primary">{feature.title}</h3>
+                                <h3 className="text-xs sm:text-base md:text-lg font-bold group-hover:text-primary">{feature.title}</h3>
                                 <p className="text-muted-foreground">{feature.description}</p>
                                 </div>
                             </div>

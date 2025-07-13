@@ -113,7 +113,7 @@ export default function Home() {
                       <div className={`p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
-                      <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <CardTitle className="text-sm sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </CardTitle>
                     </CardHeader>
@@ -160,7 +160,7 @@ export default function Home() {
                               {feature.icon}
                             </div>
                             <div className="space-y-2 flex-grow">
-                              <h3 className="text-base sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                              <h3 className="text-xs sm:text-base md:text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-4">
