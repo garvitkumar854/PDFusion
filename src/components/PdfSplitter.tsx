@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -531,7 +532,7 @@ export function PdfSplitter() {
           ) : (
              <div className="p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                    <FileIcon className="w-6 h-6 text-destructive shrink-0" />
                     <div className="flex flex-col overflow-hidden">
                         {file ? (
                           <>
