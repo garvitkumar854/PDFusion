@@ -36,6 +36,13 @@ export default function Home() {
       description: 'Convert each page of a PDF into a high-quality JPG image.',
       href: '/pdf-to-jpg'
     },
+     {
+      icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-red-100 dark:bg-red-900/20',
+      title: 'JPG to PDF',
+      description: 'Convert JPG images to a PDF file with orientation and margin options.',
+      href: '/jpg-to-pdf'
+    },
   ];
 
   const futureFeatures = [
@@ -106,27 +113,27 @@ export default function Home() {
                 Choose from our growing list of tools to handle your PDF tasks.
               </p>
           </AnimateOnScroll>
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {services.map((service, index) => (
               <AnimateOnScroll
                   key={index}
                   animation="animate-in fade-in-0"
                   className="duration-700 h-full"
-                  delay={index * 200}
+                  delay={index * 150}
               >
                 <Link href={service.href} className="h-full block">
-                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col p-4 md:p-6">
-                    <CardHeader className="flex-row items-center gap-4 p-0">
-                      <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
-                        {service.icon}
-                      </div>
-                      <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                        {service.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow p-0 pt-4">
-                      <p className="text-muted-foreground text-sm">{service.description}</p>
-                    </CardContent>
+                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
+                     <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
+                        <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
+                          {service.icon}
+                        </div>
+                        <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
+                          {service.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow p-4 pt-2 md:p-6 md:pt-2">
+                        <p className="text-muted-foreground text-sm">{service.description}</p>
+                      </CardContent>
                   </Card>
                 </Link>
               </AnimateOnScroll>
