@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import docx_pdf from 'docx-pdf';
 
 const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -78,6 +77,7 @@ export default function WordToPdfConverter() {
 
     try {
         const fileBuffer = await file.arrayBuffer();
+        const { default: docx_pdf } = await import('docx-pdf');
 
         docx_pdf(fileBuffer, {}, (err, result) => {
             clearInterval(progressInterval);
