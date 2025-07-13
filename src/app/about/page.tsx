@@ -201,7 +201,7 @@ export default function AboutPage() {
           >
             <Card className="max-w-2xl mx-auto bg-card/50 dark:bg-card/20 p-8 border border-primary/20 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
               <Avatar className="w-24 h-24 border-4 border-primary/50">
-                <AvatarImage src="https://placehold.co/150x150.png" alt="Garvit Kumar" data-ai-hint="male portrait" />
+                <AvatarImage src="https://placehold.co/150x150.png" alt="Creator Garvit Kumar" data-ai-hint="male portrait" />
                 <AvatarFallback>GK</AvatarFallback>
               </Avatar>
               <div className="text-center sm:text-left">

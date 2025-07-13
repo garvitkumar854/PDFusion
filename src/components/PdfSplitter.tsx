@@ -120,10 +120,13 @@ export function PdfSplitter() {
   const [splitError, setSplitError] = useState<string | null>(null);
 
   const { toast } = useToast();
+  
+  const isCancelledRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Cleanup function to run when the component unmounts
+    // Component unmount logic
     return () => {
+      isCancelledRef.current = true;
       splitResults.forEach(r => URL.revokeObjectURL(r.url));
       if (file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
@@ -133,6 +136,7 @@ export function PdfSplitter() {
   
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number): Promise<PagePreview | null> => {
     try {
+        if (isCancelledRef.current) return null;
         const page = await pdfjsDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement('canvas');
@@ -172,6 +176,7 @@ export function PdfSplitter() {
         return;
       }
       
+      isCancelledRef.current = false;
       setIsProcessing(true);
       setPagePreviews([]);
       try {
@@ -194,6 +199,7 @@ export function PdfSplitter() {
         
         const renderPromises: Promise<void>[] = [];
         for (let i = 1; i <= totalPages; i++) {
+            if (isCancelledRef.current) break;
             const promise = renderPdfPage(pdfjsDoc, i).then(renderedPage => {
                 if(renderedPage) {
                     setPagePreviews(prev => {
@@ -212,11 +218,15 @@ export function PdfSplitter() {
         await Promise.all(renderPromises);
 
       } catch (error) {
-        console.error("Error loading PDF:", error);
-        toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
+        if (!isCancelledRef.current) {
+          console.error("Error loading PDF:", error);
+          toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
+        }
       } finally {
-        setIsProcessing(false);
-        setIsRenderingPreviews(false);
+        if (!isCancelledRef.current) {
+          setIsProcessing(false);
+          setIsRenderingPreviews(false);
+        }
       }
     },
     [toast, renderPdfPage]
@@ -232,7 +242,10 @@ export function PdfSplitter() {
   });
 
   const removeFile = () => {
+    isCancelledRef.current = true;
     setFile(null);
+    setIsProcessing(false);
+    setIsRenderingPreviews(false);
     setCustomRanges("");
     setSplitResults([]);
     setPagePreviews([]);
@@ -273,6 +286,7 @@ export function PdfSplitter() {
     setIsSplitting(true);
     setSplitError(null);
     setSplitResults([]);
+    isCancelledRef.current = false;
 
     let pageGroups: number[][] = [];
     
@@ -313,6 +327,8 @@ export function PdfSplitter() {
         }
       }
       
+      if (isCancelledRef.current) return;
+
       if (pageGroups.length === 0 || pageGroups.every(g => g.length === 0)) {
          setSplitError("No pages selected or ranges defined for splitting.");
          setIsSplitting(false);
@@ -323,6 +339,7 @@ export function PdfSplitter() {
       const originalName = file.file.name.replace(/\.pdf$/i, '');
 
       for (const group of pageGroups) {
+        if (isCancelledRef.current) return;
         if (group.length === 0) continue;
         
         const newPdf = await PDFDocument.create();
@@ -341,6 +358,11 @@ export function PdfSplitter() {
             url,
         });
       }
+      if (isCancelledRef.current) {
+        results.forEach(r => URL.revokeObjectURL(r.url));
+        return;
+      }
+
       setSplitResults(results);
       toast({
         title: "Split Successful!",
@@ -349,15 +371,21 @@ export function PdfSplitter() {
       });
 
     } catch (error: any) {
-      console.error("Split failed:", error);
-      toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
+      if (!isCancelledRef.current) {
+        console.error("Split failed:", error);
+        toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
+      }
     } finally {
-      setIsSplitting(false);
+      if (!isCancelledRef.current) {
+        setIsSplitting(false);
+      }
     }
   };
 
   const handleCancelSplit = () => {
+    isCancelledRef.current = true;
     setIsSplitting(false);
+    setSplitError(null);
   };
   
   const handleSplitAgain = () => {
@@ -531,7 +559,7 @@ export function PdfSplitter() {
       </Card>
 
       {file && (
-        <Card className={cn("bg-white dark:bg-card shadow-lg", isSplitting && "opacity-70 pointer-events-none")}>
+        <Card className={cn("bg-white dark:bg-card shadow-lg", (isSplitting || isProcessing) && "opacity-70 pointer-events-none")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Split Options</CardTitle>
           </CardHeader>
@@ -712,7 +740,7 @@ export function PdfSplitter() {
                     <AlertTriangle className="w-4 h-4" /> {splitError}
                 </p>
             )}
-            <div className="mt-8">
+            <div className="mt-8 space-y-4">
               {isSplitting ? (
                  <div className="p-4 border rounded-lg bg-primary/5 text-center">
                     <div className="flex items-center justify-center gap-2">
