@@ -24,6 +24,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
+import { Progress } from "./ui/progress";
+
+// Set worker path for pdf.js
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -33,6 +40,7 @@ type PDFFile = {
   file: File;
   totalPages: number;
   pdfDoc: PDFDocument;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
 };
 
 type SplitResult = {
@@ -57,11 +65,12 @@ function formatBytes(bytes: number, decimals = 2) {
 export function PdfSplitter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSplitting, setIsSplitting] = useState(false);
   const [splitResults, setSplitResults] = useState<SplitResult[]>([]);
   const [pagePreviews, setPagePreviews] = useState<PagePreview[]>([]);
   const [isRenderingPreviews, setIsRenderingPreviews] = useState(false);
-  
-  // Split settings state
+  const [previewProgress, setPreviewProgress] = useState(0);
+
   const [splitMode, setSplitMode] = useState<"range" | "extract">("range");
   const [rangeMode, setRangeMode] = useState<"custom" | "fixed">("custom");
   const [extractMode, setExtractMode] = useState<"all" | "select">("all");
@@ -69,56 +78,49 @@ export function PdfSplitter() {
   const [customRanges, setCustomRanges] = useState("");
   const [fixedRangeSize, setFixedRangeSize] = useState(1);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
-  
+
   const [splitError, setSplitError] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
-  
-  const renderPdfPages = useCallback(async (pdfDoc: PDFDocument) => {
+
+  const renderPdfPages = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy) => {
     setIsRenderingPreviews(true);
+    setPreviewProgress(0);
     const previews: PagePreview[] = [];
-    const pages = pdfDoc.getPages();
-    
-    for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const { width, height } = page.getSize();
-        
-        // Create a temporary PDF with just this page to render it
-        const tempDoc = await PDFDocument.create();
-        const [copiedPage] = await tempDoc.copyPages(pdfDoc, [i]);
-        tempDoc.addPage(copiedPage);
-        
+    const numPages = pdfjsDoc.numPages;
+
+    for (let i = 1; i <= numPages; i++) {
+      try {
+        const page = await pdfjsDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        
-        const viewport = { scale: 1.5, width, height };
-        canvas.width = viewport.width * viewport.scale;
-        canvas.height = viewport.height * viewport.scale;
-        
-        // This is a simplified preview. For full fidelity, a library like pdf.js would be needed.
-        // For now, we'll create a placeholder representation.
-        if (context) {
-            context.fillStyle = 'white';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.strokeStyle = '#cccccc';
-            context.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-            context.fillStyle = '#333333';
-            context.font = '24px Arial';
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.fillText(`Page ${i + 1}`, canvas.width / 2, canvas.height / 2);
-        }
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-        previews.push({
-            pageNumber: i + 1,
-            dataUrl: canvas.toDataURL(),
-        });
+        if (context) {
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+          await page.render(renderContext).promise;
+          previews.push({
+            pageNumber: i,
+            dataUrl: canvas.toDataURL('image/jpeg', 0.8),
+          });
+        }
+      } catch (e) {
+        console.error(`Error rendering page ${i}:`, e);
+        // Add a placeholder for failed previews
+        previews.push({ pageNumber: i, dataUrl: '' });
+      }
+      setPreviewProgress(Math.round((i / numPages) * 100));
     }
-    
+
     setPagePreviews(previews);
     setIsRenderingPreviews(false);
   }, []);
-
+  
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (acceptedFiles.length === 0) {
@@ -134,22 +136,26 @@ export function PdfSplitter() {
         return;
       }
       
+      setIsProcessing(true);
       try {
         const pdfBytes = await singleFile.arrayBuffer();
         const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         const totalPages = pdfDoc.getPageCount();
 
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, totalPages, pdfDoc });
+        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, totalPages, pdfDoc, pdfjsDoc });
         setCustomRanges(`1-${totalPages}`);
         setFixedRangeSize(1);
         setSelectedPages(new Set());
         setSplitResults([]);
         setSplitError(null);
         
-        renderPdfPages(pdfDoc);
+        renderPdfPages(pdfjsDoc);
       } catch (error) {
         console.error("Error loading PDF:", error);
         toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
+      } finally {
+        setIsProcessing(false);
       }
     },
     [toast, renderPdfPages]
@@ -202,7 +208,7 @@ export function PdfSplitter() {
 
   const handleSplit = async () => {
     if (!file) return;
-    setIsProcessing(true);
+    setIsSplitting(true);
     setSplitError(null);
     setSplitResults([]);
 
@@ -214,14 +220,14 @@ export function PdfSplitter() {
           const parsed = parseCustomRanges(customRanges, file.totalPages);
           if (!parsed) {
             setSplitError("Invalid page ranges. Please use formats like '1-3', '5', '7-9'.");
-            setIsProcessing(false);
+            setIsSplitting(false);
             return;
           }
           pageGroups = parsed;
         } else { // fixed range
           if (fixedRangeSize < 1) {
             setSplitError("Fixed range size must be at least 1.");
-            setIsProcessing(false);
+            setIsSplitting(false);
             return;
           }
           for (let i = 0; i < file.totalPages; i += fixedRangeSize) {
@@ -238,7 +244,7 @@ export function PdfSplitter() {
         } else { // select pages
           if (selectedPages.size === 0) {
             setSplitError("Please select at least one page to extract.");
-            setIsProcessing(false);
+            setIsSplitting(false);
             return;
           }
           pageGroups = [[...selectedPages].sort((a, b) => a - b).map(p => p - 1)];
@@ -247,7 +253,7 @@ export function PdfSplitter() {
       
       if (pageGroups.length === 0) {
          setSplitError("No pages selected or ranges defined for splitting.");
-         setIsProcessing(false);
+         setIsSplitting(false);
          return;
       }
       
@@ -265,7 +271,9 @@ export function PdfSplitter() {
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         
-        const rangeText = group.length === 1 ? `page_${group[0] + 1}` : `pages_${group[0] + 1}-${group[group.length - 1] + 1}`;
+        const firstPage = group[0] + 1;
+        const lastPage = group[group.length - 1] + 1;
+        const rangeText = firstPage === lastPage ? `page_${firstPage}` : `pages_${firstPage}-${lastPage}`;
         results.push({
             filename: `${originalName}_${rangeText}.pdf`,
             url,
@@ -282,7 +290,7 @@ export function PdfSplitter() {
       console.error("Split failed:", error);
       toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
     } finally {
-      setIsProcessing(false);
+      setIsSplitting(false);
     }
   };
   
@@ -369,7 +377,7 @@ export function PdfSplitter() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!file ? (
+          {!file && !isProcessing ? (
             <div
               {...getRootProps()}
               className={cn(
@@ -397,15 +405,26 @@ export function PdfSplitter() {
                 <div className="flex items-center gap-3 overflow-hidden">
                     <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                     <div className="flex flex-col overflow-hidden">
-                        <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                            {formatBytes(file.file.size)} • {file.totalPages} pages
-                        </span>
+                        {file ? (
+                          <>
+                            <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                                {formatBytes(file.file.size)} • {file.totalPages} pages
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                             <span className="text-sm font-medium truncate">Processing PDF...</span>
+                             <span className="text-xs text-muted-foreground">Please wait a moment.</span>
+                          </>
+                        )}
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile}>
-                    <X className="w-4 h-4" />
-                </Button>
+                {file && (
+                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile}>
+                        <X className="w-4 h-4" />
+                    </Button>
+                )}
              </div>
           )}
         </CardContent>
@@ -484,33 +503,39 @@ export function PdfSplitter() {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="select-all"
-                                        checked={selectedPages.size === file.totalPages}
+                                        checked={selectedPages.size === file.totalPages && file.totalPages > 0}
                                         onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
+                                        disabled={isRenderingPreviews}
                                     />
                                     <Label htmlFor="select-all">Select All</Label>
                                 </div>
                             </div>
                             {isRenderingPreviews ? (
-                                <div className="flex justify-center items-center h-48">
+                                <div className="flex flex-col justify-center items-center h-48">
                                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                    <p className="ml-2">Rendering previews...</p>
+                                    <p className="mt-4 mb-2">Rendering page previews...</p>
+                                    <Progress value={previewProgress} className="w-full max-w-xs h-2" />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-h-96 overflow-y-auto">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto pr-2">
                                     {pagePreviews.map(preview => (
                                         <div 
                                             key={preview.pageNumber}
                                             onClick={() => toggleSelectPage(preview.pageNumber)}
                                             className={cn(
-                                                "relative rounded-md overflow-hidden border-2 cursor-pointer transition-all aspect-[2/3]",
+                                                "relative rounded-md overflow-hidden border-2 cursor-pointer transition-all aspect-[7/10] bg-muted",
                                                 selectedPages.has(preview.pageNumber) ? "border-primary shadow-lg" : "border-transparent hover:border-primary/50"
                                             )}
                                         >
-                                            <img src={preview.dataUrl} alt={`Page ${preview.pageNumber}`} className="w-full h-full object-cover"/>
+                                          {preview.dataUrl ? (
+                                            <img src={preview.dataUrl} alt={`Page ${preview.pageNumber}`} className="w-full h-full object-contain"/>
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">Preview failed</div>
+                                          )}
                                             <div className="absolute top-1 right-1">
-                                                <Checkbox checked={selectedPages.has(preview.pageNumber)} className="bg-white" />
+                                                <Checkbox checked={selectedPages.has(preview.pageNumber)} className="bg-white/80" />
                                             </div>
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5">
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
                                                 {preview.pageNumber}
                                             </div>
                                         </div>
@@ -529,13 +554,13 @@ export function PdfSplitter() {
                 </p>
             )}
             <div className="mt-8">
-              {isProcessing ? (
+              {isSplitting ? (
                 <Button size="lg" className="w-full text-base font-bold" disabled>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Splitting...
                 </Button>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isProcessing}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isRenderingPreviews}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>
@@ -547,5 +572,3 @@ export function PdfSplitter() {
     </div>
   );
 }
-
-    
