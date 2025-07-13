@@ -7,37 +7,37 @@ import Link from 'next/link';
 
 const whyChooseUsFeatures = [
     {
-      icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Powerful PDF Tools',
       description: 'Our intuitive interface makes merging, splitting, and compressing PDFs as easy as a few clicks.',
     },
     {
-      icon: <Shield className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-primary/10',
       title: 'Privacy First',
       description: 'Your files never leave your browser. We process everything locally to ensure maximum security.',
     },
     {
-      icon: <Zap className="w-8 h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
       description: 'Built with modern technology to handle your PDFs quickly and efficiently, without server delays.',
     },
     {
-      icon: <Users className="w-8 h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'User-Centric Design',
       description: 'Every feature is designed with our users in mind, making the experience smooth and enjoyable.',
     },
     {
-      icon: <Code2 className="w-8 h-8 text-gray-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Code2 className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-gray-100 dark:bg-gray-900/20',
       title: 'Open Source',
       description: 'Our code is open source, allowing for transparency and community contributions.',
     },
     {
-      icon: <Heart className="w-8 h-8 text-red-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-red-100 dark:bg-red-900/20',
       title: 'Made with Love',
       description: "We're passionate about creating tools that make your life easier, for free.",
@@ -121,12 +121,12 @@ export default function AboutPage() {
                     <Card className="group bg-white dark:bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-4 md:p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                             <div className="flex flex-col items-start gap-4 h-full">
-                                <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                                <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
                                 {feature.icon}
                                 </div>
                                 <div className="space-y-2">
-                                <h3 className="text-xs sm:text-base md:text-lg font-bold group-hover:text-primary">{feature.title}</h3>
-                                <p className="text-muted-foreground">{feature.description}</p>
+                                <h3 className="text-base sm:text-lg font-bold group-hover:text-primary">{feature.title}</h3>
+                                <p className="text-muted-foreground text-sm sm:text-base">{feature.description}</p>
                                 </div>
                             </div>
                         </CardContent>

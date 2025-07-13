@@ -9,21 +9,21 @@ export default function Home() {
 
   const services = [
     {
-      icon: <Combine className="w-8 h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Combine className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Merge PDF',
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'
     },
     {
-      icon: <Scissors className="w-8 h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <Scissors className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Split PDF',
       description: 'Extract specific pages or page ranges from a PDF into separate files.',
       href: '/split-pdf'
     },
     {
-      icon: <FileArchive className="w-8 h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
+      icon: <FileArchive className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-orange-100 dark:bg-orange-900/20',
       title: 'Compress PDF',
       description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
@@ -33,21 +33,21 @@ export default function Home() {
 
   const futureFeatures = [
     {
-      icon: <Zap className="w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" />,
+      icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
       description: 'Merge your PDFs in seconds with our optimized processing engine',
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-6 h-6 text-teal-500 transition-transform group-hover:scale-110" />,
+      icon: <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-teal-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
     },
     {
-      icon: <FileText className="w-6 h-6 text-blue-500 transition-transform group-hover:scale-110" />,
+      icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 transition-transform group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Advanced Features',
       description: 'Powerful tools to handle your PDF needs',
@@ -110,15 +110,15 @@ export default function Home() {
                 <Link href={service.href} className="h-full block">
                   <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
                     <CardHeader className="flex-row items-center gap-4 p-3 sm:p-4 md:p-6">
-                      <div className={`p-3 rounded-lg ${service.bgColor}`}>
+                      <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
-                      <CardTitle className="text-sm sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <CardTitle className="text-base sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow p-4 md:p-6 pt-0">
-                      <p className="text-muted-foreground">{service.description}</p>
+                      <p className="text-muted-foreground text-sm sm:text-base">{service.description}</p>
                     </CardContent>
                   </Card>
                 </Link>
@@ -156,18 +156,18 @@ export default function Home() {
                       <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-4 md:p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                           <div className="flex flex-col items-start gap-4 h-full">
-                            <div className={`p-3 rounded-lg ${feature.bgColor}`}>
+                            <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
                               {feature.icon}
                             </div>
                             <div className="space-y-2 flex-grow">
-                              <h3 className="text-xs sm:text-base md:text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
-                              <p className="text-muted-foreground">{feature.description}</p>
+                              <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                              <p className="text-muted-foreground text-sm sm:text-base">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-4">
                               {feature.points.map((point, pointIndex) => (
                                 <li key={pointIndex} className="flex items-center gap-3">
                                   <CheckIcon className="w-5 h-5 text-primary" />
-                                  <span className="text-muted-foreground">{point}</span>
+                                  <span className="text-muted-foreground text-sm sm:text-base">{point}</span>
                                 </li>
                               ))}
                             </ul>
