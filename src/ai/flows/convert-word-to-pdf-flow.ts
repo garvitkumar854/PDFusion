@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import docx_pdf from 'docx-pdf';
 import { Readable } from 'stream';
 import * as fs from 'fs/promises';
