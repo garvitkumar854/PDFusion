@@ -120,6 +120,16 @@ export function PdfSplitter() {
   const [splitError, setSplitError] = useState<string | null>(null);
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Cleanup function to run when the component unmounts
+    return () => {
+      splitResults.forEach(r => URL.revokeObjectURL(r.url));
+      if (file?.pdfjsDoc) {
+        file.pdfjsDoc.destroy();
+      }
+    };
+  }, [splitResults, file]);
   
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number): Promise<PagePreview | null> => {
     try {
@@ -715,7 +725,7 @@ export function PdfSplitter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isRenderingPreviews}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isRenderingPreviews || isProcessing}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>

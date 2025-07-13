@@ -82,6 +82,15 @@ export function PdfCompressor() {
     return () => clearTimeout(timeoutId);
   }, [status]);
 
+  useEffect(() => {
+    // Cleanup function to run when the component unmounts
+    return () => {
+      if (compressionResult) {
+        URL.revokeObjectURL(compressionResult.url);
+      }
+    };
+  }, [compressionResult]);
+
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {

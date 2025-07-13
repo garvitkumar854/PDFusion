@@ -57,6 +57,15 @@ export function MergePdfs() {
   const [isDragging, setIsDragging] = useState(false);
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Cleanup function to run when the component unmounts
+    return () => {
+      if (mergedPdfUrl) {
+        URL.revokeObjectURL(mergedPdfUrl);
+      }
+    };
+  }, [mergedPdfUrl]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -405,7 +414,7 @@ export function MergePdfs() {
                             </Button>
                         </div>
                     ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={files.length < 2}>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={files.length < 2 || isMerging}>
                             <Layers className="mr-2 h-5 w-5" />
                             Merge PDFs
                         </Button>
