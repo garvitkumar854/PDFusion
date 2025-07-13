@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -64,7 +65,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean }) => (
+const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string }) => (
     <div 
         key={pageNumber}
         onClick={onToggle ? () => onToggle(pageNumber) : undefined}
@@ -72,7 +73,8 @@ const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckb
             "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
             onToggle && "cursor-pointer",
             isSelected ? "border-primary shadow-lg" : "border-transparent",
-            onToggle && !isSelected && "hover:border-primary/50"
+            onToggle && !isSelected && "hover:border-primary/50",
+            className
         )}
     >
         {dataUrl ? (
@@ -160,6 +162,7 @@ export function PdfSplitter() {
       }
       
       setIsProcessing(true);
+      setPagePreviews([]);
       try {
         const pdfBytes = await singleFile.arrayBuffer();
         const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -177,29 +180,32 @@ export function PdfSplitter() {
         setPreviewProgress(0);
         const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: '' }));
         setPagePreviews(previews);
-
+        
+        const renderPromises: Promise<void>[] = [];
         for (let i = 1; i <= totalPages; i++) {
-          renderPdfPage(pdfjsDoc, i).then(renderedPage => {
-            if(renderedPage) {
-              setPagePreviews(prev => {
-                  const newPreviews = [...prev];
-                  const index = newPreviews.findIndex(p => p.pageNumber === renderedPage.pageNumber);
-                  if (index !== -1) {
-                      newPreviews[index] = renderedPage;
-                  }
-                  return newPreviews;
-              });
-            }
-          });
-          setPreviewProgress(Math.round((i / totalPages) * 100));
+            const promise = renderPdfPage(pdfjsDoc, i).then(renderedPage => {
+                if(renderedPage) {
+                    setPagePreviews(prev => {
+                        const newPreviews = [...prev];
+                        const index = newPreviews.findIndex(p => p.pageNumber === renderedPage.pageNumber);
+                        if (index !== -1) {
+                            newPreviews[index] = renderedPage;
+                        }
+                        return newPreviews;
+                    });
+                }
+                setPreviewProgress(prev => Math.round(((prev * (totalPages / 100) + 1) / totalPages) * 100));
+            });
+            renderPromises.push(promise);
         }
-        setIsRenderingPreviews(false);
+        await Promise.all(renderPromises);
 
       } catch (error) {
         console.error("Error loading PDF:", error);
         toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
       } finally {
         setIsProcessing(false);
+        setIsRenderingPreviews(false);
       }
     },
     [toast, renderPdfPage]
@@ -400,6 +406,16 @@ export function PdfSplitter() {
     }
     return [];
   }, [customRanges, file, splitMode, rangeMode]);
+  
+  const fixedRangeGroups = useMemo(() => {
+    if (!file || splitMode !== 'range' || rangeMode !== 'fixed' || fixedRangeSize < 1) return [];
+    const groups: PagePreview[][] = [];
+    for (let i = 0; i < pagePreviews.length; i += fixedRangeSize) {
+        groups.push(pagePreviews.slice(i, i + fixedRangeSize));
+    }
+    return groups;
+  }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
+
 
   if (splitResults.length > 0) {
     return (
@@ -488,11 +504,11 @@ export function PdfSplitter() {
                         )}
                     </div>
                 </div>
-                {file && !isProcessing && (
-                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile}>
+                 {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : (file && (
+                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}>
                         <X className="w-4 h-4" />
                     </Button>
-                )}
+                ))}
              </div>
           )}
         </CardContent>
@@ -582,7 +598,7 @@ export function PdfSplitter() {
                     <>
                         {/* Custom Range Preview */}
                         {splitMode === 'range' && rangeMode === 'custom' && (
-                             <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4">
+                             <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
                                 {customRangePreviewPages.length > 0 ? (
                                     <>
                                         <div className="w-1/3 max-w-32">
@@ -612,17 +628,28 @@ export function PdfSplitter() {
                         )}
 
                         {/* Fixed Range Preview */}
-                        {splitMode === 'range' && rangeMode === 'fixed' && fixedRangeSize > 0 && (
-                            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-2 sm:gap-x-4 gap-y-2 items-center max-h-96 overflow-y-auto pr-2">
-                                {pagePreviews.map((preview, index) => (
-                                    <React.Fragment key={preview.pageNumber}>
-                                        <PagePreviewCard {...preview} showCheckbox={false} />
-                                        {(index + 1) % fixedRangeSize === 0 && index < pagePreviews.length - 1 && (
-                                            <div className="col-span-full h-px border-t-2 border-dashed border-primary/50 my-2"></div>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </div>
+                        {splitMode === 'range' && rangeMode === 'fixed' && (
+                            <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
+                                <div className="flex w-max space-x-4 p-4">
+                                    {fixedRangeGroups.map((group, groupIndex) => (
+                                        <Card key={groupIndex} className="p-2 shrink-0">
+                                            <CardContent className="p-0">
+                                                <div className="grid grid-cols-2 gap-2 w-max">
+                                                    {group.map(preview => (
+                                                        <PagePreviewCard 
+                                                            key={preview.pageNumber} 
+                                                            {...preview} 
+                                                            showCheckbox={false} 
+                                                            className="w-24"
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
                         )}
                         
                         {/* Extract Pages Preview (both modes) */}
@@ -684,5 +711,3 @@ export function PdfSplitter() {
     </div>
   );
 }
-
-    
