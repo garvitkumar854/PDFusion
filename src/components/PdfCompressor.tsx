@@ -77,7 +77,9 @@ export function PdfCompressor() {
     else if (status === 'compressing') targetProgress = 90;
     else if (status === 'done' || status === 'error') targetProgress = 100;
     else targetProgress = 0;
-    setProgress(targetProgress);
+
+    const timeoutId = setTimeout(() => setProgress(targetProgress), 100);
+    return () => clearTimeout(timeoutId);
   }, [status]);
 
 
@@ -118,6 +120,7 @@ export function PdfCompressor() {
     }
 
     setStatus('uploading');
+    setProgress(0);
     setCompressionResult(null);
 
     try {
@@ -194,7 +197,10 @@ export function PdfCompressor() {
           </div>
         </div>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">
-          File size reduced by <span className="font-bold text-primary">{reduction.toFixed(1)}%</span>.
+            { reduction > 0 
+                ? <>File size reduced by <span className="font-bold text-primary">{reduction.toFixed(1)}%</span>.</>
+                : <>This PDF is already well-optimized!</>
+            }
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
@@ -277,35 +283,37 @@ export function PdfCompressor() {
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Compression Options</CardTitle>
           </CardHeader>
-          <CardContent className={cn(isCompressing && "opacity-70 pointer-events-none")}>
-            <RadioGroup 
-              value={compressionLevel} 
-              onValueChange={(v) => setCompressionLevel(v as CompressionLevel)} 
-              className="space-y-4"
-              disabled={isCompressing}
-            >
-              <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
-                <RadioGroupItem value="low" id="c-low" />
-                <div>
-                  <div className="font-semibold">Less Compression</div>
-                  <p className="text-sm text-muted-foreground">Good quality, lower compression.</p>
-                </div>
-              </Label>
-              <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
-                <RadioGroupItem value="recommended" id="c-recommended" />
-                <div>
-                  <div className="font-semibold">Recommended</div>
-                  <p className="text-sm text-muted-foreground">Good compression and good quality.</p>
-                </div>
-              </Label>
-              <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
-                <RadioGroupItem value="extreme" id="c-extreme" />
-                <div>
-                  <div className="font-semibold">Extreme Compression</div>
-                  <p className="text-sm text-muted-foreground">Lowest file size, lower quality.</p>
-                </div>
-              </Label>
-            </RadioGroup>
+          <CardContent>
+            <div className={cn(isCompressing && "opacity-70 pointer-events-none")}>
+              <RadioGroup 
+                value={compressionLevel} 
+                onValueChange={(v) => setCompressionLevel(v as CompressionLevel)} 
+                className="space-y-4"
+                disabled={isCompressing}
+              >
+                <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+                  <RadioGroupItem value="low" id="c-low" />
+                  <div>
+                    <div className="font-semibold">Less Compression</div>
+                    <p className="text-sm text-muted-foreground">Good quality, lower compression.</p>
+                  </div>
+                </Label>
+                <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+                  <RadioGroupItem value="recommended" id="c-recommended" />
+                  <div>
+                    <div className="font-semibold">Recommended</div>
+                    <p className="text-sm text-muted-foreground">Good compression and good quality.</p>
+                  </div>
+                </Label>
+                <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+                  <RadioGroupItem value="extreme" id="c-extreme" />
+                  <div>
+                    <div className="font-semibold">Extreme Compression</div>
+                    <p className="text-sm text-muted-foreground">Lowest file size, lower quality.</p>
+                  </div>
+                </Label>
+              </RadioGroup>
+            </div>
 
             <div className="mt-8">
               {isCompressing ? (
@@ -317,8 +325,13 @@ export function PdfCompressor() {
                     </div>
                     <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
                   </div>
-                  <Progress value={progress} className="h-2" />
-                  <Button size="sm" variant="ghost" onClick={handleCancelCompress} className="w-full mt-4 text-muted-foreground">
+                  <Progress value={progress} className="h-2 transition-all duration-500 ease-out" />
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={handleCancelCompress} 
+                    className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
                     <Ban className="mr-2 h-4 w-4" />
                     Cancel
                   </Button>
