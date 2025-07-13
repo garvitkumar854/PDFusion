@@ -40,21 +40,21 @@ export default function Home() {
 
   const futureFeatures = [
     {
-      icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500 transition-transform group-hover:scale-110" />,
+      icon: <Zap className="w-5 h-5 text-yellow-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
       description: 'Merge your PDFs in seconds with our optimized processing engine',
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-teal-500 transition-transform group-hover:scale-110" />,
+      icon: <ShieldCheck className="w-5 h-5 text-teal-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
       bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
     },
     {
-      icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 transition-transform group-hover:scale-110" />,
+      icon: <FileText className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Advanced Features',
       description: 'Powerful tools to handle your PDF needs',
@@ -116,7 +116,7 @@ export default function Home() {
               >
                 <Link href={service.href} className="h-full block">
                   <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
-                    <CardHeader className="flex-row items-center gap-4 p-3 sm:p-4 md:p-6">
+                    <CardHeader className="flex-row items-center gap-4 p-4 md:p-6">
                       <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
