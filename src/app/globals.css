@@ -4,47 +4,47 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 240 10% 97.5%; /* #F5F5F7 - Very light grey */
     --foreground: 240 5% 15%;
-    --card: 0 0% 99%;
+    --card: 0 0% 100%;
     --card-foreground: 240 5% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 5% 15%;
-    --primary: 221 83% 53%;
+    --primary: 275 100% 25%; /* #4B0082 - Deep Indigo */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 5% 90%;
     --secondary-foreground: 240 5% 15%;
     --muted: 240 5% 90%;
     --muted-foreground: 240 4% 45%;
-    --accent: 221 83% 53%;
+    --accent: 180 100% 25%; /* #008080 - Vibrant Teal */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 6% 88%;
     --input: 240 6% 88%;
-    --ring: 221 83% 53%;
+    --ring: 275 100% 25%;
     --radius: 1rem;
   }
   .dark {
-    --background: 217 60% 7%; /* #040D1F */
+    --background: 240 4% 9%; /* #151619 - Light grey dark equivalent */
     --foreground: 0 0% 98%;
-    --card: 217 60% 7%;
+    --card: 240 4% 12%;
     --card-foreground: 0 0% 98%;
-    --popover: 217 60% 7%;
+    --popover: 240 4% 9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 221 83% 63%;
-    --primary-foreground: 240 5% 15%;
+    --primary: 275 80% 65%; /* #9966CC - Lighter Indigo */
+    --primary-foreground: 0 0% 98%;
     --secondary: 240 4% 20%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 4% 20%;
     --muted-foreground: 240 4% 65%;
-    --accent: 221 83% 63%;
+    --accent: 180 80% 50%; /* #33CCCC - Lighter Teal */
     --accent-foreground: 240 5% 15%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 4% 20%;
     --input: 240 4% 20%;
-    --ring: 221 83% 63%;
+    --ring: 275 80% 65%;
   }
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, File as FileIcon, Download, X, CheckCircle, FileText, Loader2, RefreshCw } from "lucide-react";
+import { UploadCloud, Download, X, CheckCircle, FileText, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -78,7 +78,7 @@ export default function WordToPdfConverter() {
         const fileBuffer = await file.arrayBuffer();
         const { default: docx_pdf } = await import('docx-pdf');
 
-        docx_pdf(fileBuffer, {}, (err: Error | null, result: Buffer) => {
+        docx_pdf(fileBuffer, {}, (err: Error | null, result: Buffer | null) => {
             clearInterval(progressInterval);
             if (err) {
                 console.error("Conversion failed:", err);
@@ -134,7 +134,7 @@ export default function WordToPdfConverter() {
 
   if (convertedPdfUrl) {
     return (
-        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
+        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
             <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Successful!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new PDF is ready to be downloaded.</p>
@@ -154,7 +154,7 @@ export default function WordToPdfConverter() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white dark:bg-card shadow-lg">
+      <Card className="bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload Word Document</CardTitle>
           <CardDescription>Drag & drop a .doc or .docx file to get started.</CardDescription>
@@ -183,12 +183,12 @@ export default function WordToPdfConverter() {
       </Card>
 
       {file && (
-        <Card className="bg-white dark:bg-card shadow-lg animate-in fade-in duration-300">
+        <Card className="bg-card shadow-lg animate-in fade-in duration-300">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">File Ready for Conversion</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-card/80">
               <div className="flex items-center gap-3 overflow-hidden">
                 <FileText className="w-8 h-8 text-blue-500 shrink-0" />
                 <div className="flex flex-col overflow-hidden">
