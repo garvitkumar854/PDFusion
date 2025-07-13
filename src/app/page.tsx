@@ -1,4 +1,4 @@
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,13 @@ export default function Home() {
       title: 'Compress PDF',
       description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
       href: '/compress-pdf'
+    },
+    {
+      icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      title: 'PDF to JPG',
+      description: 'Convert each page of a PDF into a high-quality JPG image.',
+      href: '/pdf-to-jpg'
     },
   ];
 
@@ -113,12 +120,12 @@ export default function Home() {
                       <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
-                      <CardTitle className="text-base sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow p-4 md:p-6 pt-0">
-                      <p className="text-muted-foreground text-sm sm:text-base">{service.description}</p>
+                      <p className="text-muted-foreground text-sm">{service.description}</p>
                     </CardContent>
                   </Card>
                 </Link>
@@ -160,14 +167,14 @@ export default function Home() {
                               {feature.icon}
                             </div>
                             <div className="space-y-2 flex-grow">
-                              <h3 className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
-                              <p className="text-muted-foreground text-sm sm:text-base">{feature.description}</p>
+                              <h3 className="text-base font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                              <p className="text-muted-foreground text-sm">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-4">
                               {feature.points.map((point, pointIndex) => (
                                 <li key={pointIndex} className="flex items-center gap-3">
                                   <CheckIcon className="w-5 h-5 text-primary" />
-                                  <span className="text-muted-foreground text-sm sm:text-base">{point}</span>
+                                  <span className="text-muted-foreground text-sm">{point}</span>
                                 </li>
                               ))}
                             </ul>
