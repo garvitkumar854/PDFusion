@@ -1,4 +1,4 @@
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Layers, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,15 +9,15 @@ export default function Home() {
 
   const services = [
     {
-      icon: <Layers className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-primary/10',
+      icon: <Combine className="w-8 h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Merge PDF',
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'
     },
     {
-      icon: <FileText className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-primary/10',
+      icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Word to PDF',
       description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
       href: '/word-to-pdf'
