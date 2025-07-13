@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -51,11 +52,14 @@ export function MergePdfs() {
   const [mergeProgress, setMergeProgress] = useState(0);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
+  const [removingFileId, setRemovingFileId] = useState<string | null>(null);
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
+  const mergeOperationId = useRef<number>(0);
+  const isCancelledRef = useRef<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +68,7 @@ export function MergePdfs() {
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
+      isCancelledRef.current = true;
     };
   }, [mergedPdfUrl]);
   
@@ -114,11 +119,15 @@ export function MergePdfs() {
   });
 
   const removeFile = (fileId: string) => {
-    const fileToRemove = files.find(f => f.id === fileId);
-    if (fileToRemove) {
-      setTotalSize(prev => prev - fileToRemove.file.size);
-      setFiles(prev => prev.filter(f => f.id !== fileId));
-    }
+    setRemovingFileId(fileId);
+    setTimeout(() => {
+      const fileToRemove = files.find(f => f.id === fileId);
+      if (fileToRemove) {
+        setTotalSize(prev => prev - fileToRemove.file.size);
+        setFiles(prev => prev.filter(f => f.id !== fileId));
+      }
+      setRemovingFileId(null);
+    }, 300); // Should match the CSS transition duration
   };
   
   const handleClearAll = () => {
@@ -166,25 +175,22 @@ export function MergePdfs() {
       });
       return;
     }
-
+    
+    isCancelledRef.current = false;
+    const currentOperationId = ++mergeOperationId.current;
+    
     setIsMerging(true);
     setMergeProgress(0);
     setMergedPdfUrl(null);
-
-    const progressInterval = setInterval(() => {
-        setMergeProgress(prev => {
-            if (prev >= 95) {
-                clearInterval(progressInterval);
-                return 95;
-            }
-            return prev + 5;
-        });
-    }, 100);
+    
+    // Smooth progress bar updates
+    setTimeout(() => setMergeProgress(95), 100);
 
     try {
         const mergedPdf = await PDFDocument.create();
 
         for (const pdfFile of files) {
+            if (isCancelledRef.current) throw new Error("Operation cancelled by user");
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
                 const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -200,12 +206,20 @@ export function MergePdfs() {
             }
         }
         
+        if (isCancelledRef.current) throw new Error("Operation cancelled by user");
+
         if (mergedPdf.getPageCount() === 0) {
             throw new Error("Merge failed. All source PDFs might be corrupted, encrypted, or invalid.");
         }
 
         const mergedPdfBytes = await mergedPdf.save();
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        
+        if (isCancelledRef.current || currentOperationId !== mergeOperationId.current) {
+            URL.revokeObjectURL(URL.createObjectURL(blob));
+            return;
+        }
+
         const url = URL.createObjectURL(blob);
         setMergedPdfUrl(url);
       
@@ -216,20 +230,24 @@ export function MergePdfs() {
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Merge Failed",
-        description: error.message || "An unexpected error occurred during the merge process.",
-      });
+       if (error.message !== "Operation cancelled by user" && !isCancelledRef.current) {
+          toast({
+            variant: "destructive",
+            title: "Merge Failed",
+            description: error.message || "An unexpected error occurred during the merge process.",
+          });
+      }
       setMergeProgress(0); // Reset on error
     } finally {
-      clearInterval(progressInterval);
-      setMergeProgress(100);
-      setIsMerging(false);
+      if (!isCancelledRef.current && currentOperationId === mergeOperationId.current) {
+        setMergeProgress(100);
+        setIsMerging(false);
+      }
     }
   };
   
   const handleCancelMerge = () => {
+    isCancelledRef.current = true;
     setIsMerging(false);
     setMergeProgress(0);
   };
@@ -339,11 +357,12 @@ export function MergePdfs() {
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
-                        style={{ willChange: 'transform' }}
+                        style={{ willChange: 'transform, opacity, height, padding, margin' }}
                         className={cn(
-                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card transition-transform duration-300 ease-in-out',
+                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                              isMerging ? 'cursor-not-allowed' : 'cursor-grab',
+                             removingFileId === pdfFile.id && 'opacity-0 scale-95 -translate-x-full h-0 !p-0 !my-0'
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
@@ -407,7 +426,7 @@ export function MergePdfs() {
                                 </div>
                                 <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
-                            <Progress value={mergeProgress} className="h-2" />
+                            <Progress value={mergeProgress} className="h-2 transition-all duration-500" />
                             <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
                                 <Ban className="mr-2 h-4 w-4" />
                                 Cancel
