@@ -57,7 +57,8 @@
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.2",
     "pdf-lib": "^1.17.1",
-    "next-fonts": "^1.5.1"
+    "next-fonts": "^1.5.1",
+    "docx-pdf": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",

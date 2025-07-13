@@ -6,11 +6,11 @@ import { UploadCloud, Download, X, CheckCircle, FileText, Loader2, RefreshCw } f
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { convertWordToPdf } from "@/ai/flows/convert-word-to-pdf-flow";
 
-const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -20,6 +20,21 @@ function formatBytes(bytes: number, decimals = 2) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+async function fileToDataURI(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as Data URI'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function WordToPdfConverter() {
@@ -73,33 +88,20 @@ export default function WordToPdfConverter() {
 
     const progressInterval = setInterval(() => {
         setConversionProgress(prev => {
-            const next = prev + 10;
-            if (next > 90) {
+            const next = prev + 5;
+            if (next > 95) {
                 clearInterval(progressInterval);
             }
             return next;
         });
-    }, 100);
+    }, 200);
 
     try {
-        const pdfDoc = await PDFDocument.create();
-        const page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        
-        const text = `This is a placeholder PDF created from:\n\n${file.name}\n\nFile size: ${formatBytes(file.size)}\n\nA full DOCX parser would be required for content conversion.`;
-        
-        page.drawText(text, {
-            x: 50,
-            y: height - 50,
-            font,
-            size: 12,
-            color: rgb(0, 0, 0),
-            lineHeight: 24,
-        });
+        const docxDataUri = await fileToDataURI(file);
 
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const result = await convertWordToPdf({ docxDataUri });
+
+        const blob = new Blob([Buffer.from(result.pdfBase64, 'base64')], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         
         setConvertedPdfUrl(url);
@@ -112,7 +114,7 @@ export default function WordToPdfConverter() {
 
     } catch (error) {
       console.error("Conversion failed:", error);
-      toast({ variant: "destructive", title: "Conversion Failed", description: "An unexpected error occurred." });
+      toast({ variant: "destructive", title: "Conversion Failed", description: "An unexpected error occurred. The file may be corrupted or in an unsupported format." });
     } finally {
         clearInterval(progressInterval);
         setIsConverting(false);
@@ -139,7 +141,6 @@ export default function WordToPdfConverter() {
     setConversionProgress(0);
   };
 
-
   if (convertedPdfUrl) {
     return (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
@@ -162,8 +163,8 @@ export default function WordToPdfConverter() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card shadow-lg">
-        <CardContent className="p-6">
+      <Card className="bg-card shadow-lg border">
+        <CardContent className="p-6 sm:p-10">
           <div
             {...getRootProps()}
             className={cn(
@@ -175,15 +176,15 @@ export default function WordToPdfConverter() {
           >
             <input {...getInputProps()} />
             {file ? (
-                <>
-                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+                <div className="text-center">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto" />
                     <p className="mt-2 text-base sm:text-lg font-semibold text-foreground truncate max-w-full px-4" title={file.name}>{file.name}</p>
                     <p className="text-xs sm:text-sm text-muted-foreground">{formatBytes(file.size)}</p>
-                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); removeFile(); }} className="mt-4">
-                        <X className="mr-2 h-4 w-4" />
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeFile(); }} className="mt-4 text-destructive hover:bg-destructive/10">
+                        <X className="mr-1 h-4 w-4" />
                         Remove File
                     </Button>
-                </>
+                </div>
             ) : (
                 <>
                     <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
@@ -201,12 +202,8 @@ export default function WordToPdfConverter() {
       </Card>
 
       {file && (
-        <Card className="bg-card shadow-lg animate-in fade-in duration-300">
-          <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Ready to Convert</CardTitle>
-            <CardDescription>Click the button below to start the conversion process.</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="bg-card shadow-lg animate-in fade-in duration-300 border">
+          <CardContent className="p-6">
             <div className="space-y-4">
               {isConverting ? (
                 <div className="p-4 border rounded-lg bg-primary/5">
