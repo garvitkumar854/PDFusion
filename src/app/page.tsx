@@ -1,4 +1,4 @@
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,13 @@ export default function Home() {
       title: 'Merge PDF',
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'
+    },
+    {
+      icon: <Scissors className="w-8 h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      title: 'Split PDF',
+      description: 'Extract specific pages or page ranges from a PDF into separate files.',
+      href: '/split-pdf'
     },
   ];
 
@@ -85,7 +92,7 @@ export default function Home() {
                 Choose from our growing list of tools to handle your PDF tasks.
               </p>
           </AnimateOnScroll>
-          <div className="max-w-xl mx-auto grid grid-cols-1 gap-8">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             {services.map((service, index) => (
               <AnimateOnScroll
                   key={index}
