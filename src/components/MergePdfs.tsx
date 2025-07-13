@@ -262,7 +262,7 @@ export function MergePdfs() {
       toast({
         title: "Merge Successful!",
         description: "Your PDF is ready to be downloaded.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
+        action: <div className="p-1 rounded-full bg-primary"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       if (error.message !== 'Cancelled') {
@@ -303,11 +303,11 @@ export function MergePdfs() {
   if (mergedPdfUrl) {
     return (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
-            <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
+            <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-primary mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-green-500 hover:bg-green-600">
+                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-primary hover:bg-primary/90">
                     <Download className="mr-2 h-5 w-5" />
                     Download PDF
                 </Button>
@@ -402,7 +402,7 @@ export function MergePdfs() {
                             </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                            <Badge variant="outline" className="hidden text-green-600 border-green-200 sm:inline-flex bg-green-50 dark:bg-green-900/20 dark:border-green-500/30">
+                            <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
                             <CheckCircle className="w-3.5 h-3.5 mr-1" />
                             Ready
                             </Badge>

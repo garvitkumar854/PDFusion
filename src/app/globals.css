@@ -16,7 +16,7 @@
     --secondary-foreground: 240 5% 15%;
     --muted: 240 5% 90%;
     --muted-foreground: 240 4% 45%;
-    --accent: 180 100% 25%; /* #008080 - Vibrant Teal */
+    --accent: 246 100% 50%; /* #5e4dff - Replaced with primary */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -38,8 +38,8 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 240 4% 20%;
     --muted-foreground: 240 4% 65%;
-    --accent: 180 80% 50%; /* #33CCCC - Lighter Teal */
-    --accent-foreground: 240 5% 15%;
+    --accent: 246 100% 65%; /* Lighter #5e4dff - Replaced with primary */
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 4% 20%;

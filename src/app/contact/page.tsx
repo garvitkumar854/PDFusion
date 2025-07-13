@@ -18,12 +18,12 @@ const contactMethods = [
     bgColor: 'bg-blue-100/50 dark:bg-blue-900/20 hover:bg-blue-200/60 dark:hover:bg-blue-900/40',
   },
   {
-    icon: <MessageSquare className="w-8 h-8 text-green-500 dark:text-green-400" />,
+    icon: <MessageSquare className="w-8 h-8 text-primary dark:text-primary" />,
     title: 'Live Chat',
     description: 'Get instant help',
     href: '#',
     details: 'Available 24/7',
-    bgColor: 'bg-green-100/50 dark:bg-green-900/20 hover:bg-green-200/60 dark:hover:bg-green-900/40',
+    bgColor: 'bg-primary/10 hover:bg-primary/20',
   },
   {
     icon: <Phone className="w-8 h-8 text-purple-500 dark:text-purple-400" />,

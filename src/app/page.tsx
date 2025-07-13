@@ -16,8 +16,8 @@ export default function Home() {
       href: '/merger'
     },
     {
-      icon: <FileText className="w-8 h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <FileText className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-primary/10',
       title: 'Word to PDF',
       description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
       href: '/word-to-pdf'
@@ -33,8 +33,8 @@ export default function Home() {
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-6 h-6 text-green-500 transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <ShieldCheck className="w-6 h-6 text-primary transition-transform group-hover:scale-110" />,
+      bgColor: 'bg-primary/10',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],

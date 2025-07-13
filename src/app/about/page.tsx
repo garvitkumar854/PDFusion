@@ -13,8 +13,8 @@ const whyChooseUsFeatures = [
       description: 'Our intuitive interface makes merging PDFs as easy as drag and drop. No technical knowledge required.',
     },
     {
-      icon: <Shield className="w-8 h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <Shield className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-primary/10',
       title: 'Privacy First',
       description: 'Your files never leave your browser. We process everything locally to ensure maximum security.',
     },
