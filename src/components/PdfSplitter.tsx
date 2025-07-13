@@ -403,7 +403,7 @@ export function PdfSplitter() {
 
   if (splitResults.length > 0) {
     return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
+      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-primary mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Split Successfully!</h2>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new documents are ready for download.</p>
@@ -488,7 +488,7 @@ export function PdfSplitter() {
                         )}
                     </div>
                 </div>
-                {file && (
+                {file && !isProcessing && (
                     <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile}>
                         <X className="w-4 h-4" />
                     </Button>
@@ -582,10 +582,10 @@ export function PdfSplitter() {
                     <>
                         {/* Custom Range Preview */}
                         {splitMode === 'range' && rangeMode === 'custom' && (
-                             <div className="mt-4 flex items-center justify-center gap-4">
+                             <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4">
                                 {customRangePreviewPages.length > 0 ? (
                                     <>
-                                        <div className="w-1/3">
+                                        <div className="w-1/3 max-w-32">
                                             <PagePreviewCard
                                                 pageNumber={customRangePreviewPages[0]}
                                                 dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || ''}
@@ -594,8 +594,8 @@ export function PdfSplitter() {
                                         </div>
                                         {customRangePreviewPages.length > 1 && (
                                             <>
-                                                <Minus className="w-8 h-8 text-muted-foreground shrink-0" />
-                                                <div className="w-1/3">
+                                                <Minus className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground shrink-0" />
+                                                <div className="w-1/3 max-w-32">
                                                     <PagePreviewCard
                                                         pageNumber={customRangePreviewPages[1]}
                                                         dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || ''}
@@ -606,14 +606,14 @@ export function PdfSplitter() {
                                         )}
                                     </>
                                 ) : (
-                                    <p className="text-muted-foreground text-sm">Enter a valid range to see a preview.</p>
+                                    <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
                                 )}
                             </div>
                         )}
 
                         {/* Fixed Range Preview */}
                         {splitMode === 'range' && rangeMode === 'fixed' && fixedRangeSize > 0 && (
-                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2 items-center max-h-96 overflow-y-auto pr-2">
+                            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-2 sm:gap-x-4 gap-y-2 items-center max-h-96 overflow-y-auto pr-2">
                                 {pagePreviews.map((preview, index) => (
                                     <React.Fragment key={preview.pageNumber}>
                                         <PagePreviewCard {...preview} showCheckbox={false} />
@@ -627,9 +627,9 @@ export function PdfSplitter() {
                         
                         {/* Extract Pages Preview (both modes) */}
                         {splitMode === 'extract' && (
-                            <div className="mt-4 border rounded-lg p-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <Label className="font-semibold">
+                            <div className="mt-4 border rounded-lg p-2 sm:p-4">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                                    <Label className="font-semibold text-base sm:text-lg">
                                         Selected Pages: {selectedPages.size} / {file.totalPages}
                                     </Label>
                                     <div className="flex items-center space-x-2">
@@ -642,7 +642,7 @@ export function PdfSplitter() {
                                         <Label htmlFor="select-all">Select All</Label>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto pr-2">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
                                     {pagePreviews.map(preview => (
                                         <PagePreviewCard 
                                             key={preview.pageNumber}
