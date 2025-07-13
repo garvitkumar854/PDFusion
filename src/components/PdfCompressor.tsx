@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -38,6 +38,7 @@ type CompressionResult = {
 };
 
 type CompressionLevel = "low" | "recommended" | "extreme";
+type CompressionStatus = "idle" | "uploading" | "compressing" | "done" | "error";
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -59,12 +60,25 @@ const fileToDataUri = (file: File): Promise<string> => {
 
 export function PdfCompressor() {
   const [file, setFile] = useState<PDFFile | null>(null);
-  const [isCompressing, setIsCompressing] = useState(false);
   const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>("recommended");
+  
+  const [status, setStatus] = useState<CompressionStatus>("idle");
   const [progress, setProgress] = useState(0);
 
   const { toast } = useToast();
+  
+  const isCompressing = status === 'uploading' || status === 'compressing';
+
+  useEffect(() => {
+    let targetProgress = 0;
+    if (status === 'uploading') targetProgress = 50;
+    else if (status === 'compressing') targetProgress = 90;
+    else if (status === 'done' || status === 'error') targetProgress = 100;
+    else targetProgress = 0;
+    setProgress(targetProgress);
+  }, [status]);
+
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -75,6 +89,8 @@ export function PdfCompressor() {
       
       const singleFile = acceptedFiles[0];
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
+      setCompressionResult(null);
+      setStatus("idle");
     },
     [toast]
   );
@@ -90,6 +106,7 @@ export function PdfCompressor() {
 
   const removeFile = () => {
     setFile(null);
+    setStatus("idle");
   };
 
   const handleCompress = async () => {
@@ -98,16 +115,14 @@ export function PdfCompressor() {
       return;
     }
 
-    setIsCompressing(true);
-    setProgress(0);
+    setStatus('uploading');
     setCompressionResult(null);
-
-    const progressInterval = setInterval(() => {
-        setProgress(prev => (prev < 95 ? prev + 5 : 95));
-    }, 500);
 
     try {
       const pdfDataUri = await fileToDataUri(file.file);
+      
+      setStatus('compressing');
+      
       const input: CompressPdfInput = { pdfDataUri, compressionLevel };
       const result = await compressPdf(input);
       
@@ -121,6 +136,7 @@ export function PdfCompressor() {
         compressedSize: result.compressedSize,
         filename: `${originalName}_compressed.pdf`,
       });
+      setStatus('done');
       
       toast({
         title: "Compression Successful!",
@@ -129,16 +145,13 @@ export function PdfCompressor() {
       });
 
     } catch (error: any) {
+      setStatus('error');
       console.error("Compression failed:", error);
       toast({
         variant: "destructive",
         title: "Compression Failed",
         description: error.message || "An unexpected error occurred during compression.",
       });
-    } finally {
-      clearInterval(progressInterval);
-      setProgress(100);
-      setIsCompressing(false);
     }
   };
   
@@ -148,6 +161,7 @@ export function PdfCompressor() {
     }
     setFile(null);
     setCompressionResult(null);
+    setStatus('idle');
   };
 
   if (compressionResult) {
@@ -187,6 +201,16 @@ export function PdfCompressor() {
         </div>
       </div>
     );
+  }
+
+  const getProgressLabel = () => {
+    switch(status) {
+        case "uploading": return "Uploading to server...";
+        case "compressing": return "Compressing PDF...";
+        case "done": return "Done!";
+        case "error": return "An error occurred.";
+        default: return "";
+    }
   }
 
   return (
@@ -275,14 +299,14 @@ export function PdfCompressor() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                      <p className="text-sm font-medium text-primary transition-all duration-300">Compressing PDF on our servers...</p>
+                      <p className="text-sm font-medium text-primary transition-all duration-300">{getProgressLabel()}</p>
                     </div>
                     <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleCompress} disabled={!file}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleCompress} disabled={!file || isCompressing}>
                   <FileArchive className="mr-2 h-5 w-5" />
                   Compress PDF
                 </Button>

@@ -62,6 +62,7 @@ const compressPdfFlow = ai.defineFlow(
       });
       
       const imageQuality = getImageQuality(compressionLevel);
+      let imagesProcessed = 0;
 
       const pages = pdfDoc.getPages();
       for (const page of pages) {
@@ -79,10 +80,11 @@ const compressPdfFlow = ai.defineFlow(
               if (!imageStream || !('asStream' in imageStream)) continue;
               
               try {
-                  const image = await PDFImage.of(imageStream.asStream(), pdfDoc);
-                  if (image.isJpg) {
-                      const compressedImage = await pdfDoc.embedJpg(image.jpgBytes!, { quality: imageQuality });
+                  const image = await pdfDoc.embedPdf(imageStream);
+                  if (image.type === 'image' && image.subtype === 'jpeg') {
+                      const compressedImage = await pdfDoc.embedJpg(image.data, { quality: imageQuality });
                       xobjectDict.set(imageName, compressedImage.ref);
+                      imagesProcessed++;
                   }
               } catch (e) {
                   console.warn(`Could not process an image resource (${imageName.toString()}). Skipping it.`, e);
@@ -90,7 +92,14 @@ const compressPdfFlow = ai.defineFlow(
           }
       }
 
-      // save() will automatically remove unused objects, helping to reduce file size.
+      if (imagesProcessed === 0) {
+        return {
+           compressedPdfDataUri: pdfDataUri,
+           originalSize,
+           compressedSize: originalSize,
+        }
+      }
+
       const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
       const compressedSize = compressedPdfBytes.length;
 
@@ -98,7 +107,6 @@ const compressPdfFlow = ai.defineFlow(
         throw new Error("Compression resulted in an empty file. This can happen if the PDF has an unsupported structure.");
       }
       
-      // If the "compressed" file is larger, return the original.
       if (compressedSize >= originalSize) {
          return {
             compressedPdfDataUri: pdfDataUri,
