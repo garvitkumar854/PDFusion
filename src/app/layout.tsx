@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import FooterLoader from '@/components/FooterLoader';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -28,7 +28,7 @@ export default function RootLayout({
         <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
           {children}
         </main>
-        <Footer />
+        <FooterLoader />
         <Toaster />
       </body>
     </html>
