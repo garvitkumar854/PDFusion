@@ -9,12 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { PDFDocument, PDFImage } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
-
-if (typeof window === 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
+import { PDFDocument } from 'pdf-lib';
 
 export const CompressPdfInputSchema = z.object({
   pdfDataUri: z
@@ -60,70 +55,45 @@ const compressPdfFlow = ai.defineFlow(
     try {
       const pdfBytes = Buffer.from(pdfDataUri.split(',')[1], 'base64');
       const originalSize = pdfBytes.length;
+
+      const pdfDoc = await PDFDocument.load(pdfBytes, { 
+        // Some PDFs have objects that are not properly structured, this can help
+        ignoreEncryption: true,
+        updateMetadata: false 
+      });
       
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-      const compressedPdfDoc = await PDFDocument.create();
       const imageQuality = getImageQuality(compressionLevel);
-
-      for (let i = 1; i <= pdfjsDoc.numPages; i++) {
-        const page = await pdfjsDoc.getPage(i);
-        const operators = await page.getOperatorList();
-        const newPage = compressedPdfDoc.addPage([page.view[2], page.view[3]]);
-        
-        const resources = page.getResources();
-        
-        for (const op of operators.fnArray) {
-           if (op === pdfjsLib.OPS.paintImageXObject) {
-              const [imgName] = operators.argsArray[operators.argsArray.length - 1];
-              const img = await resources.getImage(imgName);
-
-              if (img) {
-                const imageBytes = img.data;
-
-                let pdfImage: PDFImage;
-                try {
-                    pdfImage = await compressedPdfDoc.embedJpg(imageBytes);
-                } catch (e) {
-                    // Fallback to PNG if it's not a valid JPG
-                    try {
-                        pdfImage = await compressedPdfDoc.embedPng(imageBytes);
-                    } catch (pngError) {
-                        console.warn(`Could not embed image ${imgName} on page ${i}. Skipping.`);
-                        continue;
-                    }
-                }
-                
-                // Compress the image before drawing
-                const canvas = newPage.ownerDocument.context.canvas({
-                    width: img.width,
-                    height: img.height,
-                });
-
-                const ctx = canvas.getContext('2d');
-                const imageBitmap = await createImageBitmap(new Blob([imageBytes]));
-                ctx.drawImage(imageBitmap, 0, 0);
-                const compressedImageBytes = await canvas.toBuffer('image/jpeg', imageQuality);
-                const compressedImage = await compressedPdfDoc.embedJpg(compressedImageBytes);
-
-                newPage.drawImage(compressedImage, {
-                  x: 0,
-                  y: 0,
-                  width: newPage.getWidth(),
-                  height: newPage.getHeight(),
-                });
-              }
-           }
+      const images = pdfDoc.getImages();
+      
+      // We are primarily targeting JPG images as they are common and compress well.
+      // Other image formats like PNG are not re-compressed to avoid quality issues
+      // with lossless formats.
+      for (const image of images) {
+        if (image.isJpg) {
+            try {
+                const compressedImage = await pdfDoc.embedJpg(image.jpgBytes!, { quality: imageQuality });
+                image.ref.set(compressedImage.ref);
+            } catch (e) {
+                console.warn('Could not re-compress an image. Skipping it.', e);
+            }
         }
-        // This is a simplified approach. A full implementation would need to handle all operators,
-        // not just images. For text, vectors, etc., they would be drawn here.
-        // For now, this flow will primarily compress pages that contain images.
       }
 
-      const compressedPdfBytes = await compressedPdfDoc.save();
+      // save() will automatically remove unused objects, helping to reduce file size.
+      const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
       const compressedSize = compressedPdfBytes.length;
 
       if (compressedSize === 0) {
-        throw new Error("Compression resulted in an empty file. This can happen if the PDF contains no compressible images or has an unsupported structure.")
+        throw new Error("Compression resulted in an empty file. This can happen if the PDF has an unsupported structure.");
+      }
+      
+      // If the "compressed" file is larger, return the original.
+      if (compressedSize >= originalSize) {
+         return {
+            compressedPdfDataUri: pdfDataUri,
+            originalSize,
+            compressedSize: originalSize,
+         }
       }
 
       const compressedPdfDataUri = `data:application/pdf;base64,${Buffer.from(compressedPdfBytes).toString('base64')}`;
@@ -135,7 +105,7 @@ const compressPdfFlow = ai.defineFlow(
       };
     } catch (error: any) {
       console.error('Error during PDF compression:', error);
-      throw new Error(`Failed to compress PDF. ${error.message}`);
+      throw new Error(`Failed to compress PDF. The file may be corrupted, encrypted, or in an unsupported format.`);
     }
   }
 );
