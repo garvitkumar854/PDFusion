@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers, Menu, ChevronDown, Combine, FileText, Scissors, FileArchive } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -78,6 +78,25 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
   );
 };
 
+const PdfFusionLogo = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 256 256"
+    className={cn("w-8 h-8", className)}
+  >
+    <rect width="256" height="256" fill="hsl(var(--primary))" rx="60" />
+    <path
+      fill="hsl(var(--primary-foreground))"
+      d="M216 99.88V168a8 8 0 0 1-8 8H88a8 8 0 0 1-8-8v-68.12a8 8 0 0 1 2.62-5.92l48-43.12a8 8 0 0 1 10.76 0l48 43.12a8 8 0 0 1 2.62 5.92Z"
+      opacity="0.5"
+    />
+    <path
+      fill="hsl(var(--primary-foreground))"
+      d="M208 88a8 8 0 0 0-8-8h-56a8 8 0 0 0-5.66 2.34L95.34 128H48a8 8 0 0 0-8 8v56a8 8 0 0 0 8 8h112a8 8 0 0 0 8-8v-42.34l34.34-34.32A8 8 0 0 0 208 88Zm-48 88H56v-40h42.34l40-40H160Z"
+    />
+  </svg>
+);
+
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,9 +107,7 @@ export default function Header() {
     <header className="py-4 border-b bg-background/80 sticky top-0 z-50 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
-          <div className="bg-primary p-2 rounded-md">
-            <Layers className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <PdfFusionLogo />
           <h1 className="text-xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
               PDFusion
@@ -144,9 +161,7 @@ export default function Header() {
                     <div className="p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-6">
                             <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                                <div className="bg-primary p-2 rounded-md">
-                                    <Layers className="w-6 h-6 text-primary-foreground" />
-                                </div>
+                                <PdfFusionLogo />
                                 <h1 className="text-xl font-bold tracking-tight">
                                   <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                                     PDFusion
