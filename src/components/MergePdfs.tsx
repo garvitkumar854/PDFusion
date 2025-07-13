@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { mergePdfs } from "@/ai/flows/merge-pdfs-flow";
+import { PDFDocument } from 'pdf-lib';
+
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 100;
@@ -41,22 +42,6 @@ function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
-
-async function fileToDataURI(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to read file as Data URI'));
-        }
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-}
-
 
 export function MergePdfs() {
   const [files, setFiles] = useState<PDFFile[]>([]);
@@ -183,19 +168,35 @@ export function MergePdfs() {
             }
             return prev + 5;
         });
-    }, 500);
+    }, 100);
 
     try {
-      const pdfDataUris = await Promise.all(
-        files.map(pdfFile => fileToDataURI(pdfFile.file))
-      );
-      
-      const result = await mergePdfs({ pdfDataUris });
+        const mergedPdf = await PDFDocument.create();
 
-      const blob = new Blob([Buffer.from(result.mergedPdfBase64, 'base64')], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      
-      setMergedPdfUrl(url);
+        for (const pdfFile of files) {
+            const pdfBytes = await pdfFile.file.arrayBuffer();
+            try {
+                const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+                const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            } catch (error) {
+                console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
+                toast({
+                   variant: "destructive",
+                   title: "Skipped a file",
+                   description: `Could not process "${pdfFile.file.name}". It might be corrupted or encrypted.`
+                });
+            }
+        }
+        
+        if (mergedPdf.getPageCount() === 0) {
+            throw new Error("Merge failed. All source PDFs might be corrupted, encrypted, or invalid.");
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setMergedPdfUrl(url);
       
       toast({
         title: "Merge Successful!",
@@ -377,18 +378,16 @@ export function MergePdfs() {
                 
                 <div className="space-y-4">
                     {isMerging ? (
-                        <>
-                             <div className="p-4 border rounded-lg bg-primary/5">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs on the server...</p>
-                                    </div>
-                                    <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
+                        <div className="p-4 border rounded-lg bg-primary/5">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                    <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs in your browser...</p>
                                 </div>
-                                <Progress value={mergeProgress} className="h-2" />
+                                <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
-                        </>
+                            <Progress value={mergeProgress} className="h-2" />
+                        </div>
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
                             <Layers className="mr-2 h-5 w-5" />
