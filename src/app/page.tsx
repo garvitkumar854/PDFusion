@@ -66,7 +66,7 @@ export default function Home() {
             <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               ✨ Your All-in-One PDF Toolkit
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
               Powerful PDF Tools,
               <br />
               <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
@@ -92,14 +92,14 @@ export default function Home() {
                 <Wand2 className="w-4 h-4" />
                 Our Services
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
                 What Can We <span className="text-primary">Help You With?</span>
               </h2>
               <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg">
                 Choose from our growing list of tools to handle your PDF tasks.
               </p>
           </AnimateOnScroll>
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {services.map((service, index) => (
               <AnimateOnScroll
                   key={index}
@@ -109,15 +109,15 @@ export default function Home() {
               >
                 <Link href={service.href} className="h-full block">
                   <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
-                    <CardHeader className="flex-row items-center gap-4">
+                    <CardHeader className="flex-row items-center gap-4 p-4 md:p-6">
                       <div className={`p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
-                      <CardTitle className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <CardTitle className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-grow">
+                    <CardContent className="flex-grow p-4 md:p-6 pt-0">
                       <p className="text-muted-foreground">{service.description}</p>
                     </CardContent>
                   </Card>
@@ -138,14 +138,14 @@ export default function Home() {
                   <Wand2 className="w-4 h-4" />
                   Why Choose PDFusion?
                 </div>
-                <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
                   Experience the <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Future of PDF Tools</span>
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
                   Discover the most intuitive and powerful PDF tools available online. Built with cutting-edge technology for the best user experience.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left grid-auto-rows-fr">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left grid-auto-rows-fr">
                   {futureFeatures.map((feature, index) => (
                     <AnimateOnScroll
                       key={index}
@@ -153,14 +153,14 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 250}
                     >
-                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-4 md:p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                           <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
                               {feature.icon}
                             </div>
                             <div className="space-y-2 flex-grow">
-                              <h3 className="text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                              <h3 className="text-lg md:text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-4">

@@ -79,7 +79,7 @@ export default function AboutPage() {
               <Sparkles className="w-4 h-4" />
               Our Mission
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
               About{' '}
               <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 PDFusion
@@ -102,7 +102,7 @@ export default function AboutPage() {
                   <Sparkles className="w-4 h-4" />
                   Why Choose PDFusion?
                 </div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
                   The <span className="text-primary">Best Choice</span> for Your PDFs
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
@@ -110,7 +110,7 @@ export default function AboutPage() {
                 </p>
             </AnimateOnScroll>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left">
                 {whyChooseUsFeatures.map((feature, index) => (
                     <AnimateOnScroll
                     key={index}
@@ -118,14 +118,14 @@ export default function AboutPage() {
                     className="duration-700"
                     delay={index * 150}
                     >
-                    <Card className="group bg-white dark:bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                    <Card className="group bg-white dark:bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-4 md:p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                             <div className="flex flex-col items-start gap-4 h-full">
                                 <div className={`p-3 rounded-lg ${feature.bgColor}`}>
                                 {feature.icon}
                                 </div>
                                 <div className="space-y-2">
-                                <h3 className="text-xl font-bold group-hover:text-primary">{feature.title}</h3>
+                                <h3 className="text-lg md:text-xl font-bold group-hover:text-primary">{feature.title}</h3>
                                 <p className="text-muted-foreground">{feature.description}</p>
                                 </div>
                             </div>
@@ -147,7 +147,7 @@ export default function AboutPage() {
               <Sparkles className="w-4 h-4" />
               Secure & Simple
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               How It <span className="text-primary">Works</span>
             </h2>
             <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
@@ -190,7 +190,7 @@ export default function AboutPage() {
                 <Sparkles className="w-4 h-4" />
                 From the Creator
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-12">
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-12">
                 A Note from the <span className="text-primary">Creator</span>
               </h2>
           </AnimateOnScroll>
@@ -226,7 +226,7 @@ export default function AboutPage() {
                 <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                     <div className="w-full">
-                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
                         Ready to <span className="text-primary">Streamline</span> Your PDFs?
                       </h2>
                       <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
