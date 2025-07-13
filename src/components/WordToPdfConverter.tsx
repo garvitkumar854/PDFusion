@@ -79,7 +79,7 @@ export default function WordToPdfConverter() {
         const fileBuffer = await file.arrayBuffer();
         const { default: docx_pdf } = await import('docx-pdf');
 
-        docx_pdf(fileBuffer, {}, (err, result) => {
+        docx_pdf(fileBuffer, {}, (err: Error, result: Buffer) => {
             clearInterval(progressInterval);
             if (err) {
                 console.error("Conversion failed:", err);
