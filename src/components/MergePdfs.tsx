@@ -365,7 +365,7 @@ export function MergePdfs() {
                              removingFileId === pdfFile.id && 'opacity-0 scale-95 -translate-x-full h-0 !p-0 !my-0'
                         )}
                         >
-                        <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
                             <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                             <div className="flex flex-col overflow-hidden">
                             <span className="text-sm font-medium truncate" title={pdfFile.file.name}>

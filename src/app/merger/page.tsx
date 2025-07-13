@@ -12,7 +12,7 @@ export default function MergerPage() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-500"
         >
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
             Merge PDFs with{' '}
             <br />
             <span className="relative inline-block">

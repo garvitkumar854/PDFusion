@@ -66,7 +66,7 @@ export default function Home() {
             <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               ✨ Your All-in-One PDF Toolkit
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
               Powerful PDF Tools,
               <br />
               <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
@@ -92,7 +92,7 @@ export default function Home() {
                 <Wand2 className="w-4 h-4" />
                 Our Services
               </div>
-              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                 What Can We <span className="text-primary">Help You With?</span>
               </h2>
               <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg">
