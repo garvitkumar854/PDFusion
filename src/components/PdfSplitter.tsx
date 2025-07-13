@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   GripVertical,
   Minus,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -64,15 +65,16 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string }) => (
+const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => (
     <div 
         key={pageNumber}
-        onClick={onToggle ? () => onToggle(pageNumber) : undefined}
+        onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
         className={cn(
             "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
-            onToggle && "cursor-pointer",
+            !disabled && onToggle && "cursor-pointer",
             isSelected ? "border-primary shadow-lg" : "border-transparent",
-            onToggle && !isSelected && "hover:border-primary/50",
+            !disabled && onToggle && !isSelected && "hover:border-primary/50",
+            disabled && "cursor-not-allowed",
             className
         )}
     >
@@ -88,7 +90,7 @@ const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckb
         )}
         {showCheckbox && onToggle && (
             <div className="absolute top-1 right-1">
-                <Checkbox checked={isSelected} className="bg-white/80" readOnly />
+                <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
             </div>
         )}
         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
@@ -216,6 +218,7 @@ export function PdfSplitter() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    disabled: isProcessing || isSplitting,
   });
 
   const removeFile = () => {
@@ -332,7 +335,7 @@ export function PdfSplitter() {
       toast({
         title: "Split Successful!",
         description: `Your PDF has been split into ${results.length} new document(s).`,
-        action: <div className="p-1 rounded-full bg-primary"><CheckCircle className="w-5 h-5 text-white" /></div>
+        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
     } catch (error: any) {
@@ -341,6 +344,10 @@ export function PdfSplitter() {
     } finally {
       setIsSplitting(false);
     }
+  };
+
+  const handleCancelSplit = () => {
+    setIsSplitting(false);
   };
   
   const handleSplitAgain = () => {
@@ -419,7 +426,7 @@ export function PdfSplitter() {
   if (splitResults.length > 0) {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
-        <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-primary mb-6" />
+        <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Split Successfully!</h2>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new documents are ready for download.</p>
         <div className="w-full max-w-md space-y-3 my-4 max-h-60 overflow-y-auto pr-2">
@@ -438,7 +445,7 @@ export function PdfSplitter() {
             ))}
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <Button size="lg" onClick={handleDownloadAll} className="w-full sm:w-auto text-base font-bold bg-primary hover:bg-primary/90">
+          <Button size="lg" onClick={handleDownloadAll} className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
             <Download className="mr-2 h-5 w-5" />
             Download All ({splitResults.length})
           </Button>
@@ -465,7 +472,7 @@ export function PdfSplitter() {
               {...getRootProps()}
               className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                "hover:border-primary/50",
+                !isSplitting && "hover:border-primary/50",
                 isDragActive && "border-primary bg-primary/10"
               )}
             >
@@ -475,7 +482,7 @@ export function PdfSplitter() {
                 Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4">
+              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isSplitting}>
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Choose File
               </Button>
@@ -504,7 +511,7 @@ export function PdfSplitter() {
                     </div>
                 </div>
                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : (file && (
-                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}>
+                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSplitting}>
                         <X className="w-4 h-4" />
                     </Button>
                 ))}
@@ -514,26 +521,26 @@ export function PdfSplitter() {
       </Card>
 
       {file && (
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className={cn("bg-white dark:bg-card shadow-lg", isSplitting && "opacity-70 pointer-events-none")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Split Options</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="range">Split by range</TabsTrigger>
-                <TabsTrigger value="extract">Extract pages</TabsTrigger>
+                <TabsTrigger value="range" disabled={isSplitting}>Split by range</TabsTrigger>
+                <TabsTrigger value="extract" disabled={isSplitting}>Extract pages</TabsTrigger>
               </TabsList>
               
               <TabsContent value="range" className="mt-6">
-                <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4">
+                <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4" disabled={isSplitting}>
                   <div>
                     <div className="flex items-center space-x-2 mb-2">
                       <RadioGroupItem value="custom" id="r-custom" />
                       <Label htmlFor="r-custom" className="font-semibold">Custom ranges</Label>
                     </div>
                     <Input 
-                      disabled={rangeMode !== 'custom'}
+                      disabled={rangeMode !== 'custom' || isSplitting}
                       id="split-ranges" 
                       value={customRanges} 
                       onChange={(e) => {
@@ -554,7 +561,7 @@ export function PdfSplitter() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Input
-                        disabled={rangeMode !== 'fixed'}
+                        disabled={rangeMode !== 'fixed' || isSplitting}
                         id="fixed-range-size"
                         type="number"
                         min="1"
@@ -569,7 +576,7 @@ export function PdfSplitter() {
               </TabsContent>
 
               <TabsContent value="extract" className="mt-6">
-                <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4">
+                <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4" disabled={isSplitting}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="all" id="r-all" />
                     <Label htmlFor="r-all">Extract all pages into separate PDFs</Label>
@@ -666,7 +673,7 @@ export function PdfSplitter() {
                                             id="select-all"
                                             checked={selectedPages.size === file.totalPages && file.totalPages > 0}
                                             onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
-                                            disabled={isRenderingPreviews || extractMode === 'all'}
+                                            disabled={isRenderingPreviews || extractMode === 'all' || isSplitting}
                                         />
                                         <Label htmlFor="select-all">Select All</Label>
                                     </div>
@@ -679,6 +686,7 @@ export function PdfSplitter() {
                                             isSelected={extractMode === 'all' || selectedPages.has(preview.pageNumber)}
                                             onToggle={extractMode === 'select' ? toggleSelectPage : undefined}
                                             showCheckbox={extractMode === 'select'}
+                                            disabled={isSplitting}
                                         />
                                     ))}
                                 </div>
@@ -696,10 +704,16 @@ export function PdfSplitter() {
             )}
             <div className="mt-8">
               {isSplitting ? (
-                <Button size="lg" className="w-full text-base font-bold" disabled>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Splitting...
-                </Button>
+                 <div className="p-4 border rounded-lg bg-primary/5 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                      <p className="text-sm font-medium text-primary">Splitting PDF...</p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={handleCancelSplit} className="w-full mt-4 text-muted-foreground">
+                        <Ban className="mr-2 h-4 w-4" />
+                        Cancel
+                    </Button>
+                </div>
               ) : (
                 <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isRenderingPreviews}>
                   <Scissors className="mr-2 h-5 w-5" />

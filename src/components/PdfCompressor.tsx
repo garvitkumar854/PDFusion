@@ -12,6 +12,7 @@ import {
   Loader2,
   FileArchive,
   ArrowRight,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -102,6 +103,7 @@ export function PdfCompressor() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    disabled: isCompressing,
   });
 
   const removeFile = () => {
@@ -141,7 +143,7 @@ export function PdfCompressor() {
       toast({
         title: "Compression Successful!",
         description: "Your PDF is ready for download.",
-        action: <div className="p-1 rounded-full bg-primary"><CheckCircle className="w-5 h-5 text-white" /></div>
+        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
     } catch (error: any) {
@@ -152,7 +154,14 @@ export function PdfCompressor() {
         title: "Compression Failed",
         description: error.message || "An unexpected error occurred during compression.",
       });
+      setProgress(0);
     }
+  };
+
+  const handleCancelCompress = () => {
+    setStatus('idle');
+    setProgress(0);
+    // Note: This doesn't abort the backend request, just resets the UI.
   };
   
   const handleCompressAgain = () => {
@@ -170,7 +179,7 @@ export function PdfCompressor() {
     
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
-        <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-primary mb-6" />
+        <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Compressed Successfully!</h2>
         
         <div className="flex items-center justify-center my-6 gap-4 text-base sm:text-lg">
@@ -190,7 +199,7 @@ export function PdfCompressor() {
         
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
           <a href={url} download={filename}>
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-primary hover:bg-primary/90">
+            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
               <Download className="mr-2 h-5 w-5" />
               Download PDF
             </Button>
@@ -215,7 +224,7 @@ export function PdfCompressor() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white dark:bg-card shadow-lg">
+      <Card className={cn("bg-white dark:bg-card shadow-lg", isCompressing && "opacity-70 pointer-events-none")}>
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF to Compress</CardTitle>
           <CardDescription>
@@ -228,7 +237,7 @@ export function PdfCompressor() {
               {...getRootProps()}
               className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                "hover:border-primary/50",
+                !isCompressing && "hover:border-primary/50",
                 isDragActive && "border-primary bg-primary/10"
               )}
             >
@@ -238,7 +247,7 @@ export function PdfCompressor() {
                 Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4">
+              <Button type="button" onClick={open} className="mt-4" disabled={isCompressing}>
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Choose File
               </Button>
@@ -255,7 +264,7 @@ export function PdfCompressor() {
                   <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isCompressing}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -268,8 +277,13 @@ export function PdfCompressor() {
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Compression Options</CardTitle>
           </CardHeader>
-          <CardContent>
-            <RadioGroup value={compressionLevel} onValueChange={(v) => setCompressionLevel(v as CompressionLevel)} className="space-y-4">
+          <CardContent className={cn(isCompressing && "opacity-70 pointer-events-none")}>
+            <RadioGroup 
+              value={compressionLevel} 
+              onValueChange={(v) => setCompressionLevel(v as CompressionLevel)} 
+              className="space-y-4"
+              disabled={isCompressing}
+            >
               <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
                 <RadioGroupItem value="low" id="c-low" />
                 <div>
@@ -304,6 +318,10 @@ export function PdfCompressor() {
                     <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
                   </div>
                   <Progress value={progress} className="h-2" />
+                  <Button size="sm" variant="ghost" onClick={handleCancelCompress} className="w-full mt-4 text-muted-foreground">
+                    <Ban className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
                 </div>
               ) : (
                 <Button size="lg" className="w-full text-base font-bold" onClick={handleCompress} disabled={!file || isCompressing}>

@@ -12,6 +12,7 @@ import {
   Layers,
   FolderOpen,
   Loader2,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -100,6 +101,7 @@ export function MergePdfs() {
     accept: { "application/pdf": [".pdf"] },
     noClick: true,
     noKeyboard: true,
+    disabled: isMerging,
   });
 
   const removeFile = (fileId: string) => {
@@ -201,7 +203,7 @@ export function MergePdfs() {
       toast({
         title: "Merge Successful!",
         description: "Your PDF is ready to be downloaded.",
-        action: <div className="p-1 rounded-full bg-primary"><CheckCircle className="w-5 h-5 text-white" /></div>
+        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
@@ -210,11 +212,17 @@ export function MergePdfs() {
         title: "Merge Failed",
         description: error.message || "An unexpected error occurred during the merge process.",
       });
+      setMergeProgress(0); // Reset on error
     } finally {
       clearInterval(progressInterval);
       setMergeProgress(100);
       setIsMerging(false);
     }
+  };
+  
+  const handleCancelMerge = () => {
+    setIsMerging(false);
+    setMergeProgress(0);
   };
 
   const handleDownload = () => {
@@ -240,11 +248,11 @@ export function MergePdfs() {
   if (mergedPdfUrl) {
     return (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
-            <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-primary mb-6" />
+            <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-primary hover:bg-primary/90">
+                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
                     <Download className="mr-2 h-5 w-5" />
                     Download PDF
                 </Button>
@@ -258,7 +266,7 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70 pointer-events-none")}>
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
                 <CardDescription>
@@ -270,7 +278,7 @@ export function MergePdfs() {
                     {...getRootProps()}
                     className={cn(
                     "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                    "hover:border-primary/50",
+                    !isMerging && "hover:border-primary/50",
                     isDragActive && "border-primary bg-primary/10"
                     )}
                 >
@@ -280,7 +288,7 @@ export function MergePdfs() {
                         Drop PDF files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4">
+                    <Button type="button" onClick={open} className="mt-4" disabled={isMerging}>
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Choose Files
                     </Button>
@@ -295,7 +303,7 @@ export function MergePdfs() {
         </Card>
 
         {files.length > 0 && (
-          <Card className="bg-white dark:bg-card shadow-lg">
+          <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70 pointer-events-none")}>
             <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
@@ -306,6 +314,7 @@ export function MergePdfs() {
                 size="sm" 
                 onClick={handleClearAll} 
                 className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md -ml-2 sm:ml-0"
+                disabled={isMerging}
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
                 Clear All
@@ -316,15 +325,16 @@ export function MergePdfs() {
                     {files.map((pdfFile, index) => (
                         <div
                         key={pdfFile.id}
-                        draggable
+                        draggable={!isMerging}
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
                         style={{ willChange: 'transform' }}
                         className={cn(
-                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card cursor-grab transition-transform duration-300 ease-in-out',
+                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card transition-transform duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                             isMerging ? 'cursor-not-allowed' : 'cursor-grab',
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
@@ -349,6 +359,7 @@ export function MergePdfs() {
                             size="icon" 
                             className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive" 
                             onClick={() => removeFile(pdfFile.id)}
+                            disabled={isMerging}
                             >
                             <X className="w-4 h-4" />
                             </Button>
@@ -373,6 +384,7 @@ export function MergePdfs() {
                         onChange={(e) => setOutputFilename(e.target.value)}
                         className="mt-1"
                         placeholder="e.g., merged_document.pdf"
+                        disabled={isMerging}
                     />
                 </div>
                 
@@ -382,11 +394,15 @@ export function MergePdfs() {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs in your browser...</p>
+                                    <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
                                 </div>
                                 <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
                             <Progress value={mergeProgress} className="h-2" />
+                            <Button size="sm" variant="ghost" onClick={handleCancelMerge} className="w-full mt-4 text-muted-foreground">
+                                <Ban className="mr-2 h-4 w-4" />
+                                Cancel
+                            </Button>
                         </div>
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
