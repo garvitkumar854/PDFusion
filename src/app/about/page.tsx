@@ -2,15 +2,15 @@ import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight } from "lucide-react";
+import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
 
 const whyChooseUsFeatures = [
     {
       icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-      title: 'PDF Merging Made Simple',
-      description: 'Our intuitive interface makes merging PDFs as easy as drag and drop. No technical knowledge required.',
+      title: 'Powerful PDF Tools',
+      description: 'Our intuitive interface makes merging, splitting, and compressing PDFs as easy as a few clicks.',
     },
     {
       icon: <Shield className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
@@ -22,7 +22,7 @@ const whyChooseUsFeatures = [
       icon: <Zap className="w-8 h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'Lightning Fast',
-      description: 'Built with modern technology to handle your PDFs quickly and efficiently.',
+      description: 'Built with modern technology to handle your PDFs quickly and efficiently, without server delays.',
     },
     {
       icon: <Users className="w-8 h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" />,
@@ -40,23 +40,44 @@ const whyChooseUsFeatures = [
       icon: <Heart className="w-8 h-8 text-red-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-red-100 dark:bg-red-900/20',
       title: 'Made with Love',
-      description: "We're passionate about creating tools that make your life easier.",
+      description: "We're passionate about creating tools that make your life easier, for free.",
     },
 ];
+
+const howItWorksSteps = [
+    {
+        icon: <UploadCloud className="w-10 h-10 text-primary" />,
+        title: 'Upload Your Files',
+        description: 'Select your PDFs from your computer. All files are loaded directly into your browser.',
+    },
+    {
+        icon: <Settings className="w-10 h-10 text-primary" />,
+        title: 'Configure Options',
+        description: 'Reorder files, select pages, or choose your compression level. Your settings are applied instantly.',
+    },
+    {
+        icon: <Download className="w-10 h-10 text-primary" />,
+        title: 'Download Securely',
+        description: 'Your new PDF is generated in your browser and downloaded directly to your device. No uploads needed.',
+    }
+]
 
 
 export default function AboutPage() {
   return (
     <>
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4 text-center">
+      <section className="relative py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.3),rgba(255,255,255,0))]"></div>
+        </div>
+        <div className="container mx-auto px-4 text-center relative z-10">
           <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-500"
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               <Sparkles className="w-4 h-4" />
-              About Our Mission
+              Our Mission
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
               About{' '}
@@ -64,32 +85,14 @@ export default function AboutPage() {
                 PDFusion
               </span>
             </h1>
-            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-              A modern solution for combining PDF files, built with simplicity and security in mind.
+            <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg">
+              We believe that managing PDF documents should be simple, secure, and accessible to everyone. Our mission is to provide a fast and user-friendly toolkit that makes PDF editing effortless while maintaining the highest standards of privacy.
             </p>
           </AnimateOnScroll>
         </div>
       </section>
 
-      <section className="pb-20 md:pb-32">
-        <div className="container mx-auto px-4 max-w-4xl">
-            <AnimateOnScroll
-                animation="animate-in fade-in-0"
-                className="duration-700 delay-200"
-            >
-                <Card className="bg-card/50 dark:bg-card/20 p-8 border border-primary/20 shadow-lg">
-                    <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-                        Our <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Mission</span>
-                    </h2>
-                    <p className="text-muted-foreground text-base md:text-lg">
-                        We believe that managing PDF documents should be simple and accessible to everyone. Our mission is to provide a secure, fast, and user-friendly tool that makes PDF merging effortless while maintaining the highest standards of privacy and security.
-                    </p>
-                </Card>
-            </AnimateOnScroll>
-        </div>
-      </section>
-
-      <section className="pb-20 md:pb-32">
+      <section className="py-20 md:py-32 bg-background">
         <div className="container mx-auto px-4 text-center">
             <AnimateOnScroll
                 animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -97,13 +100,13 @@ export default function AboutPage() {
             >
                 <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
                   <Sparkles className="w-4 h-4" />
-                  Why Choose Our Tool?
+                  Why Choose PDFusion?
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-                  Why Choose <span className="text-primary">Our Tool?</span>
+                  The <span className="text-primary">Best Choice</span> for Your PDFs
                 </h2>
                 <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
-                  Discover what makes our PDF merger the best choice for your document needs.
+                  Discover what makes our PDF toolkit the best choice for your document needs.
                 </p>
             </AnimateOnScroll>
 
@@ -134,7 +137,50 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="pb-20 md:pb-32">
+       <section className="py-20 md:py-32">
+        <div className="container mx-auto px-4 text-center">
+          <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-500"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+              <Sparkles className="w-4 h-4" />
+              Secure & Simple
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+              How It <span className="text-primary">Works</span>
+            </h2>
+            <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
+              Your privacy is our priority. All processing happens securely in your browser.
+            </p>
+          </AnimateOnScroll>
+          <div className="relative max-w-4xl mx-auto">
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block" aria-hidden="true"></div>
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0 animate-pulse" aria-hidden="true"></div>
+            
+            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12">
+              {howItWorksSteps.map((step, index) => (
+                <AnimateOnScroll
+                  key={index}
+                  animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                  className="duration-700"
+                  delay={index * 200}
+                >
+                  <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg">
+                    <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20 mb-6">
+                      {step.icon}
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                    <p className="text-muted-foreground">{step.description}</p>
+                  </div>
+                </AnimateOnScroll>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <AnimateOnScroll
               animation="animate-in fade-in-0"
@@ -172,36 +218,32 @@ export default function AboutPage() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <div className="bg-white dark:bg-[hsl(223,73%,11%)] rounded-2xl p-8 lg:p-10 overflow-hidden shadow-xl border border-primary/20">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-left-12"
-                className="duration-700 w-full lg:w-auto"
-              >
-                <div className="text-center lg:text-left">
-                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-                    Ready to <span className="text-primary">Try It Out?</span>
-                  </h2>
-                  <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
-                    Experience the simplicity of PDFusion for yourself.
-                  </p>
+           <AnimateOnScroll
+                animation="animate-in fade-in-0 zoom-in-95"
+                className="duration-700"
+            >
+              <div className="relative bg-white dark:bg-card rounded-2xl p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20">
+                <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
+                    <div className="w-full">
+                      <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+                        Ready to <span className="text-primary">Streamline</span> Your PDFs?
+                      </h2>
+                      <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
+                        Experience the simplicity and security of PDFusion for yourself.
+                      </p>
+                    </div>
+                  <div className="flex-shrink-0 w-full lg:w-auto">
+                    <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
+                      <Link href="/merger">
+                        Start Merging PDFs
+                        <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
-              </AnimateOnScroll>
-              <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-right-12"
-                className="duration-700 w-full lg:w-auto"
-              >
-                <div className="flex-shrink-0">
-                  <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
-                    <Link href="/merger">
-                      Start Merging PDFs
-                      <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    </Link>
-                  </Button>
-                </div>
-              </AnimateOnScroll>
-            </div>
-          </div>
+              </div>
+          </AnimateOnScroll>
         </div>
       </section>
     </>
