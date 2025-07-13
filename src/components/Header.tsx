@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers, Menu, ChevronDown, FileText } from 'lucide-react';
+import { Layers, Menu, ChevronDown, Combine, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,7 +27,7 @@ const navLinks = [
 ];
 
 const services = [
-    { href: "/merger", label: "Merge PDF", icon: <Layers className="mr-2 h-4 w-4" /> },
+    { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
