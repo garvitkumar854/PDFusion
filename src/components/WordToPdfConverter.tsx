@@ -70,7 +70,6 @@ export default function WordToPdfConverter() {
     setConversionProgress(0);
     setConvertedPdfUrl(null);
 
-    // Simulate conversion progress
     const progressInterval = setInterval(() => {
       setConversionProgress(prev => Math.min(prev + 10, 90));
     }, 200);
