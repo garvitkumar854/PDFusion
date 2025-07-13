@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -47,7 +48,8 @@ type ConversionResult = {
 
 type PagePreview = {
   pageNumber: number;
-  dataUrl: string;
+  dataUrl: string | null;
+  isVisible: boolean;
 };
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -59,39 +61,67 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => (
-    <div 
-        key={pageNumber}
-        onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
-        className={cn(
-            "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
-            !disabled && onToggle && "cursor-pointer",
-            isSelected ? "border-primary shadow-lg" : "border-transparent",
-            !disabled && onToggle && !isSelected && "hover:border-primary/50",
-            disabled && "cursor-not-allowed",
-            className
-        )}
-    >
-        {dataUrl ? (
-        <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
-        ) : (
-        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
-            <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span>Page {pageNumber}</span>
+const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const { onVisible } = usePageVisibility(pageNumber);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                onVisible(pageNumber);
+            }
+        }, { threshold: 0.1 });
+
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => {
+            if (ref.current) {
+                observer.unobserve(ref.current);
+            }
+        };
+    }, [pageNumber, onVisible]);
+
+    return (
+        <div
+            ref={ref}
+            key={pageNumber}
+            onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
+            className={cn(
+                "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
+                !disabled && onToggle && "cursor-pointer",
+                isSelected ? "border-primary shadow-lg" : "border-transparent",
+                !disabled && onToggle && !isSelected && "hover:border-primary/50",
+                disabled && "cursor-not-allowed",
+                className
+            )}
+        >
+            {dataUrl ? (
+            <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
+            ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
+                <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span>Page {pageNumber}</span>
+                </div>
+            </div>
+            )}
+            {showCheckbox && onToggle && (
+                <div className="absolute top-1 right-1">
+                    <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
+                </div>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
+                {pageNumber}
             </div>
         </div>
-        )}
-        {showCheckbox && onToggle && (
-            <div className="absolute top-1 right-1">
-                <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
-            </div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
-            {pageNumber}
-        </div>
-    </div>
-);
+    );
+});
+PagePreviewCard.displayName = 'PagePreviewCard';
+
+const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
+const usePageVisibility = () => React.useContext(PageVisibilityContext);
 
 
 export function PdfToJpgConverter() {
@@ -100,8 +130,7 @@ export function PdfToJpgConverter() {
   const [isConverting, setIsConverting] = useState(false);
   const [conversionResults, setConversionResults] = useState<ConversionResult[]>([]);
   const [pagePreviews, setPagePreviews] = useState<PagePreview[]>([]);
-  const [isRenderingPreviews, setIsRenderingPreviews] = useState(false);
-  const [previewProgress, setPreviewProgress] = useState(0);
+  
   const [conversionProgress, setConversionProgress] = useState(0);
 
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
@@ -123,26 +152,27 @@ export function PdfToJpgConverter() {
     };
   }, [conversionResults, file]);
   
-  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, quality: number = 0.5): Promise<PagePreview | null> => {
+  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, scale: number = 0.5): Promise<string | null> => {
     try {
         if (isCancelledRef.current) return null;
         const page = await pdfjsDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: quality });
+        const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
         if (context) {
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, canvas.width, canvas.height);
             const renderContext = {
                 canvasContext: context,
-                viewport: viewport
+                viewport: viewport,
+                renderInteractiveForms: false,
+                enableWebGL: false,
             };
             await page.render(renderContext).promise;
-            return {
-                pageNumber: pageNum,
-                dataUrl: canvas.toDataURL('image/jpeg', 0.9), // 0.9 JPEG quality
-            };
+            return canvas.toDataURL('image/jpeg', 0.9);
         }
     } catch (e) {
         console.error(`Error rendering page ${pageNum}:`, e);
@@ -178,30 +208,8 @@ export function PdfToJpgConverter() {
         setConversionResults([]);
         setError(null);
         
-        setIsRenderingPreviews(true);
-        setPreviewProgress(0);
-        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: '' }));
+        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
         setPagePreviews(previews);
-        
-        const renderPromises: Promise<void>[] = [];
-        for (let i = 1; i <= totalPages; i++) {
-            if (isCancelledRef.current) break;
-            const promise = renderPdfPage(pdfjsDoc, i).then(renderedPage => {
-                if(renderedPage) {
-                    setPagePreviews(prev => {
-                        const newPreviews = [...prev];
-                        const index = newPreviews.findIndex(p => p.pageNumber === renderedPage.pageNumber);
-                        if (index !== -1) {
-                            newPreviews[index] = renderedPage;
-                        }
-                        return newPreviews;
-                    });
-                }
-                setPreviewProgress(prev => Math.round(((prev * (totalPages / 100) + 1) / totalPages) * 100));
-            });
-            renderPromises.push(promise);
-        }
-        await Promise.all(renderPromises);
 
       } catch (error) {
         if (!isCancelledRef.current) {
@@ -211,12 +219,41 @@ export function PdfToJpgConverter() {
       } finally {
         if (!isCancelledRef.current) {
           setIsProcessing(false);
-          setIsRenderingPreviews(false);
         }
       }
     },
     [toast, renderPdfPage]
   );
+  
+  const onPageVisible = useCallback((pageNumber: number) => {
+    if (!file) return;
+
+    setPagePreviews(prev => {
+        const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
+        if (pageIndex === -1 || prev[pageIndex].dataUrl || prev[pageIndex].isVisible) {
+            return prev;
+        }
+
+        const newPreviews = [...prev];
+        newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
+        
+        renderPdfPage(file.pdfjsDoc, pageNumber, 0.5).then(dataUrl => {
+            if (dataUrl) {
+                setPagePreviews(currentPreviews => {
+                    const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
+                    if (latestIndex > -1) {
+                       const finalPreviews = [...currentPreviews];
+                       finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
+                       return finalPreviews;
+                    }
+                    return currentPreviews;
+                });
+            }
+        });
+        
+        return newPreviews;
+    });
+  }, [file, renderPdfPage]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -232,7 +269,6 @@ export function PdfToJpgConverter() {
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setIsProcessing(false);
-    setIsRenderingPreviews(false);
     setConversionResults([]);
     setPagePreviews([]);
     setError(null);
@@ -261,9 +297,9 @@ export function PdfToJpgConverter() {
             const pageNum = pagesToConvert[i];
             
             // Re-render at higher quality for final output
-            const renderedPage = await renderPdfPage(file.pdfjsDoc, pageNum, 2.0); // Higher scale for quality
-            if(renderedPage) {
-                const blob = await (await fetch(renderedPage.dataUrl)).blob();
+            const dataUrl = await renderPdfPage(file.pdfjsDoc, pageNum, 2.0); // Higher scale for quality
+            if(dataUrl) {
+                const blob = await (await fetch(dataUrl)).blob();
                 const filename = `${file.file.name.replace(/\.pdf$/i, '')}_page_${pageNum}.jpg`;
                 zip.file(filename, blob);
                 
@@ -445,41 +481,42 @@ export function PdfToJpgConverter() {
             <CardTitle className="text-xl sm:text-2xl">Conversion Options</CardTitle>
           </CardHeader>
           <CardContent>
-             {isRenderingPreviews ? (
+             {isProcessing ? (
                 <div className="flex flex-col justify-center items-center h-48">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="mt-4 mb-2">Rendering page previews...</p>
-                    <Progress value={previewProgress} className="w-full max-w-xs h-2" />
+                    <p className="mt-4 mb-2">Processing PDF...</p>
                 </div>
             ) : (
-                 <div className="border rounded-lg p-2 sm:p-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                        <Label className="font-semibold text-base sm:text-lg">
-                            Selected Pages: {selectedPages.size} / {file.totalPages}
-                        </Label>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="select-all"
-                                checked={selectedPages.size === file.totalPages && file.totalPages > 0}
-                                onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
-                                disabled={isRenderingPreviews || isConverting}
-                            />
-                            <Label htmlFor="select-all">Select All</Label>
+                 <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
+                    <div className="border rounded-lg p-2 sm:p-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                            <Label className="font-semibold text-base sm:text-lg">
+                                Selected Pages: {selectedPages.size} / {file.totalPages}
+                            </Label>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="select-all"
+                                    checked={selectedPages.size === file.totalPages && file.totalPages > 0}
+                                    onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
+                                    disabled={isConverting}
+                                />
+                                <Label htmlFor="select-all">Select All</Label>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
+                            {pagePreviews.map(preview => (
+                                <PagePreviewCard 
+                                    key={preview.pageNumber}
+                                    {...preview}
+                                    isSelected={selectedPages.has(preview.pageNumber)}
+                                    onToggle={toggleSelectPage}
+                                    showCheckbox={true}
+                                    disabled={isConverting}
+                                />
+                            ))}
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
-                        {pagePreviews.map(preview => (
-                            <PagePreviewCard 
-                                key={preview.pageNumber}
-                                {...preview}
-                                isSelected={selectedPages.has(preview.pageNumber)}
-                                onToggle={toggleSelectPage}
-                                showCheckbox={true}
-                                disabled={isConverting}
-                            />
-                        ))}
-                    </div>
-                </div>
+                 </PageVisibilityContext.Provider>
             )}
 
 
@@ -505,7 +542,7 @@ export function PdfToJpgConverter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isConverting || isRenderingPreviews || isProcessing || selectedPages.size === 0}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isConverting || isProcessing || selectedPages.size === 0}>
                   <ImageIcon className="mr-2 h-5 w-5" />
                   Convert to JPG
                 </Button>
@@ -517,3 +554,5 @@ export function PdfToJpgConverter() {
     </div>
   );
 }
+
+    
