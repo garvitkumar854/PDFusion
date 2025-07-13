@@ -1,5 +1,19 @@
-import WordToPdfConverter from '@/components/WordToPdfConverter';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const WordToPdfConverter = dynamic(
+  () => import('@/components/WordToPdfConverter'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    )
+  }
+);
 
 export default function WordToPdfPage() {
   return (
