@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -9,21 +9,19 @@ import {
   Download,
   X,
   CheckCircle,
-  GripVertical,
   FileText,
   FolderOpen,
   Loader2,
   Ban,
   FileArchive,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument, StandardFonts, rgb, PageSizes, degrees } from 'pdf-lib';
+import { PDFDocument, PageSizes } from 'pdf-lib';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
@@ -40,11 +38,18 @@ type ImageFile = {
   id: string;
   file: File;
   previewUrl: string;
+  width: number;
+  height: number;
 };
 
 type Orientation = "portrait" | "landscape";
 type PageSize = "A4" | "Letter" | "Fit";
 type MarginSize = "none" | "small" | "big";
+
+const PAGE_SIZE_MAP: Record<"A4" | "Letter", [number, number]> = {
+    A4: PageSizes.A4,
+    Letter: PageSizes.Letter,
+};
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -55,6 +60,49 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const PagePreview = ({ image, orientation, pageSize, marginSize }: { image: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
+    const getPageDimensions = () => {
+        if (pageSize === "Fit") {
+            return { width: image.width, height: image.height, aspectRatio: image.width / image.height };
+        }
+        let dims = PAGE_SIZE_MAP[pageSize];
+        if (orientation === 'landscape') {
+            dims = [dims[1], dims[0]];
+        }
+        return { width: dims[0], height: dims[1], aspectRatio: dims[0] / dims[1] };
+    };
+
+    const getMargin = () => {
+        if (pageSize === "Fit") return 0;
+        if (marginSize === "none") return 0;
+        return marginSize === "small" ? 0.05 : 0.1; // Margin as a percentage of the shortest side
+    };
+
+    const { aspectRatio } = getPageDimensions();
+    const marginPercent = getMargin();
+
+    return (
+        <div className="flex flex-col items-center">
+            <div 
+                className="bg-white dark:bg-zinc-800 shadow-md border"
+                style={{
+                    aspectRatio: `${aspectRatio}`,
+                    width: '100%',
+                    padding: `${marginPercent * 100}%`,
+                }}
+            >
+                <img
+                    src={image.previewUrl}
+                    alt="preview"
+                    className="w-full h-full object-contain"
+                />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Page {image.id.split('-')[0]}</p>
+        </div>
+    );
+}
+
+
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
@@ -62,7 +110,6 @@ export function JpgToPdfConverter() {
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
   
-  // Conversion Options
   const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
@@ -78,9 +125,8 @@ export function JpgToPdfConverter() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current = 0; // Invalidate any running operations
+      operationId.current = 0;
       files.forEach(f => URL.revokeObjectURL(f.previewUrl));
       if (conversionResults) {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
@@ -89,14 +135,9 @@ export function JpgToPdfConverter() {
   }, [files, conversionResults]);
   
   const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (files.length + acceptedFiles.length > MAX_FILES) {
-        toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
-        return;
-      }
-      
+    (acceptedFiles: File[]) => {
       let currentSize = totalSize;
-      const newFiles = acceptedFiles.filter(file => {
+      const validFiles = acceptedFiles.filter(file => {
         if (file.size > MAX_FILE_SIZE_BYTES) {
           toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
           return false;
@@ -109,20 +150,29 @@ export function JpgToPdfConverter() {
         return true;
       });
 
-      const filesToAdd = newFiles.map(file => ({ 
-        id: `${file.name}-${Date.now()}`, 
-        file,
-        previewUrl: URL.createObjectURL(file),
-      }));
+      const filesToAdd: Promise<ImageFile>[] = validFiles.map(file => 
+        new Promise((resolve) => {
+          const previewUrl = URL.createObjectURL(file);
+          const img = new window.Image();
+          img.onload = () => {
+            resolve({
+              id: `${files.length + validFiles.indexOf(file) + 1}-${file.name}`,
+              file,
+              previewUrl,
+              width: img.width,
+              height: img.height,
+            });
+          };
+          img.src = previewUrl;
+        })
+      );
       
-      setFiles(prev => [...prev, ...filesToAdd]);
-      setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
-
-      if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not valid image types or exceeded size limits." });
-      }
+      Promise.all(filesToAdd).then(newFiles => {
+        setFiles(prev => [...prev, ...newFiles]);
+        setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.file.size, 0));
+      });
     },
-    [files, totalSize, toast]
+    [files.length, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -136,12 +186,14 @@ export function JpgToPdfConverter() {
   const removeFile = (fileId: string) => {
     setRemovingFileId(fileId);
     setTimeout(() => {
-      const fileToRemove = files.find(f => f.id === fileId);
-      if (fileToRemove) {
-        URL.revokeObjectURL(fileToRemove.previewUrl);
-        setTotalSize(prev => prev - fileToRemove.file.size);
-        setFiles(prev => prev.filter(f => f.id !== fileId));
-      }
+      setFiles(prev => {
+        const fileToRemove = prev.find(f => f.id === fileId);
+        if (fileToRemove) {
+          URL.revokeObjectURL(fileToRemove.previewUrl);
+          setTotalSize(s => s - fileToRemove.file.size);
+        }
+        return prev.filter(f => f.id !== fileId);
+      });
       setRemovingFileId(null);
     }, 300);
   };
@@ -190,15 +242,16 @@ export function JpgToPdfConverter() {
     setConversionResults(null);
     
     try {
-      const getPageSize = () => {
-        let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
+      const getPageDimensions = (img: ImageFile) => {
+        if(pageSize === 'Fit') return {width: img.width, height: img.height};
+        let size = PAGE_SIZE_MAP[pageSize];
         return orientation === 'landscape' ? [size[1], size[0]] : size;
       }
 
-      const getMargin = () => {
-        if (marginSize === 'none') return 0;
-        if (marginSize === 'small') return 36; // 0.5 inch
-        return 72; // 1 inch
+      const getMargin = (pageWidth: number, pageHeight: number) => {
+        if (pageSize === 'Fit' || marginSize === 'none') return 0;
+        const shortestSide = Math.min(pageWidth, pageHeight);
+        return marginSize === 'small' ? shortestSide * 0.05 : shortestSide * 0.1; // 5% or 10% margin
       }
       
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
@@ -213,31 +266,24 @@ export function JpgToPdfConverter() {
             ? mergedPdf.embedPng(imageBytes) 
             : mergedPdf.embedJpg(imageBytes));
 
-        const pageDims = getPageSize();
-        const margin = getMargin();
-
+        const pageDims = getPageDimensions(imageFile);
         let page;
+        let docToSave: PDFDocument;
+
         if (mergeIntoOnePdf) {
-            page = mergedPdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
+            page = mergedPdf.addPage(pageDims);
+            docToSave = mergedPdf;
         } else {
             const singlePdf = await PDFDocument.create();
-            page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
+            page = singlePdf.addPage(pageDims);
+            docToSave = singlePdf;
         }
-
-        const dims = image.scale(1);
         
-        let pageWidth, pageHeight;
-        if (pageSize === 'Fit') {
-            pageWidth = dims.width + margin * 2;
-            pageHeight = dims.height + margin * 2;
-            page.setSize(pageWidth, pageHeight);
-        } else {
-            pageWidth = page.getWidth();
-            pageHeight = page.getHeight();
-        }
-
+        const {width: pageWidth, height: pageHeight} = page.getSize();
+        const margin = getMargin(pageWidth, pageHeight);
         const usableWidth = pageWidth - margin * 2;
         const usableHeight = pageHeight - margin * 2;
+        
         const scaled = image.scaleToFit(usableWidth, usableHeight);
         
         page.drawImage(image, {
@@ -248,7 +294,7 @@ export function JpgToPdfConverter() {
         });
         
         if (!mergeIntoOnePdf) {
-            const pdfBytes = await (page.doc as PDFDocument).save();
+            const pdfBytes = await docToSave.save();
             pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
         }
         
@@ -298,17 +344,6 @@ export function JpgToPdfConverter() {
     setConversionProgress(0);
     toast({ title: "Conversion cancelled." });
   };
-
-  const handleDownload = () => {
-    if (!conversionResults || conversionResults.length === 0) return;
-    const result = conversionResults[0];
-    const link = document.createElement("a");
-    link.href = result.url;
-    link.download = result.filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
   
   const handleConvertMore = () => {
     if (conversionResults) {
@@ -325,10 +360,12 @@ export function JpgToPdfConverter() {
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Successful!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Button size="lg" onClick={handleDownload} className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-                    {conversionResults[0].filename.endsWith('.zip') ? <FileArchive className="mr-2 h-5 w-5" /> : <Download className="mr-2 h-5 w-5" />}
-                    Download {conversionResults[0].filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
-                </Button>
+                <a href={conversionResults[0].url} download={conversionResults[0].filename}>
+                    <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
+                        {conversionResults[0].filename.endsWith('.zip') ? <FileArchive className="mr-2 h-5 w-5" /> : <Download className="mr-2 h-5 w-5" />}
+                        Download {conversionResults[0].filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
+                    </Button>
+                </a>
                 <Button size="lg" variant="outline" onClick={handleConvertMore} className="w-full sm:w-auto text-base">
                     Convert More
                 </Button>
@@ -375,131 +412,94 @@ export function JpgToPdfConverter() {
             </CardContent>
         </Card>
 
-        {files.length > 0 && (
-          <Card className={cn("bg-white dark:bg-card shadow-lg", isConverting && "opacity-70 pointer-events-none")}>
-            <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
-              <div>
-                <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
-                <CardDescription>Drag to reorder images</CardDescription>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md -ml-2 sm:ml-0"
-                disabled={isConverting}
-              >
-                <X className="w-4 h-4 mr-1 sm:mr-2" />
-                Clear All
-              </Button>
-            </CardHeader>
-            <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto pr-2">
-                    {files.map((imgFile, index) => (
-                        <div
-                        key={imgFile.id}
-                        draggable={!isConverting}
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragEnter={(e) => handleDragEnter(e, index)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => e.preventDefault()}
-                        style={{ willChange: 'transform, opacity, height, padding, margin' }}
-                        className={cn(
-                            'group relative rounded-lg border bg-card transition-all duration-300 ease-in-out aspect-square',
-                             isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
-                             isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                             removingFileId === imgFile.id && 'opacity-0 scale-95'
-                        )}
-                        >
-                          <img src={imgFile.previewUrl} alt={imgFile.file.name} className="w-full h-full object-cover rounded-lg" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white rounded-lg">
-                            <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
-                            <p className="text-xs text-white/80">{formatBytes(imgFile.file.size)}</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="absolute top-1 right-1 w-7 h-7 text-white/80 bg-black/30 hover:bg-destructive/80 hover:text-white"
-                            onClick={() => removeFile(imgFile.id)}
-                            disabled={isConverting}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <div className="absolute top-1 left-1 w-7 h-7 flex items-center justify-center text-white font-bold bg-black/30 rounded-full text-sm">
-                            {index + 1}
-                          </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="bg-white dark:bg-card shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Conversion Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
-                    {/* Orientation */}
-                    <div>
-                        <Label className="font-semibold">Page Orientation</Label>
-                        <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="portrait" id="o-p" /><Label htmlFor="o-p">Portrait</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="landscape" id="o-l" /><Label htmlFor="o-l">Landscape</Label></div>
-                        </RadioGroup>
-                    </div>
-                    {/* Page Size */}
-                    <div>
-                        <Label className="font-semibold">Page Size</Label>
-                        <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="A4" id="ps-a4" /><Label htmlFor="ps-a4">A4</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Letter" id="ps-letter" /><Label htmlFor="ps-letter">Letter</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Fit" id="ps-fit" /><Label htmlFor="ps-fit">Fit Image</Label></div>
-                        </RadioGroup>
-                    </div>
-                    {/* Margin */}
-                    <div>
-                        <Label className="font-semibold">Margin</Label>
-                        <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>No Margin</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
-                        </RadioGroup>
-                    </div>
-                </div>
-
-                <div className={cn("flex items-center space-x-2 pt-4 border-t", isConverting && "opacity-70 pointer-events-none")}>
-                    <Checkbox id="merge" checked={mergeIntoOnePdf} onCheckedChange={(c) => setMergeIntoOnePdf(Boolean(c))} disabled={isConverting} />
-                    <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
-                </div>
-                
-                <div className="space-y-4 pt-4 border-t">
-                    {isConverting ? (
-                        <div className="p-4 border rounded-lg bg-primary/5">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    <p className="text-sm font-medium text-primary transition-all duration-300">Converting to PDF...</p>
-                                </div>
-                                <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
+       {files.length > 0 && (
+            <Card className="bg-white dark:bg-card shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Arrange and Configure</CardTitle>
+                    <CardDescription>Drag images to reorder them and set your PDF options.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 space-y-6">
+                        {/* Options */}
+                        <div className={cn("space-y-6", isConverting && "opacity-70 pointer-events-none")}>
+                            <div>
+                                <Label className="font-semibold">Page Orientation</Label>
+                                <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="portrait" id="o-p" /><Label htmlFor="o-p">Portrait</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="landscape" id="o-l" /><Label htmlFor="o-l">Landscape</Label></div>
+                                </RadioGroup>
                             </div>
-                            <Progress value={conversionProgress} className="h-2 transition-all duration-500" />
-                            <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4">
-                                <Ban className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
+                            <div>
+                                <Label className="font-semibold">Page Size</Label>
+                                <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="A4" id="ps-a4" /><Label htmlFor="ps-a4">A4</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Letter" id="ps-letter" /><Label htmlFor="ps-letter">Letter</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Fit" id="ps-fit" /><Label htmlFor="ps-fit">Fit Image</Label></div>
+                                </RadioGroup>
+                            </div>
+                            <div>
+                                <Label className="font-semibold">Margin</Label>
+                                <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>No Margin</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
+                                </RadioGroup>
+                            </div>
+                            <div className="flex items-center space-x-2 pt-4 border-t">
+                                <Checkbox id="merge" checked={mergeIntoOnePdf} onCheckedChange={(c) => setMergeIntoOnePdf(Boolean(c))} disabled={isConverting} />
+                                <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
+                            </div>
                         </div>
-                    ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={files.length === 0 || isConverting}>
-                            <FileText className="mr-2 h-5 w-5" />
-                            Convert to PDF
-                        </Button>
-                    )}
-                </div>
 
-            </CardContent>
-        </Card>
+                        {/* Action Buttons */}
+                        <div className="space-y-4 pt-4 border-t">
+                            {isConverting ? (
+                                <div className="p-4 border rounded-lg bg-primary/5">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2"><Loader2 className="w-5 h-5 text-primary animate-spin" /><p className="text-sm font-medium text-primary">Converting...</p></div>
+                                        <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
+                                    </div>
+                                    <Progress value={conversionProgress} className="h-2" />
+                                    <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4"><Ban className="mr-2 h-4 w-4" />Cancel</Button>
+                                </div>
+                            ) : (
+                                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={files.length === 0}><FileText className="mr-2 h-5 w-5" />Convert to PDF</Button>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Previews */}
+                    <div className="md:col-span-2">
+                        <div className="flex justify-between items-center mb-4">
+                             <h3 className="font-semibold">Preview</h3>
+                             <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" disabled={isConverting}><X className="w-4 h-4 mr-1" />Clear All</Button>
+                        </div>
+                        <div onDragOver={handleDragOver} className="grid grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4 max-h-[600px] overflow-y-auto">
+                           {files.map((imgFile, index) => (
+                                <div
+                                    key={imgFile.id}
+                                    draggable={!isConverting}
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragEnter={(e) => handleDragEnter(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    className={cn(
+                                        'relative transition-all duration-300',
+                                        isDragging && dragItem.current === index ? 'shadow-2xl scale-105 opacity-50' : 'shadow-sm',
+                                        isConverting ? 'cursor-not-allowed' : 'cursor-grab',
+                                        removingFileId === imgFile.id && 'opacity-0 scale-95'
+                                    )}
+                                >
+                                    <PagePreview image={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-7 h-7" onClick={() => removeFile(imgFile.id)} disabled={isConverting}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+       )}
     </div>
   );
 }
