@@ -58,14 +58,13 @@ export function MergePdfs() {
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  const mergeOperationId = useRef<number>(0);
-  const isCancelledRef = useRef<boolean>(false);
+  const operationId = useRef<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
-      isCancelledRef.current = true;
+      operationId.current = 0; // Invalidate any running operations
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
@@ -176,8 +175,7 @@ export function MergePdfs() {
       return;
     }
     
-    isCancelledRef.current = false;
-    const currentOperationId = ++mergeOperationId.current;
+    const currentOperationId = ++operationId.current;
     
     setIsMerging(true);
     setMergeProgress(0);
@@ -190,7 +188,7 @@ export function MergePdfs() {
         const mergedPdf = await PDFDocument.create();
 
         for (const pdfFile of files) {
-            if (isCancelledRef.current) return;
+            if (operationId.current !== currentOperationId) return; // Cancelled
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
                 const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -206,7 +204,7 @@ export function MergePdfs() {
             }
         }
         
-        if (isCancelledRef.current) return;
+        if (operationId.current !== currentOperationId) return;
 
         if (mergedPdf.getPageCount() === 0) {
             throw new Error("Merge failed. All source PDFs might be corrupted, encrypted, or invalid.");
@@ -215,7 +213,7 @@ export function MergePdfs() {
         const mergedPdfBytes = await mergedPdf.save();
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
         
-        if (isCancelledRef.current || currentOperationId !== mergeOperationId.current) {
+        if (operationId.current !== currentOperationId) {
             URL.revokeObjectURL(URL.createObjectURL(blob));
             return;
         }
@@ -230,7 +228,7 @@ export function MergePdfs() {
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
-       if (!isCancelledRef.current) {
+       if (operationId.current === currentOperationId) {
           toast({
             variant: "destructive",
             title: "Merge Failed",
@@ -239,7 +237,7 @@ export function MergePdfs() {
       }
       setMergeProgress(0); // Reset on error
     } finally {
-      if (!isCancelledRef.current && currentOperationId === mergeOperationId.current) {
+      if (operationId.current === currentOperationId) {
         setMergeProgress(100);
         setIsMerging(false);
       }
@@ -247,9 +245,10 @@ export function MergePdfs() {
   };
   
   const handleCancelMerge = () => {
-    isCancelledRef.current = true;
+    operationId.current++; // Invalidate the current operation
     setIsMerging(false);
     setMergeProgress(0);
+    toast({ title: "Merge cancelled." });
   };
 
   const handleDownload = () => {

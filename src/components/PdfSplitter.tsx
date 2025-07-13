@@ -122,12 +122,12 @@ export function PdfSplitter() {
 
   const { toast } = useToast();
   
-  const isCancelledRef = useRef<boolean>(false);
+  const operationId = useRef<number>(0);
 
   useEffect(() => {
     // Component unmount logic
     return () => {
-      isCancelledRef.current = true;
+      operationId.current = 0; // Invalidate any running operations
       splitResults.forEach(r => URL.revokeObjectURL(r.url));
       if (file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
@@ -135,9 +135,9 @@ export function PdfSplitter() {
     };
   }, [splitResults, file]);
   
-  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number): Promise<PagePreview | null> => {
+  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<PagePreview | null> => {
     try {
-        if (isCancelledRef.current) return null;
+        if (operationId.current !== currentOperationId) return null;
         const page = await pdfjsDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement('canvas');
@@ -177,7 +177,7 @@ export function PdfSplitter() {
         return;
       }
       
-      isCancelledRef.current = false;
+      const currentOperationId = ++operationId.current;
       setIsProcessing(true);
       setPagePreviews([]);
       try {
@@ -200,8 +200,8 @@ export function PdfSplitter() {
         
         const renderPromises: Promise<void>[] = [];
         for (let i = 1; i <= totalPages; i++) {
-            if (isCancelledRef.current) break;
-            const promise = renderPdfPage(pdfjsDoc, i).then(renderedPage => {
+            if (operationId.current !== currentOperationId) break;
+            const promise = renderPdfPage(pdfjsDoc, i, currentOperationId).then(renderedPage => {
                 if(renderedPage) {
                     setPagePreviews(prev => {
                         const newPreviews = [...prev];
@@ -219,12 +219,12 @@ export function PdfSplitter() {
         await Promise.all(renderPromises);
 
       } catch (error) {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
           console.error("Error loading PDF:", error);
           toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
         }
       } finally {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
           setIsProcessing(false);
           setIsRenderingPreviews(false);
         }
@@ -243,7 +243,7 @@ export function PdfSplitter() {
   });
 
   const removeFile = () => {
-    isCancelledRef.current = true;
+    operationId.current++; // Invalidate any running operations
     setFile(null);
     setIsProcessing(false);
     setIsRenderingPreviews(false);
@@ -284,10 +284,10 @@ export function PdfSplitter() {
 
   const handleSplit = async () => {
     if (!file) return;
+    const currentOperationId = ++operationId.current;
     setIsSplitting(true);
     setSplitError(null);
     setSplitResults([]);
-    isCancelledRef.current = false;
 
     let pageGroups: number[][] = [];
     
@@ -328,7 +328,7 @@ export function PdfSplitter() {
         }
       }
       
-      if (isCancelledRef.current) return;
+      if (operationId.current !== currentOperationId) return;
 
       if (pageGroups.length === 0 || pageGroups.every(g => g.length === 0)) {
          setSplitError("No pages selected or ranges defined for splitting.");
@@ -340,7 +340,7 @@ export function PdfSplitter() {
       const originalName = file.file.name.replace(/\.pdf$/i, '');
 
       for (const group of pageGroups) {
-        if (isCancelledRef.current) return;
+        if (operationId.current !== currentOperationId) return;
         if (group.length === 0) continue;
         
         const newPdf = await PDFDocument.create();
@@ -359,7 +359,7 @@ export function PdfSplitter() {
             url,
         });
       }
-      if (isCancelledRef.current) {
+      if (operationId.current !== currentOperationId) {
         results.forEach(r => URL.revokeObjectURL(r.url));
         return;
       }
@@ -372,21 +372,22 @@ export function PdfSplitter() {
       });
 
     } catch (error: any) {
-      if (!isCancelledRef.current) {
+      if (operationId.current === currentOperationId) {
         console.error("Split failed:", error);
         toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
       }
     } finally {
-      if (!isCancelledRef.current) {
+      if (operationId.current === currentOperationId) {
         setIsSplitting(false);
       }
     }
   };
 
   const handleCancelSplit = () => {
-    isCancelledRef.current = true;
+    operationId.current++; // Invalidate current operation
     setIsSplitting(false);
     setSplitError(null);
+    toast({ title: "Split cancelled." });
   };
   
   const handleSplitAgain = () => {

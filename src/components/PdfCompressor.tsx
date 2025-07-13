@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -67,6 +68,7 @@ export function PdfCompressor() {
   const [status, setStatus] = useState<CompressionStatus>("idle");
   const [progress, setProgress] = useState(0);
 
+  const operationId = useRef<number>(0);
   const { toast } = useToast();
   
   const isCompressing = status === 'uploading' || status === 'compressing';
@@ -85,6 +87,7 @@ export function PdfCompressor() {
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
+      operationId.current = 0; // Invalidate any running operations
       if (compressionResult) {
         URL.revokeObjectURL(compressionResult.url);
       }
@@ -128,6 +131,7 @@ export function PdfCompressor() {
       return;
     }
 
+    const currentOperationId = ++operationId.current;
     setStatus('uploading');
     setProgress(0);
     setCompressionResult(null);
@@ -135,13 +139,22 @@ export function PdfCompressor() {
     try {
       const pdfDataUri = await fileToDataUri(file.file);
       
+      if (operationId.current !== currentOperationId) return; // Cancelled
+      
       setStatus('compressing');
       
       const input: CompressPdfInput = { pdfDataUri, compressionLevel };
       const result = await compressPdf(input);
       
+      if (operationId.current !== currentOperationId) return; // Cancelled
+
       const blob = await fetch(result.compressedPdfDataUri).then(res => res.blob());
       const url = URL.createObjectURL(blob);
+      
+      if (operationId.current !== currentOperationId) {
+        URL.revokeObjectURL(url);
+        return;
+      }
       
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       setCompressionResult({
@@ -159,21 +172,24 @@ export function PdfCompressor() {
       });
 
     } catch (error: any) {
-      setStatus('error');
-      console.error("Compression failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Compression Failed",
-        description: error.message || "An unexpected error occurred during compression.",
-      });
-      setProgress(0);
+      if (operationId.current === currentOperationId) {
+        setStatus('error');
+        console.error("Compression failed:", error);
+        toast({
+          variant: "destructive",
+          title: "Compression Failed",
+          description: error.message || "An unexpected error occurred during compression.",
+        });
+        setProgress(0);
+      }
     }
   };
 
   const handleCancelCompress = () => {
+    operationId.current++; // Invalidate the current operation
     setStatus('idle');
     setProgress(0);
-    // Note: This doesn't abort the backend request, just resets the UI.
+    toast({ title: "Compression cancelled." });
   };
   
   const handleCompressAgain = () => {

@@ -63,7 +63,7 @@ function formatBytes(bytes: number, decimals = 2) {
 
 const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => {
     const ref = useRef<HTMLDivElement>(null);
-    const { onVisible } = usePageVisibility(pageNumber);
+    const { onVisible } = usePageVisibility();
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
@@ -138,13 +138,12 @@ export function PdfToJpgConverter() {
 
   const { toast } = useToast();
   
-  const isCancelledRef = useRef<boolean>(false);
   const operationId = useRef<number>(0);
 
   useEffect(() => {
     // Component unmount logic
     return () => {
-      isCancelledRef.current = true;
+      operationId.current = 0; // Invalidate any running operations
       conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       if (file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
@@ -152,9 +151,9 @@ export function PdfToJpgConverter() {
     };
   }, [conversionResults, file]);
   
-  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, scale: number = 0.5): Promise<string | null> => {
+  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number, scale: number = 0.5): Promise<string | null> => {
     try {
-        if (isCancelledRef.current) return null;
+        if (operationId.current !== currentOperationId) return null;
         const page = await pdfjsDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
@@ -195,7 +194,7 @@ export function PdfToJpgConverter() {
         return;
       }
       
-      isCancelledRef.current = false;
+      const currentOperationId = ++operationId.current;
       setIsProcessing(true);
       setPagePreviews([]);
       try {
@@ -212,17 +211,17 @@ export function PdfToJpgConverter() {
         setPagePreviews(previews);
 
       } catch (error) {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
           console.error("Error loading PDF:", error);
           toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
         }
       } finally {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
           setIsProcessing(false);
         }
       }
     },
-    [toast, renderPdfPage]
+    [toast]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -237,8 +236,9 @@ export function PdfToJpgConverter() {
         const newPreviews = [...prev];
         newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
         
-        renderPdfPage(file.pdfjsDoc, pageNumber, 0.5).then(dataUrl => {
-            if (dataUrl) {
+        const currentOperationId = operationId.current;
+        renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId, 0.5).then(dataUrl => {
+            if (dataUrl && operationId.current === currentOperationId) {
                 setPagePreviews(currentPreviews => {
                     const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
                     if (latestIndex > -1) {
@@ -265,7 +265,7 @@ export function PdfToJpgConverter() {
   });
 
   const removeFile = () => {
-    isCancelledRef.current = true;
+    operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setIsProcessing(false);
@@ -281,7 +281,6 @@ export function PdfToJpgConverter() {
     }
     
     const currentOperationId = ++operationId.current;
-    isCancelledRef.current = false;
     setIsConverting(true);
     setConversionProgress(0);
     setError(null);
@@ -293,11 +292,11 @@ export function PdfToJpgConverter() {
         const totalToConvert = pagesToConvert.length;
         
         for (let i = 0; i < totalToConvert; i++) {
-            if (isCancelledRef.current) break;
+            if (operationId.current !== currentOperationId) break;
             const pageNum = pagesToConvert[i];
             
             // Re-render at higher quality for final output
-            const dataUrl = await renderPdfPage(file.pdfjsDoc, pageNum, 2.0); // Higher scale for quality
+            const dataUrl = await renderPdfPage(file.pdfjsDoc, pageNum, currentOperationId, 2.0); // Higher scale for quality
             if(dataUrl) {
                 const blob = await (await fetch(dataUrl)).blob();
                 const filename = `${file.file.name.replace(/\.pdf$/i, '')}_page_${pageNum}.jpg`;
@@ -311,7 +310,7 @@ export function PdfToJpgConverter() {
             setConversionProgress(((i + 1) / totalToConvert) * 100);
         }
 
-        if (isCancelledRef.current || operationId.current !== currentOperationId) {
+        if (operationId.current !== currentOperationId) {
             results.forEach(r => URL.revokeObjectURL(r.url));
             return;
         }
@@ -331,22 +330,23 @@ export function PdfToJpgConverter() {
             action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
         });
     } catch (err: any) {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
             setError("An error occurred during conversion.");
             toast({ variant: "destructive", title: "Conversion Failed", description: err.message || "Please try again." });
         }
     } finally {
-        if (!isCancelledRef.current) {
+        if (operationId.current === currentOperationId) {
             setIsConverting(false);
         }
     }
   };
 
   const handleCancelConvert = () => {
-    isCancelledRef.current = true;
+    operationId.current++;
     setIsConverting(false);
     setConversionProgress(0);
     setError(null);
+    toast({ title: "Conversion cancelled." });
   };
   
   const handleConvertAgain = () => {
@@ -554,5 +554,3 @@ export function PdfToJpgConverter() {
     </div>
   );
 }
-
-    
