@@ -16,28 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { PDFDocument } from "pdf-lib";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { mergePdfs } from "@/ai/flows/merge-pdfs-flow";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 100;
 const MAX_TOTAL_SIZE_MB = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
-
-const MERGE_STAGES = [
-    "Initializing merge engine...",
-    "Analyzing PDF structures...",
-    "Copying pages from documents...",
-    "Combining documents together...",
-    "Optimizing new file size...",
-    "Adding document metadata...",
-    "Finalizing merged document...",
-    "Almost there..."
-];
 
 export type PDFFile = {
   id: string;
@@ -53,41 +42,35 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+async function fileToDataURI(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to read file as Data URI'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+}
+
 
 export function MergePdfs() {
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
   const [isMerging, setIsMerging] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(0);
-  const [targetProgress, setTargetProgress] = useState(0);
-  const [progressStatus, setProgressStatus] = useState(MERGE_STAGES[0]);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
-  const isCancelled = useRef(false);
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
   const { toast } = useToast();
-
-  useEffect(() => {
-    let progressInterval: NodeJS.Timeout;
-    if (isMerging) {
-      progressInterval = setInterval(() => {
-        setMergeProgress(prev => {
-          if (prev < targetProgress) {
-            return Math.min(prev + 1, targetProgress);
-          }
-          if(prev >= 100) {
-            clearInterval(progressInterval);
-          }
-          return prev;
-        });
-      }, 50); 
-    }
-    return () => clearInterval(progressInterval);
-  }, [isMerging, targetProgress]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -146,12 +129,6 @@ export function MergePdfs() {
     setFiles([]);
     setTotalSize(0);
   };
-
-  const handleCancel = () => {
-    isCancelled.current = true;
-    setIsMerging(false); // Immediately stop the UI merging state
-    toast({ title: "Merge Cancelled", description: "The merge process was cancelled." });
-  };
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
@@ -196,87 +173,46 @@ export function MergePdfs() {
 
     setIsMerging(true);
     setMergeProgress(0);
-    setTargetProgress(0);
-    setProgressStatus(MERGE_STAGES[0]);
-    isCancelled.current = false;
     setMergedPdfUrl(null);
 
+    const progressInterval = setInterval(() => {
+        setMergeProgress(prev => {
+            if (prev >= 95) {
+                clearInterval(progressInterval);
+                return 95;
+            }
+            return prev + 5;
+        });
+    }, 500);
+
     try {
-      const mergedPdf = await PDFDocument.create();
-      let filesProcessed = 0;
-      let stageIndex = 0;
-
-      const progressInterval = setInterval(() => {
-        if (isCancelled.current) {
-            clearInterval(progressInterval);
-            return;
-        }
-        stageIndex = (stageIndex + 1) % (MERGE_STAGES.length -1);
-        setProgressStatus(MERGE_STAGES[stageIndex]);
-      }, 1500 + Math.random() * 500);
-
-      for (const pdfFile of files) {
-        if (isCancelled.current) {
-            throw new Error("Cancelled");
-        }
-
-        const progressIncrement = (1 / files.length) * 100;
-        setTargetProgress(prev => Math.min(prev + progressIncrement, 95));
-
-        try {
-            const fileBytes = await pdfFile.file.arrayBuffer();
-            const sourcePdf = await PDFDocument.load(fileBytes, { ignoreEncryption: true });
-            const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
-            copiedPages.forEach((page) => mergedPdf.addPage(page));
-        } catch (error) {
-            console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
-            toast({
-                variant: 'destructive',
-                title: 'Skipped File',
-                description: `Could not process "${pdfFile.file.name}". It might be corrupted or encrypted.`,
-            });
-        } finally {
-            filesProcessed++;
-        }
-      }
-
-      clearInterval(progressInterval);
+      const pdfDataUris = await Promise.all(
+        files.map(pdfFile => fileToDataURI(pdfFile.file))
+      );
       
-      if (isCancelled.current) {
-        throw new Error("Cancelled");
-      }
-      
-      if (mergedPdf.getPageCount() === 0) {
-        toast({ variant: 'destructive', title: 'Merge Failed', description: "No valid pages were found. All source PDFs might be corrupted or encrypted." });
-        throw new Error("Merge failed. All source PDFs might be corrupted or encrypted.");
-      }
+      const result = await mergePdfs({ pdfDataUris });
 
-      setTargetProgress(100);
-      setProgressStatus("Finalizing...");
-
-      const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
+      const blob = new Blob([Buffer.from(result.mergedPdfBase64, 'base64')], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
+      
       setMergedPdfUrl(url);
-
+      
       toast({
         title: "Merge Successful!",
         description: "Your PDF is ready to be downloaded.",
         action: <div className="p-1 rounded-full bg-primary"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
-      if (error.message !== 'Cancelled') {
-        console.error("Merge failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Merge Failed",
-          description: error.message || "An unexpected error occurred during the merge process.",
-        });
-      }
+      console.error("Merge failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Merge Failed",
+        description: error.message || "An unexpected error occurred during the merge process.",
+      });
     } finally {
+      clearInterval(progressInterval);
+      setMergeProgress(100);
       setIsMerging(false);
-      setMergeProgress(0);
-      setTargetProgress(0);
     }
   };
 
@@ -323,9 +259,9 @@ export function MergePdfs() {
     <div className="space-y-6">
         <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Upload & Merge</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
                 <CardDescription>
-                  Drag & drop files, reorder them, and click merge.
+                  Drag &amp; drop files, reorder them, and click merge.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -334,7 +270,7 @@ export function MergePdfs() {
                     className={cn(
                     "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                     "hover:border-primary/50",
-                    isDragActive && "border-primary bg-primary/10"
+                    isDragActive &amp;&amp; "border-primary bg-primary/10"
                     )}
                 >
                     <input {...getInputProps()} />
@@ -357,7 +293,7 @@ export function MergePdfs() {
             </CardContent>
         </Card>
 
-        {files.length > 0 && (
+        {files.length > 0 &amp;&amp; (
           <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
               <div>
@@ -387,7 +323,7 @@ export function MergePdfs() {
                         style={{ willChange: 'transform' }}
                         className={cn(
                             'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card cursor-grab transition-transform duration-300 ease-in-out',
-                             isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                             isDragging &amp;&amp; dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
@@ -441,29 +377,18 @@ export function MergePdfs() {
                 
                 <div className="space-y-4">
                     {isMerging ? (
-                        <>
+                        &lt;&gt;
                              <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary transition-all duration-300">{progressStatus}</p>
+                                        <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs on the server...</p>
                                     </div>
                                     <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                                 </div>
                                 <Progress value={mergeProgress} className="h-2" />
-                                <div className="flex justify-end mt-4">
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={handleCancel}
-                                        className="w-full"
-                                        >
-                                        <X className="mr-2 h-4 w-4" />
-                                        Cancel Merge
-                                    </Button>
-                                </div>
                             </div>
-                        </>
+                        &lt;/>
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
                             <Layers className="mr-2 h-5 w-5" />
