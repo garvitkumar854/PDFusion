@@ -1,0 +1,15 @@
+
+{
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "id": "pdfusion-backend",
+      "region": "us-west1"
+    }
+  }
+}
