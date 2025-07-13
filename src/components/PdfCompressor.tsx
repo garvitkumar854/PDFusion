@@ -328,9 +328,9 @@ export function PdfCompressor() {
                   <Progress value={progress} className="h-2 transition-all duration-500 ease-out" />
                   <Button 
                     size="sm" 
-                    variant="ghost" 
+                    variant="destructive" 
                     onClick={handleCancelCompress} 
-                    className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full mt-4"
                   >
                     <Ban className="mr-2 h-4 w-4" />
                     Cancel

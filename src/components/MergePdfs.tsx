@@ -376,7 +376,7 @@ export function MergePdfs() {
                 <CardTitle className="text-xl sm:text-2xl">Merge Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div>
+                <div className={cn(isMerging && "opacity-70 pointer-events-none")}>
                     <label htmlFor="output-filename" className="text-sm font-medium text-foreground">Output Filename</label>
                     <Input 
                         id="output-filename" 
@@ -399,13 +399,13 @@ export function MergePdfs() {
                                 <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
                             <Progress value={mergeProgress} className="h-2" />
-                            <Button size="sm" variant="ghost" onClick={handleCancelMerge} className="w-full mt-4 text-muted-foreground">
+                            <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
                                 <Ban className="mr-2 h-4 w-4" />
                                 Cancel
                             </Button>
                         </div>
                     ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={files.length < 2}>
                             <Layers className="mr-2 h-5 w-5" />
                             Merge PDFs
                         </Button>

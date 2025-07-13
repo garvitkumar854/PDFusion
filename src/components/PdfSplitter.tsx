@@ -709,7 +709,7 @@ export function PdfSplitter() {
                       <Loader2 className="w-5 h-5 text-primary animate-spin" />
                       <p className="text-sm font-medium text-primary">Splitting PDF...</p>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={handleCancelSplit} className="w-full mt-4 text-muted-foreground">
+                    <Button size="sm" variant="destructive" onClick={handleCancelSplit} className="w-full mt-4">
                         <Ban className="mr-2 h-4 w-4" />
                         Cancel
                     </Button>
