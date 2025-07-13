@@ -11,7 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { PDFDocument } from 'pdf-lib';
 
-export const CompressPdfInputSchema = z.object({
+const CompressPdfInputSchema = z.object({
   pdfDataUri: z
     .string()
     .describe(
@@ -21,7 +21,7 @@ export const CompressPdfInputSchema = z.object({
 });
 export type CompressPdfInput = z.infer<typeof CompressPdfInputSchema>;
 
-export const CompressPdfOutputSchema = z.object({
+const CompressPdfOutputSchema = z.object({
   compressedPdfDataUri: z.string().describe('The compressed PDF file as a data URI.'),
   originalSize: z.number().describe('The original file size in bytes.'),
   compressedSize: z.number().describe('The compressed file size in bytes.'),
