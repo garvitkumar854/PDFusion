@@ -81,6 +81,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
   return (
     <header className="py-4 border-b bg-background/80 sticky top-0 z-50 backdrop-blur-lg">
@@ -97,15 +98,22 @@ export default function Header() {
         </Link>
         
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <NavLink key={link.href + link.label} href={link.href} label={link.label} currentPath={pathname} />
-          ))}
+          <NavLink href="/" label="Home" currentPath={pathname} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="font-semibold text-muted-foreground hover:text-primary p-2 group">
-                Services
-                <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-              </Button>
+                <div className={cn(
+                    "group relative py-2 font-semibold transition-colors flex items-center cursor-pointer",
+                    isServicesActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+                )}>
+                    <span>Services</span>
+                    <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    <span
+                        className={cn(
+                        "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                        isServicesActive ? "w-full" : "w-0 group-hover:w-full"
+                        )}
+                    />
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
                 {services.map((service) => (
@@ -118,6 +126,8 @@ export default function Header() {
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <NavLink href="/about" label="About" currentPath={pathname} />
+          <NavLink href="/contact" label="Contact" currentPath={pathname} />
         </nav>
 
         <div className="md:hidden">
