@@ -17,7 +17,7 @@ export default function Home() {
     },
     {
       icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Word to PDF',
       description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
       href: '/word-to-pdf'
@@ -75,7 +75,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="services" className="pb-20 md:pb-32">
+      <section id="services" className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
         <div className="container mx-auto px-4">
           <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
