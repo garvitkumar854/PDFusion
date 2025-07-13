@@ -1,4 +1,4 @@
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,13 @@ export default function Home() {
       title: 'Split PDF',
       description: 'Extract specific pages or page ranges from a PDF into separate files.',
       href: '/split-pdf'
+    },
+    {
+      icon: <FileArchive className="w-8 h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      title: 'Compress PDF',
+      description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
+      href: '/compress-pdf'
     },
   ];
 
@@ -97,7 +104,7 @@ export default function Home() {
               <AnimateOnScroll
                   key={index}
                   animation="animate-in fade-in-0"
-                  className="duration-700"
+                  className="duration-700 h-full"
                   delay={index * 200}
               >
                 <Link href={service.href} className="h-full block">
