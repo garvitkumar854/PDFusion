@@ -15,13 +15,6 @@ export default function Home() {
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'
     },
-    {
-      icon: <FileText className="w-8 h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
-      title: 'Word to PDF',
-      description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
-      href: '/word-to-pdf'
-    },
   ];
 
   const futureFeatures = [
@@ -92,7 +85,7 @@ export default function Home() {
                 Choose from our growing list of tools to handle your PDF tasks.
               </p>
           </AnimateOnScroll>
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="max-w-xl mx-auto grid grid-cols-1 gap-8">
             {services.map((service, index) => (
               <AnimateOnScroll
                   key={index}

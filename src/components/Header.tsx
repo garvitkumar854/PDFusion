@@ -28,7 +28,6 @@ const navLinks = [
 
 const services = [
     { href: "/merger", label: "Merge PDF", icon: <Layers className="mr-2 h-4 w-4" /> },
-    { href: "/word-to-pdf", label: "Word to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {

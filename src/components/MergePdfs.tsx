@@ -270,7 +270,7 @@ export function MergePdfs() {
                     className={cn(
                     "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                     "hover:border-primary/50",
-                    isDragActive &amp;&amp; "border-primary bg-primary/10"
+                    isDragActive && "border-primary bg-primary/10"
                     )}
                 >
                     <input {...getInputProps()} />
@@ -293,7 +293,7 @@ export function MergePdfs() {
             </CardContent>
         </Card>
 
-        {files.length > 0 &amp;&amp; (
+        {files.length > 0 && (
           <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
               <div>
@@ -323,7 +323,7 @@ export function MergePdfs() {
                         style={{ willChange: 'transform' }}
                         className={cn(
                             'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card cursor-grab transition-transform duration-300 ease-in-out',
-                             isDragging &amp;&amp; dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                             isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                         )}
                         >
                         <div className="flex items-center gap-3 overflow-hidden">
@@ -377,7 +377,7 @@ export function MergePdfs() {
                 
                 <div className="space-y-4">
                     {isMerging ? (
-                        &lt;&gt;
+                        <>
                              <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -388,7 +388,7 @@ export function MergePdfs() {
                                 </div>
                                 <Progress value={mergeProgress} className="h-2" />
                             </div>
-                        &lt;/>
+                        </>
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={isMerging || files.length < 2}>
                             <Layers className="mr-2 h-5 w-5" />
