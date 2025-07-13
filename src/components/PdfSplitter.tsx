@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -13,6 +14,7 @@ import {
   Loader2,
   AlertTriangle,
   GripVertical,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +64,39 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean }) => (
+    <div 
+        key={pageNumber}
+        onClick={onToggle ? () => onToggle(pageNumber) : undefined}
+        className={cn(
+            "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
+            onToggle && "cursor-pointer",
+            isSelected ? "border-primary shadow-lg" : "border-transparent",
+            onToggle && !isSelected && "hover:border-primary/50"
+        )}
+    >
+        {dataUrl ? (
+        <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
+        ) : (
+        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
+            <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span>Page {pageNumber}</span>
+            </div>
+        </div>
+        )}
+        {showCheckbox && onToggle && (
+            <div className="absolute top-1 right-1">
+                <Checkbox checked={isSelected} className="bg-white/80" readOnly />
+            </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
+            {pageNumber}
+        </div>
+    </div>
+);
+
+
 export function PdfSplitter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -82,16 +117,10 @@ export function PdfSplitter() {
   const [splitError, setSplitError] = useState<string | null>(null);
 
   const { toast } = useToast();
-
-  const renderPdfPages = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy) => {
-    setIsRenderingPreviews(true);
-    setPreviewProgress(0);
-    const previews: PagePreview[] = [];
-    const numPages = pdfjsDoc.numPages;
-
-    for (let i = 1; i <= numPages; i++) {
-      try {
-        const page = await pdfjsDoc.getPage(i);
+  
+  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number): Promise<PagePreview | null> => {
+    try {
+        const page = await pdfjsDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -99,28 +128,22 @@ export function PdfSplitter() {
         canvas.width = viewport.width;
 
         if (context) {
-          const renderContext = {
-            canvasContext: context,
-            viewport: viewport
-          };
-          await page.render(renderContext).promise;
-          previews.push({
-            pageNumber: i,
-            dataUrl: canvas.toDataURL('image/jpeg', 0.8),
-          });
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
+            return {
+                pageNumber: pageNum,
+                dataUrl: canvas.toDataURL('image/jpeg', 0.8),
+            };
         }
-      } catch (e) {
-        console.error(`Error rendering page ${i}:`, e);
-        // Add a placeholder for failed previews
-        previews.push({ pageNumber: i, dataUrl: '' });
-      }
-      setPreviewProgress(Math.round((i / numPages) * 100));
+    } catch (e) {
+        console.error(`Error rendering page ${pageNum}:`, e);
     }
-
-    setPagePreviews(previews);
-    setIsRenderingPreviews(false);
+    return null;
   }, []);
-  
+
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (acceptedFiles.length === 0) {
@@ -150,7 +173,28 @@ export function PdfSplitter() {
         setSplitResults([]);
         setSplitError(null);
         
-        renderPdfPages(pdfjsDoc);
+        setIsRenderingPreviews(true);
+        setPreviewProgress(0);
+        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: '' }));
+        setPagePreviews(previews);
+
+        for (let i = 1; i <= totalPages; i++) {
+          renderPdfPage(pdfjsDoc, i).then(renderedPage => {
+            if(renderedPage) {
+              setPagePreviews(prev => {
+                  const newPreviews = [...prev];
+                  const index = newPreviews.findIndex(p => p.pageNumber === renderedPage.pageNumber);
+                  if (index !== -1) {
+                      newPreviews[index] = renderedPage;
+                  }
+                  return newPreviews;
+              });
+            }
+          });
+          setPreviewProgress(Math.round((i / totalPages) * 100));
+        }
+        setIsRenderingPreviews(false);
+
       } catch (error) {
         console.error("Error loading PDF:", error);
         toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
@@ -158,7 +202,7 @@ export function PdfSplitter() {
         setIsProcessing(false);
       }
     },
-    [toast, renderPdfPages]
+    [toast, renderPdfPage]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -251,7 +295,7 @@ export function PdfSplitter() {
         }
       }
       
-      if (pageGroups.length === 0) {
+      if (pageGroups.length === 0 || pageGroups.every(g => g.length === 0)) {
          setSplitError("No pages selected or ranges defined for splitting.");
          setIsSplitting(false);
          return;
@@ -332,6 +376,30 @@ export function PdfSplitter() {
       setSelectedPages(new Set());
     }
   };
+
+  const customRangePreviewPages = useMemo(() => {
+    if (!file || splitMode !== 'range' || rangeMode !== 'custom') return [];
+    
+    const firstPart = customRanges.split(',')[0].trim();
+    if (firstPart.includes('-')) {
+        const [startStr, endStr] = firstPart.split('-');
+        const start = parseInt(startStr, 10);
+        const end = parseInt(endStr, 10);
+        if (!isNaN(start) && start >= 1 && start <= file.totalPages) {
+            const pages = [start];
+            if (!isNaN(end) && end >= 1 && end <= file.totalPages && end > start) {
+                pages.push(end);
+            }
+            return pages;
+        }
+    } else {
+        const pageNum = parseInt(firstPart, 10);
+        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= file.totalPages) {
+            return [pageNum];
+        }
+    }
+    return [];
+  }, [customRanges, file, splitMode, rangeMode]);
 
   if (splitResults.length > 0) {
     return (
@@ -441,6 +509,7 @@ export function PdfSplitter() {
                 <TabsTrigger value="range">Split by range</TabsTrigger>
                 <TabsTrigger value="extract">Extract pages</TabsTrigger>
               </TabsList>
+              
               <TabsContent value="range" className="mt-6">
                 <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4">
                   <div>
@@ -475,7 +544,7 @@ export function PdfSplitter() {
                         type="number"
                         min="1"
                         value={fixedRangeSize}
-                        onChange={(e) => setFixedRangeSize(parseInt(e.target.value) || 1)}
+                        onChange={(e) => setFixedRangeSize(Math.max(1, parseInt(e.target.value)) || 1)}
                         className="w-24"
                       />
                       <Label htmlFor="fixed-range-size" className="text-muted-foreground">pages per file</Label>
@@ -483,6 +552,7 @@ export function PdfSplitter() {
                   </div>
                 </RadioGroup>
               </TabsContent>
+
               <TabsContent value="extract" className="mt-6">
                 <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4">
                   <div className="flex items-center space-x-2">
@@ -494,60 +564,102 @@ export function PdfSplitter() {
                       <RadioGroupItem value="select" id="r-select" />
                       <Label htmlFor="r-select">Select pages to extract into one PDF</Label>
                     </div>
-                    {extractMode === 'select' && (
-                        <div className="mt-4 border rounded-lg p-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <Label className="font-semibold">
-                                    Selected Pages: {selectedPages.size} / {file.totalPages}
-                                </Label>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="select-all"
-                                        checked={selectedPages.size === file.totalPages && file.totalPages > 0}
-                                        onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
-                                        disabled={isRenderingPreviews}
-                                    />
-                                    <Label htmlFor="select-all">Select All</Label>
-                                </div>
-                            </div>
-                            {isRenderingPreviews ? (
-                                <div className="flex flex-col justify-center items-center h-48">
-                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                    <p className="mt-4 mb-2">Rendering page previews...</p>
-                                    <Progress value={previewProgress} className="w-full max-w-xs h-2" />
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto pr-2">
-                                    {pagePreviews.map(preview => (
-                                        <div 
-                                            key={preview.pageNumber}
-                                            onClick={() => toggleSelectPage(preview.pageNumber)}
-                                            className={cn(
-                                                "relative rounded-md overflow-hidden border-2 cursor-pointer transition-all aspect-[7/10] bg-muted",
-                                                selectedPages.has(preview.pageNumber) ? "border-primary shadow-lg" : "border-transparent hover:border-primary/50"
-                                            )}
-                                        >
-                                          {preview.dataUrl ? (
-                                            <img src={preview.dataUrl} alt={`Page ${preview.pageNumber}`} className="w-full h-full object-contain"/>
-                                          ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">Preview failed</div>
-                                          )}
-                                            <div className="absolute top-1 right-1">
-                                                <Checkbox checked={selectedPages.has(preview.pageNumber)} className="bg-white/80" />
-                                            </div>
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
-                                                {preview.pageNumber}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
                   </div>
                 </RadioGroup>
               </TabsContent>
             </Tabs>
+            
+            {/* Preview Section */}
+            <div className="mt-6 border-t pt-6">
+                <Label className="font-semibold text-base">Preview</Label>
+                 {isRenderingPreviews ? (
+                    <div className="flex flex-col justify-center items-center h-48">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="mt-4 mb-2">Rendering page previews...</p>
+                        <Progress value={previewProgress} className="w-full max-w-xs h-2" />
+                    </div>
+                ) : (
+                    <>
+                        {/* Custom Range Preview */}
+                        {splitMode === 'range' && rangeMode === 'custom' && (
+                             <div className="mt-4 flex items-center justify-center gap-4">
+                                {customRangePreviewPages.length > 0 ? (
+                                    <>
+                                        <div className="w-1/3">
+                                            <PagePreviewCard
+                                                pageNumber={customRangePreviewPages[0]}
+                                                dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || ''}
+                                                showCheckbox={false}
+                                            />
+                                        </div>
+                                        {customRangePreviewPages.length > 1 && (
+                                            <>
+                                                <Minus className="w-8 h-8 text-muted-foreground shrink-0" />
+                                                <div className="w-1/3">
+                                                    <PagePreviewCard
+                                                        pageNumber={customRangePreviewPages[1]}
+                                                        dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || ''}
+                                                        showCheckbox={false}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">Enter a valid range to see a preview.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Fixed Range Preview */}
+                        {splitMode === 'range' && rangeMode === 'fixed' && fixedRangeSize > 0 && (
+                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-4 gap-y-2 items-center max-h-96 overflow-y-auto pr-2">
+                                {pagePreviews.map((preview, index) => (
+                                    <React.Fragment key={preview.pageNumber}>
+                                        <PagePreviewCard {...preview} showCheckbox={false} />
+                                        {(index + 1) % fixedRangeSize === 0 && index < pagePreviews.length - 1 && (
+                                            <div className="col-span-full h-px border-t-2 border-dashed border-primary/50 my-2"></div>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Extract Pages Preview (both modes) */}
+                        {splitMode === 'extract' && (
+                            <div className="mt-4 border rounded-lg p-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <Label className="font-semibold">
+                                        Selected Pages: {selectedPages.size} / {file.totalPages}
+                                    </Label>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="select-all"
+                                            checked={selectedPages.size === file.totalPages && file.totalPages > 0}
+                                            onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
+                                            disabled={isRenderingPreviews || extractMode === 'all'}
+                                        />
+                                        <Label htmlFor="select-all">Select All</Label>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto pr-2">
+                                    {pagePreviews.map(preview => (
+                                        <PagePreviewCard 
+                                            key={preview.pageNumber}
+                                            {...preview}
+                                            isSelected={extractMode === 'all' || selectedPages.has(preview.pageNumber)}
+                                            onToggle={extractMode === 'select' ? toggleSelectPage : undefined}
+                                            showCheckbox={extractMode === 'select'}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+
             {splitError && (
                 <p className="text-sm text-destructive mt-4 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" /> {splitError}
@@ -572,3 +684,5 @@ export function PdfSplitter() {
     </div>
   );
 }
+
+    
