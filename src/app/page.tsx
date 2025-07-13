@@ -9,15 +9,15 @@ export default function Home() {
 
   const services = [
     {
-      icon: <Layers className="w-8 h-8 text-teal-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      icon: <Layers className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-primary/10',
       title: 'Merge PDF',
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'
     },
     {
-      icon: <FileText className="w-8 h-8 text-teal-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      icon: <FileText className="w-8 h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-primary/10',
       title: 'Word to PDF',
       description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
       href: '/word-to-pdf'
@@ -33,8 +33,8 @@ export default function Home() {
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-6 h-6 text-primary transition-transform group-hover:scale-110" />,
-      bgColor: 'bg-primary/10',
+      icon: <ShieldCheck className="w-6 h-6 text-teal-500 transition-transform group-hover:scale-110" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
