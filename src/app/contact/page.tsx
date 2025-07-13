@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 const contactMethods = [
   {
-    icon: <Mail className="w-8 h-8 text-blue-500 dark:text-blue-400" />,
+    icon: <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 dark:text-blue-400" />,
     title: 'Email Us',
     description: 'Send us an email anytime',
     href: 'mailto:garvitkajot854@gmail.com',
@@ -18,7 +18,7 @@ const contactMethods = [
     bgColor: 'bg-blue-100/50 dark:bg-blue-900/20 hover:bg-blue-200/60 dark:hover:bg-blue-900/40',
   },
   {
-    icon: <MessageSquare className="w-8 h-8 text-primary dark:text-primary" />,
+    icon: <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-primary dark:text-primary" />,
     title: 'Live Chat',
     description: 'Get instant help',
     href: '#',
@@ -26,7 +26,7 @@ const contactMethods = [
     bgColor: 'bg-primary/10 hover:bg-primary/20',
   },
   {
-    icon: <Phone className="w-8 h-8 text-purple-500 dark:text-purple-400" />,
+    icon: <Phone className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 dark:text-purple-400" />,
     title: 'Call Us',
     description: 'Speak with our team',
     href: 'tel:+918306064643',
@@ -34,7 +34,7 @@ const contactMethods = [
     bgColor: 'bg-purple-100/50 dark:bg-purple-900/20 hover:bg-purple-200/60 dark:hover:bg-purple-900/40',
   },
   {
-    icon: <MapPin className="w-8 h-8 text-orange-500 dark:text-orange-400" />,
+    icon: <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 dark:text-orange-400" />,
     title: 'Office',
     description: 'Visit our headquarters',
     href: '#',
@@ -57,7 +57,7 @@ export default function ContactPage() {
                 <Sparkles className="w-4 h-4" />
                 Get In Touch
               </div>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
                 Contact{' '}
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                   Us
@@ -77,14 +77,14 @@ export default function ContactPage() {
                   delay={150 * (index + 1)}
                 >
                   <Link href={method.href}>
-                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left hover:shadow-lg">
+                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-4 sm:p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left hover:shadow-lg">
                       <CardContent className="p-0 flex items-start gap-4">
-                        <div className={`p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
+                        <div className={`p-2 sm:p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
                           {method.icon}
                         </div>
                         <div className="space-y-1 min-w-0">
-                          <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
-                          <p className="text-sm text-muted-foreground truncate">{method.details}</p>
+                          <h3 className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors">{method.title}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">{method.details}</p>
                         </div>
                       </CardContent>
                     </Card>
