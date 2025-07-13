@@ -20,7 +20,7 @@ export default function Home() {
       bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Word to PDF',
       description: 'Convert your Microsoft Word documents to high-quality PDFs in seconds.',
-      href: '#'
+      href: '/word-to-pdf'
     },
   ];
 
