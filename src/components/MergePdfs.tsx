@@ -65,10 +65,10 @@ export function MergePdfs() {
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
+      isCancelledRef.current = true;
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
-      isCancelledRef.current = true;
     };
   }, [mergedPdfUrl]);
   
@@ -190,7 +190,7 @@ export function MergePdfs() {
         const mergedPdf = await PDFDocument.create();
 
         for (const pdfFile of files) {
-            if (isCancelledRef.current) throw new Error("Operation cancelled by user");
+            if (isCancelledRef.current) return;
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
                 const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -206,7 +206,7 @@ export function MergePdfs() {
             }
         }
         
-        if (isCancelledRef.current) throw new Error("Operation cancelled by user");
+        if (isCancelledRef.current) return;
 
         if (mergedPdf.getPageCount() === 0) {
             throw new Error("Merge failed. All source PDFs might be corrupted, encrypted, or invalid.");
@@ -230,7 +230,7 @@ export function MergePdfs() {
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
-       if (error.message !== "Operation cancelled by user" && !isCancelledRef.current) {
+       if (!isCancelledRef.current) {
           toast({
             variant: "destructive",
             title: "Merge Failed",
