@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
@@ -634,7 +633,10 @@ export function PdfSplitter() {
                                     {fixedRangeGroups.map((group, groupIndex) => (
                                         <Card key={groupIndex} className="p-2 shrink-0">
                                             <CardContent className="p-0">
-                                                <div className="grid grid-cols-2 gap-2 w-max">
+                                                <div className={cn(
+                                                    "grid gap-2 w-max",
+                                                    fixedRangeSize > 1 ? "grid-cols-2" : "grid-cols-1"
+                                                )}>
                                                     {group.map(preview => (
                                                         <PagePreviewCard 
                                                             key={preview.pageNumber} 
