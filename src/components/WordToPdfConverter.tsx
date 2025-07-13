@@ -82,15 +82,12 @@ export default function WordToPdfConverter() {
     }, 100);
 
     try {
-        // This is a simplified conversion. It doesn't parse the DOCX,
-        // it just creates a PDF with the file's metadata.
-        // A full DOCX parser would be a very large and complex addition.
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage();
         const { width, height } = page.getSize();
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         
-        const text = `Converted from: ${file.name}\nFile size: ${formatBytes(file.size)}`;
+        const text = `This is a placeholder PDF created from:\n\n${file.name}\n\nFile size: ${formatBytes(file.size)}\n\nA full DOCX parser would be required for content conversion.`;
         
         page.drawText(text, {
             x: 50,
@@ -98,6 +95,7 @@ export default function WordToPdfConverter() {
             font,
             size: 12,
             color: rgb(0, 0, 0),
+            lineHeight: 24,
         });
 
         const pdfBytes = await pdfDoc.save();
@@ -165,29 +163,39 @@ export default function WordToPdfConverter() {
   return (
     <div className="space-y-6">
       <Card className="bg-card shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">Upload Word Document</CardTitle>
-          <CardDescription>Drag & drop a .doc or .docx file to get started.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div
             {...getRootProps()}
             className={cn(
               "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
               "hover:border-primary/50",
-              isDragActive && "border-primary bg-primary/10"
+              isDragActive ? "border-primary bg-primary/10" : "border-border",
+              file && "border-green-500/50 bg-green-500/5"
             )}
           >
             <input {...getInputProps()} />
-            <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-            <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
-              Drop your Word file here
-            </p>
-            <p className="text-xs text-muted-foreground sm:text-sm">or</p>
-            <Button type="button" onClick={open} className="mt-2">
-              Choose File
-            </Button>
-            <p className="mt-4 text-xs text-muted-foreground">Max file size: {MAX_FILE_SIZE_MB}MB</p>
+            {file ? (
+                <>
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+                    <p className="mt-2 text-base sm:text-lg font-semibold text-foreground truncate max-w-full px-4" title={file.name}>{file.name}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{formatBytes(file.size)}</p>
+                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); removeFile(); }} className="mt-4">
+                        <X className="mr-2 h-4 w-4" />
+                        Remove File
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+                      Drop your Word file here
+                    </p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">or</p>
+                    <Button type="button" onClick={(e) => { e.stopPropagation(); open(); }} className="mt-2">
+                      Choose File
+                    </Button>
+                </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -195,31 +203,10 @@ export default function WordToPdfConverter() {
       {file && (
         <Card className="bg-card shadow-lg animate-in fade-in duration-300">
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">File Ready for Conversion</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Ready to Convert</CardTitle>
+            <CardDescription>Click the button below to start the conversion process.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between p-3 rounded-lg border bg-card/80">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <FileText className="w-8 h-8 text-blue-500 shrink-0" />
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm font-medium truncate" title={file.name}>
-                    {file.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatBytes(file.size)}
-                  </span>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive"
-                onClick={removeFile}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            
+          <CardContent>
             <div className="space-y-4">
               {isConverting ? (
                 <div className="p-4 border rounded-lg bg-primary/5">
@@ -245,5 +232,3 @@ export default function WordToPdfConverter() {
     </div>
   );
 }
-
-    

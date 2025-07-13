@@ -101,7 +101,7 @@ export default function Home() {
                   delay={index * 200}
               >
                 <Link href={service.href} className="h-full block">
-                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-white dark:bg-card h-full flex flex-col">
+                  <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
                     <CardHeader className="flex-row items-center gap-4">
                       <div className={`p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
@@ -146,7 +146,7 @@ export default function Home() {
                       className="duration-700"
                       delay={index * 250}
                     >
-                      <Card className="group bg-white dark:bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
+                      <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-6 rounded-xl hover:border-primary flex flex-col h-full">
                         <CardContent className="p-0 flex-grow">
                           <div className="flex flex-col items-start gap-4 h-full">
                             <div className={`p-3 rounded-lg ${feature.bgColor}`}>
@@ -176,7 +176,7 @@ export default function Home() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <div className="bg-white dark:bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden">
+          <div className="bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <AnimateOnScroll
                 animation="animate-in fade-in-0 slide-in-from-left-12"

@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 240 10% 97.5%; /* #F5F5F7 - Very light grey */
+    --background: 0 0% 100%;
     --foreground: 240 5% 15%;
     --card: 0 0% 100%;
     --card-foreground: 240 5% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 5% 15%;
-    --primary: 275 100% 25%; /* #4B0082 - Deep Indigo */
+    --primary: 246 100% 50%; /* #5e4dff */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 5% 90%;
     --secondary-foreground: 240 5% 15%;
@@ -22,17 +22,17 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 6% 88%;
     --input: 240 6% 88%;
-    --ring: 275 100% 25%;
+    --ring: 246 100% 50%;
     --radius: 1rem;
   }
   .dark {
-    --background: 240 4% 9%; /* #151619 - Light grey dark equivalent */
+    --background: 240 4% 9%;
     --foreground: 0 0% 98%;
     --card: 240 4% 12%;
     --card-foreground: 0 0% 98%;
     --popover: 240 4% 9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 275 80% 65%; /* #9966CC - Lighter Indigo */
+    --primary: 246 100% 65%; /* Lighter #5e4dff */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4% 20%;
     --secondary-foreground: 0 0% 98%;
@@ -44,7 +44,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 4% 20%;
     --input: 240 4% 20%;
-    --ring: 275 80% 65%;
+    --ring: 246 100% 65%;
   }
 }
 

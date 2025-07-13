@@ -3,8 +3,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers, Menu } from 'lucide-react';
+import { Layers, Menu, ChevronDown, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Sheet,
   SheetContent,
@@ -17,10 +23,14 @@ import { ThemeToggler } from './ThemeToggler';
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/merger", label: "Merge PDF" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+
+const services = [
+    { href: "/merger", label: "Merge PDF", icon: <Layers className="mr-2 h-4 w-4" /> },
+    { href: "/word-to-pdf", label: "Word to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
   const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
@@ -91,6 +101,24 @@ export default function Header() {
           {navLinks.map((link) => (
             <NavLink key={link.href + link.label} href={link.href} label={link.label} currentPath={pathname} />
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="font-semibold text-muted-foreground hover:text-primary p-2 group">
+                Services
+                <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                {services.map((service) => (
+                    <DropdownMenuItem key={service.href} asChild>
+                        <Link href={service.href}>
+                            {service.icon}
+                            {service.label}
+                        </Link>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
@@ -131,6 +159,13 @@ export default function Header() {
                                   currentPath={pathname} 
                                   onClick={() => setIsOpen(false)} 
                                 />
+                            ))}
+                            <div className="text-lg font-semibold text-foreground">Services</div>
+                            {services.map((service) => (
+                                <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4">
+                                     {service.icon}
+                                    {service.label}
+                                </Link>
                             ))}
                         </nav>
                         <div className="mt-auto pt-6 border-t flex flex-col gap-4">
