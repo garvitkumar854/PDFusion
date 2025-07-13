@@ -109,11 +109,11 @@ export default function Home() {
               >
                 <Link href={service.href} className="h-full block">
                   <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
-                    <CardHeader className="flex-row items-center gap-4 p-4 md:p-6">
+                    <CardHeader className="flex-row items-center gap-4 p-3 sm:p-4 md:p-6">
                       <div className={`p-3 rounded-lg ${service.bgColor}`}>
                         {service.icon}
                       </div>
-                      <CardTitle className="text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </CardTitle>
                     </CardHeader>
@@ -160,7 +160,7 @@ export default function Home() {
                               {feature.icon}
                             </div>
                             <div className="space-y-2 flex-grow">
-                              <h3 className="text-lg md:text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                              <h3 className="text-base sm:text-lg md:text-xl font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
                               <p className="text-muted-foreground">{feature.description}</p>
                             </div>
                             <ul className="space-y-3 mt-4">
