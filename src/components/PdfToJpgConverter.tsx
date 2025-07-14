@@ -143,17 +143,6 @@ export function PdfToJpgConverter() {
   
   const operationId = useRef<number>(0);
 
-  useEffect(() => {
-    // Component unmount logic
-    return () => {
-      operationId.current++;
-      if (file?.pdfjsDoc) {
-        file.pdfjsDoc.destroy();
-      }
-      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
-    };
-  }, [file, conversionResults]);
-  
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number, scale: number = 0.5): Promise<string | null> => {
     try {
         if (operationId.current !== currentOperationId) return null;
@@ -229,6 +218,7 @@ export function PdfToJpgConverter() {
   
   const onPageVisible = useCallback((pageNumber: number) => {
     if (!file) return;
+    const currentOperationId = operationId.current;
 
     setPagePreviews(prev => {
         const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
@@ -239,7 +229,6 @@ export function PdfToJpgConverter() {
         const newPreviews = [...prev];
         newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
         
-        const currentOperationId = operationId.current;
         renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId, 0.5).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPagePreviews(currentPreviews => {
@@ -283,7 +272,9 @@ export function PdfToJpgConverter() {
         return;
     }
     
+    // Increment operationId at the start to stop background rendering
     const currentOperationId = ++operationId.current;
+
     setIsConverting(true);
     setConversionProgress(0);
     setError(null);
@@ -545,7 +536,7 @@ export function PdfToJpgConverter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isConverting || isProcessing || selectedPages.size === 0}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isConverting || isProcessing || !file || selectedPages.size === 0}>
                   <ImageIcon className="mr-2 h-5 w-5" />
                   Convert to JPG
                 </Button>

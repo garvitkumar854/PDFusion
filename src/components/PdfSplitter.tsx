@@ -154,17 +154,6 @@ export function PdfSplitter() {
   
   const operationId = useRef<number>(0);
 
-  useEffect(() => {
-    // Component unmount logic
-    return () => {
-      operationId.current++; // Invalidate any running operations
-      splitResults.forEach(r => URL.revokeObjectURL(r.url));
-      if (file?.pdfjsDoc) {
-        file.pdfjsDoc.destroy();
-      }
-    };
-  }, [splitResults, file]);
-  
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
     try {
         if (operationId.current !== currentOperationId) return null;
@@ -239,6 +228,7 @@ export function PdfSplitter() {
   
   const onPageVisible = useCallback((pageNumber: number) => {
     if (!file) return;
+    const currentOperationId = operationId.current;
 
     setPagePreviews(prev => {
         const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
@@ -249,7 +239,6 @@ export function PdfSplitter() {
         const newPreviews = [...prev];
         newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
         
-        const currentOperationId = operationId.current;
         renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPagePreviews(currentPreviews => {
@@ -318,7 +307,10 @@ export function PdfSplitter() {
 
   const handleSplit = async () => {
     if (!file) return;
+
+    // Increment operationId at the start to stop background rendering
     const currentOperationId = ++operationId.current;
+    
     setIsSplitting(true);
     setSplitError(null);
     setSplitResults([]);
