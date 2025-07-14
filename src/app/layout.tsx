@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: 'PDFusion',
   description: 'Merge and manage your PDF files with ease.',
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.png?v=2',
   }
 };
 

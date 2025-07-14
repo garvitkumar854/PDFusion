@@ -83,7 +83,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 
 const PdfFusionLogo = ({ className }: { className?: string }) => (
   <Image
-    src="/logo.png"
+    src="/logo.png?v=2"
     alt="PDFusion Logo"
     width={32}
     height={32}
