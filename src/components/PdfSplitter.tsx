@@ -29,6 +29,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import JSZip from "jszip";
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -54,6 +55,7 @@ type SplitResult = {
 type PagePreview = {
   pageNumber: number;
   dataUrl: string | null;
+  isVisible: boolean;
 };
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -65,39 +67,70 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => (
-    <div 
-        key={pageNumber}
-        onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
-        className={cn(
-            "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
-            !disabled && onToggle && "cursor-pointer",
-            isSelected ? "border-primary shadow-lg" : "border-transparent",
-            !disabled && onToggle && !isSelected && "hover:border-primary/50",
-            disabled && "cursor-not-allowed",
-            className
-        )}
-    >
-        {dataUrl ? (
-        <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
-        ) : (
-        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
-            <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span>Page {pageNumber}</span>
+const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
+const usePageVisibility = () => React.useContext(PageVisibilityContext);
+
+const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const { onVisible } = usePageVisibility();
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting && !dataUrl) {
+                onVisible(pageNumber);
+                 if (ref.current) {
+                   observer.unobserve(ref.current);
+                }
+            }
+        }, { threshold: 0.1 });
+
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => {
+            if (ref.current) {
+                observer.unobserve(ref.current);
+            }
+        };
+    }, [pageNumber, onVisible, dataUrl]);
+    
+    return (
+        <div 
+            ref={ref}
+            key={pageNumber}
+            onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
+            className={cn(
+                "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
+                !disabled && onToggle && "cursor-pointer",
+                isSelected ? "border-primary shadow-lg" : "border-transparent",
+                !disabled && onToggle && !isSelected && "hover:border-primary/50",
+                disabled && "cursor-not-allowed",
+                className
+            )}
+        >
+            {dataUrl ? (
+            <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
+            ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
+                <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span>Page {pageNumber}</span>
+                </div>
+            </div>
+            )}
+            {showCheckbox && onToggle && (
+                <div className="absolute top-1 right-1">
+                    <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
+                </div>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
+                {pageNumber}
             </div>
         </div>
-        )}
-        {showCheckbox && onToggle && (
-            <div className="absolute top-1 right-1">
-                <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
-            </div>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
-            {pageNumber}
-        </div>
-    </div>
-);
+    )
+});
+PagePreviewCard.displayName = 'PagePreviewCard';
 
 
 export function PdfSplitter() {
@@ -106,8 +139,6 @@ export function PdfSplitter() {
   const [isSplitting, setIsSplitting] = useState(false);
   const [splitResults, setSplitResults] = useState<SplitResult[]>([]);
   const [pagePreviews, setPagePreviews] = useState<PagePreview[]>([]);
-  const [isRenderingPreviews, setIsRenderingPreviews] = useState(false);
-  const [previewProgress, setPreviewProgress] = useState(0);
 
   const [splitMode, setSplitMode] = useState<"range" | "extract">("range");
   const [rangeMode, setRangeMode] = useState<"custom" | "fixed">("custom");
@@ -134,7 +165,7 @@ export function PdfSplitter() {
     };
   }, [splitResults, file]);
   
-  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<PagePreview | null> => {
+  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
     try {
         if (operationId.current !== currentOperationId) return null;
         const page = await pdfjsDoc.getPage(pageNum);
@@ -150,10 +181,7 @@ export function PdfSplitter() {
                 viewport: viewport
             };
             await page.render(renderContext).promise;
-            return {
-                pageNumber: pageNum,
-                dataUrl: canvas.toDataURL('image/jpeg', 0.8),
-            };
+            return canvas.toDataURL('image/jpeg', 0.8);
         }
     } catch (e) {
         console.error(`Error rendering page ${pageNum}:`, e);
@@ -192,30 +220,8 @@ export function PdfSplitter() {
         setSplitResults([]);
         setSplitError(null);
         
-        setIsRenderingPreviews(true);
-        setPreviewProgress(0);
-        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: '' }));
+        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
         setPagePreviews(previews);
-        
-        const renderPromises: Promise<void>[] = [];
-        for (let i = 1; i <= totalPages; i++) {
-            if (operationId.current !== currentOperationId) break;
-            const promise = renderPdfPage(pdfjsDoc, i, currentOperationId).then(renderedPage => {
-                if(renderedPage) {
-                    setPagePreviews(prev => {
-                        const newPreviews = [...prev];
-                        const index = newPreviews.findIndex(p => p.pageNumber === renderedPage.pageNumber);
-                        if (index !== -1) {
-                            newPreviews[index] = renderedPage;
-                        }
-                        return newPreviews;
-                    });
-                }
-                setPreviewProgress(prev => Math.round(((prev * (totalPages / 100) + 1) / totalPages) * 100));
-            });
-            renderPromises.push(promise);
-        }
-        await Promise.all(renderPromises);
 
       } catch (error) {
         if (operationId.current === currentOperationId) {
@@ -225,12 +231,42 @@ export function PdfSplitter() {
       } finally {
         if (operationId.current === currentOperationId) {
           setIsProcessing(false);
-          setIsRenderingPreviews(false);
         }
       }
     },
-    [toast, renderPdfPage]
+    [toast]
   );
+  
+  const onPageVisible = useCallback((pageNumber: number) => {
+    if (!file) return;
+
+    setPagePreviews(prev => {
+        const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
+        if (pageIndex === -1 || prev[pageIndex].dataUrl || prev[pageIndex].isVisible) {
+            return prev;
+        }
+
+        const newPreviews = [...prev];
+        newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
+        
+        const currentOperationId = operationId.current;
+        renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
+            if (dataUrl && operationId.current === currentOperationId) {
+                setPagePreviews(currentPreviews => {
+                    const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
+                    if (latestIndex > -1) {
+                       const finalPreviews = [...currentPreviews];
+                       finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
+                       return finalPreviews;
+                    }
+                    return currentPreviews;
+                });
+            }
+        });
+        
+        return newPreviews;
+    });
+  }, [file, renderPdfPage]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -245,7 +281,6 @@ export function PdfSplitter() {
     operationId.current++; // Invalidate any running operations
     setFile(null);
     setIsProcessing(false);
-    setIsRenderingPreviews(false);
     setCustomRanges("");
     setSplitResults([]);
     setPagePreviews([]);
@@ -337,6 +372,7 @@ export function PdfSplitter() {
       
       const results: SplitResult[] = [];
       const originalName = file.file.name.replace(/\.pdf$/i, '');
+      const zip = new JSZip();
 
       for (const group of pageGroups) {
         if (operationId.current !== currentOperationId) return;
@@ -347,26 +383,36 @@ export function PdfSplitter() {
         copiedPages.forEach(page => newPdf.addPage(page));
         
         const newPdfBytes = await newPdf.save();
-        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
         
         const firstPage = group[0] + 1;
         const lastPage = group[group.length - 1] + 1;
         const rangeText = firstPage === lastPage ? `page_${firstPage}` : `pages_${firstPage}-${lastPage}`;
-        results.push({
-            filename: `${originalName}_${rangeText}.pdf`,
-            url,
-        });
+        const filename = `${originalName}_${rangeText}.pdf`
+
+        if (pageGroups.length > 1) {
+            zip.file(filename, newPdfBytes);
+        } else {
+             const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+             const url = URL.createObjectURL(blob);
+             results.push({ filename, url });
+        }
       }
+
       if (operationId.current !== currentOperationId) {
         results.forEach(r => URL.revokeObjectURL(r.url));
         return;
+      }
+      
+      if (pageGroups.length > 1) {
+        const zipBlob = await zip.generateAsync({type:"blob"});
+        const url = URL.createObjectURL(zipBlob);
+        results.push({ filename: `${originalName}_split.zip`, url });
       }
 
       setSplitResults(results);
       toast({
         title: "Split Successful!",
-        description: `Your PDF has been split into ${results.length} new document(s).`,
+        description: `Your PDF has been split.`,
         action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
@@ -396,16 +442,14 @@ export function PdfSplitter() {
   };
   
   const handleDownloadAll = () => {
-    splitResults.forEach((result, index) => {
-      setTimeout(() => {
-        const link = document.createElement("a");
-        link.href = result.url;
-        link.download = result.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, index * 300);
-    });
+    const resultToDownload = splitResults[0]; // either single PDF or the zip
+     if (!resultToDownload) return;
+     const link = document.createElement("a");
+     link.href = resultToDownload.url;
+     link.download = resultToDownload.filename;
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
   };
 
   const toggleSelectPage = (pageNumber: number) => {
@@ -460,7 +504,7 @@ export function PdfSplitter() {
         for(let j = 0; j < fixedRangeSize && (i + j) < file.totalPages; j++) {
             const pageNum = i + j + 1;
             const preview = pagePreviews.find(p => p.pageNumber === pageNum);
-            group.push(preview || { pageNumber: pageNum, dataUrl: null });
+            group.push(preview || { pageNumber: pageNum, dataUrl: null, isVisible: false });
         }
         groups.push(group);
     }
@@ -473,26 +517,12 @@ export function PdfSplitter() {
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Split Successfully!</h2>
-        <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new documents are ready for download.</p>
-        <div className="w-full max-w-md space-y-3 my-4 max-h-60 overflow-y-auto pr-2">
-            {splitResults.map(result => (
-                <div key={result.filename} className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <FileIcon className="w-6 h-6 text-destructive shrink-0" />
-                        <span className="text-sm font-medium truncate" title={result.filename}>{result.filename}</span>
-                    </div>
-                    <a href={result.url} download={result.filename}>
-                      <Button size="sm" variant="ghost">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </a>
-                </div>
-            ))}
-        </div>
+        <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
+        
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
           <Button size="lg" onClick={handleDownloadAll} className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
             <Download className="mr-2 h-5 w-5" />
-            Download All ({splitResults.length})
+            Download {splitResults[0].filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
           </Button>
           <Button size="lg" variant="outline" onClick={handleSplitAgain} className="w-full sm:w-auto text-base">
             Split Another PDF
@@ -641,14 +671,13 @@ export function PdfSplitter() {
             {/* Preview Section */}
             <div className="mt-6 border-t pt-6">
                 <Label className="font-semibold text-base">Preview</Label>
-                 {isProcessing || isRenderingPreviews ? (
+                 {isProcessing ? (
                     <div className="flex flex-col justify-center items-center h-48">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        <p className="mt-4 mb-2">{isProcessing ? "Processing PDF..." : "Rendering page previews..."}</p>
-                        {isRenderingPreviews && <Progress value={previewProgress} className="w-full max-w-xs h-2" />}
+                        <p className="mt-4 mb-2">Processing PDF...</p>
                     </div>
                 ) : (
-                    <>
+                    <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                         {/* Custom Range Preview */}
                         {splitMode === 'range' && rangeMode === 'custom' && (
                              <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
@@ -720,7 +749,7 @@ export function PdfSplitter() {
                                             id="select-all"
                                             checked={selectedPages.size === file.totalPages && file.totalPages > 0}
                                             onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
-                                            disabled={isRenderingPreviews || extractMode === 'all' || isSplitting}
+                                            disabled={extractMode === 'all' || isSplitting}
                                         />
                                         <Label htmlFor="select-all">Select All</Label>
                                     </div>
@@ -739,7 +768,7 @@ export function PdfSplitter() {
                                 </div>
                             </div>
                         )}
-                    </>
+                    </PageVisibilityContext.Provider>
                 )}
             </div>
 
@@ -762,7 +791,7 @@ export function PdfSplitter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>
