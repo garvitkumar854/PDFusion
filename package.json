@@ -42,7 +42,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
-    "firebase": "^11.10.0",
+    "firebase": "^10.12.2",
     "genkit": "^1.13.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.475.0",
@@ -76,3 +76,4 @@
     "typescript": "^5"
   }
 }
+    

@@ -1,11 +1,10 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
-  Image as ImageIcon,
   Download,
   X,
   CheckCircle,
@@ -14,7 +13,6 @@ import {
   Loader2,
   Ban,
   FileArchive,
-  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -503,3 +501,5 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
+    

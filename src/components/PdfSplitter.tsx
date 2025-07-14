@@ -13,7 +13,6 @@ import {
   FolderOpen,
   Loader2,
   AlertTriangle,
-  GripVertical,
   Minus,
   Ban,
 } from "lucide-react";
@@ -112,7 +111,7 @@ export function PdfSplitter() {
 
   const [splitMode, setSplitMode] = useState<"range" | "extract">("range");
   const [rangeMode, setRangeMode] = useState<"custom" | "fixed">("custom");
-  const [extractMode, setExtractMode] = useState<"all" | "select">("all");
+  const [extractMode, setExtractMode] = useState<"all" | "select">("select");
 
   const [customRanges, setCustomRanges] = useState("");
   const [fixedRangeSize, setFixedRangeSize] = useState(1);
@@ -767,3 +766,5 @@ export function PdfSplitter() {
     </div>
   );
 }
+
+    
