@@ -155,9 +155,11 @@ export function PdfSplitter() {
   const operationId = useRef<number>(0);
 
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
+    if (operationId.current !== currentOperationId) return null;
     try {
-        if (operationId.current !== currentOperationId) return null;
         const page = await pdfjsDoc.getPage(pageNum);
+        if (operationId.current !== currentOperationId) return null;
+
         const viewport = page.getViewport({ scale: 0.5 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -170,10 +172,13 @@ export function PdfSplitter() {
                 viewport: viewport
             };
             await page.render(renderContext).promise;
+             if (operationId.current !== currentOperationId) return null;
             return canvas.toDataURL('image/jpeg', 0.8);
         }
     } catch (e) {
-        console.error(`Error rendering page ${pageNum}:`, e);
+        if (operationId.current === currentOperationId) {
+          console.error(`Error rendering page ${pageNum}:`, e);
+        }
     }
     return null;
   }, []);
@@ -540,7 +545,8 @@ export function PdfSplitter() {
               className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                 !isSplitting && "hover:border-primary/50",
-                isDragActive && "border-primary bg-primary/10"
+                isDragActive && "border-primary bg-primary/10",
+                isSplitting && "opacity-70 pointer-events-none"
               )}
             >
               <input {...getInputProps()} />
@@ -671,95 +677,97 @@ export function PdfSplitter() {
                 ) : (
                     <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                         {/* Custom Range Preview */}
-                        {splitMode === 'range' && rangeMode === 'custom' && (
-                             <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
-                                {customRangePreviewPages.length > 0 ? (
-                                    <>
-                                        <div className="w-1/3 max-w-32">
-                                            <PagePreviewCard
-                                                pageNumber={customRangePreviewPages[0]}
-                                                dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || null}
-                                                showCheckbox={false}
-                                            />
-                                        </div>
-                                        {customRangePreviewPages.length > 1 && (
-                                            <>
-                                                <Minus className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground shrink-0" />
-                                                <div className="w-1/3 max-w-32">
-                                                    <PagePreviewCard
-                                                        pageNumber={customRangePreviewPages[1]}
-                                                        dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || null}
-                                                        showCheckbox={false}
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                    </>
-                                ) : (
-                                    <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Fixed Range Preview */}
-                        {splitMode === 'range' && rangeMode === 'fixed' && (
-                            <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
-                                <div className="flex w-max space-x-4 p-4">
-                                    {fixedRangeGroups.map((group, groupIndex) => (
-                                        <Card key={groupIndex} className="p-2 shrink-0">
-                                            <CardContent className="p-0">
-                                                <div className={cn(
-                                                    "grid gap-2 w-max",
-                                                    fixedRangeSize > 1 ? "grid-cols-2" : "grid-cols-1"
-                                                )}>
-                                                    {group.map(preview => (
-                                                        <PagePreviewCard 
-                                                            key={preview.pageNumber} 
-                                                            {...preview} 
-                                                            showCheckbox={false} 
-                                                            className="w-24"
+                        <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
+                            {splitMode === 'range' && rangeMode === 'custom' && (
+                                <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
+                                    {customRangePreviewPages.length > 0 ? (
+                                        <>
+                                            <div className="w-1/3 max-w-32">
+                                                <PagePreviewCard
+                                                    pageNumber={customRangePreviewPages[0]}
+                                                    dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || null}
+                                                    showCheckbox={false}
+                                                />
+                                            </div>
+                                            {customRangePreviewPages.length > 1 && (
+                                                <>
+                                                    <Minus className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground shrink-0" />
+                                                    <div className="w-1/3 max-w-32">
+                                                        <PagePreviewCard
+                                                            pageNumber={customRangePreviewPages[1]}
+                                                            dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || null}
+                                                            showCheckbox={false}
                                                         />
-                                                    ))}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
+                                    )}
                                 </div>
-                                <ScrollBar orientation="horizontal" />
-                            </ScrollArea>
-                        )}
-                        
-                        {/* Extract Pages Preview (both modes) */}
-                        {splitMode === 'extract' && (
-                            <div className={cn("mt-4 border rounded-lg p-2 sm:p-4", isSplitting && "opacity-70 pointer-events-none")}>
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                                    <Label className="font-semibold text-base sm:text-lg">
-                                        Selected Pages: {selectedPages.size} / {file.totalPages}
-                                    </Label>
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="select-all"
-                                            checked={selectedPages.size === file.totalPages && file.totalPages > 0}
-                                            onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
-                                            disabled={extractMode === 'all' || isSplitting}
-                                        />
-                                        <Label htmlFor="select-all">Select All</Label>
+                            )}
+
+                            {/* Fixed Range Preview */}
+                            {splitMode === 'range' && rangeMode === 'fixed' && (
+                                <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
+                                    <div className="flex w-max space-x-4 p-4">
+                                        {fixedRangeGroups.map((group, groupIndex) => (
+                                            <Card key={groupIndex} className="p-2 shrink-0">
+                                                <CardContent className="p-0">
+                                                    <div className={cn(
+                                                        "grid gap-2 w-max",
+                                                        fixedRangeSize > 1 ? "grid-cols-2" : "grid-cols-1"
+                                                    )}>
+                                                        {group.map(preview => (
+                                                            <PagePreviewCard 
+                                                                key={preview.pageNumber} 
+                                                                {...preview} 
+                                                                showCheckbox={false} 
+                                                                className="w-24"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            )}
+                            
+                            {/* Extract Pages Preview (both modes) */}
+                            {splitMode === 'extract' && (
+                                <div className={cn("mt-4 border rounded-lg p-2 sm:p-4", isSplitting && "opacity-70 pointer-events-none")}>
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                                        <Label className="font-semibold text-base sm:text-lg">
+                                            Selected Pages: {selectedPages.size} / {file.totalPages}
+                                        </Label>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="select-all"
+                                                checked={selectedPages.size === file.totalPages && file.totalPages > 0}
+                                                onCheckedChange={(checked) => toggleSelectAllPages(Boolean(checked))}
+                                                disabled={extractMode === 'all' || isSplitting}
+                                            />
+                                            <Label htmlFor="select-all">Select All</Label>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
+                                        {pagePreviews.map(preview => (
+                                            <PagePreviewCard 
+                                                key={preview.pageNumber}
+                                                {...preview}
+                                                isSelected={extractMode === 'all' || selectedPages.has(preview.pageNumber)}
+                                                onToggle={extractMode === 'select' ? toggleSelectPage : undefined}
+                                                showCheckbox={extractMode === 'select'}
+                                                disabled={isSplitting}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
-                                    {pagePreviews.map(preview => (
-                                        <PagePreviewCard 
-                                            key={preview.pageNumber}
-                                            {...preview}
-                                            isSelected={extractMode === 'all' || selectedPages.has(preview.pageNumber)}
-                                            onToggle={extractMode === 'select' ? toggleSelectPage : undefined}
-                                            showCheckbox={extractMode === 'select'}
-                                            disabled={isSplitting}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </PageVisibilityContext.Provider>
                 )}
             </div>

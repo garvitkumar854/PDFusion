@@ -87,7 +87,7 @@ export function PdfCompressor() {
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current = 0; // Invalidate any running operations
+      operationId.current++; // Invalidate any running operations
       if (compressionResult) {
         URL.revokeObjectURL(compressionResult.url);
       }
@@ -255,7 +255,7 @@ export function PdfCompressor() {
 
   return (
     <div className="space-y-6">
-      <Card className={cn("bg-white dark:bg-card shadow-lg", isCompressing && "opacity-70 pointer-events-none")}>
+      <Card className="bg-white dark:bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF to Compress</CardTitle>
           <CardDescription>
@@ -269,7 +269,8 @@ export function PdfCompressor() {
               className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                 !isCompressing && "hover:border-primary/50",
-                isDragActive && "border-primary bg-primary/10"
+                isDragActive && "border-primary bg-primary/10",
+                isCompressing && "opacity-70 pointer-events-none"
               )}
             >
               <input {...getInputProps()} />
@@ -287,7 +288,7 @@ export function PdfCompressor() {
               </p>
             </div>
           ) : (
-            <div className="p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between">
+            <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isCompressing && "opacity-70 pointer-events-none")}>
               <div className="flex items-center gap-3 overflow-hidden">
                 <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                 <div className="flex flex-col overflow-hidden">

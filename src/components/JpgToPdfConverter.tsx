@@ -378,7 +378,7 @@ export function JpgToPdfConverter() {
 
   return (
     <div className="space-y-6">
-        <Card className={cn("bg-white dark:bg-card shadow-lg", isConverting && "opacity-70 pointer-events-none")}>
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload Images</CardTitle>
                 <CardDescription>
@@ -391,7 +391,8 @@ export function JpgToPdfConverter() {
                     className={cn(
                     "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                     !isConverting && "hover:border-primary/50",
-                    isDragActive && "border-primary bg-primary/10"
+                    isDragActive && "border-primary bg-primary/10",
+                    isConverting && "opacity-70 pointer-events-none"
                     )}
                 >
                     <input {...getInputProps()} />
@@ -476,7 +477,7 @@ export function JpgToPdfConverter() {
                              <h3 className="font-semibold">Preview</h3>
                              <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" disabled={isConverting}><X className="w-4 h-4 mr-1" />Clear All</Button>
                         </div>
-                        <div onDragOver={handleDragOver} className="grid grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4 max-h-[600px] overflow-y-auto">
+                        <div onDragOver={handleDragOver} className={cn("grid grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4 max-h-[600px] overflow-y-auto", isConverting && "opacity-70 pointer-events-none")}>
                            {files.map((imgFile, index) => (
                                 <div
                                     key={imgFile.id}

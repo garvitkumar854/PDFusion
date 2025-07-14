@@ -64,7 +64,7 @@ export function MergePdfs() {
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current = 0; // Invalidate any running operations
+      operationId.current++; // Invalidate any running operations
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
@@ -292,7 +292,7 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70 pointer-events-none")}>
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
                 <CardDescription>
@@ -305,7 +305,8 @@ export function MergePdfs() {
                     className={cn(
                     "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                     !isMerging && "hover:border-primary/50",
-                    isDragActive && "border-primary bg-primary/10"
+                    isDragActive && "border-primary bg-primary/10",
+                    isMerging && "opacity-70 pointer-events-none"
                     )}
                 >
                     <input {...getInputProps()} />
@@ -329,7 +330,7 @@ export function MergePdfs() {
         </Card>
 
         {files.length > 0 && (
-          <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70 pointer-events-none")}>
+          <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70")}>
             <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
               <div>
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
@@ -347,7 +348,7 @@ export function MergePdfs() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="space-y-2 max-h-[266px] overflow-y-auto pr-2">
+                <div className={cn("space-y-2 max-h-[266px] overflow-y-auto pr-2", isMerging && "pointer-events-none")}>
                     {files.map((pdfFile, index) => (
                         <div
                         key={pdfFile.id}
