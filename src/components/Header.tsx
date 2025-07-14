@@ -3,7 +3,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image, FileText } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,7 +31,7 @@ const services = [
     { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
     { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
     { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
-    { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <Image className="mr-2 h-4 w-4" /> },
+    { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
     { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
 ]
 
@@ -81,22 +82,13 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 };
 
 const PdfFusionLogo = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
+  <Image
+    src="/logo.png"
+    alt="PDFusion Logo"
+    width={32}
+    height={32}
     className={cn("w-8 h-8", className)}
-  >
-    <rect width="256" height="256" fill="hsl(var(--primary))" rx="60" />
-    <path
-      fill="hsl(var(--primary-foreground))"
-      d="M216 99.88V168a8 8 0 0 1-8 8H88a8 8 0 0 1-8-8v-68.12a8 8 0 0 1 2.62-5.92l48-43.12a8 8 0 0 1 10.76 0l48 43.12a8 8 0 0 1 2.62 5.92Z"
-      opacity="0.5"
-    />
-    <path
-      fill="hsl(var(--primary-foreground))"
-      d="M208 88a8 8 0 0 0-8-8h-56a8 8 0 0 0-5.66 2.34L95.34 128H48a8 8 0 0 0-8 8v56a8 8 0 0 0 8 8h112a8 8 0 0 0 8-8v-42.34l34.34-34.32A8 8 0 0 0 208 88Zm-48 88H56v-40h42.34l40-40H160Z"
-    />
-  </svg>
+  />
 );
 
 
