@@ -142,11 +142,24 @@ export function PdfToJpgConverter() {
   const { toast } = useToast();
   
   const operationId = useRef<number>(0);
+  
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      operationId.current++; // Invalidate any running operations
+      if(file?.pdfjsDoc) {
+          file.pdfjsDoc.destroy();
+      }
+      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
+    }
+  }, [file, conversionResults]);
 
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number, scale: number = 0.5): Promise<string | null> => {
+    if (operationId.current !== currentOperationId) return null;
     try {
-        if (operationId.current !== currentOperationId) return null;
         const page = await pdfjsDoc.getPage(pageNum);
+        if (operationId.current !== currentOperationId) return null;
+        
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -162,11 +175,15 @@ export function PdfToJpgConverter() {
                 renderInteractiveForms: false,
                 enableWebGL: false,
             };
-            await page.render(renderContext).promise;
+            const renderTask = page.render(renderContext);
+            await renderTask.promise;
+             if (operationId.current !== currentOperationId) return null;
             return canvas.toDataURL('image/jpeg', 0.9);
         }
     } catch (e) {
-        console.error(`Error rendering page ${pageNum}:`, e);
+        if (operationId.current === currentOperationId) {
+            console.error(`Error rendering page ${pageNum}:`, e);
+        }
     }
     return null;
   }, []);
@@ -217,7 +234,7 @@ export function PdfToJpgConverter() {
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
-    if (!file) return;
+    if (!file || isConverting) return;
     const currentOperationId = operationId.current;
 
     setPagePreviews(prev => {
@@ -245,7 +262,7 @@ export function PdfToJpgConverter() {
         
         return newPreviews;
     });
-  }, [file, renderPdfPage]);
+  }, [file, renderPdfPage, isConverting]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -470,7 +487,7 @@ export function PdfToJpgConverter() {
       </Card>
 
       {file && (
-        <Card className={cn("bg-white dark:bg-card shadow-lg", isConverting && "opacity-70 pointer-events-none")}>
+        <Card className="bg-white dark:bg-card shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Conversion Options</CardTitle>
           </CardHeader>
@@ -536,7 +553,7 @@ export function PdfToJpgConverter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isConverting || isProcessing || !file || selectedPages.size === 0}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isProcessing || !file || selectedPages.size === 0}>
                   <ImageIcon className="mr-2 h-5 w-5" />
                   Convert to JPG
                 </Button>
