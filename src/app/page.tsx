@@ -1,5 +1,5 @@
 
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, FileX2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,20 @@ export default function Home() {
       href: '/compress-pdf'
     },
     {
+      icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
+      title: 'Organize PDF',
+      description: 'Visually reorder, rotate, and delete pages in your PDF document.',
+      href: '/organize-pdf'
+    },
+     {
+      icon: <FileX2 className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
+      title: 'Remove Pages',
+      description: 'Quickly select and delete one or more pages from your PDF.',
+      href: '/remove-pages'
+    },
+    {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF to JPG',
@@ -43,6 +57,13 @@ export default function Home() {
       title: 'JPG to PDF',
       description: 'Convert JPG images to a PDF file with orientation and margin options.',
       href: '/jpg-to-pdf'
+    },
+    {
+      icon: <Code className="w-6 h-6 sm:w-8 sm:h-8 text-lime-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-lime-100 dark:bg-lime-900/20',
+      title: 'PDF to HTML',
+      description: 'Convert your PDF into a basic, editable HTML file.',
+      href: '/pdf-to-html'
     },
     {
       icon: <RotateCw className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500 transition-transform duration-300 group-hover:scale-110" />,
@@ -134,7 +155,7 @@ export default function Home() {
                   key={index}
                   animation="animate-in fade-in-0"
                   className="duration-700 h-full"
-                  delay={index * 150}
+                  delay={index * 100}
               >
                 <Link href={service.href} className="h-full block">
                   <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">

@@ -5,7 +5,6 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
-  File as FileIcon,
   Download,
   X,
   CheckCircle,
@@ -361,14 +360,16 @@ export function PdfRotator() {
             <div className="space-y-6 sticky top-24">
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
-                    <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg">
+                    <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg aspect-square overflow-hidden">
                         {previewUrl ? (
-                            <img 
-                                src={previewUrl} 
-                                alt="PDF first page preview" 
-                                className="max-w-full h-auto max-h-[500px] lg:max-h-[600px] object-contain shadow-md border rounded-md transition-transform duration-300"
-                                style={{ transform: `rotate(${angle}deg)` }}
-                            />
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                <img 
+                                    src={previewUrl} 
+                                    alt="PDF first page preview" 
+                                    className="max-w-full max-h-full object-contain shadow-md border rounded-md transition-transform duration-300 origin-center"
+                                    style={{ transform: `rotate(${angle}deg)` }}
+                                />
+                            </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />

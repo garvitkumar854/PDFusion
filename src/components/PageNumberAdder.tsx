@@ -5,7 +5,6 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
-  File as FileIcon,
   Download,
   X,
   CheckCircle,
@@ -72,6 +71,16 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16) / 255,
+        g: parseInt(result[2], 16) / 255,
+        b: parseInt(result[3], 16) / 255,
+      }
+    : { r: 0, g: 0, b: 0 };
+};
 
 export function PageNumberAdder() {
   const [file, setFile] = useState<PDFFile | null>(null);
@@ -84,6 +93,7 @@ export function PageNumberAdder() {
   const [margin, setMargin] = useState(36);
   const [fontSize, setFontSize] = useState(12);
   const [font, setFont] = useState<Font>("Helvetica");
+  const [textColor, setTextColor] = useState("#000000");
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
@@ -188,7 +198,7 @@ export function PageNumberAdder() {
       // Now draw text
       const pageNum = getPageNumberText(startPage, file.pdfjsDoc.numPages);
       ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
-      ctx.fillStyle = "black";
+      ctx.fillStyle = textColor;
       const textMetrics = ctx.measureText(pageNum);
 
       let x = 0, y = 0;
@@ -208,14 +218,14 @@ export function PageNumberAdder() {
         ctx.beginPath();
         ctx.moveTo(x, y + 2);
         ctx.lineTo(x + textMetrics.width, y + 2);
-        ctx.strokeStyle = 'black';
+        ctx.strokeStyle = textColor;
         ctx.lineWidth = Math.max(1, fontSize / 12);
         ctx.stroke();
       }
     };
     img.src = firstPagePreviewUrl;
 
-  }, [firstPagePreviewUrl, position, margin, fontSize, font, isBold, isItalic, isUnderline, startPage, formatType, customFormat, file]);
+  }, [firstPagePreviewUrl, position, margin, fontSize, font, isBold, isItalic, isUnderline, startPage, formatType, customFormat, file, textColor]);
 
   useEffect(() => {
     drawPreview();
@@ -252,6 +262,7 @@ export function PageNumberAdder() {
       else if (isItalic) selectedFont = FONT_STYLE_MAP[font].italic;
 
       const embeddedFont = await pdfDoc.embedFont(selectedFont, { subset: true });
+      const colorRgb = hexToRgb(textColor);
       
       const pages = pdfDoc.getPages();
 
@@ -278,14 +289,14 @@ export function PageNumberAdder() {
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
         else x = width - margin - textWidth;
 
-        page.drawText(text, { x, y, size: fontSize, font: embeddedFont, color: rgb(0, 0, 0) });
+        page.drawText(text, { x, y, size: fontSize, font: embeddedFont, color: rgb(colorRgb.r, colorRgb.g, colorRgb.b) });
 
         if (isUnderline) {
           page.drawLine({
             start: { x: x, y: y - 2 },
             end: { x: x + textWidth, y: y - 2 },
             thickness: Math.max(0.5, fontSize / 15),
-            color: rgb(0, 0, 0),
+            color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
           });
         }
         
@@ -464,11 +475,18 @@ export function PageNumberAdder() {
                                 </div>
                                 <div>
                                     <Label className="font-semibold">Style</Label>
-                                    <div className="mt-1 flex gap-2">
+                                    <div className="mt-1 flex items-center gap-2">
                                         <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button>
                                         <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button>
                                         <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button>
                                     </div>
+                                </div>
+                            </div>
+                             <div>
+                                <Label htmlFor="textColor" className="font-semibold">Text Color</Label>
+                                <div className="relative mt-1">
+                                    <Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/>
+                                    <Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" disabled={isProcessing} />
                                 </div>
                             </div>
                         </div>
