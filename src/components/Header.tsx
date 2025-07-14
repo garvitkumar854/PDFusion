@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +33,8 @@ const services = [
     { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
     { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+    { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
+    { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {

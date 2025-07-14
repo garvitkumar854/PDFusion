@@ -1,4 +1,5 @@
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image } from 'lucide-react';
+
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +43,20 @@ export default function Home() {
       title: 'JPG to PDF',
       description: 'Convert JPG images to a PDF file with orientation and margin options.',
       href: '/jpg-to-pdf'
+    },
+    {
+      icon: <RotateCw className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
+      title: 'Rotate PDF',
+      description: 'Rotate all pages in a PDF document by 90, 180, or 270 degrees.',
+      href: '/rotate-pdf'
+    },
+    {
+      icon: <Hash className="w-6 h-6 sm:w-8 sm:h-8 text-pink-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-pink-100 dark:bg-pink-900/20',
+      title: 'Add Page Numbers',
+      description: 'Easily insert page numbers into your PDF with custom positions.',
+      href: '/add-page-numbers'
     },
   ];
 
