@@ -89,6 +89,7 @@ export function PageNumberAdder() {
   const [isUnderline, setIsUnderline] = useState(false);
   
   const [startPage, setStartPage] = useState(1);
+  const [endPage, setEndPage] = useState(1);
   const [formatType, setFormatType] = useState<FormatType>('n');
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
@@ -113,8 +114,13 @@ export function PageNumberAdder() {
         const singleFile = acceptedFiles[0];
         const pdfBytes = await singleFile.arrayBuffer();
         const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        
+        if (operationId.current !== currentOperationId) return;
+
         setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
         setResult(null);
+        setStartPage(1);
+        setEndPage(pdfjsDoc.numPages);
 
         // Render first page for preview
         const page = await pdfjsDoc.getPage(1);
@@ -230,6 +236,15 @@ export function PageNumberAdder() {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const totalPages = pdfDoc.getPageCount();
+      
+      const effectiveStart = Math.max(0, startPage - 1);
+      const effectiveEnd = Math.min(totalPages, endPage);
+
+      if (effectiveStart >= effectiveEnd) {
+          toast({ variant: "destructive", title: "Invalid Range", description: "Start page must be before or the same as the end page." });
+          setIsProcessing(false);
+          return;
+      }
 
       let selectedFont = FONT_MAP[font];
       if (isBold && isItalic) selectedFont = FONT_STYLE_MAP[font].boldItalic;
@@ -239,9 +254,8 @@ export function PageNumberAdder() {
       const embeddedFont = await pdfDoc.embedFont(selectedFont, { subset: true });
       
       const pages = pdfDoc.getPages();
-      const effectiveStart = Math.max(0, startPage - 1);
 
-      for (let i = effectiveStart; i < totalPages; i++) {
+      for (let i = effectiveStart; i < effectiveEnd; i++) {
         if (operationId.current !== currentOperationId) return;
 
         const page = pages[i];
@@ -253,9 +267,12 @@ export function PageNumberAdder() {
         let x = 0, y = 0;
         const [vPos, hPos] = position.split('-');
         
-        if (vPos === 'top') y = height - margin - textHeight;
-        else if (vPos === 'middle') y = height / 2 - textHeight / 2;
+        if (vPos === 'top') y = height - margin;
+        else if (vPos === 'middle') y = height / 2;
         else y = margin;
+        
+        let baselineOffset = textHeight * 0.25; // A small adjustment for better visual alignment
+        y -= baselineOffset;
 
         if (hPos === 'left') x = margin;
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
@@ -272,7 +289,7 @@ export function PageNumberAdder() {
           });
         }
         
-        setProgress(Math.round(((i - effectiveStart + 1) / (totalPages - effectiveStart)) * 100));
+        setProgress(Math.round(((i - effectiveStart + 1) / (effectiveEnd - effectiveStart)) * 100));
       }
 
       if (operationId.current !== currentOperationId) return;
@@ -390,63 +407,69 @@ export function PageNumberAdder() {
                 </Card>
                 <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
-                    <CardContent className={cn("space-y-6", isProcessing && "opacity-70 pointer-events-none")}>
-                        <div>
-                            <Label className="font-semibold">Position</Label>
-                            <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
-                                {positions.map(p => (
-                                <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button>
-                                ))}
+                    <CardContent className="space-y-6">
+                       <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
+                            <div>
+                                <Label className="font-semibold">Position</Label>
+                                <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
+                                    {positions.map(p => (
+                                    <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <Label className="font-semibold">Format</Label>
-                            <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing}>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">Only page number (1)</Label></div>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page n (Page 1)</Label></div>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc.numPages})</Label></div>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page n of N (Page 1 of {file.pdfjsDoc.numPages})</Label></div>
-                                <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
-                            </RadioGroup>
-                            {formatType === 'custom' && (
-                                <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing} placeholder="e.g. {p} of {n}"/>
-                            )}
-                        </div>
+                            <div>
+                                <Label className="font-semibold">Format</Label>
+                                <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing}>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">Only page number (1)</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page n (Page 1)</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc.numPages})</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page n of N (Page 1 of {file.pdfjsDoc.numPages})</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
+                                </RadioGroup>
+                                {formatType === 'custom' && (
+                                    <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing} placeholder="e.g. {p} of {n}"/>
+                                )}
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="startPage" className="font-semibold">Start numbering from page</Label>
-                                <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc.numPages} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-2" disabled={isProcessing}/>
+                            <div className="space-y-2">
+                                <Label className="font-semibold">Page Range</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc.numPages} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="endPage" type="number" value={endPage} min={startPage} max={file.pdfjsDoc.numPages} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} className="mt-1" disabled={isProcessing}/>
+                                </div>
                             </div>
-                            <div>
-                                <Label htmlFor="margin" className="font-semibold">Margin (points)</Label>
-                                <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                 <div>
+                                    <Label htmlFor="margin" className="font-semibold">Margin (points)</Label>
+                                    <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-1" disabled={isProcessing}/>
+                                </div>
+                                <div>
+                                    <Label htmlFor="font-size" className="font-semibold">Font Size (points)</Label>
+                                    <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-1" disabled={isProcessing}/>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                <Label htmlFor="font-size" className="font-semibold">Font Size (points)</Label>
-                                <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
-                            </div>
-                            <div>
-                                <Label htmlFor="font" className="font-semibold">Font</Label>
-                                <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}>
-                                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Helvetica">Helvetica</SelectItem>
-                                        <SelectItem value="TimesRoman">Times New Roman</SelectItem>
-                                        <SelectItem value="Courier">Courier</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div>
-                            <Label className="font-semibold">Style</Label>
-                            <div className="mt-2 flex gap-2">
-                                <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button>
-                                <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button>
-                                <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="font" className="font-semibold">Font</Label>
+                                    <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}>
+                                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Helvetica">Helvetica</SelectItem>
+                                            <SelectItem value="TimesRoman">Times New Roman</SelectItem>
+                                            <SelectItem value="Courier">Courier</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="font-semibold">Style</Label>
+                                    <div className="mt-1 flex gap-2">
+                                        <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button>
+                                        <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button>
+                                        <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
