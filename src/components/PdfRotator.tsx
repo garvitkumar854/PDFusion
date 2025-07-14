@@ -360,7 +360,7 @@ export function PdfRotator() {
             <div className="space-y-6 sticky top-24">
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
-                    <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg aspect-square overflow-hidden">
+                    <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
                         {previewUrl ? (
                             <div className="relative w-full h-full flex items-center justify-center">
                                 <img 
