@@ -123,8 +123,12 @@ export function JpgToPdfConverter() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // This is the cleanup function that runs when the component unmounts.
     return () => {
-      operationId.current = 0;
+      // Invalidate any ongoing operations to prevent state updates on an unmounted component.
+      operationId.current++; 
+      
+      // Revoke object URLs to avoid memory leaks.
       files.forEach(f => URL.revokeObjectURL(f.previewUrl));
       if (conversionResults) {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
@@ -501,5 +505,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
-    

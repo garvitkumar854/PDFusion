@@ -53,7 +53,7 @@ type SplitResult = {
 
 type PagePreview = {
   pageNumber: number;
-  dataUrl: string;
+  dataUrl: string | null;
 };
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -65,7 +65,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => (
+const PagePreviewCard = ({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => (
     <div 
         key={pageNumber}
         onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
@@ -126,7 +126,7 @@ export function PdfSplitter() {
   useEffect(() => {
     // Component unmount logic
     return () => {
-      operationId.current = 0; // Invalidate any running operations
+      operationId.current++; // Invalidate any running operations
       splitResults.forEach(r => URL.revokeObjectURL(r.url));
       if (file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
@@ -454,9 +454,15 @@ export function PdfSplitter() {
   
   const fixedRangeGroups = useMemo(() => {
     if (!file || splitMode !== 'range' || rangeMode !== 'fixed' || fixedRangeSize < 1) return [];
-    const groups: PagePreview[][] = [];
-    for (let i = 0; i < pagePreviews.length; i += fixedRangeSize) {
-        groups.push(pagePreviews.slice(i, i + fixedRangeSize));
+    const groups: (PagePreview | { pageNumber: number; dataUrl: null })[][] = [];
+    for (let i = 0; i < file.totalPages; i += fixedRangeSize) {
+        const group: (PagePreview | { pageNumber: number; dataUrl: null })[] = [];
+        for(let j = 0; j < fixedRangeSize && (i + j) < file.totalPages; j++) {
+            const pageNum = i + j + 1;
+            const preview = pagePreviews.find(p => p.pageNumber === pageNum);
+            group.push(preview || { pageNumber: pageNum, dataUrl: null });
+        }
+        groups.push(group);
     }
     return groups;
   }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
@@ -560,84 +566,86 @@ export function PdfSplitter() {
       </Card>
 
       {file && (
-        <Card className={cn("bg-white dark:bg-card shadow-lg", (isSplitting || isProcessing) && "opacity-70 pointer-events-none")}>
+        <Card className={cn("bg-white dark:bg-card shadow-lg")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Split Options</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="range" disabled={isSplitting}>Split by range</TabsTrigger>
-                <TabsTrigger value="extract" disabled={isSplitting}>Extract pages</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="range" className="mt-6">
-                <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4" disabled={isSplitting}>
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <RadioGroupItem value="custom" id="r-custom" />
-                      <Label htmlFor="r-custom" className="font-semibold">Custom ranges</Label>
+            <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
+                <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="range" disabled={isSplitting}>Split by range</TabsTrigger>
+                    <TabsTrigger value="extract" disabled={isSplitting}>Extract pages</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="range" className="mt-6">
+                    <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4" disabled={isSplitting}>
+                    <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                        <RadioGroupItem value="custom" id="r-custom" />
+                        <Label htmlFor="r-custom" className="font-semibold">Custom ranges</Label>
+                        </div>
+                        <Input 
+                        disabled={rangeMode !== 'custom' || isSplitting}
+                        id="split-ranges" 
+                        value={customRanges} 
+                        onChange={(e) => {
+                            setCustomRanges(e.target.value);
+                            if(splitError) setSplitError(null);
+                        }}
+                        className={cn("mt-1", splitError && rangeMode === 'custom' && "border-destructive focus-visible:ring-destructive")}
+                        placeholder="e.g., 1-3, 5, 8-10"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                        Each range creates a new PDF. Example: <span className="font-mono bg-muted/80 px-1 py-0.5 rounded">1-3, 5, 8-10</span>
+                        </p>
                     </div>
-                    <Input 
-                      disabled={rangeMode !== 'custom' || isSplitting}
-                      id="split-ranges" 
-                      value={customRanges} 
-                      onChange={(e) => {
-                          setCustomRanges(e.target.value);
-                          if(splitError) setSplitError(null);
-                      }}
-                      className={cn("mt-1", splitError && rangeMode === 'custom' && "border-destructive focus-visible:ring-destructive")}
-                      placeholder="e.g., 1-3, 5, 8-10"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Each range creates a new PDF. Example: <span className="font-mono bg-muted/80 px-1 py-0.5 rounded">1-3, 5, 8-10</span>
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <RadioGroupItem value="fixed" id="r-fixed" />
-                      <Label htmlFor="r-fixed" className="font-semibold">Fixed ranges</Label>
+                    <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                        <RadioGroupItem value="fixed" id="r-fixed" />
+                        <Label htmlFor="r-fixed" className="font-semibold">Fixed ranges</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Input
+                            disabled={rangeMode !== 'fixed' || isSplitting}
+                            id="fixed-range-size"
+                            type="number"
+                            min="1"
+                            value={fixedRangeSize}
+                            onChange={(e) => setFixedRangeSize(Math.max(1, parseInt(e.target.value)) || 1)}
+                            className="w-24"
+                        />
+                        <Label htmlFor="fixed-range-size" className="text-muted-foreground">pages per file</Label>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        disabled={rangeMode !== 'fixed' || isSplitting}
-                        id="fixed-range-size"
-                        type="number"
-                        min="1"
-                        value={fixedRangeSize}
-                        onChange={(e) => setFixedRangeSize(Math.max(1, parseInt(e.target.value)) || 1)}
-                        className="w-24"
-                      />
-                      <Label htmlFor="fixed-range-size" className="text-muted-foreground">pages per file</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </TabsContent>
+                    </RadioGroup>
+                </TabsContent>
 
-              <TabsContent value="extract" className="mt-6">
-                <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4" disabled={isSplitting}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="r-all" />
-                    <Label htmlFor="r-all">Extract all pages into separate PDFs</Label>
-                  </div>
-                  <div>
+                <TabsContent value="extract" className="mt-6">
+                    <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4" disabled={isSplitting}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="select" id="r-select" />
-                      <Label htmlFor="r-select">Select pages to extract into one PDF</Label>
+                        <RadioGroupItem value="all" id="r-all" />
+                        <Label htmlFor="r-all">Extract all pages into separate PDFs</Label>
                     </div>
-                  </div>
-                </RadioGroup>
-              </TabsContent>
-            </Tabs>
+                    <div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="select" id="r-select" />
+                        <Label htmlFor="r-select">Select pages to extract into one PDF</Label>
+                        </div>
+                    </div>
+                    </RadioGroup>
+                </TabsContent>
+                </Tabs>
+            </div>
             
             {/* Preview Section */}
             <div className="mt-6 border-t pt-6">
                 <Label className="font-semibold text-base">Preview</Label>
-                 {isRenderingPreviews ? (
+                 {isProcessing || isRenderingPreviews ? (
                     <div className="flex flex-col justify-center items-center h-48">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        <p className="mt-4 mb-2">Rendering page previews...</p>
-                        <Progress value={previewProgress} className="w-full max-w-xs h-2" />
+                        <p className="mt-4 mb-2">{isProcessing ? "Processing PDF..." : "Rendering page previews..."}</p>
+                        {isRenderingPreviews && <Progress value={previewProgress} className="w-full max-w-xs h-2" />}
                     </div>
                 ) : (
                     <>
@@ -649,7 +657,7 @@ export function PdfSplitter() {
                                         <div className="w-1/3 max-w-32">
                                             <PagePreviewCard
                                                 pageNumber={customRangePreviewPages[0]}
-                                                dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || ''}
+                                                dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || null}
                                                 showCheckbox={false}
                                             />
                                         </div>
@@ -659,7 +667,7 @@ export function PdfSplitter() {
                                                 <div className="w-1/3 max-w-32">
                                                     <PagePreviewCard
                                                         pageNumber={customRangePreviewPages[1]}
-                                                        dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || ''}
+                                                        dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || null}
                                                         showCheckbox={false}
                                                     />
                                                 </div>
@@ -702,7 +710,7 @@ export function PdfSplitter() {
                         
                         {/* Extract Pages Preview (both modes) */}
                         {splitMode === 'extract' && (
-                            <div className="mt-4 border rounded-lg p-2 sm:p-4">
+                            <div className={cn("mt-4 border rounded-lg p-2 sm:p-4", isSplitting && "opacity-70 pointer-events-none")}>
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                                     <Label className="font-semibold text-base sm:text-lg">
                                         Selected Pages: {selectedPages.size} / {file.totalPages}
@@ -754,7 +762,7 @@ export function PdfSplitter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isRenderingPreviews || isProcessing}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>
@@ -766,5 +774,3 @@ export function PdfSplitter() {
     </div>
   );
 }
-
-    

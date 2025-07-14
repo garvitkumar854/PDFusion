@@ -67,8 +67,11 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
+            if (entry.isIntersecting && !dataUrl) {
                 onVisible(pageNumber);
+                if (ref.current) {
+                   observer.unobserve(ref.current);
+                }
             }
         }, { threshold: 0.1 });
 
@@ -81,7 +84,7 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
                 observer.unobserve(ref.current);
             }
         };
-    }, [pageNumber, onVisible]);
+    }, [pageNumber, onVisible, dataUrl]);
 
     return (
         <div
@@ -143,13 +146,13 @@ export function PdfToJpgConverter() {
   useEffect(() => {
     // Component unmount logic
     return () => {
-      operationId.current = 0; // Invalidate any running operations
-      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
+      operationId.current++;
       if (file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
       }
+      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
     };
-  }, [conversionResults, file]);
+  }, [file, conversionResults]);
   
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number, scale: number = 0.5): Promise<string | null> => {
     try {
@@ -476,7 +479,7 @@ export function PdfToJpgConverter() {
       </Card>
 
       {file && (
-        <Card className={cn("bg-white dark:bg-card shadow-lg", (isConverting || isProcessing) && "opacity-70 pointer-events-none")}>
+        <Card className={cn("bg-white dark:bg-card shadow-lg", isConverting && "opacity-70 pointer-events-none")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Conversion Options</CardTitle>
           </CardHeader>
@@ -488,7 +491,7 @@ export function PdfToJpgConverter() {
                 </div>
             ) : (
                  <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                    <div className="border rounded-lg p-2 sm:p-4">
+                    <div className={cn("border rounded-lg p-2 sm:p-4", isConverting && "opacity-70 pointer-events-none")}>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                             <Label className="font-semibold text-base sm:text-lg">
                                 Selected Pages: {selectedPages.size} / {file.totalPages}
@@ -554,5 +557,3 @@ export function PdfToJpgConverter() {
     </div>
   );
 }
-
-    
