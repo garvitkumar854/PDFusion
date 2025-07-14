@@ -14,19 +14,19 @@ export default function AddPageNumbersPage() {
             Add Page Numbers
             <br />
             <span className="relative inline-block">
-              <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">To Your PDF</span>
+              <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">With Live Preview</span>
             </span>
           </h1>
           <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-            Easily insert page numbers into your PDF documents.
+            Easily insert and customize page numbers on your PDF.
             <br />
-            Customize position, format, font, and more.
+            Adjust position, format, style, and more with instant feedback.
           </p>
         </AnimateOnScroll>
       </section>
       
       <main className="flex-1 w-full">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <PageNumberAdderLoader />
         </div>
       </main>

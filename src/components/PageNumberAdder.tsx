@@ -13,6 +13,9 @@ import {
   Loader2,
   Ban,
   Hash,
+  Bold,
+  Italic,
+  Underline,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -22,8 +25,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
+
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -31,6 +39,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PDFFile = {
   id: string;
   file: File;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
 };
 
 type ProcessResult = {
@@ -38,8 +47,21 @@ type ProcessResult = {
   filename: string;
 };
 
-type Position = "bottom-left" | "bottom-center" | "bottom-right" | "top-left" | "top-center" | "top-right";
+type Position = "top-left" | "top-center" | "top-right" | "middle-left" | "middle-center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right";
 type Font = "Helvetica" | "TimesRoman" | "Courier";
+type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
+
+const FONT_MAP: Record<Font, StandardFonts> = {
+  Helvetica: StandardFonts.Helvetica,
+  TimesRoman: StandardFonts.TimesRoman,
+  Courier: StandardFonts.Courier,
+};
+
+const FONT_STYLE_MAP: Record<Font, { bold: StandardFonts, italic: StandardFonts, boldItalic: StandardFonts }> = {
+    Helvetica: { bold: StandardFonts.HelveticaBold, italic: StandardFonts.HelveticaOblique, boldItalic: StandardFonts.HelveticaBoldOblique },
+    TimesRoman: { bold: StandardFonts.TimesRomanBold, italic: StandardFonts.TimesRomanItalic, boldItalic: StandardFonts.TimesRomanBoldItalic },
+    Courier: { bold: StandardFonts.CourierBold, italic: StandardFonts.CourierOblique, boldItalic: StandardFonts.CourierBoldOblique },
+}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -62,30 +84,60 @@ export function PageNumberAdder() {
   const [margin, setMargin] = useState(36);
   const [fontSize, setFontSize] = useState(12);
   const [font, setFont] = useState<Font>("Helvetica");
-  const [format, setFormat] = useState("page {p} of {n}");
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
+  
+  const [startPage, setStartPage] = useState(1);
+  const [formatType, setFormatType] = useState<FormatType>('n');
+  const [customFormat, setCustomFormat] = useState("{p} / {n}");
+  
+  const [firstPagePreviewUrl, setFirstPagePreviewUrl] = useState<string | null>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
+  
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    return () => {
-      operationId.current++;
-      if (result) {
-        URL.revokeObjectURL(result.url);
-      }
-    };
-  }, [result]);
-
-
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
         return;
       }
       
-      const singleFile = acceptedFiles[0];
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
-      setResult(null);
+      const currentOperationId = ++operationId.current;
+      setIsProcessing(true);
+      setFirstPagePreviewUrl(null);
+
+      try {
+        const singleFile = acceptedFiles[0];
+        const pdfBytes = await singleFile.arrayBuffer();
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
+        setResult(null);
+
+        // Render first page for preview
+        const page = await pdfjsDoc.getPage(1);
+        const viewport = page.getViewport({ scale: 1 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext('2d');
+        if (context) {
+            await page.render({ canvasContext: context, viewport }).promise;
+             if (operationId.current !== currentOperationId) return;
+            setFirstPagePreviewUrl(canvas.toDataURL());
+        }
+      } catch (e: any) {
+         if (operationId.current === currentOperationId) {
+             console.error("Failed to load PDF", e);
+             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
+         }
+      } finally {
+         if (operationId.current === currentOperationId) {
+            setIsProcessing(false);
+         }
+      }
     }, [toast]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -100,7 +152,68 @@ export function PageNumberAdder() {
 
   const removeFile = () => {
     setFile(null);
+    setFirstPagePreviewUrl(null);
   };
+
+  const getPageNumberText = (page: number, total: number) => {
+    const format = formatType === 'custom' ? customFormat : formatType;
+    switch (format) {
+        case 'n': return `${page}`;
+        case 'page_n': return `Page ${page}`;
+        case 'n_of_N': return `${page} / ${total}`;
+        case 'page_n_of_N': return `Page ${page} of ${total}`;
+        default: return customFormat.replace(/\{p\}/g, String(page)).replace(/\{n\}/g, String(total));
+    }
+  }
+  
+  const drawPreview = useCallback(() => {
+    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file) return;
+
+    const canvas = previewCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      // Now draw text
+      const pageNum = getPageNumberText(startPage, file.pdfjsDoc.numPages);
+      ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
+      ctx.fillStyle = "black";
+      const textMetrics = ctx.measureText(pageNum);
+
+      let x = 0, y = 0;
+      const [vPos, hPos] = position.split('-');
+
+      if (vPos === 'top') y = margin;
+      else if (vPos === 'middle') y = canvas.height / 2 + textMetrics.actualBoundingBoxAscent / 2;
+      else y = canvas.height - margin;
+
+      if (hPos === 'left') x = margin;
+      else if (hPos === 'center') x = canvas.width / 2 - textMetrics.width / 2;
+      else x = canvas.width - margin - textMetrics.width;
+
+      ctx.fillText(pageNum, x, y);
+      
+      if (isUnderline) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + 2);
+        ctx.lineTo(x + textMetrics.width, y + 2);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = Math.max(1, fontSize / 12);
+        ctx.stroke();
+      }
+    };
+    img.src = firstPagePreviewUrl;
+
+  }, [firstPagePreviewUrl, position, margin, fontSize, font, isBold, isItalic, isUnderline, startPage, formatType, customFormat, file]);
+
+  useEffect(() => {
+    drawPreview();
+  }, [drawPreview]);
 
   const handleProcess = async () => {
     if (!file) {
@@ -117,53 +230,49 @@ export function PageNumberAdder() {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const totalPages = pdfDoc.getPageCount();
-      
-      const fontMap = {
-        Helvetica: StandardFonts.Helvetica,
-        TimesRoman: StandardFonts.TimesRoman,
-        Courier: StandardFonts.Courier,
-      }
-      const embeddedFont = await pdfDoc.embedFont(fontMap[font]);
+
+      let selectedFont = FONT_MAP[font];
+      if (isBold && isItalic) selectedFont = FONT_STYLE_MAP[font].boldItalic;
+      else if (isBold) selectedFont = FONT_STYLE_MAP[font].bold;
+      else if (isItalic) selectedFont = FONT_STYLE_MAP[font].italic;
+
+      const embeddedFont = await pdfDoc.embedFont(selectedFont, { subset: true });
       
       const pages = pdfDoc.getPages();
-      for (let i = 0; i < totalPages; i++) {
+      const effectiveStart = Math.max(0, startPage - 1);
+
+      for (let i = effectiveStart; i < totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
 
         const page = pages[i];
         const { width, height } = page.getSize();
-        const text = format.replace('{p}', String(i + 1)).replace('{n}', String(totalPages));
+        const text = getPageNumberText(i + 1, totalPages);
         const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
+        const textHeight = embeddedFont.heightAtSize(fontSize);
         
-        let x = 0;
-        let y = 0;
+        let x = 0, y = 0;
+        const [vPos, hPos] = position.split('-');
         
-        const posParts = position.split('-'); // e.g., ["bottom", "center"]
-        
-        // Y coordinate
-        if(posParts[0] === 'top') {
-            y = height - margin;
-        } else { // bottom
-            y = margin;
-        }
+        if (vPos === 'top') y = height - margin - textHeight;
+        else if (vPos === 'middle') y = height / 2 - textHeight / 2;
+        else y = margin;
 
-        // X coordinate
-        if(posParts[1] === 'left') {
-            x = margin;
-        } else if (posParts[1] === 'center') {
-            x = width / 2 - textWidth / 2;
-        } else { // right
-            x = width - margin - textWidth;
-        }
+        if (hPos === 'left') x = margin;
+        else if (hPos === 'center') x = width / 2 - textWidth / 2;
+        else x = width - margin - textWidth;
 
-        page.drawText(text, {
-          x,
-          y,
-          size: fontSize,
-          font: embeddedFont,
-          color: rgb(0, 0, 0),
-        });
+        page.drawText(text, { x, y, size: fontSize, font: embeddedFont, color: rgb(0, 0, 0) });
+
+        if (isUnderline) {
+          page.drawLine({
+            start: { x: x, y: y - 2 },
+            end: { x: x + textWidth, y: y - 2 },
+            thickness: Math.max(0.5, fontSize / 15),
+            color: rgb(0, 0, 0),
+          });
+        }
         
-        setProgress(Math.round(((i + 1) / totalPages) * 100));
+        setProgress(Math.round(((i - effectiveStart + 1) / (totalPages - effectiveStart)) * 100));
       }
 
       if (operationId.current !== currentOperationId) return;
@@ -178,10 +287,7 @@ export function PageNumberAdder() {
       }
       
       const originalName = file.file.name.replace(/\.pdf$/i, '');
-      setResult({
-        url,
-        filename: `${originalName}_numbered.pdf`,
-      });
+      setResult({ url, filename: `${originalName}_numbered.pdf` });
       
       toast({
         title: "Processing Complete!",
@@ -192,11 +298,7 @@ export function PageNumberAdder() {
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
         console.error("Processing failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Processing Failed",
-          description: error.message || "An unexpected error occurred.",
-        });
+        toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
       }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -213,11 +315,10 @@ export function PageNumberAdder() {
   };
   
   const handleProcessAgain = () => {
-    if (result) {
-      URL.revokeObjectURL(result.url);
-    }
+    if (result) { URL.revokeObjectURL(result.url); }
     setFile(null);
     setResult(null);
+    setFirstPagePreviewUrl(null);
   };
 
   if (result) {
@@ -229,8 +330,7 @@ export function PageNumberAdder() {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
           <a href={result.url} download={result.filename}>
             <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-              <Download className="mr-2 h-5 w-5" />
-              Download PDF
+              <Download className="mr-2 h-5 w-5" /> Download PDF
             </Button>
           </a>
           <Button size="lg" variant="outline" onClick={handleProcessAgain} className="w-full sm:w-auto text-base">
@@ -241,158 +341,152 @@ export function PageNumberAdder() {
     );
   }
 
+  const positions: Position[] = ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"];
+
   return (
     <div className="space-y-6">
-      <Card className="bg-white dark:bg-card shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
-          <CardDescription>
-            Select a single PDF file to add page numbers to.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!file ? (
+      {!file && (
+        <Card className="bg-white dark:bg-card shadow-lg">
+            <CardHeader>
+            <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
+            <CardDescription>Select a PDF file to add page numbers to.</CardDescription>
+            </CardHeader>
+            <CardContent>
             <div
-              {...getRootProps()}
-              className={cn(
+                {...getRootProps()}
+                className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                 !isProcessing && "hover:border-primary/50",
                 isDragActive && "border-primary bg-primary/10",
                 isProcessing && "opacity-70 pointer-events-none"
-              )}
+                )}
             >
-              <input {...getInputProps()} />
-              <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-              <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
-                Drop a PDF file here
-              </p>
-              <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Choose File
-              </Button>
-              <p className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
-                Max file size: {MAX_FILE_SIZE_MB}MB
-              </p>
+                <input {...getInputProps()} />
+                <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
+                <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
+                    <FolderOpen className="mr-2 h-4 w-4" />Choose File
+                </Button>
+                <p className="w-full px-2 text-center text-xs text-muted-foreground mt-6">Max file size: {MAX_FILE_SIZE_MB}MB</p>
             </div>
-          ) : (
-            <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
-              <div className="flex items-center gap-3 overflow-hidden">
-                <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
-                  <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+        </Card>
+      )}
 
       {file && (
-        <Card className="bg-white dark:bg-card shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Numbering Options</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={cn("space-y-6", isProcessing && "opacity-70 pointer-events-none")}>
-                <div>
-                    <Label className="font-semibold">Position</Label>
-                    <RadioGroup 
-                        value={position} 
-                        onValueChange={(v) => setPosition(v as Position)}
-                        className="mt-2 grid grid-cols-3 gap-2"
-                        disabled={isProcessing}
-                    >
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="top-left" className="sr-only"/>Top Left
-                        </Label>
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="top-center" className="sr-only"/>Top Center
-                        </Label>
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="top-right" className="sr-only"/>Top Right
-                        </Label>
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="bottom-left" className="sr-only"/>Bottom Left
-                        </Label>
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="bottom-center" className="sr-only"/>Bottom Center
-                        </Label>
-                        <Label className="flex items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors text-xs">
-                            <RadioGroupItem value="bottom-right" className="sr-only"/>Bottom Right
-                        </Label>
-                    </RadioGroup>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="margin" className="font-semibold">Margin (points)</Label>
-                        <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
-                    </div>
-                     <div>
-                        <Label htmlFor="font-size" className="font-semibold">Font Size (points)</Label>
-                        <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
-                    </div>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
+                <Card className="bg-white dark:bg-card shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-xl">Uploaded File</CardTitle>
+                            <CardDescription className="truncate max-w-[200px] sm:max-w-xs" title={file.file.name}>{file.file.name}</CardDescription>
+                        </div>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </CardHeader>
+                </Card>
+                <Card className="bg-white dark:bg-card shadow-lg">
+                    <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
+                    <CardContent className={cn("space-y-6", isProcessing && "opacity-70 pointer-events-none")}>
+                        <div>
+                            <Label className="font-semibold">Position</Label>
+                            <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
+                                {positions.map(p => (
+                                <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="font-semibold">Format</Label>
+                            <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing}>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">Only page number (1)</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page n (Page 1)</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc.numPages})</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page n of N (Page 1 of {file.pdfjsDoc.numPages})</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
+                            </RadioGroup>
+                            {formatType === 'custom' && (
+                                <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing} placeholder="e.g. {p} of {n}"/>
+                            )}
+                        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="format" className="font-semibold">Format</Label>
-                        <Input id="format" type="text" value={format} onChange={e => setFormat(e.target.value)} className="mt-2" disabled={isProcessing}/>
-                        <p className="text-xs text-muted-foreground mt-1.5">Use {"{p}"} for page and {"{n}"} for total pages.</p>
-                    </div>
-                    <div>
-                        <Label htmlFor="font" className="font-semibold">Font</Label>
-                        <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}>
-                            <SelectTrigger className="mt-2">
-                                <SelectValue placeholder="Select a font" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Helvetica">Helvetica</SelectItem>
-                                <SelectItem value="TimesRoman">Times New Roman</SelectItem>
-                                <SelectItem value="Courier">Courier</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="startPage" className="font-semibold">Start numbering from page</Label>
+                                <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc.numPages} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-2" disabled={isProcessing}/>
+                            </div>
+                            <div>
+                                <Label htmlFor="margin" className="font-semibold">Margin (points)</Label>
+                                <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <Label htmlFor="font-size" className="font-semibold">Font Size (points)</Label>
+                                <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-2" disabled={isProcessing}/>
+                            </div>
+                            <div>
+                                <Label htmlFor="font" className="font-semibold">Font</Label>
+                                <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}>
+                                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Helvetica">Helvetica</SelectItem>
+                                        <SelectItem value="TimesRoman">Times New Roman</SelectItem>
+                                        <SelectItem value="Courier">Courier</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="font-semibold">Style</Label>
+                            <div className="mt-2 flex gap-2">
+                                <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button>
+                                <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button>
+                                <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-
-            <div className="mt-8">
-              {isProcessing ? (
-                <div className="p-4 border rounded-lg bg-primary/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                      <p className="text-sm font-medium text-primary transition-all duration-300">Adding page numbers...</p>
-                    </div>
-                    <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-                  <div className="mt-4">
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={handleCancel} 
-                        className="w-full"
-                      >
-                        <Ban className="mr-2 h-4 w-4" />
-                        Cancel
-                      </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}>
-                  <Hash className="mr-2 h-5 w-5" />
-                  Add Page Numbers
-                </Button>
-              )}
+            <div className="space-y-6 sticky top-24">
+                 <Card className="bg-white dark:bg-card shadow-lg">
+                    <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
+                    <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg">
+                        {firstPagePreviewUrl ? (
+                            <canvas ref={previewCanvasRef} className="max-w-full h-auto max-h-[500px] lg:max-h-[600px] object-contain shadow-md border rounded-md" />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                <p className="mt-2">Loading preview...</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+                 <Card className="bg-white dark:bg-card shadow-lg">
+                    <CardContent className="p-6">
+                        {isProcessing ? (
+                            <div className="p-4 border rounded-lg bg-primary/5">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                    <p className="text-sm font-medium text-primary transition-all duration-300">Adding page numbers...</p>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
+                                </div>
+                                <Progress value={progress} className="h-2" />
+                                <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
+                            </div>
+                        ) : (
+                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );
