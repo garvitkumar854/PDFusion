@@ -1,5 +1,5 @@
 
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, FileX2 } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,13 +36,6 @@ export default function Home() {
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
-    },
-     {
-      icon: <FileX2 className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
-      title: 'Remove Pages',
-      description: 'Quickly select and delete one or more pages from your PDF.',
-      href: '/remove-pages'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
