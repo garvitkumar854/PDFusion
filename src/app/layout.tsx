@@ -14,6 +14,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'PDFusion',
   description: 'Merge and manage your PDF files with ease.',
+  icons: {
+    icon: '/favicon.png',
+  }
 };
 
 export default function RootLayout({
