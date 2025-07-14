@@ -23,6 +23,23 @@ const nextConfig: NextConfig = {
     if (isServer) {
       config.externals.push('canvas');
     }
+    
+    // Fix for pdfjs-dist and other packages with require.extensions
+    config.module.rules.push({
+      test: /pdf\.mjs$/,
+      type: "javascript/auto",
+    });
+    
+    config.module.rules.push({
+      test: /node_modules\/handlebars\/lib\/index\.js$/,
+      loader: 'string-replace-loader',
+      options: {
+        search: `require.extensions\\['.js'\\]`,
+        replace: '() => {}',
+        flags: 'g',
+      },
+    });
+
     return config;
   },
 };
