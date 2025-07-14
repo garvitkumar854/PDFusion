@@ -120,7 +120,7 @@ export function PageNumberAdder() {
       
       const fontMap = {
         Helvetica: StandardFonts.Helvetica,
-        TimesRoman: StandardFonts.TimesNewRoman,
+        TimesRoman: StandardFonts.TimesRoman,
         Courier: StandardFonts.Courier,
       }
       const embeddedFont = await pdfDoc.embedFont(fontMap[font]);
