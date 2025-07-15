@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,7 @@ import {
   SheetContent,
   SheetTitle,
   SheetTrigger,
+  SheetClose
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -166,6 +167,11 @@ export default function Header() {
                                   </span>
                                 </h1>
                             </Link>
+                            <SheetClose asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </SheetClose>
                         </div>
                         <nav className="flex flex-col gap-6 items-start px-2 mb-6">
                              {navLinks.map((link) => (
