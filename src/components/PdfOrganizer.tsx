@@ -193,19 +193,24 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
+      // Create a new PDFDocument
       const newPdfDoc = await PDFDocument.create();
       
+      // Get the original page indices in the new, reordered sequence
       const pageIndicesInNewOrder = pages.map(p => p.originalIndex);
       
+      // Copy the pages from the original document to the new one.
+      // This function correctly handles all resources like fonts and images.
       const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesInNewOrder);
 
+      // Add the copied pages to the new document and apply rotation
       copiedPages.forEach((page, index) => {
           const rotationAngle = pages[index].rotation;
           page.setRotation(degrees(rotationAngle));
           newPdfDoc.addPage(page);
       });
       
-      const pdfBytes = await newPdfDoc.save();
+      const pdfBytes = await newPdfDoc.save({ useObjectStreams: false });
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
@@ -221,7 +226,7 @@ export function PdfOrganizer() {
 
     } catch (e) {
       console.error("Failed to save PDF", e);
-      toast({ variant: "destructive", title: "Failed to save PDF." });
+      toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. The PDF might contain complex features that are not supported."});
     } finally {
       setIsSaving(false);
     }
@@ -311,7 +316,10 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
         if (ref.current) observer.observe(ref.current);
 
         return () => {
-            if (ref.current) observer.unobserve(ref.current);
+            if (ref.current) {
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+                observer.unobserve(ref.current);
+            }
         };
     }, [page.id, page.dataUrl, onVisible]);
 
