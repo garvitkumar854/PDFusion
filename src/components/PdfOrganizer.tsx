@@ -195,30 +195,21 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-      // Create a new PDFDocument
       const newPdfDoc = await PDFDocument.create();
-
-      // Get the original page indices in the new order
       const orderedOriginalIndices = pages.map(p => p.originalIndex);
-
-      // Copy the pages from the source document into the new document in the correct order
+      
       const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
 
-      // Apply rotations and add pages to the new document
-      copiedPages.forEach((page, index) => {
-        const newRotation = pages[index].rotation;
-        if (newRotation !== 0) {
-          page.setRotation(degrees(newRotation));
-        }
-        newPdfDoc.addPage(page);
+      copiedPages.forEach((copiedPage, index) => {
+        const pageInfo = pages[index];
+        copiedPage.setRotation(degrees(pageInfo.rotation));
+        newPdfDoc.addPage(copiedPage);
       });
 
-      // Save the new PDF
       const pdfBytes = await newPdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
-      // Trigger download
       const link = document.createElement('a');
       link.href = url;
       link.download = `${file.file.name.replace(/\.pdf$/i, '')}_organized.pdf`;
