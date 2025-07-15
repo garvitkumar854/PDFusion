@@ -48,6 +48,7 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -79,18 +80,19 @@ export function PdfOrganizer() {
     try {
       const singleFile = acceptedFiles[0];
       const pdfBytes = await singleFile.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      // Load with pdf.js for rendering previews
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice(0) }).promise; 
 
       if (operationId.current !== currentOperationId) return;
       
-      const pdfDocForRotation = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const tempPdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
       
-      const pageCount = pdfjsDoc.numPages;
+      const pageCount = tempPdfLibDoc.getPageCount();
       const initialPages: PageInfo[] = Array.from({ length: pageCount }, (_, i) => ({
         originalIndex: i,
-        rotation: pdfDocForRotation.getPage(i).getRotation().angle,
+        rotation: tempPdfLibDoc.getPage(i).getRotation().angle,
         id: `${i}-${Date.now()}`,
       }));
       setPages(initialPages);
@@ -166,6 +168,7 @@ export function PdfOrganizer() {
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -188,29 +191,25 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
+      // Load with pdf-lib only when saving
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
-      const pageIndicesToRemove = Array.from({length: pdfDoc.getPageCount()}, (_, i) => i).reverse();
-      pageIndicesToRemove.forEach(index => pdfDoc.removePage(index));
-
-      const copiedPagesMap = new Map();
-
-      for (const pageInfo of pages) {
-        let copiedPage;
-        if(copiedPagesMap.has(pageInfo.originalIndex)) {
-            copiedPage = copiedPagesMap.get(pageInfo.originalIndex);
-        } else {
-            const [page] = await pdfDoc.copyPages(pdfDoc, [pageInfo.originalIndex]);
-            copiedPagesMap.set(pageInfo.originalIndex, page);
-            copiedPage = page;
-        }
-        
-        const addedPage = pdfDoc.addPage(copiedPage);
-        addedPage.setRotation(degrees(pageInfo.rotation));
-      }
+      const newPdfDoc = await PDFDocument.create();
       
-      const newPdfBytes = await pdfDoc.save({ useObjectStreams: false });
+      const pageIndicesToCopy = pages.map(p => p.originalIndex);
+      
+      const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndicesToCopy);
+      
+      copiedPages.forEach((page, index) => {
+        const rotationAngle = pages[index].rotation;
+        if (rotationAngle !== 0) {
+          page.setRotation(degrees(rotationAngle));
+        }
+        newPdfDoc.addPage(page);
+      });
+      
+      const newPdfBytes = await newPdfDoc.save();
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
@@ -234,6 +233,7 @@ export function PdfOrganizer() {
   
   const removeFile = () => {
     operationId.current++;
+    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
   };
@@ -267,7 +267,7 @@ export function PdfOrganizer() {
             <Card className="sticky top-20 z-10">
                 <CardHeader className="flex flex-row items-center justify-between p-4">
                     <div>
-                        <CardTitle className="text-lg">Organizing: {file.file.name}</CardTitle>
+                        <CardTitle className="text-lg truncate max-w-[200px] sm:max-w-md" title={file.file.name}>Organizing: {file.file.name}</CardTitle>
                         <CardDescription>{pages.length} pages</CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -289,7 +289,7 @@ export function PdfOrganizer() {
                     onRotate={rotatePage}
                     onDelete={deletePage}
                     onDragStart={handleDragStart}
-                    onDragEnter={handleDragEnter}
+                    onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleDragEnter(e, index)}
                     onDragEnd={handleDragEnd}
                     isSaving={isSaving}
                     isDragging={isDragging && dragItem.current === index}
@@ -356,5 +356,3 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
     );
 });
 PageCard.displayName = 'PageCard';
-
-    
