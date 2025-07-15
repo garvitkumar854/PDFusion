@@ -189,44 +189,49 @@ export function PdfOrganizer() {
   
   const handleSave = async () => {
     if (!file || pages.length === 0) {
-      toast({ variant: "destructive", title: "No pages to save."});
+      toast({ variant: "destructive", title: "No pages to save." });
       return;
     }
-    
+
     setIsSaving(true);
     try {
+      // Create a new PDFDocument
       const newPdfDoc = await PDFDocument.create();
-      const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      
-      const sourcePages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesToCopy);
-      
-      const pageMap = new Map<number, any>();
-      pageIndicesToCopy.forEach((originalIndex, i) => {
-        pageMap.set(originalIndex, sourcePages[i]);
-      });
-      
-      pages.forEach((pageInfo) => {
-          const copiedPage = pageMap.get(pageInfo.originalIndex);
-          if (copiedPage) {
-              copiedPage.setRotation(degrees(pageInfo.rotation));
-              newPdfDoc.addPage(copiedPage);
-          }
+
+      // Get the original page indices in the new order
+      const orderedOriginalIndices = pages.map(p => p.originalIndex);
+
+      // Copy the pages from the source document into the new document in the correct order
+      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
+
+      // Apply rotations and add pages to the new document
+      copiedPages.forEach((page, index) => {
+        const newRotation = pages[index].rotation;
+        if (newRotation !== 0) {
+          page.setRotation(degrees(newRotation));
+        }
+        newPdfDoc.addPage(page);
       });
 
+      // Save the new PDF
       const pdfBytes = await newPdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
+      
+      // Trigger download
       const link = document.createElement('a');
       link.href = url;
       link.download = `${file.file.name.replace(/\.pdf$/i, '')}_organized.pdf`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
       toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
 
     } catch (e) {
       console.error("Failed to save PDF", e);
-      toast({ variant: "destructive", title: "Failed to save PDF."});
+      toast({ variant: "destructive", title: "Failed to save PDF." });
     } finally {
       setIsSaving(false);
     }
