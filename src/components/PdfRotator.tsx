@@ -248,12 +248,16 @@ export function PdfRotator() {
   }
 
   const getPreviewSize = () => {
-    if (!preview) return { width: 0, height: 0 };
-    if (angle === 90 || angle === 270) {
-        return { width: preview.height, height: preview.width };
-    }
+    if (!preview) return { width: 1, height: 1 };
     return { width: preview.width, height: preview.height };
-  }
+  };
+
+  const isRotatedSideways = angle === 90 || angle === 270;
+  const previewSize = getPreviewSize();
+  const aspectRatio = isRotatedSideways 
+    ? previewSize.height / previewSize.width 
+    : previewSize.width / previewSize.height;
+
 
   return (
     <div className="space-y-6">
@@ -377,15 +381,15 @@ export function PdfRotator() {
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
                         {preview ? (
                             <div
-                                className="relative w-full h-auto transition-all duration-300"
+                                className="relative w-full h-auto transition-all duration-300 flex items-center justify-center"
                                 style={{
-                                    aspectRatio: `${getPreviewSize().width} / ${getPreviewSize().height}`,
+                                    aspectRatio: `${aspectRatio}`,
                                 }}
                             >
                                 <img 
                                     src={preview.url} 
                                     alt="PDF first page preview" 
-                                    className="absolute inset-0 w-full h-full object-contain shadow-md border rounded-md transition-transform duration-300 origin-center"
+                                    className="max-w-full max-h-full object-contain shadow-md border rounded-md transition-transform duration-300 origin-center"
                                     style={{ transform: `rotate(${angle}deg)` }}
                                 />
                             </div>
