@@ -32,14 +32,12 @@ type PageInfo = {
   originalIndex: number;
   rotation: number;
   dataUrl?: string;
-  id: string; // For stable key
-  isVisible: boolean;
+  id: string; 
 };
 
 type PDFFile = {
   id: string;
   file: File;
-  pdfDoc: PDFDocument;
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
 };
 
@@ -50,7 +48,6 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -82,21 +79,19 @@ export function PdfOrganizer() {
     try {
       const singleFile = acceptedFiles[0];
       const pdfBytes = await singleFile.arrayBuffer();
-      const [pdfDoc, pdfjsDoc] = await Promise.all([
-        PDFDocument.load(pdfBytes, { ignoreEncryption: true }),
-        pdfjsLib.getDocument({ data: pdfBytes }).promise,
-      ]);
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
 
       if (operationId.current !== currentOperationId) return;
-
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfDoc, pdfjsDoc });
       
-      const pageCount = pdfDoc.getPageCount();
+      const pdfDocForRotation = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
+      
+      const pageCount = pdfjsDoc.numPages;
       const initialPages: PageInfo[] = Array.from({ length: pageCount }, (_, i) => ({
         originalIndex: i,
-        rotation: pdfDoc.getPage(i).getRotation().angle,
+        rotation: pdfDocForRotation.getPage(i).getRotation().angle,
         id: `${i}-${Date.now()}`,
-        isVisible: false,
       }));
       setPages(initialPages);
     } catch (error) {
@@ -124,14 +119,13 @@ export function PdfOrganizer() {
 
     setPages(prev => {
         const pageIndex = prev.findIndex(p => p.id === id);
-        if (pageIndex === -1 || prev[pageIndex].dataUrl || prev[pageIndex].isVisible) {
+        if (pageIndex === -1 || prev[pageIndex].dataUrl) {
             return prev;
         }
-
+        
         const newPages = [...prev];
         const pageInfo = newPages[pageIndex];
-        newPages[pageIndex] = { ...pageInfo, isVisible: true };
-        
+
         renderPage(file.pdfjsDoc, pageInfo.originalIndex + 1).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPages(current => {
@@ -159,18 +153,19 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-    dragOverItem.current = index;
-    const filesCopy = [...pages];
-    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
-    filesCopy.splice(index, 0, draggedItemContent);
-    dragItem.current = index;
-    setPages(filesCopy);
+    
+    setPages(prevPages => {
+        const newPages = [...prevPages];
+        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
+        newPages.splice(index, 0, draggedItemContent);
+        dragItem.current = index;
+        return newPages;
+    });
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
-    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -193,25 +188,30 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-      // Create a new PDFDocument
-      const newPdfDoc = await PDFDocument.create();
-      
-      // Get the original page indices in the new, reordered sequence
-      const pageIndicesInNewOrder = pages.map(p => p.originalIndex);
-      
-      // Copy the pages from the original document to the new one.
-      // This function correctly handles all resources like fonts and images.
-      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesInNewOrder);
+      const pdfBytes = await file.file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
-      // Add the copied pages to the new document and apply rotation
-      copiedPages.forEach((page, index) => {
-          const rotationAngle = pages[index].rotation;
-          page.setRotation(degrees(rotationAngle));
-          newPdfDoc.addPage(page);
-      });
+      const pageIndicesToRemove = Array.from({length: pdfDoc.getPageCount()}, (_, i) => i).reverse();
+      pageIndicesToRemove.forEach(index => pdfDoc.removePage(index));
+
+      const copiedPagesMap = new Map();
+
+      for (const pageInfo of pages) {
+        let copiedPage;
+        if(copiedPagesMap.has(pageInfo.originalIndex)) {
+            copiedPage = copiedPagesMap.get(pageInfo.originalIndex);
+        } else {
+            const [page] = await pdfDoc.copyPages(pdfDoc, [pageInfo.originalIndex]);
+            copiedPagesMap.set(pageInfo.originalIndex, page);
+            copiedPage = page;
+        }
+        
+        const addedPage = pdfDoc.addPage(copiedPage);
+        addedPage.setRotation(degrees(pageInfo.rotation));
+      }
       
-      const pdfBytes = await newPdfDoc.save({ useObjectStreams: false });
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const newPdfBytes = await pdfDoc.save({ useObjectStreams: false });
+      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
       const link = document.createElement('a');
@@ -224,9 +224,9 @@ export function PdfOrganizer() {
       
       toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
 
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to save PDF", e);
-      toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. The PDF might contain complex features that are not supported."});
+      toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message});
     } finally {
       setIsSaving(false);
     }
@@ -302,7 +302,7 @@ export function PdfOrganizer() {
   );
 }
 
-const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging }: any) => {
+const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging }: any) => {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -354,4 +354,7 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
             </div>
         </div>
     );
-};
+});
+PageCard.displayName = 'PageCard';
+
+    
