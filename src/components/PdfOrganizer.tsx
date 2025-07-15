@@ -44,16 +44,6 @@ type PDFFile = {
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
 };
 
-function formatBytes(bytes: number, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-
 export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
@@ -61,6 +51,7 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -170,18 +161,18 @@ export function PdfOrganizer() {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
     
-    setPages(prev => {
-      const newPages = [...prev];
-      const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-      newPages.splice(index, 0, draggedItemContent);
-      dragItem.current = index;
-      return newPages;
-    });
+    dragOverItem.current = index;
+    const newPages = [...pages];
+    const draggedItemContent = newPages.splice(dragItem.current, 1)[0];
+    newPages.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setPages(newPages);
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
