@@ -44,9 +44,10 @@ export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(isSaving);
   
   const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -89,12 +90,19 @@ export function PdfOrganizer() {
         id: `${i}-${Date.now()}`,
       }));
 
-      // Pre-fetch initial rotations
+      // Pre-fetch initial rotations from pdf-lib as it's more reliable for this
       try {
         const tempPdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        initialPages.forEach((p, i) => {
-            p.rotation = tempPdfLibDoc.getPage(i).getRotation().angle;
-        });
+        if (operationId.current === currentOperationId) {
+            initialPages.forEach((p, i) => {
+                try {
+                    p.rotation = tempPdfLibDoc.getPage(i).getRotation().angle;
+                } catch(e) {
+                    console.warn(`Could not get rotation for page ${i}. Defaulting to 0.`);
+                    p.rotation = 0;
+                }
+            });
+        }
       } catch (e) {
           console.warn("Could not pre-fetch rotations from pdf-lib", e);
       }
@@ -161,19 +169,18 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-    
-    setPages(prevPages => {
-        const newPages = [...prevPages];
-        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-        newPages.splice(index, 0, draggedItemContent);
-        dragItem.current = index;
-        return newPages;
-    });
+    dragOverItem.current = index;
+    const filesCopy = [...pages];
+    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+    filesCopy.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setPages(filesCopy);
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -359,3 +366,5 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
     );
 });
 PageCard.displayName = 'PageCard';
+
+    
