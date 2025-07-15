@@ -172,8 +172,8 @@ export function PdfOrganizer() {
     setPages(prev => {
       const newPages = [...prev];
       const draggedItem = newPages.splice(dragItem.current!, 1)[0];
-      newPages.splice(index, 0, draggedItem);
-      dragItem.current = index;
+      newPages.splice(dragOverItem.current!, 0, draggedItem);
+      dragItem.current = dragOverItem.current;
       return newPages;
     });
   };
@@ -183,6 +183,10 @@ export function PdfOrganizer() {
     dragItem.current = null;
     dragOverItem.current = null;
   };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  }
   
   const rotatePage = (id: string) => {
     setPages(prev => prev.map(p => p.id === id ? {...p, rotation: (p.rotation + 90) % 360} : p));
@@ -202,11 +206,12 @@ export function PdfOrganizer() {
     try {
       const newPdfDoc = await PDFDocument.create();
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesToCopy);
+
+      const sourcePages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesToCopy);
       
       const pageMap = new Map();
-      copiedPages.forEach((p, i) => {
-        pageMap.set(pageIndicesToCopy[i], p);
+      pageIndicesToCopy.forEach((originalIndex, i) => {
+        pageMap.set(originalIndex, sourcePages[i]);
       });
       
       pages.forEach((pageInfo) => {
@@ -283,7 +288,7 @@ export function PdfOrganizer() {
                     </div>
                 </CardHeader>
             </Card>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" onDragOver={(e) => e.preventDefault()}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" onDragOver={handleDragOver}>
               {pages.map((page, index) => (
                 <PageCard
                     key={page.id}
