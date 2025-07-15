@@ -10,7 +10,6 @@ import {
   CheckCircle,
   FolderOpen,
   Loader2,
-  Ban,
   RotateCw,
   Trash2,
   Save,
@@ -51,6 +50,7 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -159,19 +159,18 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-    
-    setPages(prev => {
-        const newPages = [...prev];
-        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-        newPages.splice(index, 0, draggedItemContent);
-        dragItem.current = index;
-        return newPages;
-    })
+    dragOverItem.current = index;
+    const filesCopy = [...pages];
+    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+    filesCopy.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setPages(filesCopy);
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -196,14 +195,14 @@ export function PdfOrganizer() {
     try {
       const newPdfDoc = await PDFDocument.create();
       
-      const orderedOriginalIndices = pages.map(p => p.originalIndex);
-      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
+      const pageIndicesInNewOrder = pages.map(p => p.originalIndex);
+      
+      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesInNewOrder);
 
       copiedPages.forEach((page, index) => {
           const rotationAngle = pages[index].rotation;
-          if (rotationAngle !== 0) {
-              page.setRotation(degrees(rotationAngle));
-          }
+          page.setRotation(degrees(rotationAngle));
+          newPdfDoc.addPage(page);
       });
       
       const pdfBytes = await newPdfDoc.save();
