@@ -197,14 +197,12 @@ export function PdfOrganizer() {
       const newPdfDoc = await PDFDocument.create();
       
       const orderedOriginalIndices = pages.map(p => p.originalIndex);
+      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
 
-      const copiedPageIndices = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
-
-      copiedPageIndices.forEach((copiedPageIndex, index) => {
-          const newPage = newPdfDoc.getPage(copiedPageIndex);
+      copiedPages.forEach((page, index) => {
           const rotationAngle = pages[index].rotation;
           if (rotationAngle !== 0) {
-              newPage.setRotation(degrees(rotationAngle));
+              page.setRotation(degrees(rotationAngle));
           }
       });
       
