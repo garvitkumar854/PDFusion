@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { Skeleton } from "./ui/skeleton";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -47,13 +48,13 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
-  const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number) => {
+  const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
+    if (operationId.current !== currentOperationId) return undefined;
     try {
       const page = await pdfjsDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale: 0.5 });
@@ -74,8 +75,14 @@ export function PdfOrganizer() {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     const currentOperationId = ++operationId.current;
-    setIsLoading(true);
+    
+    // Cleanup previous state
+    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    setFile(null);
     setPages([]);
+
+    setIsLoading(true);
+
     try {
       const singleFile = acceptedFiles[0];
       const pdfBytes = await singleFile.arrayBuffer();
@@ -89,23 +96,6 @@ export function PdfOrganizer() {
         rotation: 0,
         id: `${i}-${Date.now()}`,
       }));
-
-      // Pre-fetch initial rotations from pdf-lib as it's more reliable for this
-      try {
-        const tempPdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        if (operationId.current === currentOperationId) {
-            initialPages.forEach((p, i) => {
-                try {
-                    p.rotation = tempPdfLibDoc.getPage(i).getRotation().angle;
-                } catch(e) {
-                    console.warn(`Could not get rotation for page ${i}. Defaulting to 0.`);
-                    p.rotation = 0;
-                }
-            });
-        }
-      } catch (e) {
-          console.warn("Could not pre-fetch rotations from pdf-lib", e);
-      }
       
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
       setPages(initialPages);
@@ -117,7 +107,7 @@ export function PdfOrganizer() {
     } finally {
       if (operationId.current === currentOperationId) setIsLoading(false);
     }
-  }, [toast]);
+  }, [file?.pdfjsDoc, toast]);
   
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -142,7 +132,7 @@ export function PdfOrganizer() {
         const newPages = [...prev];
         const pageInfo = newPages[pageIndex];
 
-        renderPage(file.pdfjsDoc, pageInfo.originalIndex + 1).then(dataUrl => {
+        renderPage(file.pdfjsDoc, pageInfo.originalIndex + 1, currentOperationId).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPages(current => {
                     const latestIndex = current.findIndex(p => p.id === id);
@@ -169,18 +159,19 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-    dragOverItem.current = index;
-    const filesCopy = [...pages];
-    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
-    filesCopy.splice(index, 0, draggedItemContent);
-    dragItem.current = index;
-    setPages(filesCopy);
+
+    setPages(prevPages => {
+        const newPages = [...prevPages];
+        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
+        newPages.splice(index, 0, draggedItemContent);
+        dragItem.current = index;
+        return newPages;
+    });
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
-    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -202,14 +193,15 @@ export function PdfOrganizer() {
     }
 
     setIsSaving(true);
+    let pdfLibDoc: PDFDocument | null = null;
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
+      pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      
       const newPdfDoc = await PDFDocument.create();
       
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndicesToCopy);
+      const copiedPages = await newPdfDoc.copyPages(pdfLibDoc, pageIndicesToCopy);
       
       copiedPages.forEach((page, index) => {
         const rotationAngle = pages[index].rotation;
@@ -257,11 +249,11 @@ export function PdfOrganizer() {
             <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div {...getRootProps()} className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", isDragActive && "border-primary bg-primary/10", (isLoading || isSaving) && "opacity-70 pointer-events-none")}>
+            <div {...getRootProps()} className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", isDragActive && "border-primary bg-primary/10", (isLoading || isSaving) && "opacity-70 pointer-events-none", "hover:border-primary/50")}>
               <input {...getInputProps()} />
-              {isLoading ? <Loader2 className="w-10 h-10 text-primary animate-spin" /> : <UploadCloud className="w-10 h-10 text-muted-foreground" />}
+              <UploadCloud className="w-10 h-10 text-muted-foreground" />
               <p className="mt-2 text-base font-semibold text-foreground">
-                {isLoading ? "Processing PDF..." : "Drop a PDF file here"}
+                Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground">or click the button below</p>
               <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
@@ -274,45 +266,56 @@ export function PdfOrganizer() {
 
       {file && (
         <>
-            <Card className="sticky top-20 z-10">
-                <CardHeader className="flex flex-row items-center justify-between p-4">
+            <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
+                <CardHeader className="flex flex-row items-center justify-between p-3 md:p-4">
                     <div>
-                        <CardTitle className="text-lg truncate max-w-[200px] sm:max-w-md" title={file.file.name}>Organizing: {file.file.name}</CardTitle>
-                        <CardDescription>{pages.length} pages</CardDescription>
+                        <CardTitle className="text-base sm:text-lg truncate max-w-[150px] sm:max-w-md md:max-w-lg" title={file.file.name}>Organizing: {file.file.name}</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">{pages.length} pages</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                         <Button variant="outline" onClick={removeFile} disabled={isSaving}><X className="mr-2 h-4 w-4" />Change File</Button>
-                         <Button onClick={handleSave} disabled={isSaving}>
+                         <Button variant="outline" size="sm" onClick={removeFile} disabled={isSaving}><X className="mr-1 h-4 w-4" />Change File</Button>
+                         <Button size="sm" onClick={handleSave} disabled={isSaving}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save
                          </Button>
                     </div>
                 </CardHeader>
             </Card>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" onDragOver={handleDragOver}>
-              {pages.map((page, index) => (
-                <PageCard
-                    key={page.id}
-                    page={page}
-                    index={index}
-                    onVisible={onPageVisible}
-                    onRotate={rotatePage}
-                    onDelete={deletePage}
-                    onDragStart={handleDragStart}
-                    onDragEnter={handleDragEnter}
-                    onDragEnd={handleDragEnd}
-                    isSaving={isSaving}
-                    isDragging={isDragging && dragItem.current === index}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                         <div key={i} className="rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group flex flex-col items-center justify-center gap-2">
+                             <Skeleton className="w-16 h-20" />
+                             <Skeleton className="w-12 h-4" />
+                         </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" onDragOver={handleDragOver}>
+                  {pages.map((page, index) => (
+                    <PageCard
+                        key={page.id}
+                        page={page}
+                        index={index}
+                        onVisible={onPageVisible}
+                        onRotate={rotatePage}
+                        onDelete={deletePage}
+                        onDragStart={handleDragStart}
+                        onDragEnter={handleDragEnter}
+                        onDragEnd={handleDragEnd}
+                        isSaving={isSaving}
+                        isDragging={isDragging && dragItem.current === index}
+                    />
+                  ))}
+                </div>
+            )}
         </>
       )}
     </div>
   );
 }
 
-const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging }: any) => {
+const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging }: { page: PageInfo, index: number, onVisible: (id: string) => void, onRotate: (id: string) => void, onDelete: (id: string) => void, onDragStart: (e: React.DragEvent<HTMLDivElement>, index: number) => void, onDragEnter: (e: React.DragEvent<HTMLDivElement>, index: number) => void, onDragEnd: () => void, isSaving: boolean, isDragging: boolean }) => {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -323,13 +326,11 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
             }
         }, { threshold: 0.1 });
 
-        if (ref.current) observer.observe(ref.current);
+        const currentRef = ref.current;
+        if (currentRef) observer.observe(currentRef);
 
         return () => {
-            if (ref.current) {
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-                observer.unobserve(ref.current);
-            }
+            if (currentRef) observer.unobserve(currentRef);
         };
     }, [page.id, page.dataUrl, onVisible]);
 
@@ -341,12 +342,12 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
             onDragEnter={(e) => onDragEnter(e, index)}
             onDragEnd={onDragEnd}
             className={cn(
-                "relative rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group",
-                isSaving ? "cursor-not-allowed" : "cursor-grab",
-                isDragging ? "shadow-2xl scale-105 opacity-50" : "shadow-sm"
+                "relative rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-[7/10] bg-muted group shadow-sm",
+                isSaving ? "cursor-not-allowed opacity-70" : "cursor-grab",
+                isDragging ? "shadow-2xl scale-105 opacity-50 border-primary" : "border-transparent hover:shadow-md hover:border-primary/50"
             )}
         >
-            <div className="w-full h-full flex items-center justify-center p-1">
+            <div className="w-full h-full flex items-center justify-center p-1 bg-white">
             {page.dataUrl ? (
                 <img src={page.dataUrl} alt={`Page ${page.originalIndex + 1}`} className="w-full h-full object-contain transition-transform duration-300" style={{ transform: `rotate(${page.rotation}deg)` }} />
             ) : (
@@ -354,17 +355,15 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
             )}
             </div>
             
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button size="icon" variant="secondary" onClick={() => onRotate(page.id)} disabled={isSaving} className="w-8 h-8"><RotateCw className="w-4 h-4" /></Button>
-                <Button size="icon" variant="destructive" onClick={() => onDelete(page.id)} disabled={isSaving} className="w-8 h-8"><Trash2 className="w-4 h-4" /></Button>
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <Button title="Rotate" size="icon" variant="secondary" onClick={() => onRotate(page.id)} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><RotateCw className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
+                <Button title="Delete" size="icon" variant="destructive" onClick={() => onDelete(page.id)} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
             </div>
             
-            <div className="absolute bottom-1 right-1 bg-background/80 text-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border">
+            <div className="absolute top-1 right-1 bg-background/80 text-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border shadow">
                 {index + 1}
             </div>
         </div>
     );
 });
 PageCard.displayName = 'PageCard';
-
-    
