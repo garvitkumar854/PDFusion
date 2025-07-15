@@ -95,7 +95,49 @@ export function PdfToHtmlConverter() {
       const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       const totalPages = pdfjsDoc.numPages;
 
-      let htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${file.file.name}</title><style>body{font-family: sans-serif; line-height: 1.5;} .page { border-bottom: 2px solid #ccc; padding: 20px; margin-bottom: 20px; } p { margin: 0 0 1em 0; }</style></head><body>`;
+      let htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${file.file.name}</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .page {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .page:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        h1, h2, h3 {
+            font-weight: 600;
+        }
+        p {
+            margin: 0 0 1em 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1>${file.file.name}</h1>
+`;
 
       for (let i = 1; i <= totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
@@ -103,18 +145,28 @@ export function PdfToHtmlConverter() {
         const page = await pdfjsDoc.getPage(i);
         const textContent = await page.getTextContent();
         
-        htmlContent += `<div class="page" id="page-${i}">`;
-        textContent.items.forEach(item => {
+        htmlContent += `<div class="page" id="page-${i}">\n<h2>Page ${i}</h2>\n`;
+        
+        let currentParagraph = '';
+        textContent.items.forEach((item, index) => {
           if ('str' in item) {
-             htmlContent += `<p>${item.str.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+             currentParagraph += item.str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+             if (item.hasEOL || index === textContent.items.length -1) {
+                if (currentParagraph.trim()) {
+                   htmlContent += `<p>${currentParagraph}</p>\n`;
+                }
+                currentParagraph = '';
+             } else {
+                currentParagraph += ' ';
+             }
           }
         });
-        htmlContent += `</div>`;
+        htmlContent += `</div>\n`;
 
         setProgress(Math.round((i / totalPages) * 100));
       }
 
-      htmlContent += `</body></html>`;
+      htmlContent += `</div></body></html>`;
       
       if (operationId.current !== currentOperationId) return;
 

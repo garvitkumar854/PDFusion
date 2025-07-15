@@ -42,6 +42,12 @@ type ProcessResult = {
 
 type RotationAngle = 90 | 180 | 270;
 
+type PreviewInfo = {
+    url: string;
+    width: number;
+    height: number;
+}
+
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -59,7 +65,7 @@ export function PdfRotator() {
   const [progress, setProgress] = useState(0);
 
   const [angle, setAngle] = useState<RotationAngle>(90);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewInfo | null>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
@@ -70,11 +76,11 @@ export function PdfRotator() {
       if (result) {
         URL.revokeObjectURL(result.url);
       }
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+      if (preview) {
+        URL.revokeObjectURL(preview.url);
       }
     };
-  }, [result, previewUrl]);
+  }, [result, preview]);
 
 
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -85,7 +91,7 @@ export function PdfRotator() {
       
       const currentOperationId = ++operationId.current;
       setIsProcessing(true);
-      setPreviewUrl(null);
+      setPreview(null);
       
       try {
         const singleFile = acceptedFiles[0];
@@ -106,7 +112,7 @@ export function PdfRotator() {
             await page.render({ canvasContext: context, viewport }).promise;
             if (operationId.current !== currentOperationId) return;
             const url = canvas.toDataURL();
-            setPreviewUrl(url);
+            setPreview({url, width: canvas.width, height: canvas.height});
         }
       } catch(e) {
         if(operationId.current === currentOperationId) {
@@ -132,8 +138,8 @@ export function PdfRotator() {
 
   const removeFile = () => {
     setFile(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
+    if (preview) URL.revokeObjectURL(preview.url);
+    setPreview(null);
   };
 
   const handleProcess = async () => {
@@ -214,10 +220,10 @@ export function PdfRotator() {
     }
     setFile(null);
     setResult(null);
-    if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+    if (preview) {
+        URL.revokeObjectURL(preview.url);
     }
-    setPreviewUrl(null);
+    setPreview(null);
   };
 
   if (result) {
@@ -239,6 +245,14 @@ export function PdfRotator() {
         </div>
       </div>
     );
+  }
+
+  const getPreviewSize = () => {
+    if (!preview) return { width: 0, height: 0 };
+    if (angle === 90 || angle === 270) {
+        return { width: preview.height, height: preview.width };
+    }
+    return { width: preview.width, height: preview.height };
   }
 
   return (
@@ -361,12 +375,17 @@ export function PdfRotator() {
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
-                        {previewUrl ? (
-                            <div className="relative w-full h-full flex items-center justify-center">
+                        {preview ? (
+                            <div
+                                className="relative w-full h-auto transition-all duration-300"
+                                style={{
+                                    aspectRatio: `${getPreviewSize().width} / ${getPreviewSize().height}`,
+                                }}
+                            >
                                 <img 
-                                    src={previewUrl} 
+                                    src={preview.url} 
                                     alt="PDF first page preview" 
-                                    className="max-w-full max-h-full object-contain shadow-md border rounded-md transition-transform duration-300 origin-center"
+                                    className="absolute inset-0 w-full h-full object-contain shadow-md border rounded-md transition-transform duration-300 origin-center"
                                     style={{ transform: `rotate(${angle}deg)` }}
                                 />
                             </div>

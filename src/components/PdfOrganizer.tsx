@@ -204,10 +204,17 @@ export function PdfOrganizer() {
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
       const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesToCopy);
       
-      pages.forEach((pageInfo, newIndex) => {
-          const copiedPage = copiedPages[newIndex];
-          copiedPage.setRotation(degrees(pageInfo.rotation));
-          newPdfDoc.addPage(copiedPage);
+      const pageMap = new Map();
+      copiedPages.forEach((p, i) => {
+        pageMap.set(pageIndicesToCopy[i], p);
+      });
+      
+      pages.forEach((pageInfo) => {
+          const copiedPage = pageMap.get(pageInfo.originalIndex);
+          if (copiedPage) {
+              copiedPage.setRotation(degrees(pageInfo.rotation));
+              newPdfDoc.addPage(copiedPage);
+          }
       });
 
       const pdfBytes = await newPdfDoc.save();
@@ -324,7 +331,11 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
             onDragStart={(e) => onDragStart(e, index)}
             onDragEnter={(e) => onDragEnter(e, index)}
             onDragEnd={onDragEnd}
-            className={cn("relative rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group", isSaving && "cursor-not-allowed", isDragging && "shadow-2xl scale-105 opacity-50")}
+            className={cn(
+                "relative rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group",
+                isSaving && "cursor-not-allowed",
+                isDragging ? "shadow-2xl scale-105 opacity-50" : "shadow-sm"
+            )}
         >
             <div className="w-full h-full flex items-center justify-center p-1">
             {page.dataUrl ? (

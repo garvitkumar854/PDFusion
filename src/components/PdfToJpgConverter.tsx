@@ -61,6 +61,9 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
+const usePageVisibility = () => React.useContext(PageVisibilityContext);
+
 const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => {
     const ref = useRef<HTMLDivElement>(null);
     const { onVisible } = usePageVisibility();
@@ -122,10 +125,6 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
     );
 });
 PagePreviewCard.displayName = 'PagePreviewCard';
-
-const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
-const usePageVisibility = () => React.useContext(PageVisibilityContext);
-
 
 export function PdfToJpgConverter() {
   const [file, setFile] = useState<PDFFile | null>(null);
@@ -499,7 +498,7 @@ export function PdfToJpgConverter() {
                 </div>
             ) : (
                  <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                    <div className={cn("border rounded-lg p-2 sm:p-4", isConverting && "opacity-70 pointer-events-none")}>
+                    <div className={cn(isConverting && "opacity-70 pointer-events-none")}>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                             <Label className="font-semibold text-base sm:text-lg">
                                 Selected Pages: {selectedPages.size} / {file.totalPages}
