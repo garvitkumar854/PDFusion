@@ -54,7 +54,6 @@ export function PdfOrganizer() {
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   
-  // Cleanup resources when component unmounts
   useEffect(() => {
     return () => {
       if(file?.pdfjsDoc) {
@@ -85,20 +84,16 @@ export function PdfOrganizer() {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     
-    // Increment operation ID to cancel any pending rendering from previous files.
     const currentOperationId = ++operationId.current;
     
-    // Cleanup previous state before processing a new file.
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
-
     setIsLoading(true);
 
     try {
       const singleFile = acceptedFiles[0];
       const pdfBytes = await singleFile.arrayBuffer();
-      // Use both pdf-lib for saving and pdf.js for rendering.
       const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise; 
 
       if (operationId.current !== currentOperationId) {
@@ -149,7 +144,6 @@ export function PdfOrganizer() {
 
     setPages(prev => {
         const pageIndex = prev.findIndex(p => p.id === id);
-        // Only render if page exists and doesn't have a dataUrl yet.
         if (pageIndex === -1 || prev[pageIndex].dataUrl) {
             return prev;
         }
@@ -158,7 +152,6 @@ export function PdfOrganizer() {
         const pageInfo = newPages[pageIndex];
 
         renderPage(file.pdfjsDoc, pageInfo.originalIndex + 1, currentOperationId).then(dataUrl => {
-            // Check operationId again inside promise to prevent state updates from old operations.
             if (dataUrl && operationId.current === currentOperationId) {
                 setPages(current => {
                     const latestIndex = current.findIndex(p => p.id === id);
@@ -220,15 +213,12 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-      // Use original file bytes to load with pdf-lib for manipulation
       const pdfBytes = await file.file.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       
       const newPdfDoc = await PDFDocument.create();
       
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-
-      // This can be slow for large PDFs, but is necessary.
       const copiedPages = await newPdfDoc.copyPages(pdfLibDoc, pageIndicesToCopy);
       
       copiedPages.forEach((page, index) => {
@@ -269,37 +259,52 @@ export function PdfOrganizer() {
   };
 
   return (
-    <div className="space-y-6" {...getRootProps()}>
-      <input {...getInputProps()} />
-      {!file && !isLoading && (
-        <Card className="hover:border-primary/50 cursor-pointer" onClick={open}>
-          <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Organize PDF</CardTitle>
-            <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", isDragActive && "border-primary bg-primary/10")}>
-              <UploadCloud className="w-10 h-10 text-muted-foreground" />
-              <p className="mt-2 text-base font-semibold text-foreground">
-                Drop a PDF file here
-              </p>
-              <p className="text-xs text-muted-foreground">or click to select a file</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {(isLoading || file) && (
+    <div className="space-y-6">
+      {!file ? (
+        <div {...getRootProps()}>
+           <input {...getInputProps()} />
+            <Card className="bg-white dark:bg-card shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Organize PDF</CardTitle>
+                    <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div
+                    className={cn(
+                    "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
+                    !isLoading && "hover:border-primary/50",
+                    isDragActive && "border-primary bg-primary/10"
+                    )}
+                >
+                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+                        Drop a PDF file here
+                    </p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FolderOpen className="mr-2 h-4 w-4" />}
+                        {isLoading ? "Processing..." : "Choose File"}
+                    </Button>
+                </div>
+                </CardContent>
+            </Card>
+        </div>
+      ) : (
         <>
             <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between p-3 md:p-4">
-                    <div>
-                        <CardTitle className="text-base sm:text-lg truncate max-w-[150px] sm:max-w-xs md:max-w-lg" title={file?.file.name}>Organizing: {file?.file.name || '...'}</CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">{file ? `${pages.length} pages` : 'Loading...'}</CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
+                    <div className="flex-grow min-w-0">
+                        <CardTitle className="text-base sm:text-lg truncate" title={file.file.name}>
+                            Organizing: <span className="font-normal">{file.file.name}</span>
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
+                            {isLoading ? 'Loading...' : `${pages.length} pages`}
+                        </CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                         <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSaving || isLoading}>
-                            <X className="w-4 h-4" />
+                    <div className="flex gap-2 self-end sm:self-center">
+                         <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSaving || isLoading}>
+                            <X className="w-5 h-5" />
+                            <span className="sr-only">Change File</span>
                          </Button>
                          <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -308,30 +313,33 @@ export function PdfOrganizer() {
                     </div>
                 </CardHeader>
             </Card>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" onDragOver={handleDragOver}>
-              {isLoading ? (
-                  Array.from({ length: 12 }).map((_, i) => (
-                       <div key={i} className="rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group flex flex-col items-center justify-center gap-2">
-                           <Skeleton className="w-full h-full" />
-                       </div>
-                  ))
-              ) : (
-                  pages.map((page, index) => (
-                    <PageCard
-                        key={page.id}
-                        page={page}
-                        index={index}
-                        onVisible={onPageVisible}
-                        onRotate={rotatePage}
-                        onDelete={deletePage}
-                        onDragStart={handleDragStart}
-                        onDragEnter={handleDragEnter}
-                        onDragEnd={handleDragEnd}
-                        isSaving={isSaving}
-                        isDragging={isDragging && dragItem.current === index}
-                    />
-                  ))
-              )}
+            <div {...getRootProps({onDragOver: handleDragOver, className: 'outline-none'})}>
+              <input {...getInputProps()} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {isLoading ? (
+                    Array.from({ length: 12 }).map((_, i) => (
+                         <div key={i} className="rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group flex flex-col items-center justify-center gap-2">
+                             <Skeleton className="w-full h-full" />
+                         </div>
+                    ))
+                ) : (
+                    pages.map((page, index) => (
+                      <PageCard
+                          key={page.id}
+                          page={page}
+                          index={index}
+                          onVisible={onPageVisible}
+                          onRotate={rotatePage}
+                          onDelete={deletePage}
+                          onDragStart={handleDragStart}
+                          onDragEnter={handleDragEnter}
+                          onDragEnd={handleDragEnd}
+                          isSaving={isSaving}
+                          isDragging={isDragging && dragItem.current === index}
+                      />
+                    ))
+                )}
+              </div>
             </div>
         </>
       )}
