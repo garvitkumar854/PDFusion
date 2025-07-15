@@ -44,7 +44,7 @@ export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(isSaving);
+  const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
