@@ -170,15 +170,12 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-    dragOverItem.current = index;
     
     setPages(prev => {
         const newPages = [...prev];
         const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-        if (draggedItemContent) {
-          newPages.splice(dragOverItem.current!, 0, draggedItemContent);
-          dragItem.current = dragOverItem.current;
-        }
+        newPages.splice(index, 0, draggedItemContent);
+        dragItem.current = index;
         return newPages;
     });
   };
@@ -366,6 +363,3 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
         </div>
     );
 };
-
-
-    
