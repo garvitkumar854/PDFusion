@@ -162,11 +162,13 @@ export function PdfOrganizer() {
     if (dragItem.current === null || dragItem.current === index) return;
     
     dragOverItem.current = index;
-    const newPages = [...pages];
-    const draggedItemContent = newPages.splice(dragItem.current, 1)[0];
-    newPages.splice(index, 0, draggedItemContent);
-    dragItem.current = index;
-    setPages(newPages);
+    setPages(prev => {
+        const newPages = [...prev];
+        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
+        newPages.splice(index, 0, draggedItemContent);
+        dragItem.current = index;
+        return newPages;
+    })
   };
 
   const handleDragEnd = () => {
@@ -196,16 +198,15 @@ export function PdfOrganizer() {
     setIsSaving(true);
     try {
       const newPdfDoc = await PDFDocument.create();
-      const orderedOriginalIndices = pages.map(p => p.originalIndex);
+      const pageIndices = pages.map(p => p.originalIndex);
       
-      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
+      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndices);
 
-      copiedPages.forEach((copiedPage, index) => {
+      copiedPages.forEach((page, index) => {
         const pageInfo = pages[index];
-        copiedPage.setRotation(degrees(pageInfo.rotation));
-        newPdfDoc.addPage(copiedPage);
+        page.setRotation(degrees(pageInfo.rotation));
       });
-
+      
       const pdfBytes = await newPdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
