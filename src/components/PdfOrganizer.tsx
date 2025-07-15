@@ -48,7 +48,6 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -85,14 +84,14 @@ export function PdfOrganizer() {
 
       if (operationId.current !== currentOperationId) return;
       
-      const tempPdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
+      const pageCount = pdfjsDoc.numPages;
+      const tempPdfLibDocForRotation = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
       
-      const pageCount = tempPdfLibDoc.getPageCount();
       const initialPages: PageInfo[] = Array.from({ length: pageCount }, (_, i) => ({
         originalIndex: i,
-        rotation: tempPdfLibDoc.getPage(i).getRotation().angle,
+        rotation: tempPdfLibDocForRotation.getPage(i).getRotation().angle,
         id: `${i}-${Date.now()}`,
       }));
       setPages(initialPages);
@@ -168,7 +167,6 @@ export function PdfOrganizer() {
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
-    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -289,7 +287,7 @@ export function PdfOrganizer() {
                     onRotate={rotatePage}
                     onDelete={deletePage}
                     onDragStart={handleDragStart}
-                    onDragEnter={(e: React.DragEvent<HTMLDivElement>) => handleDragEnter(e, index)}
+                    onDragEnter={handleDragEnter}
                     onDragEnd={handleDragEnd}
                     isSaving={isSaving}
                     isDragging={isDragging && dragItem.current === index}
