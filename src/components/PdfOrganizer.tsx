@@ -169,12 +169,15 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent, index: number) => {
     if (dragItem.current === null || dragItem.current === index) return;
     dragOverItem.current = index;
+    
     setPages(prev => {
-      const newPages = [...prev];
-      const draggedItem = newPages.splice(dragItem.current!, 1)[0];
-      newPages.splice(dragOverItem.current!, 0, draggedItem);
-      dragItem.current = dragOverItem.current;
-      return newPages;
+        const newPages = [...prev];
+        const draggedItem = newPages.splice(dragItem.current!, 1)[0];
+        if (draggedItem) {
+          newPages.splice(dragOverItem.current!, 0, draggedItem);
+          dragItem.current = dragOverItem.current;
+        }
+        return newPages;
     });
   };
 
@@ -206,10 +209,10 @@ export function PdfOrganizer() {
     try {
       const newPdfDoc = await PDFDocument.create();
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-
+      
       const sourcePages = await newPdfDoc.copyPages(file.pdfDoc, pageIndicesToCopy);
       
-      const pageMap = new Map();
+      const pageMap = new Map<number, any>();
       pageIndicesToCopy.forEach((originalIndex, i) => {
         pageMap.set(originalIndex, sourcePages[i]);
       });
@@ -338,7 +341,7 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
             onDragEnd={onDragEnd}
             className={cn(
                 "relative rounded-md overflow-hidden border transition-all aspect-[7/10] bg-muted group",
-                isSaving && "cursor-not-allowed",
+                isSaving ? "cursor-not-allowed" : "cursor-grab",
                 isDragging ? "shadow-2xl scale-105 opacity-50" : "shadow-sm"
             )}
         >
