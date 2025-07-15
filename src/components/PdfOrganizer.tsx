@@ -61,7 +61,6 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
-  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
@@ -161,29 +160,28 @@ export function PdfOrganizer() {
     });
   }, [file, renderPage, isLoading]);
   
-  const handleDragStart = (e: React.DragEvent, index: number) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
     setTimeout(() => setIsDragging(true), 0);
   };
   
-  const handleDragEnter = (e: React.DragEvent, index: number) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
     
     setPages(prev => {
-        const newPages = [...prev];
-        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-        newPages.splice(index, 0, draggedItemContent);
-        dragItem.current = index;
-        return newPages;
+      const newPages = [...prev];
+      const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
+      newPages.splice(index, 0, draggedItemContent);
+      dragItem.current = index;
+      return newPages;
     });
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
-    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
