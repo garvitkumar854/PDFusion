@@ -7,12 +7,11 @@ import {
   UploadCloud,
   Download,
   X,
-  CheckCircle,
-  FolderOpen,
+  Save,
   Loader2,
   RotateCw,
   Trash2,
-  Save,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -79,22 +78,30 @@ export function PdfOrganizer() {
     try {
       const singleFile = acceptedFiles[0];
       const pdfBytes = await singleFile.arrayBuffer();
-      // Load with pdf.js for rendering previews
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice(0) }).promise; 
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise; 
 
       if (operationId.current !== currentOperationId) return;
       
       const pageCount = pdfjsDoc.numPages;
-      const tempPdfLibDocForRotation = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-      
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
-      
       const initialPages: PageInfo[] = Array.from({ length: pageCount }, (_, i) => ({
         originalIndex: i,
-        rotation: tempPdfLibDocForRotation.getPage(i).getRotation().angle,
+        rotation: 0,
         id: `${i}-${Date.now()}`,
       }));
+
+      // Pre-fetch initial rotations
+      try {
+        const tempPdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        initialPages.forEach((p, i) => {
+            p.rotation = tempPdfLibDoc.getPage(i).getRotation().angle;
+        });
+      } catch (e) {
+          console.warn("Could not pre-fetch rotations from pdf-lib", e);
+      }
+      
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
       setPages(initialPages);
+
     } catch (error) {
       if (operationId.current === currentOperationId) {
         toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
@@ -189,14 +196,12 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-      // Load with pdf-lib only when saving
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
       const newPdfDoc = await PDFDocument.create();
       
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      
       const copiedPages = await newPdfDoc.copyPages(pdfDoc, pageIndicesToCopy);
       
       copiedPages.forEach((page, index) => {
