@@ -197,14 +197,22 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
+      // 1. Create a new document
       const newPdfDoc = await PDFDocument.create();
-      const pageIndices = pages.map(p => p.originalIndex);
-      
-      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, pageIndices);
 
-      copiedPages.forEach((page, index) => {
-        const pageInfo = pages[index];
-        page.setRotation(degrees(pageInfo.rotation));
+      // 2. Get the correctly ordered array of original page indices
+      const orderedOriginalIndices = pages.map(p => p.originalIndex);
+
+      // 3. Copy pages from the source doc into the new doc in the correct order
+      const copiedPages = await newPdfDoc.copyPages(file.pdfDoc, orderedOriginalIndices);
+
+      // 4. Add copied pages to the new document and apply rotations
+      copiedPages.forEach((copiedPage, index) => {
+        const newPage = newPdfDoc.addPage(copiedPage);
+        const rotationAngle = pages[index].rotation;
+        if (rotationAngle !== 0) {
+          newPage.setRotation(degrees(rotationAngle));
+        }
       });
       
       const pdfBytes = await newPdfDoc.save();
@@ -349,3 +357,5 @@ const PageCard = ({ page, index, onVisible, onRotate, onDelete, onDragStart, onD
         </div>
     );
 };
+
+    
