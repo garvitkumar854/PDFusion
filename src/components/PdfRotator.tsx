@@ -286,6 +286,7 @@ export function PdfRotator() {
         } else {
             toast({ variant: 'destructive', title: 'PDF Error', description: 'Could not read this PDF. It may be corrupted.'});
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+            removeFile();
         }
     }
   };
