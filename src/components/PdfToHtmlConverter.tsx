@@ -21,16 +21,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -42,6 +33,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PDFFile = {
   id: string;
   file: File;
+  password?: string;
 };
 
 type ProcessResult = {
@@ -54,7 +46,6 @@ type PasswordState = {
   isSubmitting: boolean;
   error: string | null;
   fileToLoad: File | null;
-  passwordAttempt?: string;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -79,15 +70,14 @@ export function PdfToHtmlConverter() {
     error: null,
     fileToLoad: null,
   });
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
   const loadAndSetFile = (fileToLoad: File, password?: string) => {
-    setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad });
+    setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, password });
     setResult(null);
-    setPasswordState(prev => ({ ...prev, isNeeded: false, passwordAttempt: password, error: null }));
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -100,7 +90,6 @@ export function PdfToHtmlConverter() {
         } catch(e: any) {
             if(e.name === 'PasswordException') {
                 setPasswordState({ isNeeded: true, fileToLoad: singleFile, error: null, isSubmitting: false });
-                 setTimeout(() => passwordInputRef.current?.focus(), 100);
             } else {
                 toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
             }
@@ -136,7 +125,7 @@ export function PdfToHtmlConverter() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: passwordState.passwordAttempt }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: file.password }).promise;
       const totalPages = pdfjsDoc.numPages;
 
       let htmlContent = `<!DOCTYPE html>
@@ -248,17 +237,14 @@ export function PdfToHtmlConverter() {
     setResult(null);
   };
   
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordState.fileToLoad && passwordInputRef.current) {
-        loadAndSetFile(passwordState.fileToLoad, passwordInputRef.current.value);
+  const handlePasswordSubmit = (password: string) => {
+    if (passwordState.fileToLoad) {
+        loadAndSetFile(passwordState.fileToLoad, password);
     }
   };
   
-  const handlePasswordDialogClose = (open: boolean) => {
-      if (!open) {
-          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-      }
+  const handlePasswordDialogClose = () => {
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
 
 
@@ -302,7 +288,7 @@ export function PdfToHtmlConverter() {
             ) : (
                 <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                    {passwordState.passwordAttempt ? (
+                    {file.password ? (
                         <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
                     ) : (
                         <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
@@ -340,39 +326,14 @@ export function PdfToHtmlConverter() {
                 </CardContent>
             </Card>
         )}
-        <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={handlePasswordSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>Password Required</DialogTitle>
-                        <DialogDescription>
-                            This PDF file is password protected. Please enter the password to open it.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="password-input" className="text-right">
-                                Password
-                            </Label>
-                            <Input
-                                id="password-input"
-                                ref={passwordInputRef}
-                                type="password"
-                                className="col-span-3"
-                            />
-                        </div>
-                        {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
-                        <Button type="submit" disabled={passwordState.isSubmitting}>
-                            {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Unlock
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <PasswordDialog 
+          isOpen={passwordState.isNeeded}
+          onClose={handlePasswordDialogClose}
+          onSubmit={handlePasswordSubmit}
+          isSubmitting={passwordState.isSubmitting}
+          error={passwordState.error}
+          fileName={passwordState.fileToLoad?.name || null}
+        />
     </div>
   );
 }

@@ -30,14 +30,8 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { PasswordDialog } from "./PasswordDialog";
+
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -171,7 +165,6 @@ export function PdfSplitter() {
     error: null,
     fileToLoad: null,
   });
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   
@@ -238,7 +231,6 @@ export function PdfSplitter() {
 
         if (error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
-            setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
@@ -247,6 +239,7 @@ export function PdfSplitter() {
     } finally {
         if (operationId.current === currentOperationId) {
           setIsProcessing(false);
+          setPasswordState(prev => ({ ...prev, isSubmitting: false }));
         }
     }
   }, [toast]);
@@ -454,8 +447,13 @@ export function PdfSplitter() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        console.error("Split failed:", error);
-        toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
+         if (error.name === 'PasswordIsIncorrectError') {
+             setPasswordState(prev => ({ ...prev, isNeeded: true, fileToLoad: file.file, error: 'Incorrect password.' }));
+             toast({ variant: 'destructive', title: 'Split Failed', description: 'The password provided was incorrect.'});
+         } else {
+            console.error("Split failed:", error);
+            toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
+         }
       }
     } finally {
       if (operationId.current === currentOperationId) {
@@ -548,17 +546,14 @@ export function PdfSplitter() {
     return groups;
   }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordState.fileToLoad && passwordInputRef.current) {
-        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+  const handlePasswordSubmit = (password: string) => {
+    if (passwordState.fileToLoad) {
+        loadPdf(passwordState.fileToLoad, password);
     }
   }
   
-  const handlePasswordDialogClose = (open: boolean) => {
-      if (!open) {
-          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-      }
+  const handlePasswordDialogClose = () => {
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   }
 
 
@@ -619,7 +614,11 @@ export function PdfSplitter() {
           ) : (
              <div className="p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="w-6 h-6 text-destructive shrink-0" />
+                    {file?.password ? (
+                        <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
+                    ) : (
+                        <FileIcon className="w-6 h-6 text-destructive shrink-0" />
+                    )}
                     <div className="flex flex-col overflow-hidden">
                         {file ? (
                           <>
@@ -854,39 +853,14 @@ export function PdfSplitter() {
         </Card>
       )}
 
-      <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
-        <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handlePasswordSubmit}>
-                <DialogHeader>
-                    <DialogTitle>Password Required</DialogTitle>
-                    <DialogDescription>
-                        This PDF file is password protected. Please enter the password to open it.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password-input" className="text-right">
-                            Password
-                        </Label>
-                        <Input
-                            id="password-input"
-                            ref={passwordInputRef}
-                            type="password"
-                            className="col-span-3"
-                        />
-                    </div>
-                    {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
-                    <Button type="submit" disabled={passwordState.isSubmitting}>
-                        {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Unlock
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-      </Dialog>
+      <PasswordDialog 
+        isOpen={passwordState.isNeeded}
+        onClose={handlePasswordDialogClose}
+        onSubmit={handlePasswordSubmit}
+        isSubmitting={passwordState.isSubmitting}
+        error={passwordState.error}
+        fileName={passwordState.fileToLoad?.name || null}
+      />
     </div>
   );
 }

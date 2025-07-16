@@ -21,16 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -51,6 +42,7 @@ type PDFFile = {
   file: File;
   totalPages: number;
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
+  password?: string;
 };
 
 type PasswordState = {
@@ -58,7 +50,6 @@ type PasswordState = {
   isSubmitting: boolean;
   error: string | null;
   fileToLoad: File | null;
-  passwordAttempt?: string;
 }
 
 export function PdfOrganizer() {
@@ -73,7 +64,6 @@ export function PdfOrganizer() {
     error: null,
     fileToLoad: null,
   });
-  const passwordInputRef = useRef<HTMLInputElement>(null);
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -117,7 +107,7 @@ export function PdfOrganizer() {
     setFile(null);
     setPages([]);
     setIsLoading(true);
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null, passwordAttempt: password }));
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -140,17 +130,17 @@ export function PdfOrganizer() {
         id: `${fileToLoad.name}-${Date.now()}`, 
         file: fileToLoad, 
         totalPages: pageCount,
-        pdfjsDoc 
+        pdfjsDoc,
+        password,
       });
       setPages(initialPages);
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null, passwordAttempt: password });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
         
         if (error.name === 'PasswordException') {
             setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: null, fileToLoad }));
-            setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -159,6 +149,7 @@ export function PdfOrganizer() {
     } finally {
         if (operationId.current === currentOperationId) {
             setIsLoading(false);
+            setPasswordState(prev => ({...prev, isSubmitting: false}));
         }
     }
   }, [file?.pdfjsDoc, toast]);
@@ -256,7 +247,7 @@ export function PdfOrganizer() {
     try {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, {
-          password: passwordState.passwordAttempt,
+          password: file.password,
       });
       
       const newPdfDoc = await PDFDocument.create();
@@ -308,17 +299,14 @@ export function PdfOrganizer() {
     setPasswordState({isNeeded: false, isSubmitting: false, error: null, fileToLoad: null});
   };
   
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordState.fileToLoad && passwordInputRef.current) {
-        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+  const handlePasswordSubmit = (password: string) => {
+    if (passwordState.fileToLoad) {
+      loadPdf(passwordState.fileToLoad, password);
     }
   }
   
-  const handlePasswordDialogClose = (open: boolean) => {
-      if (!open) {
-          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-      }
+  const handlePasswordDialogClose = () => {
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   }
 
   return (
@@ -406,39 +394,14 @@ export function PdfOrganizer() {
             </div>
         </>
       )}
-      <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
-        <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handlePasswordSubmit}>
-                <DialogHeader>
-                    <DialogTitle>Password Required</DialogTitle>
-                    <DialogDescription>
-                        This PDF file is password protected. Please enter the password to open it.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password-input" className="text-right">
-                            Password
-                        </Label>
-                        <Input
-                            id="password-input"
-                            ref={passwordInputRef}
-                            type="password"
-                            className="col-span-3"
-                        />
-                    </div>
-                    {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
-                    <Button type="submit" disabled={passwordState.isSubmitting}>
-                        {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Unlock
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-      </Dialog>
+      <PasswordDialog 
+          isOpen={passwordState.isNeeded}
+          onClose={handlePasswordDialogClose}
+          onSubmit={handlePasswordSubmit}
+          isSubmitting={passwordState.isSubmitting}
+          error={passwordState.error}
+          fileName={passwordState.fileToLoad?.name || null}
+        />
     </div>
   );
 }

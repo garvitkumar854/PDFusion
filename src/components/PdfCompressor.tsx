@@ -112,14 +112,17 @@ export function PdfCompressor() {
       const singleFile = acceptedFiles[0];
       if (!singleFile) return;
 
-      const pdfBytes = await singleFile.arrayBuffer();
       let isEncrypted = false;
       try {
-        await pdfjsLib.getDocument(pdfBytes).promise;
+          const pdfBytes = await singleFile.arrayBuffer();
+          await pdfjsLib.getDocument(pdfBytes).promise;
       } catch (e: any) {
-        if (e.name === 'PasswordException') {
-          isEncrypted = true;
-        }
+          if (e.name === 'PasswordException') {
+              isEncrypted = true;
+          } else {
+              toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
+              return;
+          }
       }
 
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
@@ -336,7 +339,7 @@ export function PdfCompressor() {
              {file.isEncrypted && (
               <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                 <ShieldAlert className="h-5 w-5 shrink-0" />
-                <p>Password-protected PDFs cannot be compressed. Please upload a different file.</p>
+                <p>Password-protected PDFs cannot be compressed at this time.</p>
               </div>
             )}
             <div className={cn((isCompressing || file.isEncrypted) && "opacity-70 pointer-events-none")}>

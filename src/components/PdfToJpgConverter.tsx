@@ -26,15 +26,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import JSZip from 'jszip';
 import { Label } from "./ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "./ui/input";
+import { PasswordDialog } from "./PasswordDialog";
 
 
 // Set worker path for pdf.js
@@ -163,7 +155,6 @@ export function PdfToJpgConverter() {
     error: null,
     fileToLoad: null,
   });
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   
@@ -239,7 +230,6 @@ export function PdfToJpgConverter() {
 
         if (error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
-            setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -247,6 +237,7 @@ export function PdfToJpgConverter() {
     } finally {
         if (operationId.current === currentOperationId) {
             setIsProcessing(false);
+            setPasswordState(prev => ({...prev, isSubmitting: false}));
         }
     }
   }, [toast]);
@@ -438,17 +429,14 @@ export function PdfToJpgConverter() {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordState.fileToLoad && passwordInputRef.current) {
-        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+  const handlePasswordSubmit = (password: string) => {
+    if (passwordState.fileToLoad) {
+        loadPdf(passwordState.fileToLoad, password);
     }
   }
   
-  const handlePasswordDialogClose = (open: boolean) => {
-      if (!open) {
-          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-      }
+  const handlePasswordDialogClose = () => {
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   }
 
   if (conversionResults.length > 0) {
@@ -615,39 +603,14 @@ export function PdfToJpgConverter() {
         </Card>
       )}
 
-      <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
-        <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handlePasswordSubmit}>
-                <DialogHeader>
-                    <DialogTitle>Password Required</DialogTitle>
-                    <DialogDescription>
-                        This PDF file is password protected. Please enter the password to open it.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password-input" className="text-right">
-                            Password
-                        </Label>
-                        <Input
-                            id="password-input"
-                            ref={passwordInputRef}
-                            type="password"
-                            className="col-span-3"
-                        />
-                    </div>
-                    {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
-                    <Button type="submit" disabled={passwordState.isSubmitting}>
-                        {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Unlock
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-      </Dialog>
+      <PasswordDialog 
+          isOpen={passwordState.isNeeded}
+          onClose={handlePasswordDialogClose}
+          onSubmit={handlePasswordSubmit}
+          isSubmitting={passwordState.isSubmitting}
+          error={passwordState.error}
+          fileName={passwordState.fileToLoad?.name || null}
+        />
 
     </div>
   );
