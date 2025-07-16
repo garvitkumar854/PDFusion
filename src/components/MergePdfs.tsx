@@ -340,7 +340,7 @@ export function MergePdfs() {
 
   const handlePasswordDialogClose = () => {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
-  }
+  };
   
   const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => !f.isUnlocked);
 
@@ -360,7 +360,7 @@ export function MergePdfs() {
                 </Button>
             </div>
         </div>
-    )
+    );
   }
 
   return (
