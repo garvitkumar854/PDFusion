@@ -84,9 +84,8 @@ export function MergePdfs() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current++; // Invalidate any running operations
+      operationId.current++; 
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
@@ -125,20 +124,14 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // We use ignoreEncryption to safely check the file without crashing
-              await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-              // If it loads, we check if it was actually encrypted.
-              // A more reliable check is to see if pdfjs-dist throws PasswordException
-               try {
-                   await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
-               } catch (pdfjsError: any) {
-                    if (pdfjsError.name === 'PasswordException') {
-                        isEncrypted = true;
-                    }
-               }
-          } catch (pdfLibError: any) {
-             console.error("Failed to read file", file.name, pdfLibError);
-             throw new Error(`Could not read "${file.name}". It may be corrupted.`);
+              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+          } catch (pdfjsError: any) {
+              if (pdfjsError.name === 'PasswordException') {
+                  isEncrypted = true;
+              } else {
+                 console.error("Failed to read file", file.name, pdfjsError);
+                 throw new Error(`Could not read "${file.name}". It may be corrupted.`);
+              }
           }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted, isUnlocked: !isEncrypted, password: '' };
       });
@@ -171,7 +164,7 @@ export function MergePdfs() {
         setFiles(prev => prev.filter(f => f.id !== fileId));
       }
       setRemovingFileId(null);
-    }, 300); // Should match the CSS transition duration
+    }, 300);
   };
   
   const handleClearAll = () => {
@@ -287,7 +280,7 @@ export function MergePdfs() {
   };
   
   const handleCancelMerge = () => {
-    operationId.current++; // Invalidate the current operation
+    operationId.current++;
     setIsMerging(false);
     setMergeProgress(0);
     toast({ title: "Merge cancelled." });
@@ -327,20 +320,16 @@ export function MergePdfs() {
     
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
-      // Use pdf-lib to actually validate the password by attempting to load the doc
       await PDFDocument.load(pdfBytes, { password });
 
-      // If we get here, the password is correct
       setFiles(prevFiles => 
           prevFiles.map(f => f.id === fileId ? { ...f, password, isUnlocked: true } : f)
       );
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
-        // pdf-lib throws a specific error for incorrect passwords
-        if (e.name === 'PasswordIsIncorrectError') {
+        if (e.constructor.name === 'PasswordIsIncorrectError') {
              setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
         } else {
-            // It could be a different error (e.g., corrupted file)
             toast({ variant: "destructive", title: "Error", description: "Could not read this PDF, it might be corrupted." });
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
         }
@@ -351,7 +340,7 @@ export function MergePdfs() {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
   }
   
-  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => f.isEncrypted && !f.isUnlocked);
+  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => !f.isUnlocked);
 
   if (mergedPdfUrl) {
     return (
@@ -550,3 +539,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
