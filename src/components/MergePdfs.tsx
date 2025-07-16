@@ -125,27 +125,31 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes), ignoreEncryption: true}).promise;
-          } catch (pdfjsError: any) {
-              if (pdfjsError.name === 'PasswordException') {
-                  isEncrypted = true;
-              } else {
-                  console.error("Failed to read file", file.name, pdfjsError);
-                  throw new Error(`Could not read "${file.name}". It may be corrupted.`);
-              }
+              // We use ignoreEncryption to safely check the file without crashing
+              await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+              // If it loads, we check if it was actually encrypted.
+              // A more reliable check is to see if pdfjs-dist throws PasswordException
+               try {
+                   await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+               } catch (pdfjsError: any) {
+                    if (pdfjsError.name === 'PasswordException') {
+                        isEncrypted = true;
+                    }
+               }
+          } catch (pdfLibError: any) {
+             console.error("Failed to read file", file.name, pdfLibError);
+             throw new Error(`Could not read "${file.name}". It may be corrupted.`);
           }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted, isUnlocked: !isEncrypted, password: '' };
       });
 
       try {
         const filesToAdd = await Promise.all(filesToAddPromises);
-        
         setFiles(prev => [...prev, ...filesToAdd]);
         setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
       } catch (e: any) {
          toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted." });
       }
-
     },
     [files.length, totalSize, toast]
   );
@@ -232,12 +236,6 @@ export function MergePdfs() {
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
-                if (error.name === 'PasswordIsIncorrectError') {
-                   setIsMerging(false);
-                   setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: "Incorrect password. Please try again.", isSubmitting: false });
-                   return;
-                }
-                
                 skippedFiles++;
                 console.warn(`Skipping file: ${pdfFile.file.name}`, error);
                 toast({
@@ -329,17 +327,20 @@ export function MergePdfs() {
     
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
+      // Use pdf-lib to actually validate the password by attempting to load the doc
       await PDFDocument.load(pdfBytes, { password });
 
-      // Password is correct
+      // If we get here, the password is correct
       setFiles(prevFiles => 
           prevFiles.map(f => f.id === fileId ? { ...f, password, isUnlocked: true } : f)
       );
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
+        // pdf-lib throws a specific error for incorrect passwords
         if (e.name === 'PasswordIsIncorrectError') {
              setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
         } else {
+            // It could be a different error (e.g., corrupted file)
             toast({ variant: "destructive", title: "Error", description: "Could not read this PDF, it might be corrupted." });
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
         }
@@ -549,5 +550,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
