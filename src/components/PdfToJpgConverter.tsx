@@ -237,8 +237,8 @@ export function PdfToJpgConverter() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+        if (error.name === 'PasswordException') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
@@ -652,5 +652,3 @@ export function PdfToJpgConverter() {
     </div>
   );
 }
-
-    

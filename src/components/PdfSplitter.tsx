@@ -237,8 +237,8 @@ export function PdfSplitter() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
+        if (error.name === 'PasswordException') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
@@ -260,20 +260,7 @@ export function PdfSplitter() {
       if (acceptedFiles.length === 0) return;
       
       const singleFile = acceptedFiles[0];
-      
-      try {
-        const pdfBytes = await singleFile.arrayBuffer();
-        await PDFDocument.load(pdfBytes);
-        loadPdf(singleFile);
-      } catch (error: any) {
-        if (error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad: singleFile });
-            setTimeout(() => passwordInputRef.current?.focus(), 100);
-        } else {
-            console.error("Error checking PDF:", error);
-            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
-        }
-      }
+      loadPdf(singleFile);
     },
     [toast, loadPdf]
   );

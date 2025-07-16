@@ -167,8 +167,8 @@ export function PageNumberAdder() {
       setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
     } catch (e: any) {
         if (operationId.current === currentOperationId) {
-            if (e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
-                setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+            if (e.name === 'PasswordException') {
+                setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
                 setTimeout(() => passwordInputRef.current?.focus(), 100);
             } else {
                 console.error("Failed to load PDF", e);
@@ -282,7 +282,7 @@ export function PageNumberAdder() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt, ignoreEncryption: !passwordState.passwordAttempt });
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt });
       const totalPages = pdfDoc.getPageCount();
       
       const effectiveStart = Math.max(0, startPage - 1);
@@ -363,7 +363,7 @@ export function PageNumberAdder() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+        if(error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
           setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
         } else {
           console.error("Processing failed:", error);
@@ -620,5 +620,3 @@ export function PageNumberAdder() {
     </div>
   );
 }
-
-    

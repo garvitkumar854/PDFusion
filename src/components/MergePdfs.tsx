@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "./ui/label";
+
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 
 const MAX_FILES = 50;
@@ -123,15 +128,12 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // Try loading without password to see if it's encrypted.
-              // This will throw a PasswordException if it is.
-              await PDFDocument.load(pdfBytes);
+              await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch(e: any) {
               if (e.name === 'PasswordException') {
                   isEncrypted = true;
               } else {
-                  // Re-throw other errors (like corrupted file)
-                  throw new Error(`The file "${file.name}" may be corrupted or invalid.`);
+                  throw new Error(`Could not read "${file.name}". It may be corrupted or an unsupported format.`);
               }
           }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
@@ -588,5 +590,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    

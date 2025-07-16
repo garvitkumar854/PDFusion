@@ -137,8 +137,8 @@ export function PdfRotator() {
          setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
     } catch(e: any) {
         if(operationId.current === currentOperationId) {
-           if (e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
-                setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+           if (e.name === 'PasswordException') {
+                setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
                 setTimeout(() => passwordInputRef.current?.focus(), 100);
             } else {
                  console.error("Failed to load PDF for preview", e);
@@ -497,5 +497,3 @@ export function PdfRotator() {
     </div>
   );
 }
-
-    

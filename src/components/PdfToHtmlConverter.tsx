@@ -87,7 +87,7 @@ export function PdfToHtmlConverter() {
   const loadAndSetFile = (fileToLoad: File, password?: string) => {
     setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad });
     setResult(null);
-    setPasswordState(prev => ({ ...prev, isNeeded: false, passwordAttempt: password }));
+    setPasswordState(prev => ({ ...prev, isNeeded: false, passwordAttempt: password, error: null }));
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -100,6 +100,7 @@ export function PdfToHtmlConverter() {
         } catch(e: any) {
             if(e.name === 'PasswordException') {
                 setPasswordState({ isNeeded: true, fileToLoad: singleFile, error: null, isSubmitting: false });
+                 setTimeout(() => passwordInputRef.current?.focus(), 100);
             } else {
                 toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
             }
@@ -375,5 +376,3 @@ export function PdfToHtmlConverter() {
     </div>
   );
 }
-
-    

@@ -148,8 +148,8 @@ export function PdfOrganizer() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
         
-        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
-            setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad }));
+        if (error.name === 'PasswordException') {
+            setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: null, fileToLoad }));
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Failed to load PDF", error);
@@ -257,7 +257,6 @@ export function PdfOrganizer() {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, {
           password: passwordState.passwordAttempt,
-          ignoreEncryption: !passwordState.passwordAttempt,
       });
       
       const newPdfDoc = await PDFDocument.create();
@@ -288,7 +287,7 @@ export function PdfOrganizer() {
       toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
 
     } catch (e: any) {
-      if(e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
+      if(e.name === 'PasswordIsIncorrectError' || e.name === 'PasswordException') {
         setPasswordState(prev => ({...prev, isNeeded: true, isSubmitting: false, error: 'Incorrect password.' }));
         toast({ variant: 'destructive', title: 'Save Failed', description: 'The password provided was incorrect.'});
       } else {
@@ -496,5 +495,3 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
     );
 });
 PageCard.displayName = 'PageCard';
-
-    
