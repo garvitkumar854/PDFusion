@@ -72,6 +72,7 @@ export function PdfRotator() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const [angle, setAngle] = useState<RotationAngle>(90);
@@ -99,17 +100,12 @@ export function PdfRotator() {
     };
   }, [result, preview]);
 
-  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+  const generatePreview = useCallback(async (pdfFile: File, password?: string) => {
     const currentOperationId = ++operationId.current;
-    setIsProcessing(true);
+    setIsLoading(true);
     setPreview(null);
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
-      
     try {
-        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, password });
-        setResult(null);
-
-        const pdfBytes = await fileToLoad.arrayBuffer();
+        const pdfBytes = await pdfFile.arrayBuffer();
         const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
         if (operationId.current !== currentOperationId) return;
 
@@ -125,25 +121,18 @@ export function PdfRotator() {
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
         }
-         setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-    } catch(e: any) {
+    } catch(e) {
         if(operationId.current === currentOperationId) {
-           if (e.name === 'PasswordException') {
-                setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
-            } else {
-                 console.error("Failed to load PDF for preview", e);
-                 toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
-                 setFile(null);
-            }
+            console.error("Failed to load PDF for preview", e);
+            toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
+            setFile(null);
         }
     } finally {
         if(operationId.current === currentOperationId) {
-          setIsProcessing(false);
-          setPasswordState(prev => ({...prev, isSubmitting: false}));
+            setIsLoading(false);
         }
     }
   }, [toast]);
-
 
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
@@ -151,10 +140,26 @@ export function PdfRotator() {
         return;
       }
       const singleFile = acceptedFiles[0];
-      if(singleFile) {
-        loadPdf(singleFile);
+      if(!singleFile) return;
+
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
+      setResult(null);
+      setPreview(null);
+
+      try {
+        const pdfBytes = await singleFile.arrayBuffer();
+        await pdfjsLib.getDocument(pdfBytes).promise;
+        // Not encrypted, generate preview right away
+        generatePreview(singleFile);
+      } catch(e: any) {
+        if (e.name === 'PasswordException') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad: singleFile });
+        } else {
+            toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
+            setFile(null);
+        }
       }
-    }, [loadPdf, toast]);
+    }, [toast, generatePreview]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -163,7 +168,7 @@ export function PdfRotator() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
-    disabled: isProcessing,
+    disabled: isProcessing || isLoading,
   });
 
   const removeFile = () => {
@@ -224,7 +229,7 @@ export function PdfRotator() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordIsIncorrectError') {
+        if(error.constructor.name === 'PasswordIsIncorrectError') {
           setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
         } else {
             console.error("Processing failed:", error);
@@ -262,15 +267,37 @@ export function PdfRotator() {
     setPasswordState({ isNeeded: false, fileToLoad: null, error: null, isSubmitting: false });
   };
 
-  const handlePasswordSubmit = (password: string) => {
-    if (passwordState.fileToLoad) {
-        loadPdf(passwordState.fileToLoad, password);
+  const handlePasswordSubmit = async (password: string) => {
+    const { fileToLoad } = passwordState;
+    if (!fileToLoad) return;
+    
+    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
+
+    try {
+      const pdfBytes = await fileToLoad.arrayBuffer();
+      await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+      // Password is correct
+      setFile(prev => prev ? {...prev, password} : { id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, password });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      generatePreview(fileToLoad, password);
+    } catch(e: any) {
+        if (e.name === 'PasswordException') {
+            setPasswordState(prev => ({...prev, isSubmitting: false, error: 'Incorrect password. Please try again.'}));
+        } else {
+            toast({ variant: 'destructive', title: 'PDF Error', description: 'Could not read this PDF. It may be corrupted.'});
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+        }
     }
-  }
+  };
 
   const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-  }
+      if (!file?.password && passwordState.fileToLoad) {
+        // If they cancel without providing a password for a locked file, remove it.
+        removeFile();
+      } else {
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      }
+  };
 
 
   if (result) {
@@ -323,7 +350,7 @@ export function PdfRotator() {
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                 !isProcessing && "hover:border-primary/50",
                 isDragActive && "border-primary bg-primary/10",
-                isProcessing && "opacity-70 pointer-events-none"
+                (isProcessing || isLoading) && "opacity-70 pointer-events-none"
               )}
             >
               <input {...getInputProps()} />
@@ -332,7 +359,7 @@ export function PdfRotator() {
                 Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
+              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isLoading}>
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Choose File
               </Button>
@@ -353,7 +380,7 @@ export function PdfRotator() {
                             <CardTitle className="text-xl">Uploaded File</CardTitle>
                             <CardDescription className="truncate max-w-[200px] sm:max-w-xs" title={file.file.name}>{file.file.name}</CardDescription>
                         </div>
-                        <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing || isLoading}>
                             <X className="w-4 h-4" />
                         </Button>
                     </CardHeader>
@@ -363,13 +390,13 @@ export function PdfRotator() {
                     <CardTitle className="text-xl sm:text-2xl">Rotation Options</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
+                    <div className={cn((isProcessing || isLoading) && "opacity-70 pointer-events-none")}>
                         <Label className="font-semibold">Angle of Rotation</Label>
                         <RadioGroup 
                             value={String(angle)} 
                             onValueChange={(v) => setAngle(Number(v) as RotationAngle)}
                             className="mt-2 grid grid-cols-3 gap-2"
-                            disabled={isProcessing}
+                            disabled={isProcessing || isLoading}
                         >
                             <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50  transition-colors", angle === 90 && "border-primary bg-primary/5")}>
                                 <RadioGroupItem value="90" className="sr-only"/>
@@ -413,7 +440,7 @@ export function PdfRotator() {
                           </div>
                         </div>
                       ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || isLoading || !preview}>
                           <RotateCw className="mr-2 h-5 w-5" />
                           Rotate PDF
                         </Button>
@@ -426,7 +453,7 @@ export function PdfRotator() {
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
-                        {isProcessing && !preview ? (
+                        {isLoading ? (
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
                                 <p className="mt-2">Loading preview...</p>
