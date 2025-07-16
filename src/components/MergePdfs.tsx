@@ -124,7 +124,8 @@ export function MergePdfs() {
           let isEncrypted = false;
           try {
               // We use pdf.js to safely check for encryption without crashing.
-              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+              const doc = await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes), password: ''}).promise;
+              doc.destroy();
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
                   isEncrypted = true;
@@ -242,8 +243,8 @@ export function MergePdfs() {
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
                  if (error.name === 'PasswordIsIncorrectError') {
-                   setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: "Incorrect password. Please try again.", isSubmitting: false });
                    setIsMerging(false); // Stop the merge process
+                   setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: "Incorrect password. Please try again.", isSubmitting: false });
                    return; // Exit the function
                 }
                 
@@ -325,13 +326,19 @@ export function MergePdfs() {
   };
 
   const handlePasswordSubmit = (password: string) => {
-    if (!passwordState.fileId) return;
+    const { fileId } = passwordState;
+    if (!fileId) return;
 
-    setFiles(prev => prev.map(f => f.id === passwordState.fileId ? {...f, password } : f));
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+    setFiles(prevFiles => 
+        prevFiles.map(f => f.id === fileId ? { ...f, password } : f)
+    );
     
-    // Use a short timeout to allow state to update before trying to merge again
-    setTimeout(handleMerge, 100);
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+
+    // Important: Use a timeout to ensure the state update has propagated before re-triggering the merge
+    setTimeout(() => {
+        handleMerge();
+    }, 100);
   }
 
   const handlePasswordDialogClose = () => {
