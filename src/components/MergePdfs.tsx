@@ -125,7 +125,7 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes), ignoreEncryption: true}).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
                   isEncrypted = true;
@@ -207,23 +207,13 @@ export function MergePdfs() {
   };
   
   const handleMerge = async () => {
-    if (files.length < 2) {
-      toast({
-        variant: "destructive",
-        title: "Not enough files",
-        description: "Please upload at least two PDF files to merge.",
-      });
-      return;
-    }
-    
     const firstLockedFile = files.find(f => f.isEncrypted && !f.isUnlocked);
     if (firstLockedFile) {
         setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileId: firstLockedFile.id });
         return;
     }
-
-    const currentOperationId = ++operationId.current;
     
+    const currentOperationId = ++operationId.current;
     setIsMerging(true);
     setMergeProgress(0);
     setMergedPdfUrl(null);
@@ -242,7 +232,7 @@ export function MergePdfs() {
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
-                 if (error.name === 'PasswordIsIncorrectError') {
+                if (error.name === 'PasswordIsIncorrectError') {
                    setIsMerging(false);
                    setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: "Incorrect password. Please try again.", isSubmitting: false });
                    return;
@@ -330,8 +320,8 @@ export function MergePdfs() {
     if (!fileId) return;
 
     setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-
     const fileToUnlock = files.find(f => f.id === fileId);
+    
     if (!fileToUnlock) {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
       return;
@@ -559,3 +549,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
