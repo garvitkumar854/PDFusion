@@ -124,7 +124,8 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+              // Use pdf.js to safely check for encryption without needing options
+              await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
                   isEncrypted = true;
@@ -310,31 +311,37 @@ export function MergePdfs() {
     const { fileId } = passwordState;
     if (!fileId) return;
 
-    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
     const fileToUnlock = files.find(f => f.id === fileId);
-    
+
     if (!fileToUnlock) {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
       return;
     }
-    
+
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
+      // Use pdf-lib to validate the password
       await PDFDocument.load(pdfBytes, { password });
-
-      setFiles(prevFiles => 
-          prevFiles.map(f => f.id === fileId ? { ...f, password, isUnlocked: true } : f)
+      
+      // If successful, update the file state
+      setFiles(prevFiles =>
+        prevFiles.map(f =>
+          f.id === fileId ? { ...f, password, isUnlocked: true } : f
+        )
       );
+      // Close the dialog
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
-        if (e.constructor.name === 'PasswordIsIncorrectError') {
-             setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
-        } else {
-            toast({ variant: "destructive", title: "Error", description: "Could not read this PDF, it might be corrupted." });
-            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
-        }
+      // Check for specific pdf-lib error
+      if (e.constructor.name === 'PasswordIsIncorrectError') {
+        setPasswordState(prev => ({ ...prev, isSubmitting: false, error: "Incorrect password. Please try again." }));
+      } else {
+        toast({ variant: "destructive", title: "Error", description: "Could not read this PDF, it might be corrupted." });
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+      }
     }
-  }
+  };
 
   const handlePasswordDialogClose = () => {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
@@ -539,5 +546,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
