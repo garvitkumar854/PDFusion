@@ -164,7 +164,7 @@ export function PageNumberAdder() {
            if (operationId.current !== currentOperationId) return;
           setFirstPagePreviewUrl(canvas.toDataURL());
       }
-      setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
     } catch (e: any) {
         if (operationId.current === currentOperationId) {
             if (e.name === 'PasswordException') {
@@ -172,7 +172,7 @@ export function PageNumberAdder() {
                 setTimeout(() => passwordInputRef.current?.focus(), 100);
             } else {
                 console.error("Failed to load PDF", e);
-                toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted." });
+                toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
             }
         }
     } finally {
@@ -207,6 +207,7 @@ export function PageNumberAdder() {
   const removeFile = () => {
     setFile(null);
     setFirstPagePreviewUrl(null);
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
 
   const getPageNumberText = (page: number, total: number) => {
@@ -363,7 +364,7 @@ export function PageNumberAdder() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
+        if(error.name === 'PasswordIsIncorrectError') {
           setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
         } else {
           console.error("Processing failed:", error);
@@ -564,7 +565,7 @@ export function PageNumberAdder() {
                 </Card>
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardContent className="p-6">
-                        {isProcessing ? (
+                        {isProcessing && file ? (
                             <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">

@@ -101,6 +101,9 @@ export function MergePdfs() {
   
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
+      if (rejectedFiles.length > 0) {
+        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
+      }
       if (files.length + acceptedFiles.length > MAX_FILES) {
         toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
         return;
@@ -128,11 +131,13 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
+              const loadingTask = pdfjsLib.getDocument(new Uint8Array(pdfBytes));
+              await loadingTask.promise;
           } catch(e: any) {
               if (e.name === 'PasswordException') {
                   isEncrypted = true;
               } else {
+                   console.error("Failed to read file", e);
                   throw new Error(`Could not read "${file.name}". It may be corrupted or an unsupported format.`);
               }
           }
@@ -148,10 +153,6 @@ export function MergePdfs() {
          toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted." });
       }
 
-
-      if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
-      }
     },
     [files.length, totalSize, toast]
   );
@@ -251,7 +252,7 @@ export function MergePdfs() {
             } catch (error: any) {
                 skippedFiles++;
                 console.warn(`Skipping file: ${pdfFile.file.name}`, error);
-                if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
+                if (error.name === 'PasswordIsIncorrectError') {
                    toast({
                        variant: "destructive",
                        title: "Incorrect Password",
@@ -356,7 +357,7 @@ export function MergePdfs() {
         setTimeout(handleMerge, 100);
 
     } catch (err: any) {
-        if (err.name === 'PasswordIsIncorrectError' || err.name === 'PasswordException') {
+        if (err.name === 'PasswordIsIncorrectError') {
             setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF. It may be corrupted.'});

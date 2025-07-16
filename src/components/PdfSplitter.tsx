@@ -51,8 +51,8 @@ type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfDoc: PDFDocument;
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
+  password?: string;
 };
 
 type SplitResult = {
@@ -214,16 +214,15 @@ export function PdfSplitter() {
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { password });
         const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
-        const totalPages = pdfDoc.getPageCount();
+        const totalPages = pdfjsDoc.numPages;
 
         if (operationId.current !== currentOperationId) {
           pdfjsDoc.destroy();
           return;
         }
 
-        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfDoc, pdfjsDoc });
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, password });
         setCustomRanges(`1-${totalPages}`);
         setFixedRangeSize(1);
         setSelectedPages(new Set());
@@ -242,7 +241,7 @@ export function PdfSplitter() {
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
-            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
         }
     } finally {
@@ -315,6 +314,7 @@ export function PdfSplitter() {
     setSplitResults([]);
     setPagePreviews([]);
     setSplitError(null);
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
   
   const parseCustomRanges = (ranges: string, max: number): number[][] | null => {
@@ -407,12 +407,15 @@ export function PdfSplitter() {
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       const zip = new JSZip();
 
+      const sourcePdfBytes = await file.file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(sourcePdfBytes, { password: file.password });
+
       for (const group of pageGroups) {
         if (operationId.current !== currentOperationId) return;
         if (group.length === 0) continue;
         
         const newPdf = await PDFDocument.create();
-        const copiedPages = await newPdf.copyPages(file.pdfDoc, group);
+        const copiedPages = await newPdf.copyPages(pdfDoc, group);
         copiedPages.forEach(page => newPdf.addPage(page));
         
         const newPdfBytes = await newPdf.save();
@@ -836,7 +839,7 @@ export function PdfSplitter() {
                       <p className="text-sm font-medium text-primary">Splitting PDF...</p>
                     </div>
                     <Button size="sm" variant="destructive" onClick={handleCancelSplit} className="w-full mt-4">
-                        <Ban className="mr-2 h-4 w-4" />
+                        <Ban className="mr-2 h-4 h-4" />
                         Cancel
                     </Button>
                 </div>

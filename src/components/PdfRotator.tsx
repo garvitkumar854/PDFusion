@@ -143,6 +143,7 @@ export function PdfRotator() {
             } else {
                  console.error("Failed to load PDF for preview", e);
                  toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
+                 setFile(null);
             }
         }
     } finally {
@@ -232,7 +233,7 @@ export function PdfRotator() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
+        if(error.name === 'PasswordIsIncorrectError') {
           setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
         } else {
             console.error("Processing failed:", error);
@@ -267,6 +268,7 @@ export function PdfRotator() {
         URL.revokeObjectURL(preview.url);
     }
     setPreview(null);
+    setPasswordState({ isNeeded: false, fileToLoad: null, error: null, isSubmitting: false });
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -436,7 +438,12 @@ export function PdfRotator() {
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
-                        {preview ? (
+                        {isProcessing && !preview ? (
+                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                <p className="mt-2">Loading preview...</p>
+                            </div>
+                        ) : preview ? (
                             <div
                                 className="relative w-full h-auto transition-all duration-300 flex items-center justify-center"
                                 style={{
@@ -452,8 +459,7 @@ export function PdfRotator() {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                <p className="mt-2">Loading preview...</p>
+                                <p>Could not load preview.</p>
                             </div>
                         )}
                     </CardContent>

@@ -243,7 +243,6 @@ export function PdfToJpgConverter() {
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
-            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
         }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -321,6 +320,7 @@ export function PdfToJpgConverter() {
     setConversionResults([]);
     setPagePreviews([]);
     setError(null);
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
   
   const handleConvert = async () => {
@@ -600,7 +600,7 @@ export function PdfToJpgConverter() {
                     </div>
                     <Progress value={conversionProgress} className="h-2" />
                     <Button size="sm" variant="destructive" onClick={handleCancelConvert} className="w-full mt-4">
-                        <Ban className="mr-2 h-4 w-4" />
+                        <Ban className="mr-2 h-4 h-4" />
                         Cancel
                     </Button>
                 </div>
