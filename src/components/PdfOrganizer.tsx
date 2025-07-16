@@ -49,11 +49,13 @@ export function PdfOrganizer() {
   const [isSaving, setIsSaving] = useState(false);
   
   const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   
+<<<<<<< HEAD
   useEffect(() => {
     return () => {
       if(file?.pdfjsDoc) {
@@ -61,6 +63,10 @@ export function PdfOrganizer() {
       }
     }
   }, [file]);
+=======
+  const [pdfLibDoc, setPdfLibDoc] = useState<PDFDocument | null>(null);
+
+>>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
 
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return undefined;
@@ -89,6 +95,11 @@ export function PdfOrganizer() {
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
+<<<<<<< HEAD
+=======
+    setPdfLibDoc(null);
+
+>>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
     setIsLoading(true);
 
     try {
@@ -178,19 +189,18 @@ export function PdfOrganizer() {
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
     if (dragItem.current === null || dragItem.current === index) return;
-
-    setPages(prevPages => {
-        const newPages = [...prevPages];
-        const draggedItemContent = newPages.splice(dragItem.current!, 1)[0];
-        newPages.splice(index, 0, draggedItemContent);
-        dragItem.current = index;
-        return newPages;
-    });
+    dragOverItem.current = index;
+    const filesCopy = [...pages];
+    const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
+    filesCopy.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setPages(filesCopy);
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
     dragItem.current = null;
+    dragOverItem.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -213,14 +223,25 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
+<<<<<<< HEAD
       const pdfBytes = await file.file.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+=======
+      let docToSave: PDFDocument;
+      if (pdfLibDoc) {
+        docToSave = pdfLibDoc;
+      } else {
+        const pdfBytes = await file.file.arrayBuffer();
+        docToSave = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        setPdfLibDoc(docToSave);
+      }
+>>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
       
       const newPdfDoc = await PDFDocument.create();
       
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      const copiedPages = await newPdfDoc.copyPages(pdfLibDoc, pageIndicesToCopy);
-      
+      const copiedPages = await newPdfDoc.copyPages(docToSave, pageIndicesToCopy);
+
       copiedPages.forEach((page, index) => {
         const rotationAngle = pages[index].rotation;
         if (rotationAngle !== 0) {
@@ -256,6 +277,7 @@ export function PdfOrganizer() {
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
+    setPdfLibDoc(null);
   };
 
   return (
