@@ -320,8 +320,10 @@ export function MergePdfs() {
 
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
+      // The sole purpose of this line is to validate the password.
       await PDFDocument.load(pdfBytes, { password });
       
+      // If it succeeds, update the state.
       setFiles(prevFiles =>
         prevFiles.map(f =>
           f.id === fileId ? { ...f, password, isUnlocked: true } : f
@@ -329,6 +331,7 @@ export function MergePdfs() {
       );
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
+      // Check if the error is specifically due to an incorrect password
       if (e.constructor.name === 'PasswordIsIncorrectError') {
         setPasswordState(prev => ({ ...prev, isSubmitting: false, error: "Incorrect password. Please try again." }));
       } else {
