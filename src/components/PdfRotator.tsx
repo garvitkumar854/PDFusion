@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { PDFDocument, degrees, PasswordIsIncorrectError } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
 import { PasswordDialog } from "./PasswordDialog";
@@ -36,6 +36,7 @@ type PDFFile = {
   id: string;
   file: File;
   isEncrypted: boolean | null; // null means not yet checked
+  password?: string;
 };
 
 type ProcessResult = {
@@ -119,7 +120,7 @@ export function PdfRotator() {
             if (operationId.current !== currentOperationId) return;
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
-            setFile(f => f ? {...f, isEncrypted: false} : null);
+            setFile(f => f ? {...f, isEncrypted: false, password} : null);
         }
         pdfjsDoc.destroy();
     } catch(e: any) {
@@ -180,6 +181,13 @@ export function PdfRotator() {
     try {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password });
+      
+      // If we are here, password was correct or not needed. Store it for preview if needed.
+      if (password && !preview) {
+        setFile(f => f ? {...f, password} : f);
+        generatePreview(file.file, password);
+      }
+
       const totalPages = pdfDoc.getPageCount();
       
       const pages = pdfDoc.getPages();
@@ -210,7 +218,7 @@ export function PdfRotator() {
       
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if (error instanceof PasswordIsIncorrectError) {
+        if (error.name === 'PasswordIsIncorrectError') {
           setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again.", onSuccess: processRotation }));
         } else {
             console.error("Processing failed:", error);
@@ -231,15 +239,17 @@ export function PdfRotator() {
       return;
     }
 
-    if (file.isEncrypted) {
+    // if it's not encrypted, or already unlocked, just process
+    if (file.isEncrypted === false || (file.isEncrypted === null && preview)) {
+       processRotation(file.password);
+    } else {
+      // It's encrypted and we need a password
       setPasswordState({
         isNeeded: true,
         isSubmitting: false,
         error: null,
         onSuccess: (password) => processRotation(password),
       });
-    } else {
-      processRotation();
     }
   };
 
@@ -258,8 +268,6 @@ export function PdfRotator() {
 
   const handlePasswordSubmit = async (password: string) => {
     setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    // We don't need to validate here. We just pass the password to the original function.
-    // The validation happens inside processRotation now.
     passwordState.onSuccess(password);
     setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
   };
