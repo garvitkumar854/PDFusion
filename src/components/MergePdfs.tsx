@@ -210,6 +210,11 @@ export function MergePdfs() {
         return;
     }
     
+    if (files.length < 2) {
+        toast({ variant: "destructive", title: "Not enough files", description: "Please upload at least two files to merge." });
+        return;
+    }
+    
     const currentOperationId = ++operationId.current;
     setIsMerging(true);
     setMergeProgress(0);
@@ -310,20 +315,16 @@ export function MergePdfs() {
     const { fileId } = passwordState;
     if (!fileId) return;
 
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
     const fileToUnlock = files.find(f => f.id === fileId);
+    if (!fileToUnlock) return;
 
-    if (!fileToUnlock) {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
-      return;
-    }
-
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
+    
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
-      // The sole purpose of this line is to validate the password.
       await PDFDocument.load(pdfBytes, { password });
       
-      // If it succeeds, update the state.
+      // Password is correct, update the state
       setFiles(prevFiles =>
         prevFiles.map(f =>
           f.id === fileId ? { ...f, password, isUnlocked: true } : f
@@ -331,7 +332,6 @@ export function MergePdfs() {
       );
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
-      // Check if the error is specifically due to an incorrect password
       if (e.constructor.name === 'PasswordIsIncorrectError') {
         setPasswordState(prev => ({ ...prev, isSubmitting: false, error: "Incorrect password. Please try again." }));
       } else {
@@ -544,3 +544,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
