@@ -124,7 +124,6 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // Use pdf.js to safely check for encryption without needing options
               await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
@@ -321,16 +320,13 @@ export function MergePdfs() {
 
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
-      // Use pdf-lib to validate the password
       await PDFDocument.load(pdfBytes, { password });
       
-      // If successful, update the file state
       setFiles(prevFiles =>
         prevFiles.map(f =>
           f.id === fileId ? { ...f, password, isUnlocked: true } : f
         )
       );
-      // Close the dialog
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
       if (e.constructor.name === 'PasswordIsIncorrectError') {
