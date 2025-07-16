@@ -333,7 +333,6 @@ export function MergePdfs() {
       // Close the dialog
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
     } catch (e: any) {
-      // Check for specific pdf-lib error
       if (e.constructor.name === 'PasswordIsIncorrectError') {
         setPasswordState(prev => ({ ...prev, isSubmitting: false, error: "Incorrect password. Please try again." }));
       } else {
