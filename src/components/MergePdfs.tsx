@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument, PasswordIsIncorrectError } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import {
   Dialog,
   DialogContent,
@@ -124,8 +124,8 @@ export function MergePdfs() {
           let isEncrypted = false;
           try {
               await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
-          } catch(e) {
-              if (e instanceof PasswordIsIncorrectError) {
+          } catch(e: any) {
+              if (e.name === 'PasswordIsIncorrectError') {
                   isEncrypted = true;
               }
           }
@@ -233,16 +233,24 @@ export function MergePdfs() {
             if (operationId.current !== currentOperationId) return;
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
-                const sourcePdf = await PDFDocument.load(pdfBytes, { password: pdfFile.password, ignoreEncryption: true });
+                const sourcePdf = await PDFDocument.load(pdfBytes, { password: pdfFile.password });
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
-            } catch (error) {
+            } catch (error: any) {
                 console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
-                toast({
-                   variant: "destructive",
-                   title: "Skipped a file",
-                   description: `Could not process "${pdfFile.file.name}". It might be corrupted or need a password.`
-                });
+                if (error.name === 'PasswordIsIncorrectError') {
+                   toast({
+                       variant: "destructive",
+                       title: "Incorrect Password",
+                       description: `The password for "${pdfFile.file.name}" was incorrect. The file has been skipped.`
+                    });
+                } else {
+                    toast({
+                       variant: "destructive",
+                       title: "Skipped a file",
+                       description: `Could not process "${pdfFile.file.name}". It might be corrupted.`
+                    });
+                }
             }
         }
         
@@ -336,8 +344,8 @@ export function MergePdfs() {
         // Use a timeout to allow state to update before re-running merge
         setTimeout(handleMerge, 100);
 
-    } catch (err) {
-        if (err instanceof PasswordIsIncorrectError) {
+    } catch (err: any) {
+        if (err.name === 'PasswordIsIncorrectError') {
             setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
         } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF.'});
