@@ -123,28 +123,37 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // We use ignoreEncryption here just to check if it's protected.
-              // The actual merge will require the password if it is.
               await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           } catch(e: any) {
-              if (e.name === 'PasswordIsIncorrectError') {
+              if (e.name === 'PasswordException') {
                   isEncrypted = true;
+              } else {
+                  // Re-throw other errors
+                  throw e;
               }
           }
            try {
               await PDFDocument.load(pdfBytes);
            } catch(e:any) {
-               if (e.name === 'PasswordIsIncorrectError') {
+               if (e.name === 'PasswordException') {
                   isEncrypted = true;
-              }
+               } else if (e.name !== 'InvalidPDFStructureError') {
+                  // Ignore structure errors which ignoreEncryption handles, but flag password errors
+                  throw e;
+               }
            }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
       });
 
-      const filesToAdd = await Promise.all(filesToAddPromises);
-      
-      setFiles(prev => [...prev, ...filesToAdd]);
-      setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
+      try {
+        const filesToAdd = await Promise.all(filesToAddPromises);
+        
+        setFiles(prev => [...prev, ...filesToAdd]);
+        setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
+      } catch (e: any) {
+         toast({ variant: "destructive", title: "Error reading file", description: "One of the PDFs might be corrupted." });
+      }
+
 
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
@@ -219,7 +228,6 @@ export function MergePdfs() {
       return;
     }
     
-    // Check for encrypted files without passwords
     const firstEncryptedFile = files.find(f => f.isEncrypted && !f.password);
     if (firstEncryptedFile) {
         setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileId: firstEncryptedFile.id });
@@ -247,7 +255,7 @@ export function MergePdfs() {
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
                 console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
-                if (error.name === 'PasswordIsIncorrectError') {
+                if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
                    toast({
                        variant: "destructive",
                        title: "Incorrect Password",
@@ -344,20 +352,17 @@ export function MergePdfs() {
         const pdfBytes = await fileToUnlock.file.arrayBuffer();
         await PDFDocument.load(pdfBytes, { password });
         
-        // Password is correct, update the file state
         setFiles(prev => prev.map(f => f.id === passwordState.fileId ? {...f, password, isEncrypted: false } : f));
         
-        // Close dialog and immediately try to merge again
         setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
         
-        // Use a timeout to allow state to update before re-running merge
         setTimeout(handleMerge, 100);
 
     } catch (err: any) {
-        if (err.name === 'PasswordIsIncorrectError') {
+        if (err.name === 'PasswordIsIncorrectError' || err.name === 'PasswordException') {
             setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF.'});
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF. It may be corrupted.'});
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
         }
     }
@@ -588,3 +593,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    

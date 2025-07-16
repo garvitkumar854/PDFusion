@@ -13,6 +13,7 @@ import {
   Loader2,
   Ban,
   Code,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,16 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -38,6 +49,14 @@ type ProcessResult = {
   filename: string;
 };
 
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileToLoad: File | null;
+  passwordAttempt?: string;
+}
+
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -54,16 +73,39 @@ export function PdfToHtmlConverter() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const [passwordState, setPasswordState] = useState<PasswordState>({
+    isNeeded: false,
+    isSubmitting: false,
+    error: null,
+    fileToLoad: null,
+  });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const loadAndSetFile = (fileToLoad: File, password?: string) => {
+    setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad });
+    setResult(null);
+    setPasswordState(prev => ({ ...prev, isNeeded: false, passwordAttempt: password }));
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
       const singleFile = acceptedFiles[0];
       if (singleFile) {
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
-        setResult(null);
+        try {
+            const pdfBytes = await singleFile.arrayBuffer();
+            await pdfjsLib.getDocument({data: pdfBytes}).promise;
+            loadAndSetFile(singleFile);
+        } catch(e: any) {
+            if(e.name === 'PasswordException') {
+                setPasswordState({ isNeeded: true, fileToLoad: singleFile, error: null, isSubmitting: false });
+            } else {
+                toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
+            }
+        }
       }
-    }, []);
+    }, [toast]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -77,6 +119,7 @@ export function PdfToHtmlConverter() {
 
   const removeFile = () => {
     setFile(null);
+    setPasswordState({ isNeeded: false, fileToLoad: null, error: null, isSubmitting: false });
   };
 
   const handleProcess = async () => {
@@ -92,7 +135,7 @@ export function PdfToHtmlConverter() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: passwordState.passwordAttempt }).promise;
       const totalPages = pdfjsDoc.numPages;
 
       let htmlContent = `<!DOCTYPE html>
@@ -180,7 +223,11 @@ export function PdfToHtmlConverter() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
+        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+            setPasswordState(prev => ({...prev, isNeeded: true, error: "Incorrect password."}));
+        } else {
+            toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
+        }
       }
     } finally {
         if (operationId.current === currentOperationId) setIsProcessing(false);
@@ -199,6 +246,20 @@ export function PdfToHtmlConverter() {
     setFile(null);
     setResult(null);
   };
+  
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordState.fileToLoad && passwordInputRef.current) {
+        loadAndSetFile(passwordState.fileToLoad, passwordInputRef.current.value);
+    }
+  };
+  
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      }
+  };
+
 
   if (result) {
     return (
@@ -240,7 +301,11 @@ export function PdfToHtmlConverter() {
             ) : (
                 <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                    {passwordState.passwordAttempt ? (
+                        <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
+                    ) : (
+                        <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                    )}
                     <div className="flex flex-col overflow-hidden">
                     <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                     <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
@@ -274,6 +339,41 @@ export function PdfToHtmlConverter() {
                 </CardContent>
             </Card>
         )}
+        <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handlePasswordSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Password Required</DialogTitle>
+                        <DialogDescription>
+                            This PDF file is password protected. Please enter the password to open it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password-input" className="text-right">
+                                Password
+                            </Label>
+                            <Input
+                                id="password-input"
+                                ref={passwordInputRef}
+                                type="password"
+                                className="col-span-3"
+                            />
+                        </div>
+                        {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                        <Button type="submit" disabled={passwordState.isSubmitting}>
+                            {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Unlock
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
+
+    

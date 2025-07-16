@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Ban,
   FileArchive,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,16 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import JSZip from 'jszip';
 import { Label } from "./ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "./ui/input";
+
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -51,6 +62,14 @@ type PagePreview = {
   dataUrl: string | null;
   isVisible: boolean;
 };
+
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileToLoad: File | null;
+}
+
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -138,6 +157,14 @@ export function PdfToJpgConverter() {
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
+  const [passwordState, setPasswordState] = useState<PasswordState>({
+    isNeeded: false,
+    isSubmitting: false,
+    error: null,
+    fileToLoad: null,
+  });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const { toast } = useToast();
   
   const operationId = useRef<number>(0);
@@ -186,6 +213,45 @@ export function PdfToJpgConverter() {
     }
     return null;
   }, []);
+  
+  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+    const currentOperationId = ++operationId.current;
+    setIsProcessing(true);
+    setPagePreviews([]);
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
+    
+    try {
+        const pdfBytes = await fileToLoad.arrayBuffer();
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+        const totalPages = pdfjsDoc.numPages;
+
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc });
+        setSelectedPages(new Set(Array.from({ length: totalPages }, (_, i) => i + 1))); // Select all by default
+        setConversionResults([]);
+        setError(null);
+        
+        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
+        setPagePreviews(previews);
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+
+    } catch (error: any) {
+        if (operationId.current !== currentOperationId) return;
+
+        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+            setTimeout(() => passwordInputRef.current?.focus(), 100);
+        } else {
+            console.error("Error loading PDF:", error);
+            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+        }
+    } finally {
+        if (operationId.current === currentOperationId) {
+            setIsProcessing(false);
+        }
+    }
+  }, [toast]);
+
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -202,34 +268,9 @@ export function PdfToJpgConverter() {
         return;
       }
       
-      const currentOperationId = ++operationId.current;
-      setIsProcessing(true);
-      setPagePreviews([]);
-      try {
-        const pdfBytes = await singleFile.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        const totalPages = pdfjsDoc.numPages;
-
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, totalPages, pdfjsDoc });
-        setSelectedPages(new Set(Array.from({ length: totalPages }, (_, i) => i + 1))); // Select all by default
-        setConversionResults([]);
-        setError(null);
-        
-        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
-        setPagePreviews(previews);
-
-      } catch (error) {
-        if (operationId.current === currentOperationId) {
-          console.error("Error loading PDF:", error);
-          toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
-        }
-      } finally {
-        if (operationId.current === currentOperationId) {
-          setIsProcessing(false);
-        }
-      }
+      loadPdf(singleFile);
     },
-    [toast]
+    [toast, loadPdf]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -397,6 +438,18 @@ export function PdfToJpgConverter() {
     }
   };
 
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordState.fileToLoad && passwordInputRef.current) {
+        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+    }
+  }
+  
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      }
+  }
 
   if (conversionResults.length > 0) {
     return (
@@ -561,6 +614,43 @@ export function PdfToJpgConverter() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+        <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handlePasswordSubmit}>
+                <DialogHeader>
+                    <DialogTitle>Password Required</DialogTitle>
+                    <DialogDescription>
+                        This PDF file is password protected. Please enter the password to open it.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password-input" className="text-right">
+                            Password
+                        </Label>
+                        <Input
+                            id="password-input"
+                            ref={passwordInputRef}
+                            type="password"
+                            className="col-span-3"
+                        />
+                    </div>
+                    {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                    <Button type="submit" disabled={passwordState.isSubmitting}>
+                        {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Unlock
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
+
+    

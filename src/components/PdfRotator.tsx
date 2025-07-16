@@ -12,6 +12,7 @@ import {
   Loader2,
   Ban,
   RotateCw,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,15 @@ import { Label } from "@/components/ui/label";
 import { PDFDocument, degrees } from 'pdf-lib';
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "./ui/input";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -48,6 +58,14 @@ type PreviewInfo = {
     height: number;
 }
 
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileToLoad: File | null;
+  passwordAttempt?: string;
+}
+
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -67,6 +85,14 @@ export function PdfRotator() {
   const [angle, setAngle] = useState<RotationAngle>(90);
   const [preview, setPreview] = useState<PreviewInfo | null>(null);
 
+  const [passwordState, setPasswordState] = useState<PasswordState>({
+    isNeeded: false,
+    isSubmitting: false,
+    error: null,
+    fileToLoad: null,
+  });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
@@ -82,24 +108,18 @@ export function PdfRotator() {
     };
   }, [result, preview]);
 
-
-  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
-        return;
-      }
+  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+    const currentOperationId = ++operationId.current;
+    setIsProcessing(true);
+    setPreview(null);
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null, passwordAttempt: password }));
       
-      const currentOperationId = ++operationId.current;
-      setIsProcessing(true);
-      setPreview(null);
-      
-      try {
-        const singleFile = acceptedFiles[0];
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
+    try {
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad });
         setResult(null);
 
-        const pdfBytes = await singleFile.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        const pdfBytes = await fileToLoad.arrayBuffer();
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
         if (operationId.current !== currentOperationId) return;
 
         const page = await pdfjsDoc.getPage(1);
@@ -114,17 +134,35 @@ export function PdfRotator() {
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
         }
-      } catch(e) {
+         setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
+    } catch(e: any) {
         if(operationId.current === currentOperationId) {
-           console.error("Failed to load PDF for preview", e);
-           toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or encrypted." });
+           if (e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
+                setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+                setTimeout(() => passwordInputRef.current?.focus(), 100);
+            } else {
+                 console.error("Failed to load PDF for preview", e);
+                 toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
+            }
         }
-      } finally {
+    } finally {
         if(operationId.current === currentOperationId) {
           setIsProcessing(false);
         }
+    }
+  }, [toast]);
+
+
+  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
+      if (rejectedFiles.length > 0) {
+        toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
+        return;
       }
-    }, [toast]);
+      const singleFile = acceptedFiles[0];
+      if(singleFile) {
+        loadPdf(singleFile);
+      }
+    }, [loadPdf, toast]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -140,6 +178,7 @@ export function PdfRotator() {
     setFile(null);
     if (preview) URL.revokeObjectURL(preview.url);
     setPreview(null);
+    setPasswordState({ isNeeded: false, fileToLoad: null, error: null, isSubmitting: false });
   };
 
   const handleProcess = async () => {
@@ -155,7 +194,7 @@ export function PdfRotator() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt, ignoreEncryption: !passwordState.passwordAttempt });
       const totalPages = pdfDoc.getPageCount();
       
       const pages = pdfDoc.getPages();
@@ -193,12 +232,16 @@ export function PdfRotator() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        console.error("Processing failed:", error);
-        toast({
-          variant: "destructive",
-          title: "Processing Failed",
-          description: error.message || "An unexpected error occurred.",
-        });
+        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+          setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
+        } else {
+            console.error("Processing failed:", error);
+            toast({
+              variant: "destructive",
+              title: "Processing Failed",
+              description: error.message || "An unexpected error occurred.",
+            });
+        }
       }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -225,6 +268,20 @@ export function PdfRotator() {
     }
     setPreview(null);
   };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordState.fileToLoad && passwordInputRef.current) {
+        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+    }
+  }
+
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      }
+  }
+
 
   if (result) {
     return (
@@ -404,6 +461,41 @@ export function PdfRotator() {
             </div>
         </div>
       )}
+       <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handlePasswordSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Password Required</DialogTitle>
+                        <DialogDescription>
+                            This PDF file is password protected. Please enter the password to open it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password-input" className="text-right">
+                                Password
+                            </Label>
+                            <Input
+                                id="password-input"
+                                ref={passwordInputRef}
+                                type="password"
+                                className="col-span-3"
+                            />
+                        </div>
+                        {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                        <Button type="submit" disabled={passwordState.isSubmitting}>
+                            {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Unlock
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
+
+    

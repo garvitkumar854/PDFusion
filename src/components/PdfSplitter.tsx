@@ -214,7 +214,7 @@ export function PdfSplitter() {
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { password, ignoreEncryption: password ? false : true });
+        const pdfDoc = await PDFDocument.load(pdfBytes, { password });
         const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
         const totalPages = pdfDoc.getPageCount();
 
@@ -232,21 +232,20 @@ export function PdfSplitter() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
+        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-            setIsProcessing(false);
         }
     } finally {
-        if (operationId.current === currentOperationId && !passwordState.isNeeded) {
+        if (operationId.current === currentOperationId) {
           setIsProcessing(false);
         }
     }
-  }, [toast, passwordState.isNeeded]);
+  }, [toast]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -556,7 +555,6 @@ export function PdfSplitter() {
   const handlePasswordDialogClose = (open: boolean) => {
       if (!open) {
           setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-          setIsProcessing(false);
       }
   }
 
@@ -889,3 +887,5 @@ export function PdfSplitter() {
     </div>
   );
 }
+
+    

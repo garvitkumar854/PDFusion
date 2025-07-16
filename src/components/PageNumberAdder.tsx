@@ -15,6 +15,7 @@ import {
   Bold,
   Italic,
   Underline,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -49,6 +58,14 @@ type ProcessResult = {
 type Position = "top-left" | "top-center" | "top-right" | "middle-left" | "middle-center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right";
 type Font = "Helvetica" | "TimesRoman" | "Courier";
 type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
+
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileToLoad: File | null;
+  passwordAttempt?: string;
+}
 
 const FONT_MAP: Record<Font, StandardFonts> = {
   Helvetica: StandardFonts.Helvetica,
@@ -104,57 +121,78 @@ export function PageNumberAdder() {
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
   const [firstPagePreviewUrl, setFirstPagePreviewUrl] = useState<string | null>(null);
+  
+  const [passwordState, setPasswordState] = useState<PasswordState>({
+    isNeeded: false,
+    isSubmitting: false,
+    error: null,
+    fileToLoad: null,
+  });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+    const currentOperationId = ++operationId.current;
+    setIsProcessing(true);
+    setFirstPagePreviewUrl(null);
+    setPasswordState(prev => ({...prev, isSubmitting: true, error: null, passwordAttempt: password}));
+    
+    try {
+      const pdfBytes = await fileToLoad.arrayBuffer();
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+      
+      if (operationId.current !== currentOperationId) return;
+
+      setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc });
+      setResult(null);
+      setStartPage(1);
+      setEndPage(pdfjsDoc.numPages);
+
+      // Render first page for preview
+      const page = await pdfjsDoc.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const context = canvas.getContext('2d');
+      if (context) {
+          await page.render({ canvasContext: context, viewport }).promise;
+           if (operationId.current !== currentOperationId) return;
+          setFirstPagePreviewUrl(canvas.toDataURL());
+      }
+      setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
+    } catch (e: any) {
+        if (operationId.current === currentOperationId) {
+            if (e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
+                setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+                setTimeout(() => passwordInputRef.current?.focus(), 100);
+            } else {
+                console.error("Failed to load PDF", e);
+                toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted." });
+            }
+        }
+    } finally {
+       if (operationId.current === currentOperationId) {
+          setIsProcessing(false);
+       }
+    }
+  }, [toast]);
+
+
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
         return;
       }
-      
-      const currentOperationId = ++operationId.current;
-      setIsProcessing(true);
-      setFirstPagePreviewUrl(null);
-
-      try {
-        const singleFile = acceptedFiles[0];
-        const pdfBytes = await singleFile.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        
-        if (operationId.current !== currentOperationId) return;
-
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, pdfjsDoc });
-        setResult(null);
-        setStartPage(1);
-        setEndPage(pdfjsDoc.numPages);
-
-        // Render first page for preview
-        const page = await pdfjsDoc.getPage(1);
-        const viewport = page.getViewport({ scale: 1 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        const context = canvas.getContext('2d');
-        if (context) {
-            await page.render({ canvasContext: context, viewport }).promise;
-             if (operationId.current !== currentOperationId) return;
-            setFirstPagePreviewUrl(canvas.toDataURL());
-        }
-      } catch (e: any) {
-         if (operationId.current === currentOperationId) {
-             console.error("Failed to load PDF", e);
-             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
-         }
-      } finally {
-         if (operationId.current === currentOperationId) {
-            setIsProcessing(false);
-         }
+      const singleFile = acceptedFiles[0];
+      if (singleFile) {
+        loadPdf(singleFile);
       }
-    }, [toast]);
+    }, [loadPdf, toast]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -244,7 +282,7 @@ export function PageNumberAdder() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt, ignoreEncryption: !passwordState.passwordAttempt });
       const totalPages = pdfDoc.getPageCount();
       
       const effectiveStart = Math.max(0, startPage - 1);
@@ -325,8 +363,12 @@ export function PageNumberAdder() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        console.error("Processing failed:", error);
-        toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
+        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+          setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
+        } else {
+          console.error("Processing failed:", error);
+          toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
+        }
       }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -348,6 +390,19 @@ export function PageNumberAdder() {
     setResult(null);
     setFirstPagePreviewUrl(null);
   };
+  
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordState.fileToLoad && passwordInputRef.current) {
+        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+    }
+  }
+
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      }
+  }
 
   if (result) {
     return (
@@ -529,6 +584,41 @@ export function PageNumberAdder() {
             </div>
         </div>
       )}
+       <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handlePasswordSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Password Required</DialogTitle>
+                        <DialogDescription>
+                            This PDF file is password protected. Please enter the password to open it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password-input" className="text-right">
+                                Password
+                            </Label>
+                            <Input
+                                id="password-input"
+                                ref={passwordInputRef}
+                                type="password"
+                                className="col-span-3"
+                            />
+                        </div>
+                        {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                        <Button type="submit" disabled={passwordState.isSubmitting}>
+                            {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Unlock
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
+
+    

@@ -58,6 +58,7 @@ type PasswordState = {
   isSubmitting: boolean;
   error: string | null;
   fileToLoad: File | null;
+  passwordAttempt?: string;
 }
 
 export function PdfOrganizer() {
@@ -116,7 +117,7 @@ export function PdfOrganizer() {
     setFile(null);
     setPages([]);
     setIsLoading(true);
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null, passwordAttempt: password }));
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -142,19 +143,18 @@ export function PdfOrganizer() {
         pdfjsDoc 
       });
       setPages(initialPages);
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null, passwordAttempt: password });
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
-
-        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
+        
+        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+            setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad }));
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-            setIsLoading(false);
         }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -254,18 +254,10 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-      // pdf-lib requires a password to load, even if we are not reading it
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfLibDoc = await PDFDocument.load(pdfBytes, { 
-          password: passwordState.fileToLoad ? passwordInputRef.current?.value : undefined,
-          ignoreEncryption: true 
-      }).catch(err => {
-          if (err.name === 'PasswordIsIncorrectError') {
-              // This is a fallback, but the initial load should catch this.
-              setPasswordState({ isNeeded: true, fileToLoad: file.file, error: "Password required to save.", isSubmitting: false });
-              throw new Error("Password required.");
-          }
-          throw err;
+      const pdfLibDoc = await PDFDocument.load(pdfBytes, {
+          password: passwordState.passwordAttempt,
+          ignoreEncryption: !passwordState.passwordAttempt,
       });
       
       const newPdfDoc = await PDFDocument.create();
@@ -296,9 +288,12 @@ export function PdfOrganizer() {
       toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
 
     } catch (e: any) {
-      if (e.message !== "Password required.") {
-          console.error("Failed to save PDF", e);
-          toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message});
+      if(e.name === 'PasswordException' || e.name === 'PasswordIsIncorrectError') {
+        setPasswordState(prev => ({...prev, isNeeded: true, isSubmitting: false, error: 'Incorrect password.' }));
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'The password provided was incorrect.'});
+      } else {
+        console.error("Failed to save PDF", e);
+        toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message});
       }
     } finally {
       setIsSaving(false);
@@ -311,6 +306,7 @@ export function PdfOrganizer() {
     setFile(null);
     setPages([]);
     setIsLoading(false);
+    setPasswordState({isNeeded: false, isSubmitting: false, error: null, fileToLoad: null});
   };
   
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -323,7 +319,6 @@ export function PdfOrganizer() {
   const handlePasswordDialogClose = (open: boolean) => {
       if (!open) {
           setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-          setIsLoading(false);
       }
   }
 
@@ -501,3 +496,5 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
     );
 });
 PageCard.displayName = 'PageCard';
+
+    
