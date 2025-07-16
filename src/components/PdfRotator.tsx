@@ -194,7 +194,7 @@ export function PdfRotator() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt, ignoreEncryption: !passwordState.passwordAttempt });
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordState.passwordAttempt });
       const totalPages = pdfDoc.getPageCount();
       
       const pages = pdfDoc.getPages();
@@ -232,7 +232,7 @@ export function PdfRotator() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+        if(error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
           setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
         } else {
             console.error("Processing failed:", error);

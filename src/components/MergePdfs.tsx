@@ -123,25 +123,17 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+              // Try loading without password to see if it's encrypted.
+              // This will throw a PasswordException if it is.
+              await PDFDocument.load(pdfBytes);
           } catch(e: any) {
               if (e.name === 'PasswordException') {
                   isEncrypted = true;
               } else {
-                  // Re-throw other errors
-                  throw e;
+                  // Re-throw other errors (like corrupted file)
+                  throw new Error(`The file "${file.name}" may be corrupted or invalid.`);
               }
           }
-           try {
-              await PDFDocument.load(pdfBytes);
-           } catch(e:any) {
-               if (e.name === 'PasswordException') {
-                  isEncrypted = true;
-               } else if (e.name !== 'InvalidPDFStructureError') {
-                  // Ignore structure errors which ignoreEncryption handles, but flag password errors
-                  throw e;
-               }
-           }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
       });
 
@@ -151,7 +143,7 @@ export function MergePdfs() {
         setFiles(prev => [...prev, ...filesToAdd]);
         setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
       } catch (e: any) {
-         toast({ variant: "destructive", title: "Error reading file", description: "One of the PDFs might be corrupted." });
+         toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted." });
       }
 
 
@@ -159,7 +151,7 @@ export function MergePdfs() {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
       }
     },
-    [files, totalSize, toast]
+    [files.length, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -241,20 +233,22 @@ export function MergePdfs() {
     setMergeProgress(0);
     setMergedPdfUrl(null);
     
-    setTimeout(() => setMergeProgress(95), 100);
-
     try {
         const mergedPdf = await PDFDocument.create();
+        let skippedFiles = 0;
 
-        for (const pdfFile of files) {
+        for (let i = 0; i < files.length; i++) {
+            const pdfFile = files[i];
             if (operationId.current !== currentOperationId) return;
+
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
                 const sourcePdf = await PDFDocument.load(pdfBytes, { password: pdfFile.password });
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
-                console.warn(`Skipping corrupted or encrypted file: ${pdfFile.file.name}`, error);
+                skippedFiles++;
+                console.warn(`Skipping file: ${pdfFile.file.name}`, error);
                 if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
                    toast({
                        variant: "destructive",
@@ -264,17 +258,18 @@ export function MergePdfs() {
                 } else {
                     toast({
                        variant: "destructive",
-                       title: "Skipped a file",
-                       description: `Could not process "${pdfFile.file.name}". It might be corrupted.`
+                       title: "Skipped a corrupted file",
+                       description: `Could not process "${pdfFile.file.name}".`
                     });
                 }
             }
+            setMergeProgress(Math.round(((i + 1) / files.length) * 100));
         }
         
         if (operationId.current !== currentOperationId) return;
 
         if (mergedPdf.getPageCount() === 0) {
-            throw new Error("Merge failed. All source PDFs might be corrupted, encrypted, or invalid.");
+            throw new Error(`Merge failed. ${skippedFiles > 0 ? 'All source PDFs were either corrupted or had incorrect passwords.' : 'No pages could be merged.'}`);
         }
 
         const mergedPdfBytes = await mergedPdf.save();
@@ -290,7 +285,7 @@ export function MergePdfs() {
       
       toast({
         title: "Merge Successful!",
-        description: "Your PDF is ready to be downloaded.",
+        description: `Your PDF is ready to be downloaded.${skippedFiles > 0 ? ` (${skippedFiles} file(s) were skipped).` : ''}`,
         action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
@@ -305,7 +300,6 @@ export function MergePdfs() {
       setMergeProgress(0); // Reset on error
     } finally {
       if (operationId.current === currentOperationId) {
-        setMergeProgress(100);
         setIsMerging(false);
       }
     }
@@ -356,6 +350,7 @@ export function MergePdfs() {
         
         setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
         
+        // Use a short timeout to allow state to update before trying to merge again
         setTimeout(handleMerge, 100);
 
     } catch (err: any) {
@@ -469,7 +464,7 @@ export function MergePdfs() {
                         )}
                         >
                         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-                            {pdfFile.isEncrypted ? (
+                            {pdfFile.isEncrypted && !pdfFile.password ? (
                                 <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
                             ) : (
                                 <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
@@ -484,7 +479,7 @@ export function MergePdfs() {
                             </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                            {pdfFile.isEncrypted ? (
+                            {pdfFile.isEncrypted && !pdfFile.password ? (
                                  <Button size="sm" variant="secondary" onClick={() => setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: null, isSubmitting: false })}>
                                      <Lock className="w-3.5 h-3.5 mr-2" />
                                      Password
