@@ -220,6 +220,7 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
+              // Use pdfjs-dist for a safe encryption check
               await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
