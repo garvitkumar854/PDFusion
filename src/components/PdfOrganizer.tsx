@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument, degrees, PasswordIsIncorrectError } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 import {
@@ -147,10 +147,8 @@ export function PdfOrganizer() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error.name === 'PasswordException') {
+        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
-            // Keep loading spinner on background
-            setIsLoading(true);
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Failed to load PDF", error);
@@ -158,7 +156,11 @@ export function PdfOrganizer() {
             setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
             setIsLoading(false);
         }
-    } 
+    } finally {
+        if (operationId.current === currentOperationId) {
+            setIsLoading(false);
+        }
+    }
   }, [file?.pdfjsDoc, toast]);
 
 
@@ -258,7 +260,7 @@ export function PdfOrganizer() {
           password: passwordState.fileToLoad ? passwordInputRef.current?.value : undefined,
           ignoreEncryption: true 
       }).catch(err => {
-          if (err instanceof PasswordIsIncorrectError) {
+          if (err.name === 'PasswordIsIncorrectError') {
               // This is a fallback, but the initial load should catch this.
               setPasswordState({ isNeeded: true, fileToLoad: file.file, error: "Password required to save.", isSubmitting: false });
               throw new Error("Password required.");

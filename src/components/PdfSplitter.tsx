@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PDFDocument, PasswordIsIncorrectError } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
@@ -214,7 +214,7 @@ export function PdfSplitter() {
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { password, ignoreEncryption: true });
+        const pdfDoc = await PDFDocument.load(pdfBytes, { password, ignoreEncryption: password ? false : true });
         const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
         const totalPages = pdfDoc.getPageCount();
 
@@ -232,7 +232,7 @@ export function PdfSplitter() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error instanceof PasswordIsIncorrectError || error.name === 'PasswordException') {
+        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
