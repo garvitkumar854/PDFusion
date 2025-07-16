@@ -14,6 +14,7 @@ import {
   FileArchive,
   ArrowRight,
   Ban,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { compressPdf, CompressPdfInput } from "@/ai/flows/compress-pdf-flow";
+import * as pdfjsLib from 'pdfjs-dist';
+
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -30,6 +36,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PDFFile = {
   id: string;
   file: File;
+  isEncrypted: boolean;
 };
 
 type CompressionResult = {
@@ -96,14 +103,26 @@ export function PdfCompressor() {
 
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
+    async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
         return;
       }
       
       const singleFile = acceptedFiles[0];
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
+      if (!singleFile) return;
+
+      const pdfBytes = await singleFile.arrayBuffer();
+      let isEncrypted = false;
+      try {
+        await pdfjsLib.getDocument(pdfBytes).promise;
+      } catch (e: any) {
+        if (e.name === 'PasswordException') {
+          isEncrypted = true;
+        }
+      }
+
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
       setCompressionResult(null);
       setStatus("idle");
     },
@@ -128,6 +147,10 @@ export function PdfCompressor() {
   const handleCompress = async () => {
     if (!file) {
       toast({ variant: "destructive", title: "No file selected", description: "Please upload a PDF file to compress." });
+      return;
+    }
+    if (file.isEncrypted) {
+      toast({ variant: "destructive", title: "Encrypted PDF", description: "Password-protected PDFs cannot be compressed at this time." });
       return;
     }
 
@@ -310,12 +333,18 @@ export function PdfCompressor() {
             <CardTitle className="text-xl sm:text-2xl">Compression Options</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={cn(isCompressing && "opacity-70 pointer-events-none")}>
+             {file.isEncrypted && (
+              <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <ShieldAlert className="h-5 w-5 shrink-0" />
+                <p>Password-protected PDFs cannot be compressed. Please upload a different file.</p>
+              </div>
+            )}
+            <div className={cn((isCompressing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
               <RadioGroup 
                 value={compressionLevel} 
                 onValueChange={(v) => setCompressionLevel(v as CompressionLevel)} 
                 className="space-y-4"
-                disabled={isCompressing}
+                disabled={isCompressing || file.isEncrypted}
               >
                 <Label className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
                   <RadioGroupItem value="low" id="c-low" />
@@ -363,7 +392,7 @@ export function PdfCompressor() {
                   </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleCompress} disabled={!file || isCompressing}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleCompress} disabled={!file || isCompressing || file.isEncrypted}>
                   <FileArchive className="mr-2 h-5 w-5" />
                   Compress PDF
                 </Button>

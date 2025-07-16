@@ -131,8 +131,7 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              const loadingTask = pdfjsLib.getDocument(new Uint8Array(pdfBytes));
-              await loadingTask.promise;
+              await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch(e: any) {
               if (e.name === 'PasswordException') {
                   isEncrypted = true;

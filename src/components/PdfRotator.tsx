@@ -134,7 +134,7 @@ export function PdfRotator() {
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
         }
-         setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false, fileToLoad: null}));
+         setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null, passwordAttempt: password });
     } catch(e: any) {
         if(operationId.current === currentOperationId) {
            if (e.name === 'PasswordException') {
