@@ -123,12 +123,21 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
+              // We use ignoreEncryption here just to check if it's protected.
+              // The actual merge will require the password if it is.
+              await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
           } catch(e: any) {
               if (e.name === 'PasswordIsIncorrectError') {
                   isEncrypted = true;
               }
           }
+           try {
+              await PDFDocument.load(pdfBytes);
+           } catch(e:any) {
+               if (e.name === 'PasswordIsIncorrectError') {
+                  isEncrypted = true;
+              }
+           }
           return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
       });
 
