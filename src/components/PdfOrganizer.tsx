@@ -54,19 +54,15 @@ export function PdfOrganizer() {
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
-  
-<<<<<<< HEAD
+
   useEffect(() => {
     return () => {
+      // Cleanup pdf.js document to free memory
       if(file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
       }
     }
   }, [file]);
-=======
-  const [pdfLibDoc, setPdfLibDoc] = useState<PDFDocument | null>(null);
-
->>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
 
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return undefined;
@@ -95,11 +91,6 @@ export function PdfOrganizer() {
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
-<<<<<<< HEAD
-=======
-    setPdfLibDoc(null);
-
->>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
     setIsLoading(true);
 
     try {
@@ -223,24 +214,13 @@ export function PdfOrganizer() {
 
     setIsSaving(true);
     try {
-<<<<<<< HEAD
       const pdfBytes = await file.file.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-=======
-      let docToSave: PDFDocument;
-      if (pdfLibDoc) {
-        docToSave = pdfLibDoc;
-      } else {
-        const pdfBytes = await file.file.arrayBuffer();
-        docToSave = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        setPdfLibDoc(docToSave);
-      }
->>>>>>> 70e46d9cac6667ff7e66717f6ee4c89ff7cb1e8c
       
       const newPdfDoc = await PDFDocument.create();
       
       const pageIndicesToCopy = pages.map(p => p.originalIndex);
-      const copiedPages = await newPdfDoc.copyPages(docToSave, pageIndicesToCopy);
+      const copiedPages = await newPdfDoc.copyPages(pdfLibDoc, pageIndicesToCopy);
 
       copiedPages.forEach((page, index) => {
         const rotationAngle = pages[index].rotation;
@@ -277,40 +257,39 @@ export function PdfOrganizer() {
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
-    setPdfLibDoc(null);
   };
 
   return (
     <div className="space-y-6">
       {!file ? (
-        <div {...getRootProps()}>
-           <input {...getInputProps()} />
-            <Card className="bg-white dark:bg-card shadow-lg">
-                <CardHeader>
-                    <CardTitle className="text-xl sm:text-2xl">Organize PDF</CardTitle>
-                    <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                <div
-                    className={cn(
-                    "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                    !isLoading && "hover:border-primary/50",
-                    isDragActive && "border-primary bg-primary/10"
-                    )}
-                >
-                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
-                        Drop a PDF file here
-                    </p>
-                    <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FolderOpen className="mr-2 h-4 w-4" />}
-                        {isLoading ? "Processing..." : "Choose File"}
-                    </Button>
-                </div>
-                </CardContent>
-            </Card>
-        </div>
+        <Card className="bg-white dark:bg-card shadow-lg">
+            <CardHeader>
+                <CardTitle className="text-xl sm:text-2xl">Organize PDF</CardTitle>
+                <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div
+                {...getRootProps()}
+                className={cn(
+                "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
+                !isLoading && "hover:border-primary/50",
+                isDragActive && "border-primary bg-primary/10",
+                (isLoading || isSaving) && "opacity-70 pointer-events-none"
+                )}
+            >
+                <input {...getInputProps()} />
+                <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+                    Drop a PDF file here
+                </p>
+                <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
+                <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FolderOpen className="mr-2 h-4 w-4" />}
+                    {isLoading ? "Processing..." : "Choose File"}
+                </Button>
+            </div>
+            </CardContent>
+        </Card>
       ) : (
         <>
             <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
@@ -421,3 +400,5 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
     );
 });
 PageCard.displayName = 'PageCard';
+
+    
