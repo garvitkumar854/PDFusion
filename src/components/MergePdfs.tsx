@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useReducer } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -48,11 +48,114 @@ export type PDFFile = {
   isUnlocked: boolean;
 };
 
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  fileId: string | null;
+type State = {
+    files: PDFFile[];
+    totalSize: number;
+    isMerging: boolean;
+    mergeProgress: number;
+    mergedPdfUrl: string | null;
+    passwordState: {
+        isNeeded: boolean;
+        isSubmitting: boolean;
+        error: string | null;
+        fileId: string | null;
+    };
+    removingFileId: string | null;
+};
+
+type Action =
+    | { type: 'ADD_FILES'; files: PDFFile[] }
+    | { type: 'REMOVE_FILE'; fileId: string }
+    | { type: 'SET_FILES_ORDER'; files: PDFFile[] }
+    | { type: 'CLEAR_ALL' }
+    | { type: 'START_PASSWORD_PROMPT'; fileId: string }
+    | { type: 'CLOSE_PASSWORD_PROMPT' }
+    | { type: 'SUBMIT_PASSWORD_START' }
+    | { type: 'SUBMIT_PASSWORD_SUCCESS'; fileId: string; password: string }
+    | { type: 'SUBMIT_PASSWORD_ERROR'; error: string }
+    | { type: 'MERGE_START' }
+    | { type: 'MERGE_PROGRESS'; progress: number }
+    | { type: 'MERGE_SUCCESS'; url: string }
+    | { type: 'MERGE_ERROR'; error: string }
+    | { type: 'MERGE_CANCEL' }
+    | { type: 'RESET_MERGE_RESULTS' }
+    | { type: 'SET_REMOVING_FILE_ID'; fileId: string | null };
+
+
+const initialState: State = {
+    files: [],
+    totalSize: 0,
+    isMerging: false,
+    mergeProgress: 0,
+    mergedPdfUrl: null,
+    passwordState: {
+        isNeeded: false,
+        isSubmitting: false,
+        error: null,
+        fileId: null,
+    },
+    removingFileId: null,
+};
+
+function reducer(state: State, action: Action): State {
+    switch(action.type) {
+        case 'ADD_FILES': {
+            const newFiles = action.files;
+            const newSize = newFiles.reduce((acc, f) => acc + f.file.size, 0);
+            return {
+                ...state,
+                files: [...state.files, ...newFiles],
+                totalSize: state.totalSize + newSize,
+            }
+        }
+        case 'REMOVE_FILE': {
+            const fileToRemove = state.files.find(f => f.id === action.fileId);
+            if (!fileToRemove) return state;
+            return {
+                ...state,
+                files: state.files.filter(f => f.id !== action.fileId),
+                totalSize: state.totalSize - fileToRemove.file.size,
+                removingFileId: null,
+            };
+        }
+        case 'SET_FILES_ORDER':
+            return { ...state, files: action.files };
+        case 'CLEAR_ALL':
+            return { ...initialState };
+        case 'START_PASSWORD_PROMPT':
+            return {
+                ...state,
+                passwordState: { isNeeded: true, fileId: action.fileId, isSubmitting: false, error: null }
+            };
+        case 'CLOSE_PASSWORD_PROMPT':
+            return { ...state, passwordState: initialState.passwordState };
+        case 'SUBMIT_PASSWORD_START':
+            return { ...state, passwordState: { ...state.passwordState, isSubmitting: true, error: null } };
+        case 'SUBMIT_PASSWORD_SUCCESS':
+            return {
+                ...state,
+                files: state.files.map(f => f.id === action.fileId ? { ...f, password: action.password, isUnlocked: true } : f),
+                passwordState: initialState.passwordState
+            };
+        case 'SUBMIT_PASSWORD_ERROR':
+            return { ...state, passwordState: { ...state.passwordState, isSubmitting: false, error: action.error } };
+        case 'MERGE_START':
+            return { ...state, isMerging: true, mergeProgress: 0, mergedPdfUrl: null };
+        case 'MERGE_PROGRESS':
+            return { ...state, mergeProgress: action.progress };
+        case 'MERGE_SUCCESS':
+            return { ...state, isMerging: false, mergeProgress: 100, mergedPdfUrl: action.url };
+        case 'MERGE_ERROR':
+            return { ...state, isMerging: false };
+        case 'MERGE_CANCEL':
+            return { ...state, isMerging: false, mergeProgress: 0 };
+        case 'RESET_MERGE_RESULTS':
+            return { ...initialState };
+        case 'SET_REMOVING_FILE_ID':
+            return { ...state, removingFileId: action.fileId };
+        default:
+            return state;
+    }
 }
 
 
@@ -66,15 +169,9 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 export function MergePdfs() {
-  const [files, setFiles] = useState<PDFFile[]>([]);
-  const [totalSize, setTotalSize] = useState(0);
-  const [isMerging, setIsMerging] = useState(false);
-  const [mergeProgress, setMergeProgress] = useState(0);
-  const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, passwordState, removingFileId } = state;
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
-  const [removingFileId, setRemovingFileId] = useState<string | null>(null);
-
-  const [passwordState, setPasswordState] = useState<PasswordState>({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -85,7 +182,6 @@ export function MergePdfs() {
 
   useEffect(() => {
     return () => {
-      operationId.current++; 
       if (mergedPdfUrl) {
         URL.revokeObjectURL(mergedPdfUrl);
       }
@@ -138,8 +234,7 @@ export function MergePdfs() {
 
       try {
         const filesToAdd = await Promise.all(filesToAddPromises);
-        setFiles(prev => [...prev, ...filesToAdd]);
-        setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
+        dispatch({ type: 'ADD_FILES', files: filesToAdd });
       } catch (e: any) {
          toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted." });
       }
@@ -156,20 +251,14 @@ export function MergePdfs() {
   });
 
   const removeFile = (fileId: string) => {
-    setRemovingFileId(fileId);
+    dispatch({ type: 'SET_REMOVING_FILE_ID', fileId });
     setTimeout(() => {
-      const fileToRemove = files.find(f => f.id === fileId);
-      if (fileToRemove) {
-        setTotalSize(prev => prev - fileToRemove.file.size);
-        setFiles(prev => prev.filter(f => f.id !== fileId));
-      }
-      setRemovingFileId(null);
+      dispatch({ type: 'REMOVE_FILE', fileId });
     }, 300);
   };
   
   const handleClearAll = () => {
-    setFiles([]);
-    setTotalSize(0);
+    dispatch({ type: 'CLEAR_ALL' });
   };
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -190,7 +279,7 @@ export function MergePdfs() {
     const draggedItemContent = filesCopy.splice(dragItem.current, 1)[0];
     filesCopy.splice(index, 0, draggedItemContent);
     dragItem.current = index;
-    setFiles(filesCopy);
+    dispatch({ type: 'SET_FILES_ORDER', files: filesCopy });
   };
 
   const handleDragEnd = () => {
@@ -206,7 +295,7 @@ export function MergePdfs() {
   const handleMerge = async () => {
     const firstLockedFile = files.find(f => f.isEncrypted && !f.isUnlocked);
     if (firstLockedFile) {
-        setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileId: firstLockedFile.id });
+        dispatch({ type: 'START_PASSWORD_PROMPT', fileId: firstLockedFile.id });
         return;
     }
     
@@ -216,9 +305,7 @@ export function MergePdfs() {
     }
     
     const currentOperationId = ++operationId.current;
-    setIsMerging(true);
-    setMergeProgress(0);
-    setMergedPdfUrl(null);
+    dispatch({ type: 'MERGE_START' });
     
     try {
         const mergedPdf = await PDFDocument.create();
@@ -242,7 +329,7 @@ export function MergePdfs() {
                     description: `Could not process "${pdfFile.file.name}".`
                 });
             }
-            setMergeProgress(Math.round(((i + 1) / files.length) * 100));
+            dispatch({ type: 'MERGE_PROGRESS', progress: Math.round(((i + 1) / files.length) * 100) });
         }
         
         if (operationId.current !== currentOperationId) return;
@@ -260,7 +347,7 @@ export function MergePdfs() {
         }
 
         const url = URL.createObjectURL(blob);
-        setMergedPdfUrl(url);
+        dispatch({ type: 'MERGE_SUCCESS', url });
       
       toast({
         title: "Merge Successful!",
@@ -270,24 +357,19 @@ export function MergePdfs() {
     } catch (error: any) {
       console.error("Merge failed:", error);
        if (operationId.current === currentOperationId) {
+          dispatch({ type: 'MERGE_ERROR', error: error.message });
           toast({
             variant: "destructive",
             title: "Merge Failed",
             description: error.message || "An unexpected error occurred during the merge process.",
           });
       }
-      setMergeProgress(0);
-    } finally {
-      if (operationId.current === currentOperationId) {
-        setIsMerging(false);
-      }
     }
   };
   
   const handleCancelMerge = () => {
     operationId.current++;
-    setIsMerging(false);
-    setMergeProgress(0);
+    dispatch({ type: 'MERGE_CANCEL' });
     toast({ title: "Merge cancelled." });
   };
 
@@ -306,9 +388,7 @@ export function MergePdfs() {
     if (mergedPdfUrl) {
       URL.revokeObjectURL(mergedPdfUrl);
     }
-    setFiles([]);
-    setTotalSize(0);
-    setMergedPdfUrl(null);
+    dispatch({ type: 'RESET_MERGE_RESULTS' });
   };
 
   const handlePasswordSubmit = async (password: string) => {
@@ -318,31 +398,25 @@ export function MergePdfs() {
     const fileToUnlock = files.find(f => f.id === fileId);
     if (!fileToUnlock) return;
 
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
+    dispatch({ type: 'SUBMIT_PASSWORD_START' });
     
     try {
       const pdfBytes = await fileToUnlock.file.arrayBuffer();
       await PDFDocument.load(pdfBytes, { password });
-      
-      // Password is correct, update the state
-      setFiles(prevFiles =>
-        prevFiles.map(f =>
-          f.id === fileId ? { ...f, password, isUnlocked: true } : f
-        )
-      );
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+      dispatch({ type: 'SUBMIT_PASSWORD_SUCCESS', fileId, password });
     } catch (e: any) {
       if (e.constructor.name === 'PasswordIsIncorrectError') {
-        setPasswordState(prev => ({ ...prev, isSubmitting: false, error: "Incorrect password. Please try again." }));
+        dispatch({ type: 'SUBMIT_PASSWORD_ERROR', error: "Incorrect password. Please try again." });
       } else {
-        toast({ variant: "destructive", title: "Error", description: "Could not read this PDF, it might be corrupted." });
-        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+        console.error("PDF Read Error:", e);
+        dispatch({ type: 'SUBMIT_PASSWORD_ERROR', error: "Could not read this PDF. It may be corrupted." });
+        setTimeout(() => dispatch({ type: 'CLOSE_PASSWORD_PROMPT'}), 2000);
       }
     }
   };
 
   const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+      dispatch({ type: 'CLOSE_PASSWORD_PROMPT' });
   };
   
   const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => !f.isUnlocked);
@@ -460,7 +534,7 @@ export function MergePdfs() {
                                          Unlocked
                                      </Badge>
                                 ) : (
-                                     <Button size="sm" variant="secondary" onClick={() => setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: null, isSubmitting: false })}>
+                                     <Button size="sm" variant="secondary" onClick={() => dispatch({type: 'START_PASSWORD_PROMPT', fileId: pdfFile.id })}>
                                          <Lock className="w-3.5 h-3.5 mr-2" />
                                          Password
                                      </Button>
@@ -544,5 +618,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
