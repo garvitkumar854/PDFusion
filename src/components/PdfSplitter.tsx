@@ -218,6 +218,11 @@ export function PdfSplitter() {
         const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
         const totalPages = pdfDoc.getPageCount();
 
+        if (operationId.current !== currentOperationId) {
+          pdfjsDoc.destroy();
+          return;
+        }
+
         setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfDoc, pdfjsDoc });
         setCustomRanges(`1-${totalPages}`);
         setFixedRangeSize(1);
@@ -232,7 +237,7 @@ export function PdfSplitter() {
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
-        if (error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
+        if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
@@ -249,20 +254,26 @@ export function PdfSplitter() {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (acceptedFiles.length === 0) {
-        if (rejectedFiles.length > 0) {
-          toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "The file was not a PDF or exceeded size limits." });
-        }
-        return;
+      if (rejectedFiles.length > 0) {
+        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
       }
+      if (acceptedFiles.length === 0) return;
       
       const singleFile = acceptedFiles[0];
-      if (singleFile.size > MAX_FILE_SIZE_BYTES) {
-        toast({ variant: "destructive", title: "File too large", description: `"${singleFile.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
-        return;
-      }
       
-      loadPdf(singleFile);
+      try {
+        const pdfBytes = await singleFile.arrayBuffer();
+        await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        loadPdf(singleFile);
+      } catch (error: any) {
+        if (error.name === 'EncryptedPDFError') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad: singleFile });
+            setTimeout(() => passwordInputRef.current?.focus(), 100);
+        } else {
+            console.error("Error checking PDF:", error);
+            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+        }
+      }
     },
     [toast, loadPdf]
   );
@@ -301,7 +312,8 @@ export function PdfSplitter() {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { "application/pdf": [".pdf"] },
-    multiple: false,
+    maxFiles: 1,
+    maxSize: MAX_FILE_SIZE_BYTES,
     noClick: true,
     noKeyboard: true,
     disabled: isProcessing || isSplitting,
@@ -309,6 +321,7 @@ export function PdfSplitter() {
 
   const removeFile = () => {
     operationId.current++; // Invalidate any running operations
+    if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setIsProcessing(false);
     setCustomRanges("");
@@ -887,5 +900,3 @@ export function PdfSplitter() {
     </div>
   );
 }
-
-    
