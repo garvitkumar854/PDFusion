@@ -123,28 +123,17 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // We use ignoreEncryption to check without crashing. The actual password will be used during merge.
-              await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-              // Check if it's actually encrypted by trying to access something
-              const pdfjsDoc = await pdfjsLib.getDocument(pdfBytes).promise.catch(() => null);
-              if (!pdfjsDoc) {
-                isEncrypted = true;
-              }
-          } catch(e: any) {
-              // This library might throw its own errors for corrupted files etc.
-              // A more direct check with pdf.js can be more reliable for encryption detection
-              try {
-                  await pdfjsLib.getDocument(pdfBytes).promise;
-              } catch (pdfjsError: any) {
-                  if (pdfjsError.name === 'PasswordException') {
-                      isEncrypted = true;
-                  } else {
-                      console.error("Failed to read file", file.name, pdfjsError);
-                      throw new Error(`Could not read "${file.name}". It may be corrupted.`);
-                  }
+              // We use pdf.js to safely check for encryption without crashing.
+              await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+          } catch (pdfjsError: any) {
+              if (pdfjsError.name === 'PasswordException') {
+                  isEncrypted = true;
+              } else {
+                  console.error("Failed to read file", file.name, pdfjsError);
+                  throw new Error(`Could not read "${file.name}". It may be corrupted.`);
               }
           }
-          return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
+          return { id: `${file.name}-${Date.now()}`, file, isEncrypted, password: '' };
       });
 
       try {
@@ -252,21 +241,19 @@ export function MergePdfs() {
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
+                 if (error.name === 'PasswordIsIncorrectError') {
+                   setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: "Incorrect password. Please try again.", isSubmitting: false });
+                   setIsMerging(false); // Stop the merge process
+                   return; // Exit the function
+                }
+                
                 skippedFiles++;
                 console.warn(`Skipping file: ${pdfFile.file.name}`, error);
-                if (error.name === 'PasswordIsIncorrectError') {
-                   toast({
-                       variant: "destructive",
-                       title: "Incorrect Password",
-                       description: `The password for "${pdfFile.file.name}" was incorrect. The file has been skipped.`
-                    });
-                } else {
-                    toast({
-                       variant: "destructive",
-                       title: "Skipped a corrupted file",
-                       description: `Could not process "${pdfFile.file.name}".`
-                    });
-                }
+                toast({
+                    variant: "destructive",
+                    title: "Skipped a corrupted file",
+                    description: `Could not process "${pdfFile.file.name}".`
+                });
             }
             setMergeProgress(Math.round(((i + 1) / files.length) * 100));
         }
@@ -337,37 +324,14 @@ export function MergePdfs() {
     setMergedPdfUrl(null);
   };
 
-  const handlePasswordSubmit = async (password: string) => {
+  const handlePasswordSubmit = (password: string) => {
     if (!passwordState.fileId) return;
 
-    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-
-    const fileToUnlock = files.find(f => f.id === passwordState.fileId);
-    if (!fileToUnlock) return;
-
-    try {
-        const pdfBytes = await fileToUnlock.file.arrayBuffer();
-        await PDFDocument.load(pdfBytes, { password });
-        
-        setFiles(prev => prev.map(f => f.id === passwordState.fileId ? {...f, password, isEncrypted: false } : f));
-        
-        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
-        
-        // Use a short timeout to allow state to update before trying to merge again
-        setTimeout(handleMerge, 100);
-
-    } catch (err: any) {
-        if (err.name === 'PasswordIsIncorrectError') {
-            setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF. It may be corrupted.'});
-            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
-        }
-    } finally {
-        if (operationId.current === currentOperationId) {
-            setPasswordState(prev => ({...prev, isSubmitting: false}));
-        }
-    }
+    setFiles(prev => prev.map(f => f.id === passwordState.fileId ? {...f, password } : f));
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+    
+    // Use a short timeout to allow state to update before trying to merge again
+    setTimeout(handleMerge, 100);
   }
 
   const handlePasswordDialogClose = () => {
@@ -392,8 +356,6 @@ export function MergePdfs() {
         </div>
     )
   }
-
-  const currentOperationId = operationId.current;
 
   return (
     <div className="space-y-6">
