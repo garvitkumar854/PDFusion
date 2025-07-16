@@ -238,7 +238,7 @@ export function PdfSplitter() {
         if (operationId.current !== currentOperationId) return;
 
         if (error.name === 'PasswordIsIncorrectError' || error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: password ? 'Incorrect password.' : null, fileToLoad });
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
             console.error("Error loading PDF:", error);
@@ -263,10 +263,10 @@ export function PdfSplitter() {
       
       try {
         const pdfBytes = await singleFile.arrayBuffer();
-        await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        await PDFDocument.load(pdfBytes);
         loadPdf(singleFile);
       } catch (error: any) {
-        if (error.name === 'EncryptedPDFError') {
+        if (error.name === 'PasswordException') {
             setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad: singleFile });
             setTimeout(() => passwordInputRef.current?.focus(), 100);
         } else {
