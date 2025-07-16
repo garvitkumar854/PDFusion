@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Loader2,
   Ban,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PasswordIsIncorrectError } from 'pdf-lib';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "./ui/label";
 
 
 const MAX_FILES = 50;
@@ -34,7 +44,17 @@ const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 export type PDFFile = {
   id: string;
   file: File;
+  password?: string;
+  isEncrypted: boolean;
 };
+
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileId: string | null;
+}
+
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -53,6 +73,9 @@ export function MergePdfs() {
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   const [removingFileId, setRemovingFileId] = useState<string | null>(null);
+
+  const [passwordState, setPasswordState] = useState<PasswordState>({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -72,15 +95,14 @@ export function MergePdfs() {
   }, [mergedPdfUrl]);
   
   const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
-      
+    async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (files.length + acceptedFiles.length > MAX_FILES) {
         toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
         return;
       }
       
       let currentSize = totalSize;
-      const newFiles = acceptedFiles.filter(file => {
+      const validFiles = acceptedFiles.filter(file => {
         if (file.size > MAX_FILE_SIZE_BYTES) {
           toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
           return false;
@@ -97,10 +119,23 @@ export function MergePdfs() {
         return true;
       });
 
-      const filesToAdd = newFiles.map(file => ({ id: `${file.name}-${Date.now()}`, file }));
+      const filesToAddPromises = validFiles.map(async file => {
+          const pdfBytes = await file.arrayBuffer();
+          let isEncrypted = false;
+          try {
+              await PDFDocument.load(pdfBytes, { ignoreEncryption: false });
+          } catch(e) {
+              if (e instanceof PasswordIsIncorrectError) {
+                  isEncrypted = true;
+              }
+          }
+          return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
+      });
+
+      const filesToAdd = await Promise.all(filesToAddPromises);
       
       setFiles(prev => [...prev, ...filesToAdd]);
-      setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
+      setTotalSize(prev => prev + validFiles.reduce((acc, file) => acc + file.size, 0));
 
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
@@ -175,23 +210,30 @@ export function MergePdfs() {
       return;
     }
     
+    // Check for encrypted files without passwords
+    const firstEncryptedFile = files.find(f => f.isEncrypted && !f.password);
+    if (firstEncryptedFile) {
+        setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileId: firstEncryptedFile.id });
+        setTimeout(() => passwordInputRef.current?.focus(), 100);
+        return;
+    }
+
     const currentOperationId = ++operationId.current;
     
     setIsMerging(true);
     setMergeProgress(0);
     setMergedPdfUrl(null);
     
-    // Smooth progress bar updates
     setTimeout(() => setMergeProgress(95), 100);
 
     try {
         const mergedPdf = await PDFDocument.create();
 
         for (const pdfFile of files) {
-            if (operationId.current !== currentOperationId) return; // Cancelled
+            if (operationId.current !== currentOperationId) return;
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
-                const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+                const sourcePdf = await PDFDocument.load(pdfBytes, { password: pdfFile.password, ignoreEncryption: true });
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error) {
@@ -199,7 +241,7 @@ export function MergePdfs() {
                 toast({
                    variant: "destructive",
                    title: "Skipped a file",
-                   description: `Could not process "${pdfFile.file.name}". It might be corrupted or encrypted.`
+                   description: `Could not process "${pdfFile.file.name}". It might be corrupted or need a password.`
                 });
             }
         }
@@ -270,6 +312,45 @@ export function MergePdfs() {
     setTotalSize(0);
     setMergedPdfUrl(null);
   };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordState.fileId || !passwordInputRef.current?.value) return;
+
+    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
+
+    const fileToUnlock = files.find(f => f.id === passwordState.fileId);
+    if (!fileToUnlock) return;
+
+    const password = passwordInputRef.current.value;
+    try {
+        const pdfBytes = await fileToUnlock.file.arrayBuffer();
+        await PDFDocument.load(pdfBytes, { password });
+        
+        // Password is correct, update the file state
+        setFiles(prev => prev.map(f => f.id === passwordState.fileId ? {...f, password, isEncrypted: false } : f));
+        
+        // Close dialog and immediately try to merge again
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+        
+        // Use a timeout to allow state to update before re-running merge
+        setTimeout(handleMerge, 100);
+
+    } catch (err) {
+        if (err instanceof PasswordIsIncorrectError) {
+            setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not unlock this PDF.'});
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+        }
+    }
+  }
+
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileId: null });
+      }
+  }
 
   if (mergedPdfUrl) {
     return (
@@ -366,7 +447,11 @@ export function MergePdfs() {
                         )}
                         >
                         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-                            <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                            {pdfFile.isEncrypted ? (
+                                <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
+                            ) : (
+                                <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                            )}
                             <div className="flex flex-col overflow-hidden">
                             <span className="text-sm font-medium truncate" title={pdfFile.file.name}>
                                 {pdfFile.file.name}
@@ -377,10 +462,17 @@ export function MergePdfs() {
                             </div>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                            <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
-                            <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                            Ready
-                            </Badge>
+                            {pdfFile.isEncrypted ? (
+                                 <Button size="sm" variant="secondary" onClick={() => setPasswordState({ isNeeded: true, fileId: pdfFile.id, error: null, isSubmitting: false })}>
+                                     <Lock className="w-3.5 h-3.5 mr-2" />
+                                     Password
+                                 </Button>
+                            ) : (
+                                <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
+                                <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                Ready
+                                </Badge>
+                            )}
                             <GripVertical className="w-5 h-5 cursor-grab text-muted-foreground/70" />
                             <Button 
                             variant="ghost" 
@@ -442,6 +534,40 @@ export function MergePdfs() {
 
             </CardContent>
         </Card>
+
+        <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handlePasswordSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Password Required</DialogTitle>
+                        <DialogDescription>
+                            The file <span className="font-semibold text-foreground">{files.find(f => f.id === passwordState.fileId)?.file.name}</span> is password protected.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password-input" className="text-right">
+                                Password
+                            </Label>
+                            <Input
+                                id="password-input"
+                                ref={passwordInputRef}
+                                type="password"
+                                className="col-span-3"
+                            />
+                        </div>
+                        {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                        <Button type="submit" disabled={passwordState.isSubmitting}>
+                            {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Unlock
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

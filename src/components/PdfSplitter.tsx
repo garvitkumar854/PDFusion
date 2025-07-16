@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Minus,
   Ban,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -25,11 +26,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PasswordIsIncorrectError } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
-import { Progress } from "./ui/progress";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -57,6 +65,13 @@ type PagePreview = {
   dataUrl: string | null;
   isVisible: boolean;
 };
+
+type PasswordState = {
+  isNeeded: boolean;
+  isSubmitting: boolean;
+  error: string | null;
+  fileToLoad: File | null;
+}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -149,6 +164,14 @@ export function PdfSplitter() {
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
 
   const [splitError, setSplitError] = useState<string | null>(null);
+  
+  const [passwordState, setPasswordState] = useState<PasswordState>({
+    isNeeded: false,
+    isSubmitting: false,
+    error: null,
+    fileToLoad: null,
+  });
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   
@@ -182,6 +205,48 @@ export function PdfSplitter() {
     }
     return null;
   }, []);
+  
+  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+    const currentOperationId = ++operationId.current;
+    setIsProcessing(true);
+    setPagePreviews([]);
+    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
+    
+    try {
+        const pdfBytes = await fileToLoad.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes, { password, ignoreEncryption: true });
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
+        const totalPages = pdfDoc.getPageCount();
+
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfDoc, pdfjsDoc });
+        setCustomRanges(`1-${totalPages}`);
+        setFixedRangeSize(1);
+        setSelectedPages(new Set());
+        setSplitResults([]);
+        setSplitError(null);
+        
+        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
+        setPagePreviews(previews);
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+
+    } catch (error: any) {
+        if (operationId.current !== currentOperationId) return;
+
+        if (error instanceof PasswordIsIncorrectError || error.name === 'PasswordException') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: 'Incorrect password.', fileToLoad });
+            setTimeout(() => passwordInputRef.current?.focus(), 100);
+        } else {
+            console.error("Error loading PDF:", error);
+            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+            setIsProcessing(false);
+        }
+    } finally {
+        if (operationId.current === currentOperationId && !passwordState.isNeeded) {
+          setIsProcessing(false);
+        }
+    }
+  }, [toast, passwordState.isNeeded]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -198,37 +263,9 @@ export function PdfSplitter() {
         return;
       }
       
-      const currentOperationId = ++operationId.current;
-      setIsProcessing(true);
-      setPagePreviews([]);
-      try {
-        const pdfBytes = await singleFile.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        const totalPages = pdfDoc.getPageCount();
-
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, totalPages, pdfDoc, pdfjsDoc });
-        setCustomRanges(`1-${totalPages}`);
-        setFixedRangeSize(1);
-        setSelectedPages(new Set());
-        setSplitResults([]);
-        setSplitError(null);
-        
-        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
-        setPagePreviews(previews);
-
-      } catch (error) {
-        if (operationId.current === currentOperationId) {
-          console.error("Error loading PDF:", error);
-          toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or encrypted." });
-        }
-      } finally {
-        if (operationId.current === currentOperationId) {
-          setIsProcessing(false);
-        }
-      }
+      loadPdf(singleFile);
     },
-    [toast]
+    [toast, loadPdf]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -459,6 +496,7 @@ export function PdfSplitter() {
       }
       return newSet;
     });
+    setSplitError(null);
   };
 
   const toggleSelectAllPages = (checked: boolean) => {
@@ -507,6 +545,20 @@ export function PdfSplitter() {
     }
     return groups;
   }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordState.fileToLoad && passwordInputRef.current) {
+        loadPdf(passwordState.fileToLoad, passwordInputRef.current.value);
+    }
+  }
+  
+  const handlePasswordDialogClose = (open: boolean) => {
+      if (!open) {
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+          setIsProcessing(false);
+      }
+  }
 
 
   if (splitResults.length > 0) {
@@ -800,6 +852,40 @@ export function PdfSplitter() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={passwordState.isNeeded} onOpenChange={handlePasswordDialogClose}>
+        <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handlePasswordSubmit}>
+                <DialogHeader>
+                    <DialogTitle>Password Required</DialogTitle>
+                    <DialogDescription>
+                        This PDF file is password protected. Please enter the password to open it.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password-input" className="text-right">
+                            Password
+                        </Label>
+                        <Input
+                            id="password-input"
+                            ref={passwordInputRef}
+                            type="password"
+                            className="col-span-3"
+                        />
+                    </div>
+                    {passwordState.error && <p className="text-destructive text-sm text-center -mt-2">{passwordState.error}</p>}
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="secondary" onClick={() => handlePasswordDialogClose(false)}>Cancel</Button>
+                    <Button type="submit" disabled={passwordState.isSubmitting}>
+                        {passwordState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Unlock
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
