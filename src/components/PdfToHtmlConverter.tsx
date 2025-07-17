@@ -200,7 +200,7 @@ export function PdfToHtmlConverter() {
              setPasswordState({
                 isNeeded: true,
                 isSubmitting: false,
-                error: "Incorrect password. Please try again.",
+                error: password ? "Incorrect password. Please try again." : null,
                 onSuccess: (pwd) => {
                     setFile(f => f ? {...f, password: pwd } : null);
                     processConversion(pwd);
