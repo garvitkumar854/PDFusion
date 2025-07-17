@@ -33,7 +33,6 @@ const services = [
     { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
     { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
     { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
-    { href: "/unlock-pdf", label: "Unlock PDF", icon: <Unlock className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
     { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },

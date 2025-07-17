@@ -38,13 +38,6 @@ export default function Home() {
       href: '/organize-pdf'
     },
     {
-      icon: <Unlock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Unlock PDF',
-      description: 'Remove password and encryption from your PDF files permanently.',
-      href: '/unlock-pdf'
-    },
-    {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF to JPG',

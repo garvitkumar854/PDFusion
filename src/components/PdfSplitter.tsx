@@ -16,7 +16,6 @@ import {
   Minus,
   Ban,
   Lock,
-  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
-import Link from "next/link";
+import { PasswordDialog } from "./PasswordDialog";
 
 
 // Set worker path for pdf.js
@@ -187,14 +186,14 @@ export function PdfSplitter() {
     return null;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File) => {
+  const initFile = useCallback(async (fileToLoad: File, isEncrypted = false, unlockedDoc?: PDFDocument) => {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setPagePreviews([]);
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
+        const pdfjsDoc = unlockedDoc ? await pdfjsLib.getDocument(await unlockedDoc.save()).promise : await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
         const totalPages = pdfjsDoc.numPages;
 
         if (operationId.current !== currentOperationId) {
@@ -202,7 +201,7 @@ export function PdfSplitter() {
           return;
         }
 
-        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, isEncrypted: false });
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, isEncrypted });
         setCustomRanges(`1-${totalPages}`);
         setFixedRangeSize(1);
         setSelectedPages(new Set());
@@ -227,6 +226,13 @@ export function PdfSplitter() {
         }
     }
   }, [toast]);
+  
+  const onFileUnlock = (unlockedDoc: PDFDocument, unlockedFile: File) => {
+    if(file) {
+      initFile(unlockedFile, false, unlockedDoc);
+      toast({ title: 'File Unlocked', description: `"${unlockedFile.name}" has been decrypted.`});
+    }
+  };
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -236,9 +242,9 @@ export function PdfSplitter() {
       if (acceptedFiles.length === 0) return;
       
       const singleFile = acceptedFiles[0];
-      loadPdf(singleFile);
+      initFile(singleFile);
     },
-    [toast, loadPdf]
+    [toast, initFile]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -323,8 +329,10 @@ export function PdfSplitter() {
   };
 
   const handleSplit = async () => {
-    if (!file || file.isEncrypted) {
-      toast({ variant: "destructive", title: "Cannot split file", description: "Please upload an unlocked PDF file." });
+    if (!file) return;
+
+    if (file.isEncrypted) {
+      // The button logic should already handle this, but as a safeguard
       return;
     }
 
@@ -549,6 +557,14 @@ export function PdfSplitter() {
 
   return (
     <div className="space-y-6">
+      {file?.isEncrypted && (
+          <PasswordDialog 
+            isOpen={file.isEncrypted}
+            onOpenChange={(isOpen) => !isOpen && removeFile()}
+            file={file.file}
+            onUnlock={onFileUnlock}
+          />
+      )}
       <Card className="bg-white dark:bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF to Split</CardTitle>
@@ -594,7 +610,7 @@ export function PdfSplitter() {
                           <>
                             <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                             <span className="text-xs text-muted-foreground">
-                                {formatBytes(file.file.size)} {file.isEncrypted ? "" : `• ${file.totalPages} pages`}
+                                {formatBytes(file.file.size)} {file.isEncrypted ? "(Encrypted)" : `• ${file.totalPages} pages`}
                             </span>
                           </>
                         ) : (
@@ -615,19 +631,13 @@ export function PdfSplitter() {
         </CardContent>
       </Card>
 
-      {file && (
+      {file && !file.isEncrypted && (
         <Card className={cn("bg-white dark:bg-card shadow-lg")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Split Options</CardTitle>
-            {file.isEncrypted && (
-                 <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                    <ShieldAlert className="h-5 w-5 shrink-0" />
-                    <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to enable splitting.</p>
-                </div>
-            )}
           </CardHeader>
           <CardContent>
-            <div className={cn((isSplitting || file.isEncrypted) && "opacity-70 pointer-events-none")}>
+            <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
                 <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="range" disabled={isSplitting}>Split by range</TabsTrigger>
@@ -701,12 +711,6 @@ export function PdfSplitter() {
                     <div className="flex flex-col justify-center items-center h-48">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="mt-4 mb-2">Processing PDF...</p>
-                    </div>
-                ) : file.isEncrypted ? (
-                     <div className="flex flex-col items-center justify-center text-center p-10 bg-muted rounded-lg mt-4">
-                        <Lock className="w-12 h-12 text-muted-foreground mb-4" />
-                        <h3 className="font-semibold text-lg">Encrypted File</h3>
-                        <p className="text-muted-foreground">Page previews are unavailable for locked files.</p>
                     </div>
                 ) : (
                     <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
@@ -822,7 +826,7 @@ export function PdfSplitter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file || file.isEncrypted}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>

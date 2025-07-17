@@ -16,7 +16,6 @@ import {
   Ban,
   Lock,
   Unlock,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -28,8 +27,6 @@ import { Progress } from "@/components/ui/progress";
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PasswordDialog } from "./PasswordDialog";
-import Link from "next/link";
-
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -59,6 +56,7 @@ type State = {
 
 type Action =
     | { type: 'ADD_FILES'; files: PDFFile[] }
+    | { type: 'UPDATE_FILE'; file: PDFFile }
     | { type: 'REMOVE_FILE'; fileId: string }
     | { type: 'SET_FILES_ORDER'; files: PDFFile[] }
     | { type: 'CLEAR_ALL' }
@@ -90,6 +88,13 @@ function reducer(state: State, action: Action): State {
                 files: [...state.files, ...newFiles],
                 totalSize: state.totalSize + newSize,
             }
+        }
+        case 'UPDATE_FILE': {
+            const index = state.files.findIndex(f => f.id === action.file.id);
+            if (index === -1) return state;
+            const newFiles = [...state.files];
+            newFiles[index] = action.file;
+            return { ...state, files: newFiles };
         }
         case 'REMOVE_FILE': {
             const fileToRemove = state.files.find(f => f.id === action.fileId);
@@ -139,6 +144,8 @@ export function MergePdfs() {
   const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, removingFileId } = state;
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
+  const [passwordFile, setPasswordFile] = useState<File | null>(null);
+  
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -186,7 +193,6 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
-              // Use pdfjs-dist for a safe encryption check
               await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
@@ -258,15 +264,20 @@ export function MergePdfs() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); 
   };
+
+  const onFileUnlock = (unlockedDoc: PDFDocument, unlockedFile: File) => {
+    const fileToUpdate = files.find(f => f.file === passwordFile);
+    if(fileToUpdate) {
+        dispatch({ type: 'UPDATE_FILE', file: { ...fileToUpdate, file: unlockedFile, isEncrypted: false } });
+        toast({ title: 'File Unlocked', description: `"${unlockedFile.name}" has been decrypted.`});
+    }
+    setPasswordFile(null);
+  };
   
   const handleMerge = async () => {
     const firstLockedFile = files.find(f => f.isEncrypted);
     if (firstLockedFile) {
-        toast({
-            variant: "destructive",
-            title: "Encrypted File Detected",
-            description: `"${firstLockedFile.file.name}" is password-protected. Please use the Unlock PDF tool first.`,
-        });
+        setPasswordFile(firstLockedFile.file);
         return;
     }
     
@@ -362,7 +373,7 @@ export function MergePdfs() {
     dispatch({ type: 'RESET_MERGE_RESULTS' });
   };
   
-  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => f.isEncrypted);
+  const mergeButtonDisabled = isMerging || files.length < 2;
 
   if (mergedPdfUrl) {
     return (
@@ -385,6 +396,14 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
+        {passwordFile && (
+            <PasswordDialog 
+                isOpen={!!passwordFile}
+                onOpenChange={(isOpen) => !isOpen && setPasswordFile(null)}
+                file={passwordFile}
+                onUnlock={onFileUnlock}
+            />
+        )}
         <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
@@ -477,7 +496,7 @@ export function MergePdfs() {
                                 </Badge>
                             ) : (
                                 <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
-                                <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                <Unlock className="w-3.5 h-3.5 mr-1" />
                                 Ready
                                 </Badge>
                             )}
@@ -495,12 +514,6 @@ export function MergePdfs() {
                         </div>
                     ))}
                 </div>
-                 {files.some(f => f.isEncrypted) && (
-                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                        <ShieldAlert className="h-5 w-5 shrink-0" />
-                        <p>One or more files are password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock them first</Link> to proceed with merging.</p>
-                    </div>
-                )}
             </CardContent>
           </Card>
         )}
@@ -541,7 +554,7 @@ export function MergePdfs() {
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
                             <Layers className="mr-2 h-5 w-5" />
-                            Merge PDFs
+                            {files.some(f => f.isEncrypted) ? "Unlock & Merge PDFs" : "Merge PDFs"}
                         </Button>
                     )}
                 </div>
