@@ -33,7 +33,9 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PDFFile = {
   id: string;
   file: File;
+  isEncrypted: boolean;
   password?: string;
+  totalPages: number;
 };
 
 type ProcessResult = {
@@ -63,6 +65,7 @@ export function PdfToHtmlConverter() {
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState("Converting...");
 
   const [passwordState, setPasswordState] = useState<PasswordState>({
     isNeeded: false,
@@ -77,11 +80,23 @@ export function PdfToHtmlConverter() {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       const singleFile = acceptedFiles[0];
       if (singleFile) {
-        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
         setResult(null);
         setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
+        
+        // Safely check for encryption without a password
+        try {
+            const pdfBytes = await singleFile.arrayBuffer();
+            await pdfjsLib.getDocument({data: pdfBytes}).promise;
+            setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: false, totalPages: 0 }); // totalPages will be updated on process
+        } catch (e: any) {
+            if (e.name === 'PasswordException') {
+                setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: true, totalPages: 0 });
+            } else {
+                toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted.' });
+            }
+        }
       }
-    }, []);
+    }, [toast]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -104,6 +119,7 @@ export function PdfToHtmlConverter() {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setProgress(0);
+    setProgressText("Initializing...");
     setResult(null);
 
     try {
@@ -158,6 +174,7 @@ export function PdfToHtmlConverter() {
       for (let i = 1; i <= totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
 
+        setProgressText(`Processing page ${i} of ${totalPages}...`);
         const page = await pdfjsDoc.getPage(i);
         const textContent = await page.getTextContent();
         
@@ -227,6 +244,7 @@ export function PdfToHtmlConverter() {
     operationId.current++;
     setIsProcessing(false);
     setProgress(0);
+    setProgressText("Converting...");
     toast({ title: "Processing cancelled." });
   };
   
@@ -287,7 +305,11 @@ export function PdfToHtmlConverter() {
             ) : (
                 <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                    {file.isEncrypted ? (
+                        <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
+                    ) : (
+                        <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                    )}
                     <div className="flex flex-col overflow-hidden">
                     <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                     <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
@@ -308,7 +330,7 @@ export function PdfToHtmlConverter() {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                <p className="text-sm font-medium text-primary">Converting...</p>
+                                <p className="text-sm font-medium text-primary">{progressText}</p>
                                 </div>
                                 <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
                             </div>
