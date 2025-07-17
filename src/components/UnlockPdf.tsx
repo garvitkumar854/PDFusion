@@ -97,9 +97,8 @@ export function UnlockPdf() {
     setResult(null);
     setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
 
-    const pdfBytes = await file.file.arrayBuffer();
-
     try {
+      const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password });
       
       const totalPages = pdfDoc.getPageCount();
@@ -121,32 +120,12 @@ export function UnlockPdf() {
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
-
-        // The first attempt failed. Check if it's an incorrect password error.
-        if (error.constructor?.name === 'PasswordIsIncorrectError') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
-        } else {
-            // The error is something else. Let's see if the file is actually not encrypted.
-            try {
-                await PDFDocument.load(pdfBytes); // No password
-                // If this succeeds, the file was never locked.
-                toast({
-                    variant: "default",
-                    title: "File Not Encrypted",
-                    description: "This PDF is not password-protected.",
-                });
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                setResult({ url, filename: file.file.name });
-                setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-
-            } catch (finalError: any) {
-                // If this second attempt also fails, the file is likely corrupted.
-                console.error("Unlock failed:", finalError);
-                toast({ variant: "destructive", title: "Unlock Failed", description: "The file appears to be corrupted or is an unsupported format." });
-                setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-            }
-        }
+        
+        // The only expected error here is an incorrect password.
+        // Any other error (like corrupted file) will also result in this message,
+        // which is safer than making incorrect assumptions.
+        setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
+    
     } finally {
       if (operationId.current === currentOperationId) {
         setIsProcessing(false);
