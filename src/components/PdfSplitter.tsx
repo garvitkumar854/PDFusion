@@ -192,8 +192,8 @@ export function PdfSplitter() {
     setPagePreviews([]);
     
     try {
-        const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfjsDoc = unlockedDoc ? await pdfjsLib.getDocument(await unlockedDoc.save()).promise : await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
+        const pdfBytes = unlockedDoc ? await unlockedDoc.save() : await fileToLoad.arrayBuffer();
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
         const totalPages = pdfjsDoc.numPages;
 
         if (operationId.current !== currentOperationId) {
@@ -218,7 +218,7 @@ export function PdfSplitter() {
             setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages: 0, pdfjsDoc: null, isEncrypted: true });
         } else {
             console.error("Error loading PDF:", error);
-            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
+            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
         }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -562,7 +562,7 @@ export function PdfSplitter() {
             isOpen={file.isEncrypted}
             onOpenChange={(isOpen) => !isOpen && removeFile()}
             file={file.file}
-            onUnlock={onFileUnlock}
+            onUnlockSuccess={onFileUnlock}
           />
       )}
       <Card className="bg-white dark:bg-card shadow-lg">

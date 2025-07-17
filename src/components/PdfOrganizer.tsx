@@ -22,7 +22,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
-import Link from "next/link";
 import { PasswordDialog } from "./PasswordDialog";
 
 
@@ -51,11 +50,12 @@ type PDFFile = {
 
 export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
+  const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [passwordFile, setPasswordFile] = useState<File | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -92,16 +92,17 @@ export function PdfOrganizer() {
     return undefined;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File, unlockedPdfBytes?: ArrayBuffer) => {
+  const loadPdf = useCallback(async (fileToLoad: File, isUnlocked = false) => {
     const currentOperationId = ++operationId.current;
     
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
+    setUnlockedFile(isUnlocked ? fileToLoad : null);
     setPages([]);
     setIsLoading(true);
 
     try {
-      const pdfBytes = unlockedPdfBytes || await fileToLoad.arrayBuffer();
+      const pdfBytes = await fileToLoad.arrayBuffer();
       const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) });
       const pdfjsDoc = await loadingTask.promise; 
 
@@ -135,8 +136,9 @@ export function PdfOrganizer() {
                 file: fileToLoad,
                 totalPages: 0,
                 isEncrypted: true,
+                pdfjsDoc: undefined,
             })
-            setPasswordFile(fileToLoad);
+            setIsPasswordDialogOpen(true);
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -155,13 +157,10 @@ export function PdfOrganizer() {
     loadPdf(singleFile);
   }, [loadPdf]);
 
-  const onUnlockSuccess = async (unlockedDoc: PDFDocument) => {
-      const unlockedBytes = await unlockedDoc.save();
-      if (passwordFile) {
-        loadPdf(passwordFile, unlockedBytes);
-        toast({ title: 'File Unlocked', description: `You can now organize "${passwordFile.name}".`});
-      }
-      setPasswordFile(null);
+  const onUnlockSuccess = async (unlocked: File) => {
+      loadPdf(unlocked, true);
+      toast({ title: 'File Unlocked', description: `You can now organize your PDF.`});
+      setIsPasswordDialogOpen(false);
   };
   
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -241,14 +240,15 @@ export function PdfOrganizer() {
   };
   
   const handleSave = async () => {
-    if (!file || pages.length === 0 || file.isEncrypted) {
+    const fileToProcess = unlockedFile || file?.file;
+    if (!fileToProcess || pages.length === 0 || (file?.isEncrypted && !unlockedFile)) {
       toast({ variant: "destructive", title: "No pages to save or file is encrypted." });
       return;
     }
 
     setIsSaving(true);
     try {
-      const pdfBytes = await file.file.arrayBuffer();
+      const pdfBytes = await fileToProcess.arrayBuffer();
       const pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       
       const newPdfDoc = await PDFDocument.create();
@@ -290,6 +290,7 @@ export function PdfOrganizer() {
     operationId.current++;
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
+    setUnlockedFile(null);
     setPages([]);
     setIsLoading(false);
   };
@@ -297,12 +298,12 @@ export function PdfOrganizer() {
 
   return (
     <div className="space-y-6">
-        {passwordFile && (
+        {file?.isEncrypted && !unlockedFile && (
             <PasswordDialog
-                isOpen={!!passwordFile}
-                onOpenChange={(isOpen) => !isOpen && setPasswordFile(null)}
-                file={passwordFile}
-                onUnlock={onUnlockSuccess}
+                isOpen={isPasswordDialogOpen}
+                onOpenChange={setIsPasswordDialogOpen}
+                file={file.file}
+                onUnlockSuccess={onUnlockSuccess}
             />
         )}
       {!file && !isLoading ? (
@@ -351,17 +352,17 @@ export function PdfOrganizer() {
                             <X className="w-5 h-5" />
                             <span className="sr-only">Change File</span>
                          </Button>
-                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted}>
+                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || (file.isEncrypted && !unlockedFile)}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save
                          </Button>
                     </div>
                 </CardHeader>
-                {file?.isEncrypted && (
+                {file?.isEncrypted && !unlockedFile && (
                     <CardContent className="p-4 pt-0">
                          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <div>This PDF is password-protected. <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setPasswordFile(file.file)}>Click here to unlock.</Button></div>
+                            <div>This PDF is password-protected. <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsPasswordDialogOpen(true)}>Click here to unlock.</Button></div>
                         </div>
                     </CardContent>
                 )}
@@ -375,7 +376,7 @@ export function PdfOrganizer() {
                              <Skeleton className="w-full h-full" />
                          </div>
                     ))
-                ) : file?.isEncrypted ? (
+                ) : file?.isEncrypted && !unlockedFile ? (
                      <div className="col-span-full flex flex-col items-center justify-center text-center p-10 bg-muted rounded-lg">
                         <Lock className="w-12 h-12 text-muted-foreground mb-4" />
                         <h3 className="font-semibold text-lg">Encrypted File</h3>

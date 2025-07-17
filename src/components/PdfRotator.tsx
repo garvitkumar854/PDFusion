@@ -137,8 +137,7 @@ export function PdfRotator() {
       
       try {
           const pdfBytes = await singleFile.arrayBuffer();
-          await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-          
+          // Use pdfjs-dist to check for encryption, as it's more reliable for this purpose
           try {
              await pdfjsLib.getDocument({ data: pdfBytes }).promise;
           } catch(e: any) {
@@ -196,7 +195,7 @@ export function PdfRotator() {
 
     try {
         const pdfBytes = await fileToProcess.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
         const totalPages = pdfDoc.getPageCount();
         const pages = pdfDoc.getPages();
@@ -245,11 +244,11 @@ export function PdfRotator() {
     removeFile();
   };
 
-  const onUnlockSuccess = (decryptedFile: File) => {
-    setUnlockedFile(decryptedFile);
+  const onUnlockSuccess = (unlockedFile: File) => {
+    setUnlockedFile(unlockedFile);
     setIsPasswordDialogOpen(false);
     toast({ title: "File Unlocked!", description: "You can now rotate your PDF."});
-    generatePreview(decryptedFile);
+    generatePreview(unlockedFile);
   }
 
   if (result) {
@@ -287,7 +286,7 @@ export function PdfRotator() {
 
   return (
     <div className="space-y-6">
-      {file && (
+      {file && file.isEncrypted && (
         <PasswordDialog 
             isOpen={isPasswordDialogOpen}
             onOpenChange={setIsPasswordDialogOpen}

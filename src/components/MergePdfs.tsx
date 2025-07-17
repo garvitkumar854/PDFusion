@@ -265,7 +265,7 @@ export function MergePdfs() {
     e.preventDefault(); 
   };
 
-  const onFileUnlock = (unlockedDoc: PDFDocument, unlockedFile: File) => {
+  const onFileUnlock = (unlockedFile: File) => {
     const fileToUpdate = files.find(f => f.file === passwordFile);
     if(fileToUpdate) {
         dispatch({ type: 'UPDATE_FILE', file: { ...fileToUpdate, file: unlockedFile, isEncrypted: false } });
@@ -401,7 +401,7 @@ export function MergePdfs() {
                 isOpen={!!passwordFile}
                 onOpenChange={(isOpen) => !isOpen && setPasswordFile(null)}
                 file={passwordFile}
-                onUnlock={onFileUnlock}
+                onUnlockSuccess={onFileUnlock}
             />
         )}
         <Card className="bg-white dark:bg-card shadow-lg">

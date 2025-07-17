@@ -29,7 +29,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
-import Link from "next/link";
 import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
@@ -117,11 +116,11 @@ export function PageNumberAdder() {
   
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const loadPdf = useCallback(async (fileToLoad: File) => {
+  const loadPdf = useCallback(async (fileToLoad: File, isUnlocked = false) => {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setFirstPagePreviewUrl(null);
-    setUnlockedFile(null);
+    setUnlockedFile(isUnlocked ? fileToLoad : null);
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -203,7 +202,7 @@ export function PageNumberAdder() {
   }
   
   const drawPreview = useCallback(() => {
-    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || file.isEncrypted && !unlockedFile) return;
+    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || (file.isEncrypted && !unlockedFile)) return;
 
     const canvas = previewCanvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -378,12 +377,10 @@ export function PageNumberAdder() {
     setFirstPagePreviewUrl(null);
   };
   
-  const onUnlockSuccess = (unlockedFile: File) => {
-    setUnlockedFile(unlockedFile);
+  const onUnlockSuccess = (unlocked: File) => {
     setIsPasswordDialogOpen(false);
     toast({ title: "File Unlocked!", description: "You can now add page numbers."});
-    // Regenerate preview with unlocked file
-    loadPdf(unlockedFile);
+    loadPdf(unlocked, true);
   }
 
   if (result) {
@@ -417,7 +414,7 @@ export function PageNumberAdder() {
                 isOpen={isPasswordDialogOpen}
                 onOpenChange={setIsPasswordDialogOpen}
                 file={file.file}
-                onUnlock={onUnlockSuccess}
+                onUnlockSuccess={onUnlockSuccess}
             />
         )}
       {!file && (
