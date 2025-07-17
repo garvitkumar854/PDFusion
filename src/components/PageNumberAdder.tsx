@@ -16,6 +16,7 @@ import {
   Italic,
   Underline,
   Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
-import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -41,7 +42,7 @@ type PDFFile = {
   id: string;
   file: File;
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
-  password?: string;
+  isEncrypted: boolean;
 };
 
 type ProcessResult = {
@@ -52,13 +53,6 @@ type ProcessResult = {
 type Position = "top-left" | "top-center" | "top-right" | "middle-left" | "middle-center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right";
 type Font = "Helvetica" | "TimesRoman" | "Courier";
 type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
-
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  fileToLoad: File | null;
-}
 
 const FONT_MAP: Record<Font, StandardFonts> = {
   Helvetica: StandardFonts.Helvetica,
@@ -114,32 +108,24 @@ export function PageNumberAdder() {
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
   const [firstPagePreviewUrl, setFirstPagePreviewUrl] = useState<string | null>(null);
-  
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-    fileToLoad: null,
-  });
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+  const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setFirstPagePreviewUrl(null);
-    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       
       if (operationId.current !== currentOperationId) return;
 
-      setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc, password });
+      setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc, isEncrypted: false });
       setResult(null);
       setStartPage(1);
       setEndPage(pdfjsDoc.numPages);
@@ -156,11 +142,10 @@ export function PageNumberAdder() {
            if (operationId.current !== currentOperationId) return;
           setFirstPagePreviewUrl(canvas.toDataURL());
       }
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
     } catch (e: any) {
         if (operationId.current === currentOperationId) {
             if (e.name === 'PasswordException') {
-                setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
+                setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc: null as any, isEncrypted: true });
             } else {
                 console.error("Failed to load PDF", e);
                 toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
@@ -169,7 +154,6 @@ export function PageNumberAdder() {
     } finally {
        if (operationId.current === currentOperationId) {
           setIsProcessing(false);
-          setPasswordState(prev => ({...prev, isSubmitting: false}));
        }
     }
   }, [toast]);
@@ -199,7 +183,6 @@ export function PageNumberAdder() {
   const removeFile = () => {
     setFile(null);
     setFirstPagePreviewUrl(null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
 
   const getPageNumberText = (page: number, total: number) => {
@@ -214,7 +197,7 @@ export function PageNumberAdder() {
   }
   
   const drawPreview = useCallback(() => {
-    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file) return;
+    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || file.isEncrypted) return;
 
     const canvas = previewCanvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -263,8 +246,8 @@ export function PageNumberAdder() {
   }, [drawPreview]);
 
   const handleProcess = async () => {
-    if (!file) {
-      toast({ variant: "destructive", title: "No file selected", description: "Please upload a PDF file." });
+    if (!file || file.isEncrypted) {
+      toast({ variant: "destructive", title: "File not ready", description: "Please upload an unlocked PDF file to process." });
       return;
     }
 
@@ -275,7 +258,7 @@ export function PageNumberAdder() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password: file.password });
+      const pdfDoc = await PDFDocument.load(pdfBytes);
       const totalPages = pdfDoc.getPageCount();
       
       const effectiveStart = Math.max(0, startPage - 1);
@@ -356,12 +339,8 @@ export function PageNumberAdder() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordIsIncorrectError') {
-            setPasswordState(prev => ({...prev, isNeeded: true, fileToLoad: file.file, error: "Incorrect password."}));
-        } else {
-          console.error("Processing failed:", error);
-          toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
-        }
+        console.error("Processing failed:", error);
+        toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
       }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -384,15 +363,6 @@ export function PageNumberAdder() {
     setFirstPagePreviewUrl(null);
   };
   
-  const handlePasswordSubmit = (password: string) => {
-    if (passwordState.fileToLoad) {
-        loadPdf(passwordState.fileToLoad, password);
-    }
-  }
-
-  const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-  }
 
   if (result) {
     return (
@@ -460,11 +430,19 @@ export function PageNumberAdder() {
                             <X className="w-4 h-4" />
                         </Button>
                     </CardHeader>
+                    {file.isEncrypted && (
+                         <CardContent>
+                            <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                                <ShieldAlert className="h-5 w-5 shrink-0" />
+                                <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link>.</p>
+                            </div>
+                        </CardContent>
+                    )}
                 </Card>
                 <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
-                       <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
+                       <div className={cn(isProcessing || file.isEncrypted, "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold">Position</Label>
                                 <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
@@ -478,8 +456,8 @@ export function PageNumberAdder() {
                                 <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing}>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">Only page number (1)</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page n (Page 1)</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc.numPages})</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page n of N (Page 1 of {file.pdfjsDoc.numPages})</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc?.numPages || 'N'})</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page n of N (Page 1 of {file.pdfjsDoc?.numPages || 'N'})</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
                                 </RadioGroup>
                                 {formatType === 'custom' && (
@@ -490,8 +468,8 @@ export function PageNumberAdder() {
                             <div className="space-y-2">
                                 <Label className="font-semibold">Page Range</Label>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc.numPages} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-1" disabled={isProcessing}/>
-                                    <Input id="endPage" type="number" value={endPage} min={startPage} max={file.pdfjsDoc.numPages} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc?.numPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="endPage" type="number" value={endPage} min={startPage} max={file.pdfjsDoc?.numPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} className="mt-1" disabled={isProcessing}/>
                                 </div>
                             </div>
                             
@@ -542,19 +520,29 @@ export function PageNumberAdder() {
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg">
-                        {firstPagePreviewUrl ? (
+                        {isProcessing ? (
+                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                <p className="mt-2">Loading preview...</p>
+                            </div>
+                        ) : file.isEncrypted ? (
+                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
+                                <Lock className="w-8 h-8 text-primary mb-4" />
+                                <p className="font-semibold">Preview unavailable for locked files.</p>
+                                <p className="text-sm">Please unlock the file first.</p>
+                            </div>
+                        ) : firstPagePreviewUrl ? (
                             <canvas ref={previewCanvasRef} className="max-w-full h-auto max-h-[500px] lg:max-h-[600px] object-contain shadow-md border rounded-md" />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                <p className="mt-2">Loading preview...</p>
+                                <p>Could not load preview.</p>
                             </div>
                         )}
                     </CardContent>
                 </Card>
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardContent className="p-6">
-                        {isProcessing && file ? (
+                        {isProcessing && !file.isEncrypted ? (
                             <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -567,21 +555,13 @@ export function PageNumberAdder() {
                                 <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
                             </div>
                         ) : (
-                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
+                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
                         )}
                     </CardContent>
                 </Card>
             </div>
         </div>
       )}
-       <PasswordDialog 
-          isOpen={passwordState.isNeeded}
-          onClose={handlePasswordDialogClose}
-          onSubmit={handlePasswordSubmit}
-          isSubmitting={passwordState.isSubmitting}
-          error={passwordState.error}
-          fileName={passwordState.fileToLoad?.name || null}
-        />
     </div>
   );
 }

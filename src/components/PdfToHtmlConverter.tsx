@@ -14,6 +14,7 @@ import {
   Ban,
   Code,
   Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
-import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -34,21 +35,12 @@ type PDFFile = {
   id: string;
   file: File;
   isEncrypted: boolean;
-  password?: string;
-  totalPages: number;
 };
 
 type ProcessResult = {
   url: string;
   filename: string;
 };
-
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  onSuccess: (password: string) => void;
-}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -67,13 +59,6 @@ export function PdfToHtmlConverter() {
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("Converting...");
 
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-    onSuccess: () => {},
-  });
-
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
@@ -81,16 +66,14 @@ export function PdfToHtmlConverter() {
       const singleFile = acceptedFiles[0];
       if (singleFile) {
         setResult(null);
-        setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
         
-        // Safely check for encryption without a password
         try {
             const pdfBytes = await singleFile.arrayBuffer();
             await pdfjsLib.getDocument({data: pdfBytes}).promise;
-            setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: false, totalPages: 0 }); // totalPages will be updated on process
+            setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: false });
         } catch (e: any) {
             if (e.name === 'PasswordException') {
-                setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: true, totalPages: 0 });
+                setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: true });
             } else {
                 toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted.' });
             }
@@ -110,11 +93,13 @@ export function PdfToHtmlConverter() {
 
   const removeFile = () => {
     setFile(null);
-    setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
   };
   
-  const processConversion = async (password?: string) => {
-    if (!file) return;
+  const processConversion = async () => {
+    if (!file || file.isEncrypted) {
+      toast({ variant: 'destructive', title: 'File Encrypted', description: 'Please unlock the PDF first before converting.'});
+      return;
+    }
     
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
@@ -124,7 +109,7 @@ export function PdfToHtmlConverter() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       const totalPages = pdfjsDoc.numPages;
 
       let htmlContent = `<!DOCTYPE html>
@@ -213,32 +198,13 @@ export function PdfToHtmlConverter() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
-             setPasswordState({
-                isNeeded: true,
-                isSubmitting: false,
-                error: password ? "Incorrect password. Please try again." : null,
-                onSuccess: (pwd) => {
-                    setFile(f => f ? {...f, password: pwd } : null);
-                    processConversion(pwd);
-                },
-            });
-        } else {
-            toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
-        }
+        toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
       }
     } finally {
         if (operationId.current === currentOperationId) setIsProcessing(false);
     }
   };
 
-  const handleProcess = async () => {
-    if (!file) {
-      toast({ variant: "destructive", title: "No file selected" });
-      return;
-    }
-    processConversion(file.password);
-  };
 
   const handleCancel = () => {
     operationId.current++;
@@ -252,16 +218,6 @@ export function PdfToHtmlConverter() {
     if (result) URL.revokeObjectURL(result.url);
     setFile(null);
     setResult(null);
-  };
-  
-  const handlePasswordSubmit = (password: string) => {
-    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    passwordState.onSuccess(password);
-    setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
-  };
-  
-  const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, onSuccess: () => {} });
   };
 
 
@@ -325,7 +281,12 @@ export function PdfToHtmlConverter() {
         {file && (
              <Card className="bg-white dark:bg-card shadow-lg">
                 <CardContent className="p-6">
-                    {isProcessing ? (
+                    {file.isEncrypted ? (
+                         <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                            <ShieldAlert className="h-5 w-5 shrink-0" />
+                            <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to enable conversion.</p>
+                        </div>
+                    ) : isProcessing ? (
                         <div className="p-4 border rounded-lg bg-primary/5">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -338,19 +299,11 @@ export function PdfToHtmlConverter() {
                             <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
                         </div>
                     ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing || file.isEncrypted}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
                     )}
                 </CardContent>
             </Card>
         )}
-        <PasswordDialog 
-          isOpen={passwordState.isNeeded}
-          onClose={handlePasswordDialogClose}
-          onSubmit={handlePasswordSubmit}
-          isSubmitting={passwordState.isSubmitting}
-          error={passwordState.error}
-          fileName={file?.file.name || null}
-        />
     </div>
   );
 }

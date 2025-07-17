@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Minus,
   Ban,
-  Lock
+  Lock,
+  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +31,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
-import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 
 // Set worker path for pdf.js
@@ -45,8 +46,8 @@ type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
-  password?: string;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy | null;
+  isEncrypted: boolean;
 };
 
 type SplitResult = {
@@ -59,13 +60,6 @@ type PagePreview = {
   dataUrl: string | null;
   isVisible: boolean;
 };
-
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  fileToLoad: File | null;
-}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -159,12 +153,6 @@ export function PdfSplitter() {
 
   const [splitError, setSplitError] = useState<string | null>(null);
   
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-    fileToLoad: null,
-  });
 
   const { toast } = useToast();
   
@@ -199,15 +187,14 @@ export function PdfSplitter() {
     return null;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+  const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setPagePreviews([]);
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password }).promise;
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
         const totalPages = pdfjsDoc.numPages;
 
         if (operationId.current !== currentOperationId) {
@@ -215,7 +202,7 @@ export function PdfSplitter() {
           return;
         }
 
-        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, password });
+        setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, isEncrypted: false });
         setCustomRanges(`1-${totalPages}`);
         setFixedRangeSize(1);
         setSelectedPages(new Set());
@@ -224,22 +211,19 @@ export function PdfSplitter() {
         
         const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
         setPagePreviews(previews);
-        setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
         if (error.name === 'PasswordException') {
-            setPasswordState({ isNeeded: true, isSubmitting: false, error: null, fileToLoad });
+            setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages: 0, pdfjsDoc: null, isEncrypted: true });
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
-            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
         }
     } finally {
         if (operationId.current === currentOperationId) {
           setIsProcessing(false);
-          setPasswordState(prev => ({ ...prev, isSubmitting: false }));
         }
     }
   }, [toast]);
@@ -258,7 +242,7 @@ export function PdfSplitter() {
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
-    if (!file) return;
+    if (!file || !file.pdfjsDoc) return;
     const currentOperationId = operationId.current;
 
     setPagePreviews(prev => {
@@ -270,7 +254,7 @@ export function PdfSplitter() {
         const newPreviews = [...prev];
         newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
         
-        renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
+        renderPdfPage(file.pdfjsDoc!, pageNumber, currentOperationId).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPagePreviews(currentPreviews => {
                     const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
@@ -307,7 +291,6 @@ export function PdfSplitter() {
     setSplitResults([]);
     setPagePreviews([]);
     setSplitError(null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
   };
   
   const parseCustomRanges = (ranges: string, max: number): number[][] | null => {
@@ -340,9 +323,11 @@ export function PdfSplitter() {
   };
 
   const handleSplit = async () => {
-    if (!file) return;
+    if (!file || file.isEncrypted) {
+      toast({ variant: "destructive", title: "Cannot split file", description: "Please upload an unlocked PDF file." });
+      return;
+    }
 
-    // Increment operationId at the start to stop background rendering
     const currentOperationId = ++operationId.current;
     
     setIsSplitting(true);
@@ -401,7 +386,7 @@ export function PdfSplitter() {
       const zip = new JSZip();
 
       const sourcePdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(sourcePdfBytes, { password: file.password });
+      const pdfDoc = await PDFDocument.load(sourcePdfBytes);
 
       for (const group of pageGroups) {
         if (operationId.current !== currentOperationId) return;
@@ -447,13 +432,8 @@ export function PdfSplitter() {
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-         if (error.name === 'PasswordIsIncorrectError') {
-             setPasswordState(prev => ({ ...prev, isNeeded: true, fileToLoad: file.file, error: 'Incorrect password.' }));
-             toast({ variant: 'destructive', title: 'Split Failed', description: 'The password provided was incorrect.'});
-         } else {
-            console.error("Split failed:", error);
-            toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
-         }
+         console.error("Split failed:", error);
+         toast({ variant: "destructive", title: "Split Failed", description: error.message || "An unexpected error occurred." });
       }
     } finally {
       if (operationId.current === currentOperationId) {
@@ -546,16 +526,6 @@ export function PdfSplitter() {
     return groups;
   }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
 
-  const handlePasswordSubmit = (password: string) => {
-    if (passwordState.fileToLoad) {
-        loadPdf(passwordState.fileToLoad, password);
-    }
-  }
-  
-  const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-  }
-
 
   if (splitResults.length > 0) {
     return (
@@ -614,7 +584,7 @@ export function PdfSplitter() {
           ) : (
              <div className="p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    {file?.password ? (
+                    {file?.isEncrypted ? (
                         <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
                     ) : (
                         <FileIcon className="w-6 h-6 text-destructive shrink-0" />
@@ -624,7 +594,7 @@ export function PdfSplitter() {
                           <>
                             <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                             <span className="text-xs text-muted-foreground">
-                                {formatBytes(file.file.size)} • {file.totalPages} pages
+                                {formatBytes(file.file.size)} {file.isEncrypted ? "" : `• ${file.totalPages} pages`}
                             </span>
                           </>
                         ) : (
@@ -649,9 +619,15 @@ export function PdfSplitter() {
         <Card className={cn("bg-white dark:bg-card shadow-lg")}>
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Split Options</CardTitle>
+            {file.isEncrypted && (
+                 <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                    <ShieldAlert className="h-5 w-5 shrink-0" />
+                    <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to enable splitting.</p>
+                </div>
+            )}
           </CardHeader>
           <CardContent>
-            <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
+            <div className={cn((isSplitting || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                 <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="range" disabled={isSplitting}>Split by range</TabsTrigger>
@@ -726,9 +702,14 @@ export function PdfSplitter() {
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="mt-4 mb-2">Processing PDF...</p>
                     </div>
+                ) : file.isEncrypted ? (
+                     <div className="flex flex-col items-center justify-center text-center p-10 bg-muted rounded-lg mt-4">
+                        <Lock className="w-12 h-12 text-muted-foreground mb-4" />
+                        <h3 className="font-semibold text-lg">Encrypted File</h3>
+                        <p className="text-muted-foreground">Page previews are unavailable for locked files.</p>
+                    </div>
                 ) : (
                     <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                        {/* Custom Range Preview */}
                         <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
                             {splitMode === 'range' && rangeMode === 'custom' && (
                                 <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
@@ -760,7 +741,6 @@ export function PdfSplitter() {
                                 </div>
                             )}
 
-                            {/* Fixed Range Preview */}
                             {splitMode === 'range' && rangeMode === 'fixed' && (
                                 <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
                                     <div className="flex w-max space-x-4 p-4">
@@ -788,7 +768,6 @@ export function PdfSplitter() {
                                 </ScrollArea>
                             )}
                             
-                            {/* Extract Pages Preview (both modes) */}
                             {splitMode === 'extract' && (
                                 <div className={cn("mt-4 border rounded-lg p-2 sm:p-4", isSplitting && "opacity-70 pointer-events-none")}>
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
@@ -843,7 +822,7 @@ export function PdfSplitter() {
                     </Button>
                 </div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file}>
+                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file || file.isEncrypted}>
                   <Scissors className="mr-2 h-5 w-5" />
                   Split PDF
                 </Button>
@@ -852,15 +831,6 @@ export function PdfSplitter() {
           </CardContent>
         </Card>
       )}
-
-      <PasswordDialog 
-        isOpen={passwordState.isNeeded}
-        onClose={handlePasswordDialogClose}
-        onSubmit={handlePasswordSubmit}
-        isSubmitting={passwordState.isSubmitting}
-        error={passwordState.error}
-        fileName={passwordState.fileToLoad?.name || null}
-      />
     </div>
   );
 }

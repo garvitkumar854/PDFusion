@@ -13,6 +13,7 @@ import {
   Trash2,
   FolderOpen,
   Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
-import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -41,29 +42,16 @@ type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
-  password?: string;
+  pdfjsDoc?: pdfjsLib.PDFDocumentProxy;
+  isEncrypted: boolean;
 };
 
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  fileToLoad: File | null;
-}
 
 export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-    fileToLoad: null,
-  });
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -100,18 +88,17 @@ export function PdfOrganizer() {
     return undefined;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File, password?: string) => {
+  const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPages([]);
     setIsLoading(true);
-    setPasswordState(prev => ({ ...prev, isSubmitting: true, error: null }));
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes), password });
+      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) });
       const pdfjsDoc = await loadingTask.promise; 
 
       if (operationId.current !== currentOperationId) {
@@ -131,25 +118,27 @@ export function PdfOrganizer() {
         file: fileToLoad, 
         totalPages: pageCount,
         pdfjsDoc,
-        password,
+        isEncrypted: false,
       });
       setPages(initialPages);
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
         
         if (error.name === 'PasswordException') {
-            setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: null, fileToLoad }));
+            setFile({
+                id: `${fileToLoad.name}-${Date.now()}`,
+                file: fileToLoad,
+                totalPages: 0,
+                isEncrypted: true,
+            })
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
-            setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
         }
     } finally {
         if (operationId.current === currentOperationId) {
             setIsLoading(false);
-            setPasswordState(prev => ({...prev, isSubmitting: false}));
         }
     }
   }, [file?.pdfjsDoc, toast]);
@@ -172,7 +161,7 @@ export function PdfOrganizer() {
   });
   
   const onPageVisible = useCallback((id: string) => {
-    if (!file || isLoading) return;
+    if (!file || isLoading || !file.pdfjsDoc) return;
     const currentOperationId = operationId.current;
 
     setPages(prev => {
@@ -184,7 +173,7 @@ export function PdfOrganizer() {
         const newPages = [...prev];
         const pageInfo = newPages[pageIndex];
 
-        renderPage(file.pdfjsDoc, pageInfo.originalIndex + 1, currentOperationId).then(dataUrl => {
+        renderPage(file.pdfjsDoc!, pageInfo.originalIndex + 1, currentOperationId).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPages(current => {
                     const latestIndex = current.findIndex(p => p.id === id);
@@ -238,17 +227,15 @@ export function PdfOrganizer() {
   };
   
   const handleSave = async () => {
-    if (!file || pages.length === 0) {
-      toast({ variant: "destructive", title: "No pages to save." });
+    if (!file || pages.length === 0 || file.isEncrypted) {
+      toast({ variant: "destructive", title: "No pages to save or file is encrypted." });
       return;
     }
 
     setIsSaving(true);
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfLibDoc = await PDFDocument.load(pdfBytes, {
-          password: file.password,
-      });
+      const pdfLibDoc = await PDFDocument.load(pdfBytes);
       
       const newPdfDoc = await PDFDocument.create();
       
@@ -278,13 +265,8 @@ export function PdfOrganizer() {
       toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
 
     } catch (e: any) {
-      if(e.name === 'PasswordIsIncorrectError' || e.name === 'PasswordException') {
-        setPasswordState(prev => ({...prev, isNeeded: true, isSubmitting: false, error: 'Incorrect password.' }));
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'The password provided was incorrect.'});
-      } else {
         console.error("Failed to save PDF", e);
         toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message});
-      }
     } finally {
       setIsSaving(false);
     }
@@ -296,18 +278,8 @@ export function PdfOrganizer() {
     setFile(null);
     setPages([]);
     setIsLoading(false);
-    setPasswordState({isNeeded: false, isSubmitting: false, error: null, fileToLoad: null});
   };
   
-  const handlePasswordSubmit = (password: string) => {
-    if (passwordState.fileToLoad) {
-      loadPdf(passwordState.fileToLoad, password);
-    }
-  }
-  
-  const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-  }
 
   return (
     <div className="space-y-6">
@@ -357,12 +329,20 @@ export function PdfOrganizer() {
                             <X className="w-5 h-5" />
                             <span className="sr-only">Change File</span>
                          </Button>
-                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file}>
+                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Save
                          </Button>
                     </div>
                 </CardHeader>
+                {file?.isEncrypted && (
+                    <CardContent className="p-4 pt-0">
+                         <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                            <ShieldAlert className="h-5 w-5 shrink-0" />
+                            <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to organize its pages.</p>
+                        </div>
+                    </CardContent>
+                )}
             </Card>
             <div {...getRootProps({onDragOver: handleDragOver, className: 'outline-none'})}>
               <input {...getInputProps()} />
@@ -373,6 +353,12 @@ export function PdfOrganizer() {
                              <Skeleton className="w-full h-full" />
                          </div>
                     ))
+                ) : file?.isEncrypted ? (
+                     <div className="col-span-full flex flex-col items-center justify-center text-center p-10 bg-muted rounded-lg">
+                        <Lock className="w-12 h-12 text-muted-foreground mb-4" />
+                        <h3 className="font-semibold text-lg">Encrypted File</h3>
+                        <p className="text-muted-foreground">Page previews are unavailable for locked files.</p>
+                    </div>
                 ) : (
                     pages.map((page, index) => (
                       <PageCard
@@ -394,14 +380,6 @@ export function PdfOrganizer() {
             </div>
         </>
       )}
-      <PasswordDialog 
-          isOpen={passwordState.isNeeded}
-          onClose={handlePasswordDialogClose}
-          onSubmit={handlePasswordSubmit}
-          isSubmitting={passwordState.isSubmitting}
-          error={passwordState.error}
-          fileName={passwordState.fileToLoad?.name || null}
-        />
     </div>
   );
 }
