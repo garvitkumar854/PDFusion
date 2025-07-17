@@ -35,7 +35,8 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PDFFile = {
   id: string;
   file: File;
-  isEncrypted: boolean | null; // null means not yet checked
+  isEncrypted: boolean;
+  isUnlocked: boolean;
   password?: string;
 };
 
@@ -56,7 +57,6 @@ type PasswordState = {
   isNeeded: boolean;
   isSubmitting: boolean;
   error: string | null;
-  onSuccess: (password: string) => void;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -83,7 +83,6 @@ export function PdfRotator() {
     isNeeded: false,
     isSubmitting: false,
     error: null,
-    onSuccess: () => {},
   });
 
   const operationId = useRef<number>(0);
@@ -100,6 +99,7 @@ export function PdfRotator() {
   const generatePreview = useCallback(async (pdfFile: File, password?: string) => {
     const currentOperationId = ++operationId.current;
     setIsLoading(true);
+    if (preview) URL.revokeObjectURL(preview.url);
     setPreview(null);
     try {
         const pdfBytes = await pdfFile.arrayBuffer();
@@ -120,13 +120,13 @@ export function PdfRotator() {
             if (operationId.current !== currentOperationId) return;
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
-            setFile(f => f ? {...f, isEncrypted: false, password} : f);
+            setFile(f => f ? {...f, isEncrypted: !!password, isUnlocked: true, password} : f);
         }
         pdfjsDoc.destroy();
     } catch(e: any) {
         if(operationId.current === currentOperationId) {
              if (e.name === 'PasswordException') {
-                setFile(f => f ? {...f, isEncrypted: true} : f);
+                setFile(f => f ? {...f, isEncrypted: true, isUnlocked: false} : f);
             } else {
                 console.error("Failed to load PDF for preview", e);
                 toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
@@ -138,7 +138,7 @@ export function PdfRotator() {
             setIsLoading(false);
         }
     }
-  }, [toast]);
+  }, [toast, preview]);
 
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
@@ -149,7 +149,7 @@ export function PdfRotator() {
       if(!singleFile) return;
       
       removeFile(); // Clear previous state
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: null });
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: false, isUnlocked: true });
       generatePreview(singleFile);
     }, [toast, generatePreview]);
 
@@ -167,10 +167,10 @@ export function PdfRotator() {
     setFile(null);
     if (preview) URL.revokeObjectURL(preview.url);
     setPreview(null);
-    setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
+    setPasswordState({ isNeeded: false, error: null, isSubmitting: false });
   };
 
-  const processRotation = async (password?: string) => {
+  const processRotation = async () => {
     if (!file) return;
 
     const currentOperationId = ++operationId.current;
@@ -180,7 +180,7 @@ export function PdfRotator() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password });
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password: file.password });
 
       const totalPages = pdfDoc.getPageCount();
       
@@ -212,12 +212,8 @@ export function PdfRotator() {
       
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
-        if (error.name === 'PasswordIsIncorrectError') {
-          setPasswordState(prev => ({ ...prev, isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again.", onSuccess: processRotation }));
-        } else {
-            console.error("Processing failed:", error);
-            toast({ variant: "destructive", title: "Processing Failed", description: "The file might be corrupted or an unexpected error occurred." });
-        }
+        console.error("Processing failed:", error);
+        toast({ variant: "destructive", title: "Processing Failed", description: "The file might be corrupted or an unexpected error occurred." });
       }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -233,18 +229,10 @@ export function PdfRotator() {
       return;
     }
 
-    if (file.isEncrypted) {
-       setPasswordState({
-        isNeeded: true,
-        isSubmitting: false,
-        error: null,
-        onSuccess: (password) => {
-          setFile(f => f ? { ...f, password } : null);
-          processRotation(password);
-        },
-      });
+    if (file.isEncrypted && !file.isUnlocked) {
+       setPasswordState({ isNeeded: true, isSubmitting: false, error: null });
     } else {
-       processRotation(file.password);
+       processRotation();
     }
   };
 
@@ -262,13 +250,32 @@ export function PdfRotator() {
   };
 
   const handlePasswordSubmit = async (password: string) => {
+    if (!file) return;
+
     setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    passwordState.onSuccess(password); 
-    setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
+    
+    try {
+        const pdfBytes = await file.file.arrayBuffer();
+        await PDFDocument.load(pdfBytes, { password });
+        
+        // Password is correct, update state and close dialog
+        setFile(f => f ? {...f, password, isUnlocked: true} : null);
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+        generatePreview(file.file, password);
+        toast({ title: "PDF Unlocked", description: "You can now rotate the PDF." });
+    } catch(e: any) {
+        if (e.name === 'PasswordIsIncorrectError') {
+            setPasswordState(prev => ({...prev, isSubmitting: false, error: "Incorrect password. Please try again."}));
+        } else {
+            console.error("Password check failed", e);
+            toast({variant: "destructive", title: "Error", description: "Could not verify password."});
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+        }
+    }
   };
 
   const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, onSuccess: () => {} });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
   };
 
 
@@ -413,8 +420,8 @@ export function PdfRotator() {
                         </div>
                       ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || isLoading}>
-                          <RotateCw className="mr-2 h-5 w-5" />
-                          Rotate PDF
+                          {file.isEncrypted && !file.isUnlocked ? <Lock className="mr-2 h-5 w-5" /> : <RotateCw className="mr-2 h-5 w-5" />}
+                          {file.isEncrypted && !file.isUnlocked ? 'Unlock & Rotate PDF' : 'Rotate PDF'}
                         </Button>
                       )}
                     </div>
@@ -446,7 +453,7 @@ export function PdfRotator() {
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
                                 <Lock className="w-8 h-8 text-primary mb-4" />
                                 <p className="font-semibold">This file is password-protected.</p>
-                                <p className="text-sm">A preview is not available. Click "Rotate PDF" to unlock and process the file.</p>
+                                <p className="text-sm">A preview is not available. Click "Unlock & Rotate" to proceed.</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
@@ -469,5 +476,3 @@ export function PdfRotator() {
     </div>
   );
 }
-
-    
