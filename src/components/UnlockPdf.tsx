@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { unlockPdf } from "@/ai/flows/unlock-pdf-flow";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { PDFDocument } from 'pdf-lib';
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -45,15 +45,6 @@ function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
-
-const fileToDataUri = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-};
 
 export function UnlockPdf() {
   const [file, setFile] = useState<PDFFile | null>(null);
@@ -90,6 +81,7 @@ export function UnlockPdf() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    disabled: isProcessing,
   });
   
   const handleProcessAgain = () => {
@@ -107,23 +99,51 @@ export function UnlockPdf() {
     setError(null);
 
     try {
-        const pdfDataUri = await fileToDataUri(file.file);
-        const response = await unlockPdf({ pdfDataUri, password });
+        const pdfBytes = await file.file.arrayBuffer();
+        
+        let pdfDoc;
+        let wasEncrypted = true;
 
-        const blob = await fetch(response.unlockedPdfDataUri).then(res => res.blob());
+        try {
+            // First, try loading with the provided password.
+            pdfDoc = await PDFDocument.load(pdfBytes, { password });
+        } catch (e: any) {
+            // If it's an incorrect password error, re-throw it to be caught by the outer catch block.
+            if (e.name === 'PasswordIsIncorrectError') {
+              throw e;
+            }
+            
+            // If it's any other error, try loading without a password.
+            // This handles cases where the file was not encrypted in the first place.
+            try {
+                pdfDoc = await PDFDocument.load(pdfBytes);
+                wasEncrypted = false; // It wasn't encrypted, but we can still return it.
+            } catch (finalError: any) {
+                // If it fails again, the file is likely corrupted.
+                throw new Error('Could not load the PDF. The file may be corrupted or in an unsupported format.');
+            }
+        }
+        
+        // Re-save the document to remove encryption. If it was never encrypted, this just saves it as-is.
+        const unlockedPdfBytes = await pdfDoc.save();
+        const blob = new Blob([unlockedPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         
         const originalName = file.file.name.replace(/\.pdf$/i, '');
         setResult({ url, filename: `${originalName}_unlocked.pdf` });
-
-        if (response.wasEncrypted) {
+        
+        if (wasEncrypted) {
             toast({ title: "PDF Unlocked Successfully!" });
         } else {
             toast({ title: "PDF was not encrypted", description: "The original file is available for download." });
         }
-
+        
     } catch(e: any) {
-        setError(e.message || "An unexpected error occurred.");
+      if (e.name === 'PasswordIsIncorrectError') {
+        setError('Incorrect password. Please try again.');
+      } else {
+        setError(e.message || "An unexpected error occurred while trying to unlock the PDF.");
+      }
     } finally {
         setIsProcessing(false);
     }
@@ -184,12 +204,12 @@ export function UnlockPdf() {
         <Card className="bg-white dark:bg-card shadow-lg animate-in fade-in duration-500">
             <CardHeader>
                 <CardTitle>Enter Password</CardTitle>
-                <CardDescription>Enter the password to unlock your PDF file.</CardDescription>
+                <CardDescription>Enter the password to unlock your PDF file. If the file is not protected, you can leave this blank.</CardDescription>
             </CardHeader>
             <CardContent>
                  <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="password-input">Password</Label>
+                        <Label htmlFor="password-input">Password (optional)</Label>
                         <div className="relative">
                             <Input
                                 id="password-input"
@@ -215,10 +235,10 @@ export function UnlockPdf() {
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </Button>
                         </div>
-                        {error && <p className="text-destructive text-sm flex items-center gap-2"><ShieldAlert className="w-4 h-4"/>{error}</p>}
+                        {error && <p className="text-destructive text-sm flex items-center gap-2 pt-2"><ShieldAlert className="w-4 h-4"/>{error}</p>}
                     </div>
 
-                    <Button size="lg" className="w-full text-base" onClick={handleUnlock} disabled={isProcessing || !password}>
+                    <Button size="lg" className="w-full text-base" onClick={handleUnlock} disabled={isProcessing}>
                         {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Lock className="mr-2 h-5 w-5" />}
                         Unlock PDF
                     </Button>
