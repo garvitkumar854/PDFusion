@@ -127,15 +127,13 @@ export function PdfRotator() {
     } catch(e: any) {
         if(operationId.current === currentOperationId) {
             console.error("Failed to load PDF for preview", e);
-            toast({ variant: "destructive", title: "Could not load preview" });
-            setFile(null); // Reset if preview fails
         }
     } finally {
         if(operationId.current === currentOperationId) {
             setIsLoadingPreview(false);
         }
     }
-  }, [preview?.url, toast]);
+  }, [preview?.url]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -149,6 +147,7 @@ export function PdfRotator() {
       
       try {
           const pdfBytes = await singleFile.arrayBuffer();
+          // This will throw a PasswordException if encrypted, which is what we want.
           await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       } catch (e: any) {
           if (e.name === 'PasswordException') {
@@ -181,15 +180,16 @@ export function PdfRotator() {
     setResult(null);
     setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
   };
-
-  const handleProcess = async () => {
+  
+  const handleProcessOrUnlock = async () => {
     if (!file) return;
 
     if (file.isEncrypted && !file.isUnlocked) {
         setPasswordState({ isNeeded: true, isSubmitting: false, error: null });
         return;
     }
-
+    
+    // --- Actual Processing Logic ---
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setProgress(0);
@@ -210,6 +210,7 @@ export function PdfRotator() {
 
         if (operationId.current !== currentOperationId) return;
         
+        // Re-encrypt if it was originally encrypted
         const saveOptions = file.isEncrypted ? { password: file.password } : {};
         const newPdfBytes = await pdfDoc.save(saveOptions);
 
@@ -228,7 +229,9 @@ export function PdfRotator() {
     } catch (error: any) {
         if (operationId.current === currentOperationId) {
             console.error("Processing failed:", error);
-            if(error.name === 'PasswordIsIncorrectError') {
+            if (error.name === 'PasswordIsIncorrectError') {
+                 // This case should ideally not be hit if unlock is separate, but as a fallback:
+                 setFile(f => f ? {...f, isUnlocked: false, password: '' } : null);
                  setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
             } else {
                 toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
@@ -239,7 +242,7 @@ export function PdfRotator() {
            setIsProcessing(false);
         }
     }
-  };
+  }
 
   const handleCancel = () => {
     operationId.current++;
@@ -258,8 +261,10 @@ export function PdfRotator() {
     setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
     try {
       const pdfBytes = await file.file.arrayBuffer();
+      // Try to load the document with the password to verify it
       await PDFDocument.load(pdfBytes, { password: password });
       
+      // If successful, update the state and close the dialog
       setFile({ ...file, isUnlocked: true, password });
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
       generatePreview(file.file, password);
@@ -269,7 +274,8 @@ export function PdfRotator() {
       if(e.name === 'PasswordIsIncorrectError') {
         setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
       } else {
-        toast({ variant: "destructive", title: "Error", description: "Could not read the PDF with this password." });
+        console.error("Password verification failed:", e);
+        toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred while verifying the password." });
         setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
       }
     }
@@ -309,6 +315,8 @@ export function PdfRotator() {
   const aspectRatio = isRotatedSideways 
     ? previewSize.height / previewSize.width 
     : previewSize.width / previewSize.height;
+
+  const buttonActionText = file?.isEncrypted && !file.isUnlocked ? 'Unlock PDF' : 'Rotate PDF';
 
   return (
     <div className="space-y-6">
@@ -368,9 +376,9 @@ export function PdfRotator() {
                           <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 h-4" />Cancel</Button></div>
                         </div>
                       ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || isLoadingPreview}>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcessOrUnlock} disabled={!file || isProcessing || isLoadingPreview}>
                           {file.isEncrypted && !file.isUnlocked ? <Unlock className="mr-2 h-5 w-5" /> : <RotateCw className="mr-2 h-5 w-5" />}
-                          {file.isEncrypted && !file.isUnlocked ? 'Unlock & Rotate' : 'Rotate PDF'}
+                          {buttonActionText}
                         </Button>
                       )}
                     </div>
@@ -391,7 +399,7 @@ export function PdfRotator() {
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
                                 <Lock className="w-8 h-8 text-primary mb-4" />
                                 <p className="font-semibold">This file is password-protected.</p>
-                                <p className="text-sm">Click 'Unlock & Rotate' to enter the password.</p>
+                                <p className="text-sm">Click 'Unlock PDF' to enter the password.</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground"><p>Could not load preview.</p></div>
