@@ -288,7 +288,7 @@ export function MergePdfs() {
 
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
-                const sourcePdf = await PDFDocument.load(pdfBytes);
+                const sourcePdf = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
