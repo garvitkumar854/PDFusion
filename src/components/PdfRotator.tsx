@@ -81,8 +81,8 @@ export function PdfRotator() {
   const [preview, setPreview] = useState<PreviewInfo | null>(null);
 
   const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: boolean,
-    isSubmitting: boolean,
+    isNeeded: false,
+    isSubmitting: false,
     error: null,
   });
 
@@ -165,7 +165,8 @@ export function PdfRotator() {
           }
       }
 
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted, isUnlocked: !isEncrypted });
+      const newFile = { id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted, isUnlocked: !isEncrypted };
+      setFile(newFile);
       if (!isEncrypted) {
           generatePreview(singleFile);
       }
@@ -208,9 +209,6 @@ export function PdfRotator() {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password: file.password });
       
-      // If we reach here, password was correct.
-      setPasswordState(prev => ({...prev, error: null}));
-
       const totalPages = pdfDoc.getPageCount();
       const pages = pdfDoc.getPages();
       for (let i = 0; i < totalPages; i++) {
@@ -222,10 +220,7 @@ export function PdfRotator() {
 
       if (operationId.current !== currentOperationId) return;
       
-      // Re-encrypt with the same password if it was originally encrypted
-      const newPdfBytes = await pdfDoc.save({
-          useObjectStreams: true,
-      });
+      const newPdfBytes = await pdfDoc.save();
 
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -273,10 +268,28 @@ export function PdfRotator() {
   const handlePasswordSubmit = async (password: string) => {
     if (!file) return;
 
-    // Just store the password and close the dialog. The verification will happen in handleProcess.
-    setFile(f => f ? {...f, password, isUnlocked: true} : null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-    toast({ title: "Password provided", description: "Click 'Rotate PDF' again to process the file." });
+    setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
+
+    // Try to unlock the PDF with the given password
+    try {
+        const pdfBytes = await file.file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes, { password });
+        pdfDoc.getPageCount(); // This will throw if the password is wrong
+        
+        // Password is correct
+        setFile(f => f ? {...f, password, isUnlocked: true} : null);
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+        toast({ title: "PDF Unlocked", description: "You can now rotate the PDF." });
+        generatePreview(file.file, password);
+
+    } catch (e: any) {
+        if (e.name === 'PasswordIsIncorrectError') {
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
+        } else {
+            toast({ variant: 'destructive', title: 'An unexpected error occurred', description: 'Could not read the PDF with this password.' });
+            setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+        }
+    }
   };
 
   const handlePasswordDialogClose = () => {
