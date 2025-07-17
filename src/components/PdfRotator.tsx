@@ -181,12 +181,6 @@ export function PdfRotator() {
     try {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password });
-      
-      // If we are here, password was correct or not needed. Store it for preview if needed.
-      if (password && !preview) {
-        setFile(f => f ? {...f, password} : f);
-        generatePreview(file.file, password);
-      }
 
       const totalPages = pdfDoc.getPageCount();
       
@@ -202,7 +196,9 @@ export function PdfRotator() {
 
       if (operationId.current !== currentOperationId) return;
 
-      const newPdfBytes = await pdfDoc.save();
+      // Re-encrypt the document with the provided password if it was originally encrypted
+      const newPdfBytes = await pdfDoc.save({ useObjectStreams: true, encrypt: password ? { userPassword: password, ownerPassword: password } : undefined });
+
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
@@ -239,11 +235,9 @@ export function PdfRotator() {
       return;
     }
 
-    // if it's not encrypted, or already unlocked, just process
-    if (file.isEncrypted === false || (file.isEncrypted === null && preview)) {
+    if (file.isEncrypted === false) {
        processRotation(file.password);
     } else {
-      // It's encrypted and we need a password
       setPasswordState({
         isNeeded: true,
         isSubmitting: false,
@@ -268,7 +262,9 @@ export function PdfRotator() {
 
   const handlePasswordSubmit = async (password: string) => {
     setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    passwordState.onSuccess(password);
+    // We call the success callback which is `processRotation(password)`
+    passwordState.onSuccess(password); 
+    // Close the dialog after submission attempt
     setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
   };
 
@@ -475,4 +471,3 @@ export function PdfRotator() {
   );
 }
 
-    
