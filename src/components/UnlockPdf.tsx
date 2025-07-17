@@ -97,16 +97,15 @@ export function UnlockPdf() {
     setResult(null);
     setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
 
-    try {
-      const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password });
+    const pdfBytes = await file.file.arrayBuffer();
 
-      // We just need to save it without a password to "unlock" it.
-      // We can iterate pages to show some progress.
+    try {
+      const pdfDoc = await PDFDocument.load(pdfBytes, { password });
+      
       const totalPages = pdfDoc.getPageCount();
       for (let i = 0; i < totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
-        pdfDoc.getPage(i); // Access page to ensure it's readable.
+        pdfDoc.getPage(i);
         setProgress(Math.round(((i + 1) / totalPages) * 100));
       }
       
@@ -119,16 +118,35 @@ export function UnlockPdf() {
       setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
       
       toast({ title: "PDF Unlocked Successfully!" });
+
     } catch (error: any) {
-      if (operationId.current === currentOperationId) {
+        if (operationId.current !== currentOperationId) return;
+
+        // The first attempt failed. Check if it's an incorrect password error.
         if (error.constructor?.name === 'PasswordIsIncorrectError') {
-          setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again."});
+            setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
         } else {
-          console.error("Unlock failed:", error);
-          toast({ variant: "destructive", title: "Unlock Failed", description: "The file may be corrupted or is not password-protected." });
-          setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+            // The error is something else. Let's see if the file is actually not encrypted.
+            try {
+                await PDFDocument.load(pdfBytes); // No password
+                // If this succeeds, the file was never locked.
+                toast({
+                    variant: "default",
+                    title: "File Not Encrypted",
+                    description: "This PDF is not password-protected.",
+                });
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                setResult({ url, filename: file.file.name });
+                setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+
+            } catch (finalError: any) {
+                // If this second attempt also fails, the file is likely corrupted.
+                console.error("Unlock failed:", finalError);
+                toast({ variant: "destructive", title: "Unlock Failed", description: "The file appears to be corrupted or is an unsupported format." });
+                setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+            }
         }
-      }
     } finally {
       if (operationId.current === currentOperationId) {
         setIsProcessing(false);
@@ -172,14 +190,14 @@ export function UnlockPdf() {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Unlocked!</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Your file is ready!</h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
           <a href={result.url} download={result.filename}>
             <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-              <Download className="mr-2 h-5 w-5" /> Download Unlocked PDF
+              <Download className="mr-2 h-5 w-5" /> Download PDF
             </Button>
           </a>
-          <Button size="lg" variant="outline" onClick={handleProcessAgain}>Unlock Another PDF</Button>
+          <Button size="lg" variant="outline" onClick={handleProcessAgain}>Process Another PDF</Button>
         </div>
       </div>
     );
