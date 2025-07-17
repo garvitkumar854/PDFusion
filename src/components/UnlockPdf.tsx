@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -10,15 +10,12 @@ import {
   X,
   CheckCircle,
   FolderOpen,
-  Loader2,
   Unlock as UnlockIcon,
-  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "./ui/progress";
 import { PDFDocument } from 'pdf-lib';
 import { PasswordDialog } from "./PasswordDialog";
 
@@ -35,12 +32,6 @@ type ProcessResult = {
   filename: string;
 };
 
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-};
-
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -53,14 +44,17 @@ function formatBytes(bytes: number, decimals = 2) {
 export function UnlockPdf() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-  });
-
   const { toast } = useToast();
+  
+  useEffect(() => {
+    return () => {
+      if(result?.url) {
+        URL.revokeObjectURL(result.url);
+      }
+    }
+  }, [result]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const singleFile = acceptedFiles[0];
@@ -77,12 +71,12 @@ export function UnlockPdf() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
-    disabled: passwordState.isSubmitting,
   });
 
   const removeFile = () => {
     setFile(null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+    setResult(null);
+    setIsPasswordDialogOpen(false);
   };
   
   const handleUnlockClick = () => {
@@ -90,7 +84,7 @@ export function UnlockPdf() {
       toast({ variant: "destructive", title: "No file selected" });
       return;
     }
-    setPasswordState({ isNeeded: true, isSubmitting: false, error: null });
+    setIsPasswordDialogOpen(true);
   };
   
   const handleProcessAgain = () => {
@@ -98,41 +92,18 @@ export function UnlockPdf() {
     setFile(null);
     setResult(null);
   };
-  
-  const handlePasswordSubmit = async (password: string) => {
+
+  const handleUnlockSuccess = (unlockedPdfBytes: Uint8Array) => {
     if (!file) return;
 
-    setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
+    const blob = new Blob([unlockedPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const originalName = file.file.name.replace(/\.pdf$/i, '');
 
-    try {
-      const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password });
-      
-      const newPdfBytes = await pdfDoc.save();
-      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-
-      const originalName = file.file.name.replace(/\.pdf$/i, '');
-      setResult({ url, filename: `${originalName}_unlocked.pdf` });
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-      
-      toast({ title: "PDF Unlocked Successfully!" });
-
-    } catch (error: any) {
-        if (error.name === 'PasswordIsIncorrectError') {
-             setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
-        } else {
-             console.error("Unlock failed:", error);
-             setPasswordState({ isNeeded: true, isSubmitting: false, error: "Unlock failed. The file may be corrupted or is an unsupported format." });
-        }
-    }
-  };
-  
-  const handlePasswordDialogClose = () => {
-      if (!passwordState.isSubmitting) {
-        setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-      }
-  };
+    setResult({ url, filename: `${originalName}_unlocked.pdf` });
+    setIsPasswordDialogOpen(false);
+    toast({ title: "PDF Unlocked Successfully!" });
+  }
 
   if (result) {
     return (
@@ -162,7 +133,7 @@ export function UnlockPdf() {
           {!file ? (
             <div
               {...getRootProps()}
-              className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", !passwordState.isSubmitting && "hover:border-primary/50", isDragActive && "border-primary bg-primary/10")}>
+              className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300 hover:border-primary/50", isDragActive && "border-primary bg-primary/10")}>
               <input {...getInputProps()} />
               <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
               <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
@@ -191,21 +162,21 @@ export function UnlockPdf() {
       {file && (
         <Card className="bg-white dark:bg-card shadow-lg">
           <CardContent className="p-6">
-            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlockClick} disabled={!file || passwordState.isSubmitting}>
+            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlockClick} disabled={!file}>
               <UnlockIcon className="mr-2 h-5 w-5" />Unlock PDF
             </Button>
           </CardContent>
         </Card>
       )}
 
-      <PasswordDialog 
-        isOpen={passwordState.isNeeded}
-        onClose={handlePasswordDialogClose}
-        onSubmit={handlePasswordSubmit}
-        isSubmitting={passwordState.isSubmitting}
-        error={passwordState.error}
-        fileName={file?.file.name || null}
-      />
+      {file && (
+        <PasswordDialog 
+          isOpen={isPasswordDialogOpen}
+          onClose={() => setIsPasswordDialogOpen(false)}
+          pdfFile={file.file}
+          onUnlockSuccess={handleUnlockSuccess}
+        />
+      )}
     </div>
   );
 }
