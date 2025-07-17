@@ -120,13 +120,13 @@ export function PdfRotator() {
             if (operationId.current !== currentOperationId) return;
             const url = canvas.toDataURL();
             setPreview({url, width: canvas.width, height: canvas.height});
-            setFile(f => f ? {...f, isEncrypted: false, password} : null);
+            setFile(f => f ? {...f, isEncrypted: false, password} : f);
         }
         pdfjsDoc.destroy();
     } catch(e: any) {
         if(operationId.current === currentOperationId) {
-            if (e.name === 'PasswordException') {
-                setFile(f => f ? {...f, isEncrypted: true} : null);
+             if (e.name === 'PasswordException') {
+                setFile(f => f ? {...f, isEncrypted: true} : f);
             } else {
                 console.error("Failed to load PDF for preview", e);
                 toast({ variant: "destructive", title: "Could not load preview", description: "The file might be corrupted or not a valid PDF." });
@@ -196,9 +196,7 @@ export function PdfRotator() {
 
       if (operationId.current !== currentOperationId) return;
 
-      // Re-encrypt the document with the provided password if it was originally encrypted
-      const newPdfBytes = await pdfDoc.save({ useObjectStreams: true, encrypt: password ? { userPassword: password, ownerPassword: password } : undefined });
-
+      const newPdfBytes = await pdfDoc.save();
       const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
@@ -235,15 +233,18 @@ export function PdfRotator() {
       return;
     }
 
-    if (file.isEncrypted === false) {
-       processRotation(file.password);
-    } else {
-      setPasswordState({
+    if (file.isEncrypted) {
+       setPasswordState({
         isNeeded: true,
         isSubmitting: false,
         error: null,
-        onSuccess: (password) => processRotation(password),
+        onSuccess: (password) => {
+          setFile(f => f ? { ...f, password } : null);
+          processRotation(password);
+        },
       });
+    } else {
+       processRotation(file.password);
     }
   };
 
@@ -262,9 +263,7 @@ export function PdfRotator() {
 
   const handlePasswordSubmit = async (password: string) => {
     setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    // We call the success callback which is `processRotation(password)`
     passwordState.onSuccess(password); 
-    // Close the dialog after submission attempt
     setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
   };
 
@@ -471,3 +470,4 @@ export function PdfRotator() {
   );
 }
 
+    
