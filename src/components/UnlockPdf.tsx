@@ -11,13 +11,14 @@ import {
   CheckCircle,
   FolderOpen,
   Unlock as UnlockIcon,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument } from 'pdf-lib';
 import { PasswordDialog } from "./PasswordDialog";
+import { unlockPdf } from "@/ai/flows/unlock-pdf-flow";
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -41,10 +42,20 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const fileToDataUri = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export function UnlockPdf() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const { toast } = useToast();
   
@@ -71,6 +82,7 @@ export function UnlockPdf() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    disabled: isProcessing,
   });
 
   const removeFile = () => {
@@ -92,18 +104,37 @@ export function UnlockPdf() {
     setFile(null);
     setResult(null);
   };
-
-  const handleUnlockSuccess = (unlockedPdfBytes: Uint8Array) => {
+  
+  const handlePasswordSubmit = async (password: string, setError: (error: string | null) => void) => {
     if (!file) return;
 
-    const blob = new Blob([unlockedPdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const originalName = file.file.name.replace(/\.pdf$/i, '');
+    setIsProcessing(true);
+    setError(null);
 
-    setResult({ url, filename: `${originalName}_unlocked.pdf` });
-    setIsPasswordDialogOpen(false);
-    toast({ title: "PDF Unlocked Successfully!" });
+    try {
+        const pdfDataUri = await fileToDataUri(file.file);
+        const response = await unlockPdf({ pdfDataUri, password });
+
+        const blob = await fetch(response.unlockedPdfDataUri).then(res => res.blob());
+        const url = URL.createObjectURL(blob);
+        const originalName = file.file.name.replace(/\.pdf$/i, '');
+        
+        setResult({ url, filename: `${originalName}_unlocked.pdf` });
+        setIsPasswordDialogOpen(false);
+        
+        if (!response.wasEncrypted) {
+             toast({ title: "PDF is not encrypted", description: "The original file has been provided for download." });
+        } else {
+             toast({ title: "PDF Unlocked Successfully!" });
+        }
+
+    } catch (e: any) {
+        setError(e.message || "An unexpected error occurred.");
+    } finally {
+        setIsProcessing(false);
+    }
   }
+
 
   if (result) {
     return (
@@ -162,8 +193,13 @@ export function UnlockPdf() {
       {file && (
         <Card className="bg-white dark:bg-card shadow-lg">
           <CardContent className="p-6">
-            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlockClick} disabled={!file}>
-              <UnlockIcon className="mr-2 h-5 w-5" />Unlock PDF
+            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlockClick} disabled={!file || isProcessing}>
+              {isProcessing ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <UnlockIcon className="mr-2 h-5 w-5" />
+              )}
+              Unlock PDF
             </Button>
           </CardContent>
         </Card>
@@ -173,8 +209,9 @@ export function UnlockPdf() {
         <PasswordDialog 
           isOpen={isPasswordDialogOpen}
           onClose={() => setIsPasswordDialogOpen(false)}
-          pdfFile={file.file}
-          onUnlockSuccess={handleUnlockSuccess}
+          fileName={file.file.name}
+          onSubmit={handlePasswordSubmit}
+          isProcessing={isProcessing}
         />
       )}
     </div>

@@ -5,3 +5,4 @@ config();
 
 // All Genkit flows must be imported here.
 import './flows/compress-pdf-flow';
+import './flows/unlock-pdf-flow';

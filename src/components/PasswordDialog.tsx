@@ -15,20 +15,19 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PDFDocument } from "pdf-lib";
 
 interface PasswordDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  pdfFile: File | null;
-  onUnlockSuccess: (unlockedPdfBytes: Uint8Array) => void;
+  fileName: string | null;
+  onSubmit: (password: string, setError: (error: string | null) => void) => Promise<void>;
+  isProcessing: boolean;
 }
 
-export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: PasswordDialogProps) {
+export function PasswordDialog({ isOpen, onClose, fileName, onSubmit, isProcessing }: PasswordDialogProps) {
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [passwordValue, setPasswordValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,44 +43,23 @@ export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: Pa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passwordValue || isSubmitting || !pdfFile) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const pdfBytes = await pdfFile.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordValue });
-      
-      const unlockedPdfBytes = await pdfDoc.save();
-      
-      onUnlockSuccess(unlockedPdfBytes);
-
-    } catch (err: any) {
-        if (err.name === 'PasswordIsIncorrectError') {
-            setError("Incorrect password. Please try again.");
-        } else {
-            console.error("Unlock failed:", err);
-            setError("Unlock failed. The file may be corrupted or is an unsupported format.");
-        }
-    } finally {
-        setIsSubmitting(false);
-    }
+    if (!passwordValue || isProcessing) return;
+    await onSubmit(passwordValue, setError);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isProcessing && onClose()}>
       <DialogContent className="max-w-[90vw] sm:max-w-md rounded-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Password Required</DialogTitle>
             <DialogDescription>
-              The file <span className="font-semibold text-foreground truncate">{pdfFile?.name}</span> is password protected.
+              The file <span className="font-semibold text-foreground truncate">{fileName}</span> may be password protected.
             </DialogDescription>
           </DialogHeader>
           
             <div className="grid gap-4 py-4">
-                <div className={cn("grid grid-cols-4 items-center gap-4", isSubmitting && "opacity-50 pointer-events-none")}>
+                <div className={cn("grid grid-cols-4 items-center gap-4", isProcessing && "opacity-50 pointer-events-none")}>
                 <Label htmlFor="password-input" className="text-right">
                     Password
                 </Label>
@@ -93,7 +71,7 @@ export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: Pa
                         onChange={(e) => setPasswordValue(e.target.value)}
                         type={showPassword ? "text" : "password"}
                         className="pr-10"
-                        disabled={isSubmitting}
+                        disabled={isProcessing}
                     />
                     <Button 
                     type="button" 
@@ -102,7 +80,7 @@ export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: Pa
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                     onClick={() => setShowPassword(p => !p)}
                     tabIndex={-1}
-                    disabled={isSubmitting}
+                    disabled={isProcessing}
                     >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
@@ -112,11 +90,11 @@ export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: Pa
             </div>
 
             <DialogFooter>
-                <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+                <Button type="button" variant="secondary" onClick={onClose} disabled={isProcessing}>
                 Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting || !passwordValue}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={isProcessing || !passwordValue}>
+                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Unlock
                 </Button>
             </DialogFooter>
