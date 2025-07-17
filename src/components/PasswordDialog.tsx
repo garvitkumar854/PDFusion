@@ -53,7 +53,6 @@ export function PasswordDialog({ isOpen, onClose, pdfFile, onUnlockSuccess }: Pa
       const pdfBytes = await pdfFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password: passwordValue });
       
-      // Save the document to remove encryption.
       const unlockedPdfBytes = await pdfDoc.save();
       
       onUnlockSuccess(unlockedPdfBytes);
