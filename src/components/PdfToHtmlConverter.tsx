@@ -45,7 +45,7 @@ type PasswordState = {
   isNeeded: boolean;
   isSubmitting: boolean;
   error: string | null;
-  fileToLoad: File | null;
+  onSuccess: (password: string) => void;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -68,34 +68,20 @@ export function PdfToHtmlConverter() {
     isNeeded: false,
     isSubmitting: false,
     error: null,
-    fileToLoad: null,
+    onSuccess: () => {},
   });
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
-  const loadAndSetFile = (fileToLoad: File, password?: string) => {
-    setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, password });
-    setResult(null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
-  };
-
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       const singleFile = acceptedFiles[0];
       if (singleFile) {
-        try {
-            const pdfBytes = await singleFile.arrayBuffer();
-            await pdfjsLib.getDocument({data: pdfBytes}).promise;
-            loadAndSetFile(singleFile);
-        } catch(e: any) {
-            if(e.name === 'PasswordException') {
-                setPasswordState({ isNeeded: true, fileToLoad: singleFile, error: null, isSubmitting: false });
-            } else {
-                toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted or not a valid PDF.'});
-            }
-        }
+        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile });
+        setResult(null);
+        setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
       }
-    }, [toast]);
+    }, []);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -109,15 +95,12 @@ export function PdfToHtmlConverter() {
 
   const removeFile = () => {
     setFile(null);
-    setPasswordState({ isNeeded: false, fileToLoad: null, error: null, isSubmitting: false });
+    setPasswordState({ isNeeded: false, error: null, isSubmitting: false, onSuccess: () => {} });
   };
-
-  const handleProcess = async () => {
-    if (!file) {
-      toast({ variant: "destructive", title: "No file selected" });
-      return;
-    }
-
+  
+  const processConversion = async (password?: string) => {
+    if (!file) return;
+    
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setProgress(0);
@@ -125,7 +108,7 @@ export function PdfToHtmlConverter() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: file.password }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
       const totalPages = pdfjsDoc.numPages;
 
       let htmlContent = `<!DOCTYPE html>
@@ -214,7 +197,15 @@ export function PdfToHtmlConverter() {
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
         if(error.name === 'PasswordException' || error.name === 'PasswordIsIncorrectError') {
-            setPasswordState(prev => ({...prev, isNeeded: true, error: "Incorrect password."}));
+             setPasswordState({
+                isNeeded: true,
+                isSubmitting: false,
+                error: "Incorrect password. Please try again.",
+                onSuccess: (pwd) => {
+                    setFile(f => f ? {...f, password: pwd } : null);
+                    processConversion(pwd);
+                },
+            });
         } else {
             toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
         }
@@ -222,6 +213,14 @@ export function PdfToHtmlConverter() {
     } finally {
         if (operationId.current === currentOperationId) setIsProcessing(false);
     }
+  };
+
+  const handleProcess = async () => {
+    if (!file) {
+      toast({ variant: "destructive", title: "No file selected" });
+      return;
+    }
+    processConversion(file.password);
   };
 
   const handleCancel = () => {
@@ -238,13 +237,13 @@ export function PdfToHtmlConverter() {
   };
   
   const handlePasswordSubmit = (password: string) => {
-    if (passwordState.fileToLoad) {
-        loadAndSetFile(passwordState.fileToLoad, password);
-    }
+    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
+    passwordState.onSuccess(password);
+    setPasswordState(prev => ({...prev, isNeeded: false, isSubmitting: false}));
   };
   
   const handlePasswordDialogClose = () => {
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, fileToLoad: null });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null, onSuccess: () => {} });
   };
 
 
@@ -288,11 +287,7 @@ export function PdfToHtmlConverter() {
             ) : (
                 <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
                 <div className="flex items-center gap-3 overflow-hidden">
-                    {file.password ? (
-                        <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" />
-                    ) : (
-                        <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
-                    )}
+                    <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                     <div className="flex flex-col overflow-hidden">
                     <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                     <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
@@ -332,7 +327,7 @@ export function PdfToHtmlConverter() {
           onSubmit={handlePasswordSubmit}
           isSubmitting={passwordState.isSubmitting}
           error={passwordState.error}
-          fileName={passwordState.fileToLoad?.name || null}
+          fileName={file?.file.name || null}
         />
     </div>
   );
