@@ -100,31 +100,32 @@ export function UnlockPdf() {
 
     try {
         const pdfBytes = await file.file.arrayBuffer();
-        
         let pdfDoc;
-        let wasEncrypted = true;
 
         try {
-            // First, try loading with the provided password.
+            // Attempt 1: Try to load with the provided password.
             pdfDoc = await PDFDocument.load(pdfBytes, { password });
+            toast({ title: "PDF Unlocked Successfully!" });
         } catch (e: any) {
-            // If it's an incorrect password error, re-throw it to be caught by the outer catch block.
+            // Attempt 2: If it fails, check if it's an incorrect password error.
             if (e.name === 'PasswordIsIncorrectError') {
-              throw e;
+                setError('Incorrect password. Please try again.');
+                setIsProcessing(false);
+                return;
             }
             
-            // If it's any other error, try loading without a password.
+            // Attempt 3: If it's another error, try loading without a password.
             // This handles cases where the file was not encrypted in the first place.
             try {
                 pdfDoc = await PDFDocument.load(pdfBytes);
-                wasEncrypted = false; // It wasn't encrypted, but we can still return it.
+                toast({ title: "PDF was not encrypted", description: "The original file is available for download." });
             } catch (finalError: any) {
-                // If it fails again, the file is likely corrupted.
+                // Attempt 4: If it fails again, the file is likely corrupted.
                 throw new Error('Could not load the PDF. The file may be corrupted or in an unsupported format.');
             }
         }
         
-        // Re-save the document to remove encryption. If it was never encrypted, this just saves it as-is.
+        // Re-save the document to remove encryption (if it was encrypted).
         const unlockedPdfBytes = await pdfDoc.save();
         const blob = new Blob([unlockedPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
@@ -132,18 +133,8 @@ export function UnlockPdf() {
         const originalName = file.file.name.replace(/\.pdf$/i, '');
         setResult({ url, filename: `${originalName}_unlocked.pdf` });
         
-        if (wasEncrypted) {
-            toast({ title: "PDF Unlocked Successfully!" });
-        } else {
-            toast({ title: "PDF was not encrypted", description: "The original file is available for download." });
-        }
-        
     } catch(e: any) {
-      if (e.name === 'PasswordIsIncorrectError') {
-        setError('Incorrect password. Please try again.');
-      } else {
         setError(e.message || "An unexpected error occurred while trying to unlock the PDF.");
-      }
     } finally {
         setIsProcessing(false);
     }
@@ -209,7 +200,7 @@ export function UnlockPdf() {
             <CardContent>
                  <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="password-input">Password (optional)</Label>
+                        <Label htmlFor="password-input">Password</Label>
                         <div className="relative">
                             <Input
                                 id="password-input"
