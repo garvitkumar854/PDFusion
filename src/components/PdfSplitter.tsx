@@ -227,9 +227,9 @@ export function PdfSplitter() {
     }
   }, [toast]);
   
-  const onFileUnlock = (unlockedDoc: PDFDocument, unlockedFile: File) => {
+  const onFileUnlock = (unlockedFile: File) => {
     if(file) {
-      initFile(unlockedFile, false, unlockedDoc);
+      initFile(unlockedFile, false);
       toast({ title: 'File Unlocked', description: `"${unlockedFile.name}" has been decrypted.`});
     }
   };
@@ -394,7 +394,7 @@ export function PdfSplitter() {
       const zip = new JSZip();
 
       const sourcePdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(sourcePdfBytes);
+      const pdfDoc = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
 
       for (const group of pageGroups) {
         if (operationId.current !== currentOperationId) return;
