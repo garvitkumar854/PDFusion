@@ -22,14 +22,15 @@ interface PasswordDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   file: File;
-  onUnlock: (unlockedDoc: PDFDocument, unlockedFile: File) => void;
+  onUnlockSuccess: (unlockedFile: File) => void;
 }
 
-export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: PasswordDialogProps) {
+export function PasswordDialog({ isOpen, onOpenChange, file, onUnlockSuccess }: PasswordDialogProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (!password) {
@@ -42,27 +43,33 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
 
     try {
       const pdfBytes = await file.arrayBuffer();
-      // Attempt to load the document with the provided password.
-      const pdfDoc = await PDFDocument.load(pdfBytes, { 
-        password,
-        ignoreEncryption: false // Ensure it strictly uses the password
+      // First, attempt to load with the provided password.
+      // `ignoreEncryption: false` is crucial to ensure it fails if the password is wrong.
+      const pdfDoc = await PDFDocument.load(pdfBytes, {
+        password: password,
+        ignoreEncryption: false
       });
 
-      // If successful, re-save the document to remove encryption.
+      // If successful, save it without encryption to unlock it permanently.
       const unlockedPdfBytes = await pdfDoc.save();
       const unlockedFile = new File([unlockedPdfBytes], file.name, { type: 'application/pdf' });
 
-      onUnlock(pdfDoc, unlockedFile);
+      onUnlockSuccess(unlockedFile);
       onOpenChange(false);
+      toast({
+        title: "File Unlocked!",
+        description: `"${file.name}" is now ready to be processed.`,
+      });
 
     } catch (e: any) {
-        // This is the most reliable way to check for an incorrect password.
-        if (e.name === 'PasswordIsIncorrectError') {
-            setError('Incorrect password. Please try again.');
-        } else {
-            console.error("PDF Unlock Error:", e);
-            setError('Could not load the PDF. It may be corrupted or in an unsupported format.');
-        }
+      // This is the most reliable way to check for an incorrect password with pdf-lib.
+      if (e.name === 'PasswordIsIncorrectError') {
+        setError('Incorrect password. Please try again.');
+      } else {
+        // Handle other errors, like corrupted files.
+        console.error("PDF Unlock Error:", e);
+        setError('Could not load the PDF. The file may be corrupted or in an unsupported format.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -71,12 +78,9 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
   const handleClose = () => {
     if (isSubmitting) return;
     onOpenChange(false);
-    // Reset state when closing
-    setPassword('');
-    setError(null);
   }
 
-  // Reset state when a new file is passed in (dialog reopens)
+  // Reset state when dialog opens for a new file
   React.useEffect(() => {
     if (isOpen) {
         setPassword('');
@@ -87,11 +91,11 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Password Required</DialogTitle>
           <DialogDescription>
-            The file "{file.name}" is encrypted. Please enter the password to continue.
+            The file "{file?.name}" is encrypted. Please enter the password to continue.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -135,7 +139,7 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting || !password}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Unlock
           </Button>
