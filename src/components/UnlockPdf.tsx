@@ -11,23 +11,16 @@ import {
   CheckCircle,
   FolderOpen,
   Loader2,
-  Lock,
   Unlock as UnlockIcon,
   Ban,
-  ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
-import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
 import { PasswordDialog } from "./PasswordDialog";
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -46,7 +39,6 @@ type PasswordState = {
   isNeeded: boolean;
   isSubmitting: boolean;
   error: string | null;
-  onSuccess: (password: string) => void;
 };
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -68,7 +60,6 @@ export function UnlockPdf() {
     isNeeded: false,
     isSubmitting: false,
     error: null,
-    onSuccess: () => {},
   });
 
   const operationId = useRef<number>(0);
@@ -94,7 +85,7 @@ export function UnlockPdf() {
 
   const removeFile = () => {
     setFile(null);
-    setPasswordState(p => ({...p, isNeeded: false, error: null}));
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
   };
 
   const processUnlock = async (password: string) => {
@@ -104,16 +95,18 @@ export function UnlockPdf() {
     setIsProcessing(true);
     setProgress(0);
     setResult(null);
+    setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { password });
 
+      // We just need to save it without a password to "unlock" it.
+      // We can iterate pages to show some progress.
       const totalPages = pdfDoc.getPageCount();
-      // This is a way to track progress, just iterating pages.
       for (let i = 0; i < totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
-        pdfDoc.getPage(i);
+        pdfDoc.getPage(i); // Access page to ensure it's readable.
         setProgress(Math.round(((i + 1) / totalPages) * 100));
       }
       
@@ -123,53 +116,39 @@ export function UnlockPdf() {
 
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       setResult({ url, filename: `${originalName}_unlocked.pdf` });
+      setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
       
       toast({ title: "PDF Unlocked Successfully!" });
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
         if (error.constructor?.name === 'PasswordIsIncorrectError') {
-          setPasswordState(prev => ({ ...prev, isNeeded: true, error: "Incorrect password. Please try again.", isSubmitting: false }));
+          setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again."});
         } else {
           console.error("Unlock failed:", error);
-          toast({ variant: "destructive", title: "Unlock Failed", description: "Could not read the PDF, it may be corrupted." });
+          toast({ variant: "destructive", title: "Unlock Failed", description: "The file may be corrupted or is not password-protected." });
+          setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
         }
       }
     } finally {
-      if (operationId.current === currentOperationId) setIsProcessing(false);
+      if (operationId.current === currentOperationId) {
+        setIsProcessing(false);
+      }
     }
   };
 
-  const handleUnlock = async () => {
+  const handleUnlockClick = () => {
     if (!file) {
       toast({ variant: "destructive", title: "No file selected" });
       return;
     }
-    
-    // First, check if it's even encrypted.
-    try {
-        const pdfBytes = await file.file.arrayBuffer();
-        await pdfjsLib.getDocument({data: pdfBytes}).promise;
-        // If it succeeds, it's not encrypted.
-        toast({ variant: "destructive", title: "PDF Not Encrypted", description: "This file is not password-protected." });
-    } catch(e: any) {
-        if (e.name === 'PasswordException') {
-            // It is encrypted, so ask for password.
-            setPasswordState({
-                isNeeded: true,
-                isSubmitting: false,
-                error: null,
-                onSuccess: processUnlock,
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted.' });
-        }
-    }
+    setPasswordState({ isNeeded: true, isSubmitting: false, error: null });
   };
 
   const handleCancel = () => {
     operationId.current++;
     setIsProcessing(false);
     setProgress(0);
+    setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
     toast({ title: "Processing cancelled." });
   };
   
@@ -180,12 +159,13 @@ export function UnlockPdf() {
   };
   
   const handlePasswordSubmit = (password: string) => {
-    setPasswordState(prev => ({...prev, isSubmitting: true, error: null}));
-    passwordState.onSuccess(password);
+    processUnlock(password);
   };
   
   const handlePasswordDialogClose = () => {
-      setPasswordState(prev => ({ ...prev, isNeeded: false, isSubmitting: false }));
+      if (!isProcessing) {
+        setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
+      }
   };
 
   if (result) {
@@ -216,17 +196,17 @@ export function UnlockPdf() {
           {!file ? (
             <div
               {...getRootProps()}
-              className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", !isProcessing && "hover:border-primary/50", isDragActive && "border-primary bg-primary/10", isProcessing && "opacity-70 pointer-events-none")}>
+              className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", !isProcessing && "hover:border-primary/50", isDragActive && "border-primary bg-primary/10")}>
               <input {...getInputProps()} />
               <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
               <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
+              <Button type="button" onClick={open} className="mt-4">
                 <FolderOpen className="mr-2 h-4 w-4" />Choose File
               </Button>
             </div>
           ) : (
-            <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
+            <div className="p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3 overflow-hidden">
                 <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
                 <div className="flex flex-col overflow-hidden">
@@ -234,7 +214,7 @@ export function UnlockPdf() {
                   <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -245,23 +225,9 @@ export function UnlockPdf() {
       {file && (
         <Card className="bg-white dark:bg-card shadow-lg">
           <CardContent className="p-6">
-            {isProcessing ? (
-              <div className="p-4 border rounded-lg bg-primary/5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="text-sm font-medium text-primary">Unlocking PDF...</p>
-                  </div>
-                  <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                </div>
-                <Progress value={progress} className="h-2" />
-                <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
-              </div>
-            ) : (
-              <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlock} disabled={!file || isProcessing}>
-                <UnlockIcon className="mr-2 h-5 w-5" />Unlock PDF
-              </Button>
-            )}
+            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlockClick} disabled={!file || isProcessing}>
+              <UnlockIcon className="mr-2 h-5 w-5" />Unlock PDF
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -273,7 +239,25 @@ export function UnlockPdf() {
         isSubmitting={passwordState.isSubmitting}
         error={passwordState.error}
         fileName={file?.file.name || null}
-      />
+      >
+        {isProcessing && (
+            <div className="p-4 border rounded-lg bg-primary/5 mt-4">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                        <p className="text-sm font-medium text-primary">Unlocking PDF...</p>
+                    </div>
+                    <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
+                </div>
+                <Progress value={progress} className="h-2" />
+                <div className="mt-4">
+                    <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
+                        <Ban className="mr-2 h-4 w-4" />Cancel
+                    </Button>
+                </div>
+            </div>
+        )}
+      </PasswordDialog>
     </div>
   );
 }
