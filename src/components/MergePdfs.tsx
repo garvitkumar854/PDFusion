@@ -16,6 +16,7 @@ import {
   Ban,
   Lock,
   Unlock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 
 if (typeof window !== 'undefined') {
@@ -43,9 +45,7 @@ const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 export type PDFFile = {
   id: string;
   file: File;
-  password?: string;
   isEncrypted: boolean;
-  isUnlocked: boolean;
 };
 
 type State = {
@@ -54,12 +54,6 @@ type State = {
     isMerging: boolean;
     mergeProgress: number;
     mergedPdfUrl: string | null;
-    passwordState: {
-        isNeeded: boolean;
-        isSubmitting: boolean;
-        error: string | null;
-        fileId: string | null;
-    };
     removingFileId: string | null;
 };
 
@@ -68,11 +62,6 @@ type Action =
     | { type: 'REMOVE_FILE'; fileId: string }
     | { type: 'SET_FILES_ORDER'; files: PDFFile[] }
     | { type: 'CLEAR_ALL' }
-    | { type: 'START_PASSWORD_PROMPT'; fileId: string }
-    | { type: 'CLOSE_PASSWORD_PROMPT' }
-    | { type: 'SUBMIT_PASSWORD_START' }
-    | { type: 'SUBMIT_PASSWORD_SUCCESS'; fileId: string; password: string }
-    | { type: 'SUBMIT_PASSWORD_ERROR'; error: string }
     | { type: 'MERGE_START' }
     | { type: 'MERGE_PROGRESS'; progress: number }
     | { type: 'MERGE_SUCCESS'; url: string }
@@ -88,12 +77,6 @@ const initialState: State = {
     isMerging: false,
     mergeProgress: 0,
     mergedPdfUrl: null,
-    passwordState: {
-        isNeeded: false,
-        isSubmitting: false,
-        error: null,
-        fileId: null,
-    },
     removingFileId: null,
 };
 
@@ -122,23 +105,6 @@ function reducer(state: State, action: Action): State {
             return { ...state, files: action.files };
         case 'CLEAR_ALL':
             return { ...initialState };
-        case 'START_PASSWORD_PROMPT':
-            return {
-                ...state,
-                passwordState: { isNeeded: true, fileId: action.fileId, isSubmitting: false, error: null }
-            };
-        case 'CLOSE_PASSWORD_PROMPT':
-            return { ...state, passwordState: initialState.passwordState };
-        case 'SUBMIT_PASSWORD_START':
-            return { ...state, passwordState: { ...state.passwordState, isSubmitting: true, error: null } };
-        case 'SUBMIT_PASSWORD_SUCCESS':
-            return {
-                ...state,
-                files: state.files.map(f => f.id === action.fileId ? { ...f, password: action.password, isUnlocked: true } : f),
-                passwordState: initialState.passwordState
-            };
-        case 'SUBMIT_PASSWORD_ERROR':
-            return { ...state, passwordState: { ...state.passwordState, isSubmitting: false, error: action.error } };
         case 'MERGE_START':
             return { ...state, isMerging: true, mergeProgress: 0, mergedPdfUrl: null };
         case 'MERGE_PROGRESS':
@@ -170,7 +136,7 @@ function formatBytes(bytes: number, decimals = 2) {
 
 export function MergePdfs() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, passwordState, removingFileId } = state;
+  const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, removingFileId } = state;
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
   
   const dragItem = useRef<number | null>(null);
@@ -230,7 +196,7 @@ export function MergePdfs() {
                  throw new Error(`Could not read "${file.name}". It may be corrupted.`);
               }
           }
-          return { id: `${file.name}-${Date.now()}`, file, isEncrypted, isUnlocked: !isEncrypted, password: '' };
+          return { id: `${file.name}-${Date.now()}`, file, isEncrypted };
       });
 
       try {
@@ -294,9 +260,13 @@ export function MergePdfs() {
   };
   
   const handleMerge = async () => {
-    const firstLockedFile = files.find(f => f.isEncrypted && !f.isUnlocked);
+    const firstLockedFile = files.find(f => f.isEncrypted);
     if (firstLockedFile) {
-        dispatch({ type: 'START_PASSWORD_PROMPT', fileId: firstLockedFile.id });
+        toast({
+            variant: "destructive",
+            title: "Encrypted File Detected",
+            description: `"${firstLockedFile.file.name}" is password-protected. Please use the Unlock PDF tool first.`,
+        });
         return;
     }
     
@@ -318,7 +288,7 @@ export function MergePdfs() {
 
             const pdfBytes = await pdfFile.file.arrayBuffer();
             try {
-                const sourcePdf = await PDFDocument.load(pdfBytes, { password: pdfFile.password });
+                const sourcePdf = await PDFDocument.load(pdfBytes);
                 const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
                 copiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (error: any) {
@@ -391,36 +361,8 @@ export function MergePdfs() {
     }
     dispatch({ type: 'RESET_MERGE_RESULTS' });
   };
-
-  const handlePasswordSubmit = async (password: string) => {
-    const { fileId } = passwordState;
-    if (!fileId) return;
-
-    const fileToUnlock = files.find(f => f.id === fileId);
-    if (!fileToUnlock) return;
-
-    dispatch({ type: 'SUBMIT_PASSWORD_START' });
-    
-    try {
-      const pdfBytes = await fileToUnlock.file.arrayBuffer();
-      await PDFDocument.load(pdfBytes, { password });
-      dispatch({ type: 'SUBMIT_PASSWORD_SUCCESS', fileId, password });
-    } catch (e: any) {
-      if (e.constructor.name === 'PasswordIsIncorrectError') {
-        dispatch({ type: 'SUBMIT_PASSWORD_ERROR', error: "Incorrect password. Please try again." });
-      } else {
-        console.error("PDF Read Error:", e);
-        dispatch({ type: 'SUBMIT_PASSWORD_ERROR', error: "Could not read this PDF. It may be corrupted." });
-        setTimeout(() => dispatch({ type: 'CLOSE_PASSWORD_PROMPT'}), 2000);
-      }
-    }
-  };
-
-  const handlePasswordDialogClose = () => {
-      dispatch({ type: 'CLOSE_PASSWORD_PROMPT' });
-  };
   
-  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => !f.isUnlocked);
+  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => f.isEncrypted);
 
   if (mergedPdfUrl) {
     return (
@@ -529,17 +471,10 @@ export function MergePdfs() {
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             {pdfFile.isEncrypted ? (
-                                pdfFile.isUnlocked ? (
-                                    <Badge variant="outline" className="text-green-600 border-green-600/20 bg-green-600/10">
-                                         <Unlock className="w-3.5 h-3.5 mr-1" />
-                                         Unlocked
-                                     </Badge>
-                                ) : (
-                                     <Button size="sm" variant="secondary" onClick={() => dispatch({type: 'START_PASSWORD_PROMPT', fileId: pdfFile.id })}>
-                                         <Lock className="w-3.5 h-3.5 mr-2" />
-                                         Password
-                                     </Button>
-                                )
+                                <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20">
+                                     <Lock className="w-3.5 h-3.5 mr-1" />
+                                     Locked
+                                </Badge>
                             ) : (
                                 <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
                                 <CheckCircle className="w-3.5 h-3.5 mr-1" />
@@ -560,6 +495,12 @@ export function MergePdfs() {
                         </div>
                     ))}
                 </div>
+                 {files.some(f => f.isEncrypted) && (
+                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                        <ShieldAlert className="h-5 w-5 shrink-0" />
+                        <p>One or more files are password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock them first</Link> to proceed with merging.</p>
+                    </div>
+                )}
             </CardContent>
           </Card>
         )}
@@ -604,18 +545,8 @@ export function MergePdfs() {
                         </Button>
                     )}
                 </div>
-
             </CardContent>
         </Card>
-        
-        <PasswordDialog 
-          isOpen={passwordState.isNeeded}
-          onClose={handlePasswordDialogClose}
-          onSubmit={handlePasswordSubmit}
-          isSubmitting={passwordState.isSubmitting}
-          error={passwordState.error}
-          fileName={files.find(f => f.id === passwordState.fileId)?.file.name || null}
-        />
     </div>
   );
 }

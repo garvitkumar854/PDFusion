@@ -13,7 +13,7 @@ import {
   Ban,
   RotateCw,
   Lock,
-  Unlock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { PDFDocument, degrees } from 'pdf-lib';
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
-import { PasswordDialog } from "./PasswordDialog";
+import Link from "next/link";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -39,19 +39,11 @@ type PDFFileInfo = {
   id: string;
   file: File;
   isEncrypted: boolean;
-  isUnlocked: boolean;
-  password?: string;
 };
 
 type ProcessResult = {
   url: string;
   filename: string;
-};
-
-type PasswordState = {
-  isNeeded: boolean;
-  isSubmitting: boolean;
-  error: string | null;
 };
 
 type PreviewInfo = {
@@ -78,13 +70,7 @@ export function PdfRotator() {
   const [angle, setAngle] = useState<RotationAngle>(90);
   const [preview, setPreview] = useState<PreviewInfo | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-
-  const [passwordState, setPasswordState] = useState<PasswordState>({
-    isNeeded: false,
-    isSubmitting: false,
-    error: null,
-  });
-
+  
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
@@ -98,7 +84,7 @@ export function PdfRotator() {
     return () => cleanup();
   }, [cleanup]);
   
-  const generatePreview = useCallback(async (fileToPreview: File, password?: string) => {
+  const generatePreview = useCallback(async (fileToPreview: File) => {
     const currentOperationId = ++operationId.current;
     setIsLoadingPreview(true);
     if (preview?.url) URL.revokeObjectURL(preview.url);
@@ -106,7 +92,7 @@ export function PdfRotator() {
     
     try {
         const pdfBytes = await fileToPreview.arrayBuffer();
-        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password }).promise;
+        const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         if (operationId.current !== currentOperationId) {
             pdfjsDoc.destroy();
             return;
@@ -158,7 +144,7 @@ export function PdfRotator() {
           }
       }
 
-      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted, isUnlocked: !isEncrypted });
+      setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
       if (!isEncrypted) {
           generatePreview(singleFile);
       }
@@ -178,14 +164,17 @@ export function PdfRotator() {
     cleanup();
     setFile(null);
     setResult(null);
-    setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
   };
   
-  const handleProcessOrUnlock = async () => {
+  const handleProcess = async () => {
     if (!file) return;
 
-    if (file.isEncrypted && !file.isUnlocked) {
-        setPasswordState({ isNeeded: true, isSubmitting: false, error: null });
+    if (file.isEncrypted) {
+        toast({
+            variant: "destructive",
+            title: "Encrypted File",
+            description: "Please use the 'Unlock PDF' service to remove the password before rotating.",
+        });
         return;
     }
     
@@ -197,7 +186,7 @@ export function PdfRotator() {
 
     try {
         const pdfBytes = await file.file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { password: file.password });
+        const pdfDoc = await PDFDocument.load(pdfBytes);
 
         const totalPages = pdfDoc.getPageCount();
         const pages = pdfDoc.getPages();
@@ -210,10 +199,7 @@ export function PdfRotator() {
 
         if (operationId.current !== currentOperationId) return;
         
-        // Re-encrypt if it was originally encrypted
-        const saveOptions = file.isEncrypted ? { password: file.password } : {};
-        const newPdfBytes = await pdfDoc.save(saveOptions);
-
+        const newPdfBytes = await pdfDoc.save();
         const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         
@@ -229,13 +215,7 @@ export function PdfRotator() {
     } catch (error: any) {
         if (operationId.current === currentOperationId) {
             console.error("Processing failed:", error);
-            if (error.name === 'PasswordIsIncorrectError') {
-                 // This case should ideally not be hit if unlock is separate, but as a fallback:
-                 setFile(f => f ? {...f, isUnlocked: false, password: '' } : null);
-                 setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
-            } else {
-                toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
-            }
+            toast({ variant: "destructive", title: "Processing Failed", description: error.message || "An unexpected error occurred." });
         }
     } finally {
         if (operationId.current === currentOperationId) {
@@ -253,36 +233,6 @@ export function PdfRotator() {
   
   const handleProcessAgain = () => {
     removeFile();
-  };
-  
-  const handlePasswordSubmit = async (password: string) => {
-    if (!file) return;
-
-    setPasswordState({ isNeeded: true, isSubmitting: true, error: null });
-    try {
-      const pdfBytes = await file.file.arrayBuffer();
-      // Try to load the document with the password to verify it
-      await PDFDocument.load(pdfBytes, { password: password });
-      
-      // If successful, update the state and close the dialog
-      setFile({ ...file, isUnlocked: true, password });
-      setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-      generatePreview(file.file, password);
-      toast({ title: "PDF Unlocked", description: "You can now rotate the document." });
-
-    } catch (e: any) {
-      if(e.name === 'PasswordIsIncorrectError') {
-        setPasswordState({ isNeeded: true, isSubmitting: false, error: "Incorrect password. Please try again." });
-      } else {
-        console.error("Password verification failed:", e);
-        toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred while verifying the password." });
-        setPasswordState({ isNeeded: false, isSubmitting: false, error: null });
-      }
-    }
-  };
-  
-  const handlePasswordDialogClose = () => {
-      setPasswordState(prev => ({ ...prev, isNeeded: false }));
   };
 
   if (result) {
@@ -315,8 +265,6 @@ export function PdfRotator() {
   const aspectRatio = isRotatedSideways 
     ? previewSize.height / previewSize.width 
     : previewSize.width / previewSize.height;
-
-  const buttonActionText = file?.isEncrypted && !file.isUnlocked ? 'Unlock PDF' : 'Rotate PDF';
 
   return (
     <div className="space-y-6">
@@ -356,9 +304,18 @@ export function PdfRotator() {
                 <Card className="bg-white dark:bg-card shadow-lg">
                   <CardHeader><CardTitle className="text-xl sm:text-2xl">Rotation Options</CardTitle></CardHeader>
                   <CardContent>
-                    <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
+                    {file.isEncrypted && (
+                        <div className="mb-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                            <ShieldAlert className="h-5 w-5 shrink-0" />
+                            <div>
+                                <p>This PDF is password-protected.</p>
+                                <p>Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to enable rotation.</p>
+                            </div>
+                        </div>
+                    )}
+                    <div className={cn((isProcessing || file.isEncrypted) && "opacity-50 pointer-events-none")}>
                         <Label className="font-semibold">Angle of Rotation</Label>
-                        <RadioGroup value={String(angle)} onValueChange={(v) => setAngle(Number(v) as RotationAngle)} className="mt-2 grid grid-cols-3 gap-2" disabled={isProcessing}>
+                        <RadioGroup value={String(angle)} onValueChange={(v) => setAngle(Number(v) as RotationAngle)} className="mt-2 grid grid-cols-3 gap-2" disabled={isProcessing || file.isEncrypted}>
                             <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50  transition-colors", angle === 90 && "border-primary bg-primary/5")}><RadioGroupItem value="90" className="sr-only"/><RotateCw className="w-6 h-6 mb-2"/>90°</Label>
                             <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 180 && "border-primary bg-primary/5")}><RadioGroupItem value="180" className="sr-only"/><RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(90deg)'}}/>180°</Label>
                             <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 270 && "border-primary bg-primary/5")}><RadioGroupItem value="270" className="sr-only"/><RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(180deg)'}}/>270°</Label>
@@ -376,9 +333,9 @@ export function PdfRotator() {
                           <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 h-4" />Cancel</Button></div>
                         </div>
                       ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcessOrUnlock} disabled={!file || isProcessing || isLoadingPreview}>
-                          {file.isEncrypted && !file.isUnlocked ? <Unlock className="mr-2 h-5 w-5" /> : <RotateCw className="mr-2 h-5 w-5" />}
-                          {buttonActionText}
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}>
+                          <RotateCw className="mr-2 h-5 w-5" />
+                          Rotate PDF
                         </Button>
                       )}
                     </div>
@@ -398,8 +355,8 @@ export function PdfRotator() {
                         ) : file?.isEncrypted ? (
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
                                 <Lock className="w-8 h-8 text-primary mb-4" />
-                                <p className="font-semibold">This file is password-protected.</p>
-                                <p className="text-sm">Click 'Unlock PDF' to enter the password.</p>
+                                <p className="font-semibold">Preview unavailable for locked files.</p>
+                                <p className="text-sm">Use the Unlock PDF tool to enable previews.</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground"><p>Could not load preview.</p></div>
@@ -409,14 +366,6 @@ export function PdfRotator() {
             </div>
         </div>
       )}
-       <PasswordDialog 
-          isOpen={passwordState.isNeeded}
-          onClose={handlePasswordDialogClose}
-          onSubmit={handlePasswordSubmit}
-          isSubmitting={passwordState.isSubmitting}
-          error={passwordState.error}
-          fileName={file?.file.name || null}
-        />
     </div>
   );
 }

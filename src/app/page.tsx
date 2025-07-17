@@ -1,5 +1,5 @@
 
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code } from 'lucide-react';
+import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, Unlock } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,13 @@ export default function Home() {
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
+    },
+    {
+      icon: <Unlock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Unlock PDF',
+      description: 'Remove password and encryption from your PDF files permanently.',
+      href: '/unlock-pdf'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
