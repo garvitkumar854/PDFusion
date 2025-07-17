@@ -30,6 +30,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import Link from "next/link";
+import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -88,6 +89,7 @@ const hexToRgb = (hex: string) => {
 
 export function PageNumberAdder() {
   const [file, setFile] = useState<PDFFile | null>(null);
+  const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -108,6 +110,7 @@ export function PageNumberAdder() {
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
   const [firstPagePreviewUrl, setFirstPagePreviewUrl] = useState<string | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
@@ -118,6 +121,7 @@ export function PageNumberAdder() {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setFirstPagePreviewUrl(null);
+    setUnlockedFile(null);
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -146,6 +150,7 @@ export function PageNumberAdder() {
         if (operationId.current === currentOperationId) {
             if (e.name === 'PasswordException') {
                 setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc: null as any, isEncrypted: true });
+                setIsPasswordDialogOpen(true);
             } else {
                 console.error("Failed to load PDF", e);
                 toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or an unsupported format." });
@@ -182,6 +187,7 @@ export function PageNumberAdder() {
 
   const removeFile = () => {
     setFile(null);
+    setUnlockedFile(null);
     setFirstPagePreviewUrl(null);
   };
 
@@ -197,7 +203,7 @@ export function PageNumberAdder() {
   }
   
   const drawPreview = useCallback(() => {
-    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || file.isEncrypted) return;
+    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || file.isEncrypted && !unlockedFile) return;
 
     const canvas = previewCanvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -210,7 +216,8 @@ export function PageNumberAdder() {
       ctx.drawImage(img, 0, 0);
 
       // Now draw text
-      const pageNum = getPageNumberText(startPage, file.pdfjsDoc.numPages);
+      const totalPages = file.pdfjsDoc?.numPages || 0;
+      const pageNum = getPageNumberText(startPage, totalPages);
       ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
       ctx.fillStyle = textColor;
       const textMetrics = ctx.measureText(pageNum);
@@ -239,17 +246,24 @@ export function PageNumberAdder() {
     };
     img.src = firstPagePreviewUrl;
 
-  }, [firstPagePreviewUrl, position, margin, fontSize, font, isBold, isItalic, isUnderline, startPage, formatType, customFormat, file, textColor]);
+  }, [firstPagePreviewUrl, position, margin, fontSize, font, isBold, isItalic, isUnderline, startPage, formatType, customFormat, file, textColor, unlockedFile]);
 
   useEffect(() => {
     drawPreview();
   }, [drawPreview]);
 
   const handleProcess = async () => {
-    if (!file || file.isEncrypted) {
-      toast({ variant: "destructive", title: "File not ready", description: "Please upload an unlocked PDF file to process." });
+    const fileToProcess = unlockedFile || file?.file;
+    if (!fileToProcess) {
+      toast({ variant: "destructive", title: "File not ready", description: "Please upload a PDF file to process." });
       return;
     }
+     if (file?.isEncrypted && !unlockedFile) {
+        toast({ variant: "destructive", title: "File Locked", description: "Please unlock the file first." });
+        setIsPasswordDialogOpen(true);
+        return;
+    }
+
 
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
@@ -257,8 +271,8 @@ export function PageNumberAdder() {
     setResult(null);
 
     try {
-      const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pdfBytes = await fileToProcess.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       const totalPages = pdfDoc.getPageCount();
       
       const effectiveStart = Math.max(0, startPage - 1);
@@ -359,10 +373,18 @@ export function PageNumberAdder() {
   const handleProcessAgain = () => {
     if (result) { URL.revokeObjectURL(result.url); }
     setFile(null);
+    setUnlockedFile(null);
     setResult(null);
     setFirstPagePreviewUrl(null);
   };
   
+  const onUnlockSuccess = (unlockedFile: File) => {
+    setUnlockedFile(unlockedFile);
+    setIsPasswordDialogOpen(false);
+    toast({ title: "File Unlocked!", description: "You can now add page numbers."});
+    // Regenerate preview with unlocked file
+    loadPdf(unlockedFile);
+  }
 
   if (result) {
     return (
@@ -386,8 +408,18 @@ export function PageNumberAdder() {
 
   const positions: Position[] = ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"];
 
+  const isEncrypted = file?.isEncrypted && !unlockedFile;
+
   return (
     <div className="space-y-6">
+        {file?.isEncrypted && (
+            <PasswordDialog
+                isOpen={isPasswordDialogOpen}
+                onOpenChange={setIsPasswordDialogOpen}
+                file={file.file}
+                onUnlock={onUnlockSuccess}
+            />
+        )}
       {!file && (
         <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
@@ -430,11 +462,11 @@ export function PageNumberAdder() {
                             <X className="w-4 h-4" />
                         </Button>
                     </CardHeader>
-                    {file.isEncrypted && (
+                    {isEncrypted && (
                          <CardContent>
                             <div className="mt-4 flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                                 <ShieldAlert className="h-5 w-5 shrink-0" />
-                                <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link>.</p>
+                                <p>This PDF is password-protected. <Button variant="link" className="p-0 h-auto" onClick={() => setIsPasswordDialogOpen(true)}>Click to unlock.</Button></p>
                             </div>
                         </CardContent>
                     )}
@@ -442,7 +474,7 @@ export function PageNumberAdder() {
                 <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
-                       <div className={cn(isProcessing || file.isEncrypted, "opacity-70 pointer-events-none")}>
+                       <div className={cn((isProcessing || isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold">Position</Label>
                                 <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
@@ -520,16 +552,16 @@ export function PageNumberAdder() {
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg">
-                        {isProcessing ? (
+                        {isProcessing && !unlockedFile ? (
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
                                 <p className="mt-2">Loading preview...</p>
                             </div>
-                        ) : file.isEncrypted ? (
+                        ) : isEncrypted ? (
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
                                 <Lock className="w-8 h-8 text-primary mb-4" />
                                 <p className="font-semibold">Preview unavailable for locked files.</p>
-                                <p className="text-sm">Please unlock the file first.</p>
+                                <p className="text-sm">Unlock the file to enable previews.</p>
                             </div>
                         ) : firstPagePreviewUrl ? (
                             <canvas ref={previewCanvasRef} className="max-w-full h-auto max-h-[500px] lg:max-h-[600px] object-contain shadow-md border rounded-md" />
@@ -542,7 +574,7 @@ export function PageNumberAdder() {
                 </Card>
                  <Card className="bg-white dark:bg-card shadow-lg">
                     <CardContent className="p-6">
-                        {isProcessing && !file.isEncrypted ? (
+                        {isProcessing && !unlockedFile ? (
                             <div className="p-4 border rounded-lg bg-primary/5">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -555,7 +587,7 @@ export function PageNumberAdder() {
                                 <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
                             </div>
                         ) : (
-                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
+                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || (file.isEncrypted && !unlockedFile)}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
                         )}
                     </CardContent>
                 </Card>
