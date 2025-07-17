@@ -27,31 +27,33 @@ interface PasswordDialogProps {
 export function PasswordDialog({ isOpen, onClose, onSubmit, isSubmitting, error, fileName }: PasswordDialogProps) {
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         passwordInputRef.current?.focus();
         setShowPassword(false);
+        setPasswordValue("");
       }, 100);
     }
   }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInputRef.current?.value) {
-      onSubmit(passwordInputRef.current.value);
+    if (passwordValue) {
+      onSubmit(passwordValue);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-[90vw] sm:max-w-md rounded-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Password Required</DialogTitle>
             <DialogDescription>
-              The file <span className="font-semibold text-foreground">{fileName}</span> is password protected.
+              The file <span className="font-semibold text-foreground truncate">{fileName}</span> is password protected.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -63,6 +65,8 @@ export function PasswordDialog({ isOpen, onClose, onSubmit, isSubmitting, error,
                  <Input
                     id="password-input"
                     ref={passwordInputRef}
+                    value={passwordValue}
+                    onChange={(e) => setPasswordValue(e.target.value)}
                     type={showPassword ? "text" : "password"}
                     className="pr-10"
                 />
@@ -72,6 +76,7 @@ export function PasswordDialog({ isOpen, onClose, onSubmit, isSubmitting, error,
                   size="icon" 
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowPassword(p => !p)}
+                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -83,7 +88,7 @@ export function PasswordDialog({ isOpen, onClose, onSubmit, isSubmitting, error,
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !passwordValue}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Unlock
             </Button>
