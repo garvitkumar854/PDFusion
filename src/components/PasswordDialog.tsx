@@ -30,44 +30,39 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async () => {
+    if (!password) {
+      setError('Password cannot be empty.');
+      return;
+    }
+    
     setIsSubmitting(true);
     setError(null);
 
     try {
       const pdfBytes = await file.arrayBuffer();
-      let pdfDoc;
+      // Attempt to load the document with the provided password.
+      const pdfDoc = await PDFDocument.load(pdfBytes, { 
+        password,
+        ignoreEncryption: false // Ensure it strictly uses the password
+      });
 
-      try {
-        pdfDoc = await PDFDocument.load(pdfBytes, { password });
-      } catch (e: any) {
-        if (e.name === 'PasswordIsIncorrectError') {
-          setError('Incorrect password. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // If it's another error, try loading without a password just in case.
-        // This handles files incorrectly flagged as encrypted.
-        try {
-            pdfDoc = await PDFDocument.load(pdfBytes);
-            toast({ title: "This PDF was not encrypted.", description: "Proceeding with the original file." });
-        } catch (finalError) {
-             throw new Error('Could not load the PDF. It may be corrupted or in an unsupported format.');
-        }
-      }
-
-      // Re-save the document to remove encryption.
+      // If successful, re-save the document to remove encryption.
       const unlockedPdfBytes = await pdfDoc.save();
       const unlockedFile = new File([unlockedPdfBytes], file.name, { type: 'application/pdf' });
 
       onUnlock(pdfDoc, unlockedFile);
       onOpenChange(false);
-      
+
     } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred.');
+        // This is the most reliable way to check for an incorrect password.
+        if (e.name === 'PasswordIsIncorrectError') {
+            setError('Incorrect password. Please try again.');
+        } else {
+            console.error("PDF Unlock Error:", e);
+            setError('Could not load the PDF. It may be corrupted or in an unsupported format.');
+        }
     } finally {
       setIsSubmitting(false);
     }
@@ -76,9 +71,19 @@ export function PasswordDialog({ isOpen, onOpenChange, file, onUnlock }: Passwor
   const handleClose = () => {
     if (isSubmitting) return;
     onOpenChange(false);
+    // Reset state when closing
     setPassword('');
     setError(null);
   }
+
+  // Reset state when a new file is passed in (dialog reopens)
+  React.useEffect(() => {
+    if (isOpen) {
+        setPassword('');
+        setError(null);
+        setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
