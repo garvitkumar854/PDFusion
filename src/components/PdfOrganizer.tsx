@@ -23,6 +23,8 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 import Link from "next/link";
+import { PasswordDialog } from "./PasswordDialog";
+
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -53,6 +55,8 @@ export function PdfOrganizer() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  const [passwordFile, setPasswordFile] = useState<File | null>(null);
+
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -88,7 +92,7 @@ export function PdfOrganizer() {
     return undefined;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File) => {
+  const loadPdf = useCallback(async (fileToLoad: File, unlockedPdfBytes?: ArrayBuffer) => {
     const currentOperationId = ++operationId.current;
     
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
@@ -97,7 +101,7 @@ export function PdfOrganizer() {
     setIsLoading(true);
 
     try {
-      const pdfBytes = await fileToLoad.arrayBuffer();
+      const pdfBytes = unlockedPdfBytes || await fileToLoad.arrayBuffer();
       const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) });
       const pdfjsDoc = await loadingTask.promise; 
 
@@ -132,6 +136,7 @@ export function PdfOrganizer() {
                 totalPages: 0,
                 isEncrypted: true,
             })
+            setPasswordFile(fileToLoad);
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -149,6 +154,15 @@ export function PdfOrganizer() {
     const singleFile = acceptedFiles[0];
     loadPdf(singleFile);
   }, [loadPdf]);
+
+  const onUnlockSuccess = async (unlockedDoc: PDFDocument) => {
+      const unlockedBytes = await unlockedDoc.save();
+      if (passwordFile) {
+        loadPdf(passwordFile, unlockedBytes);
+        toast({ title: 'File Unlocked', description: `You can now organize "${passwordFile.name}".`});
+      }
+      setPasswordFile(null);
+  };
   
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -235,7 +249,7 @@ export function PdfOrganizer() {
     setIsSaving(true);
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfLibDoc = await PDFDocument.load(pdfBytes);
+      const pdfLibDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
       
       const newPdfDoc = await PDFDocument.create();
       
@@ -283,6 +297,14 @@ export function PdfOrganizer() {
 
   return (
     <div className="space-y-6">
+        {passwordFile && (
+            <PasswordDialog
+                isOpen={!!passwordFile}
+                onOpenChange={(isOpen) => !isOpen && setPasswordFile(null)}
+                file={passwordFile}
+                onUnlock={onUnlockSuccess}
+            />
+        )}
       {!file && !isLoading ? (
         <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
@@ -337,9 +359,9 @@ export function PdfOrganizer() {
                 </CardHeader>
                 {file?.isEncrypted && (
                     <CardContent className="p-4 pt-0">
-                         <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                         <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to organize its pages.</p>
+                            <div>This PDF is password-protected. <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setPasswordFile(file.file)}>Click here to unlock.</Button></div>
                         </div>
                     </CardContent>
                 )}
