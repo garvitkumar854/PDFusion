@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import AnimatedHeadline from '@/components/AnimatedHeadline';
+import { TypewriterEffect } from '@/components/TypewriterEffect';
 
 export default function Home() {
 
@@ -99,6 +99,25 @@ export default function Home() {
     },
   ];
 
+  const typewriterWords = [
+    {
+      text: "Powerful",
+    },
+    {
+      text: "PDF",
+    },
+    {
+      text: "Tools,",
+    },
+    {
+      text: "made",
+    },
+    {
+      text: "Simple.",
+      className: "text-primary dark:text-primary",
+    },
+  ];
+
   return (
     <>
       <section className="py-20 md:py-32">
@@ -110,12 +129,8 @@ export default function Home() {
             <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               ✨ Your All-in-One PDF Toolkit
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
-              Powerful PDF Tools,
-              <br />
-              <AnimatedHeadline />
-            </h1>
-            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
+             <TypewriterEffect words={typewriterWords} />
+            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8 mt-4">
               Easily merge, convert, and manage your PDF files in one place.
               <br />
               Secure, reliable, and completely free to use.
