@@ -1,7 +1,7 @@
+
+'use client';
+
 import PdfLoader from '@/components/PdfLoader';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 
 export default function MergerPage() {

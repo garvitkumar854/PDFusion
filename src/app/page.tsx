@@ -226,39 +226,45 @@ export default function Home() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <div className="bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-left-12"
-                className="duration-700 w-full lg:w-auto"
-              >
-                <div className="text-center lg:text-left">
-                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-                    <Wand2 className="w-4 h-4" />
-                    Ready to get started?
+          <AnimateOnScroll
+              animation="animate-in fade-in-0 zoom-in-95"
+              className="duration-700"
+          >
+            <div className="relative bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden shadow-xl border-primary/20">
+              <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
+                <AnimateOnScroll
+                  animation="animate-in fade-in-0 slide-in-from-left-12"
+                  className="duration-700 w-full"
+                >
+                  <div className="lg:max-w-xl">
+                    <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                      <Wand2 className="w-4 h-4" />
+                      Ready to get started?
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
+                      Try our <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDF Tools now</span>
+                    </h2>
+                    <p className="text-muted-foreground text-base">
+                      Start working with your PDF files now. No registration required, completely free, and secure.
+                    </p>
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-                    Try our <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDF Tools now</span>
-                  </h2>
-                  <p className="max-w-xl text-muted-foreground text-base">
-                    Start working with your PDF files now. No registration required, completely free, and secure.
-                  </p>
-                </div>
-              </AnimateOnScroll>
-              <AnimateOnScroll
-                animation="animate-in fade-in-0 slide-in-from-right-12"
-                className="duration-700 w-full lg:w-auto"
-              >
-                <div className="flex-shrink-0">
-                  <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg hover:scale-105 transition-all group">
-                    <Link href="#services">
-                      Explore PDF Tools <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    </Link>
-                  </Button>
-                </div>
-              </AnimateOnScroll>
+                </AnimateOnScroll>
+                <AnimateOnScroll
+                  animation="animate-in fade-in-0 slide-in-from-right-12"
+                  className="duration-700 w-full lg:w-auto"
+                >
+                  <div className="flex-shrink-0">
+                    <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg hover:scale-105 transition-all group">
+                      <Link href="#services">
+                        Explore PDF Tools <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                      </Link>
+                    </Button>
+                  </div>
+                </AnimateOnScroll>
+              </div>
             </div>
-          </div>
+          </AnimateOnScroll>
         </div>
       </section>
     </>

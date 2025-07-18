@@ -1,3 +1,6 @@
+
+'use client';
+
 import PdfToJpgLoader from '@/components/PdfToJpgLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 

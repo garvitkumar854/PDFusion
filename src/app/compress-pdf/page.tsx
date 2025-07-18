@@ -1,3 +1,6 @@
+
+'use client';
+
 import PdfCompressorLoader from '@/components/PdfCompressorLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 
