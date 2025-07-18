@@ -55,10 +55,10 @@ const AnimatedHeadline = () => {
   const currentWord = words[wordIndex];
 
   return (
-    <span className="relative inline-block h-16 sm:h-20 md:h-24">
+    <span className="relative inline-flex items-center justify-center h-16 sm:h-20 md:h-24 w-full">
        <span
           className={cn(
-            "bg-gradient-to-r bg-clip-text text-transparent absolute left-0 top-0",
+            "bg-gradient-to-r bg-clip-text text-transparent whitespace-nowrap",
             currentWord.className,
             animationClass
           )}
