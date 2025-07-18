@@ -31,7 +31,10 @@ const RotatingWords: React.FC<RotatingWordsProps> = ({ words, colors, className 
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.5, ease: 'easeInOut' }}
         className={cn("inline-block", className)}
-        style={{ color: colors[index % colors.length] }}
+        style={{ 
+            color: colors[index % colors.length],
+            willChange: 'transform, opacity' // Performance optimization
+        }}
       >
         {words[index]}
       </motion.span>
