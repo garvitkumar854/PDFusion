@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import AnimatedHeadline from '@/components/AnimatedHeadline';
 
 export default function Home() {
 
@@ -112,9 +113,7 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
               Powerful PDF Tools,
               <br />
-              <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                Made Simple
-              </span>
+              <AnimatedHeadline />
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
               Easily merge, convert, and manage your PDF files in one place.
