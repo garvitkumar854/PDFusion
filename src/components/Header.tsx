@@ -17,7 +17,6 @@ import {
   SheetContent,
   SheetTitle,
   SheetTrigger,
-  SheetClose
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -172,11 +171,6 @@ export default function Header() {
                                     </span>
                                     </h1>
                                 </Link>
-                                <SheetClose asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                                        <X className="h-5 w-5" />
-                                    </Button>
-                                </SheetClose>
                             </div>
                             <nav className="flex flex-col gap-6 items-start px-2 mb-6">
                                 {navLinks.map((link) => (
