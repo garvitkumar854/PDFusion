@@ -1,15 +1,14 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { Poppins } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import Header from '@/components/Header';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import FooterLoader from '@/components/FooterLoader';
 
-const poppins = Poppins({ 
+const inter = Inter({ 
   subsets: ['latin'], 
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '800', '900']
+  variable: '--font-sans'
 })
 
 export const metadata: Metadata = {
@@ -26,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poppins.variable} suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
         <ThemeProvider
             attribute="class"
