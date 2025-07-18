@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ThemeToggler } from './ThemeToggler';
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -149,7 +150,8 @@ export default function Header() {
           <NavLink href="/contact" label="Contact" currentPath={pathname} />
         </nav>
 
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end items-center gap-2">
+            <ThemeToggler />
             <div className="md:hidden">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                     <SheetTrigger asChild>
