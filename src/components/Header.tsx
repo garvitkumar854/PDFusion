@@ -105,16 +105,18 @@ export default function Header() {
   return (
     <header className="py-4 border-b bg-background/80 sticky top-0 z-50 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <PdfFusionLogo />
-          <h1 className="text-xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-              PDFusion
-            </span>
-          </h1>
-        </Link>
+        <div className="flex-1 flex justify-start">
+            <Link href="/" className="flex items-center gap-2">
+            <PdfFusionLogo />
+            <h1 className="text-xl font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                PDFusion
+                </span>
+            </h1>
+            </Link>
+        </div>
         
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8 justify-center">
           <NavLink href="/" label="Home" currentPath={pathname} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -147,53 +149,55 @@ export default function Header() {
           <NavLink href="/contact" label="Contact" currentPath={pathname} />
         </nav>
 
-        <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Open menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="top" className="h-auto p-0">
-                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                    <div className="p-6 flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-6">
-                            <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                                <PdfFusionLogo />
-                                <h1 className="text-xl font-bold tracking-tight">
-                                  <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                                    PDFusion
-                                  </span>
-                                </h1>
-                            </Link>
-                            <SheetClose asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </SheetClose>
-                        </div>
-                        <nav className="flex flex-col gap-6 items-start px-2 mb-6">
-                             {navLinks.map((link) => (
-                                <MobileNavLink 
-                                  key={link.href + link.label} 
-                                  href={link.href} 
-                                  label={link.label} 
-                                  currentPath={pathname} 
-                                  onClick={() => setIsOpen(false)} 
-                                />
-                            ))}
-                            <div className="text-lg font-semibold text-foreground">Services</div>
-                            {services.map((service) => (
-                                <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4">
-                                     {service.icon}
-                                    {service.label}
+        <div className="flex-1 flex justify-end">
+            <div className="md:hidden">
+                <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu className="h-6 w-6" />
+                            <span className="sr-only">Open menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="top" className="h-auto p-0">
+                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                        <div className="p-6 flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-6">
+                                <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+                                    <PdfFusionLogo />
+                                    <h1 className="text-xl font-bold tracking-tight">
+                                    <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                                        PDFusion
+                                    </span>
+                                    </h1>
                                 </Link>
-                            ))}
-                        </nav>
-                    </div>
-                </SheetContent>
-            </Sheet>
+                                <SheetClose asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                        <X className="h-5 w-5" />
+                                    </Button>
+                                </SheetClose>
+                            </div>
+                            <nav className="flex flex-col gap-6 items-start px-2 mb-6">
+                                {navLinks.map((link) => (
+                                    <MobileNavLink 
+                                    key={link.href + link.label} 
+                                    href={link.href} 
+                                    label={link.label} 
+                                    currentPath={pathname} 
+                                    onClick={() => setIsOpen(false)} 
+                                    />
+                                ))}
+                                <div className="text-lg font-semibold text-foreground">Services</div>
+                                {services.map((service) => (
+                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4">
+                                        {service.icon}
+                                        {service.label}
+                                    </Link>
+                                ))}
+                            </nav>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            </div>
         </div>
       </div>
     </header>
