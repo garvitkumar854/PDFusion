@@ -1,0 +1,21 @@
+{
+  "name": "PDFusion",
+  "short_name": "PDFusion",
+  "description": "Merge and manage your PDF files with ease.",
+  "icons": [
+    {
+      "src": "/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#5e4dff",
+  "background_color": "#040B1D",
+  "start_url": "/",
+  "display": "standalone"
+}

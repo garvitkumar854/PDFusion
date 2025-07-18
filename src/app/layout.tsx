@@ -15,6 +15,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'PDFusion',
   description: 'Merge and manage your PDF files with ease.',
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.png?v=2',
   }
