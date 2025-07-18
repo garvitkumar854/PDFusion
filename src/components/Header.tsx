@@ -38,6 +38,7 @@ const services = [
     { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
     { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
     { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
+    { href: "/unlock-pdf", label: "Unlock PDF", icon: <Unlock className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
@@ -172,7 +173,7 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-4 items-start px-2 mb-6">
+                            <nav className="flex flex-col gap-3 items-start px-2 mb-6">
                                 {navLinks.map((link) => (
                                     <MobileNavLink 
                                     key={link.href + link.label} 
@@ -182,7 +183,7 @@ export default function Header() {
                                     onClick={() => setIsOpen(false)} 
                                     />
                                 ))}
-                                <div className="text-lg font-semibold text-foreground">Services</div>
+                                <div className="text-lg font-semibold text-foreground pt-2">Services</div>
                                 {services.map((service) => (
                                     <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4">
                                         {service.icon}

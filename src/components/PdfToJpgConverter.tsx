@@ -42,7 +42,7 @@ type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy | null;
   isEncrypted: boolean;
 };
 
@@ -250,7 +250,7 @@ export function PdfToJpgConverter() {
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
-    if (!file || isConverting || file.isEncrypted) return;
+    if (!file || isConverting || file.isEncrypted || !file.pdfjsDoc) return;
     const currentOperationId = operationId.current;
 
     setPagePreviews(prev => {
@@ -262,7 +262,7 @@ export function PdfToJpgConverter() {
         const newPreviews = [...prev];
         newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
         
-        renderPdfPage(file.pdfjsDoc, pageNumber, currentOperationId, 0.5).then(dataUrl => {
+        renderPdfPage(file.pdfjsDoc!, pageNumber, currentOperationId, 0.5).then(dataUrl => {
             if (dataUrl && operationId.current === currentOperationId) {
                 setPagePreviews(currentPreviews => {
                     const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
@@ -300,8 +300,8 @@ export function PdfToJpgConverter() {
   };
   
   const handleConvert = async () => {
-    if (!file || file.isEncrypted) {
-        setError("Please unlock the PDF file first.");
+    if (!file || file.isEncrypted || !file.pdfjsDoc) {
+        setError("Please upload an unlocked PDF file first.");
         return;
     }
     if (selectedPages.size === 0) {
@@ -309,7 +309,6 @@ export function PdfToJpgConverter() {
         return;
     }
     
-    // Increment operationId at the start to stop background rendering
     const currentOperationId = ++operationId.current;
 
     setIsConverting(true);
@@ -326,14 +325,12 @@ export function PdfToJpgConverter() {
             if (operationId.current !== currentOperationId) break;
             const pageNum = pagesToConvert[i];
             
-            // Re-render at higher quality for final output
             const dataUrl = await renderPdfPage(file.pdfjsDoc, pageNum, currentOperationId, 2.0); // Higher scale for quality
             if(dataUrl) {
                 const blob = await (await fetch(dataUrl)).blob();
                 const filename = `${file.file.name.replace(/\.pdf$/i, '')}_page_${pageNum}.jpg`;
                 zip.file(filename, blob);
                 
-                // Keep a URL for the single download case
                 if (totalToConvert === 1) {
                     results.push({ filename, url: URL.createObjectURL(blob) });
                 }

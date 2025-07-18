@@ -66,18 +66,19 @@ export function PdfToHtmlConverter() {
       const singleFile = acceptedFiles[0];
       if (singleFile) {
         setResult(null);
-        
+        let isEncrypted = false;
         try {
             const pdfBytes = await singleFile.arrayBuffer();
             await pdfjsLib.getDocument({data: pdfBytes}).promise;
-            setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: false });
         } catch (e: any) {
             if (e.name === 'PasswordException') {
-                setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted: true });
+                isEncrypted = true;
             } else {
                 toast({ variant: 'destructive', title: 'Invalid PDF', description: 'This file may be corrupted.' });
+                return;
             }
         }
+        setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
       }
     }, [toast]);
 
@@ -96,7 +97,9 @@ export function PdfToHtmlConverter() {
   };
   
   const processConversion = async () => {
-    if (!file || file.isEncrypted) {
+    if (!file) return;
+
+    if (file.isEncrypted) {
       toast({ variant: 'destructive', title: 'File Encrypted', description: 'Please unlock the PDF first before converting.'});
       return;
     }

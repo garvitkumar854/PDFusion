@@ -53,6 +53,13 @@ const services = [
       href: '/jpg-to-pdf'
     },
     {
+      icon: <Unlock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Unlock PDF',
+      description: 'Remove passwords from encrypted PDF files so you can edit them.',
+      href: '/unlock-pdf'
+    },
+    {
       icon: <Code className="w-6 h-6 sm:w-8 sm:h-8 text-lime-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-lime-100 dark:bg-lime-900/20',
       title: 'PDF to HTML',
