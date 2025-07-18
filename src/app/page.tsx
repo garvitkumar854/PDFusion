@@ -1,11 +1,11 @@
 
-import { ArrowRight, Wand2, ArrowUpRight, FileText, Combine, ShieldCheck, Zap, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, Unlock } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, Unlock, ShieldCheck, FileText, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import { TypewriterEffect } from '@/components/TypewriterEffect';
+import RotatingWords from '@/components/RotatingWords';
 
 export default function Home() {
 
@@ -99,25 +99,6 @@ export default function Home() {
     },
   ];
 
-  const typewriterWords = [
-    {
-      text: "Powerful",
-    },
-    {
-      text: "PDF",
-    },
-    {
-      text: "Tools,",
-    },
-    {
-      text: "made",
-    },
-    {
-      text: "Simple.",
-      className: "text-primary dark:text-primary",
-    },
-  ];
-
   return (
     <>
       <section className="py-20 md:py-32">
@@ -129,7 +110,14 @@ export default function Home() {
             <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               ✨ Your All-in-One PDF Toolkit
             </div>
-             <TypewriterEffect words={typewriterWords} />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
+              Powerful PDF Tools,
+              <br />
+              <RotatingWords 
+                words={["Simple.", "Secure.", "Fast.", "Free."]}
+                colors={["#5e4dff", "#00F0B5", "#F61067", "#5E239D"]}
+              />
+            </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8 mt-4">
               Easily merge, convert, and manage your PDF files in one place.
               <br />
@@ -240,44 +228,31 @@ export default function Home() {
 
       <section className="pb-20 md:pb-32">
         <div className="container mx-auto px-4">
-          <AnimateOnScroll
-              animation="animate-in fade-in-0 zoom-in-95"
-              className="duration-700"
-          >
-            <div className="relative bg-card border rounded-2xl p-8 lg:p-10 overflow-hidden shadow-xl border-primary/20">
-              <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
-              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
-                <AnimateOnScroll
-                  animation="animate-in fade-in-0 slide-in-from-left-12"
-                  className="duration-700 w-full"
-                >
-                  <div className="lg:max-w-xl">
-                    <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-                      <Wand2 className="w-4 h-4" />
-                      Ready to get started?
+           <AnimateOnScroll
+                animation="animate-in fade-in-0 zoom-in-95"
+                className="duration-700"
+            >
+              <div className="relative bg-white dark:bg-card rounded-2xl p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20">
+                <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
+                    <div className="w-full">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
+                        Ready to <span className="text-primary">Streamline</span> Your PDFs?
+                      </h2>
+                      <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
+                        Experience the simplicity and security of PDFusion for yourself.
+                      </p>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-                      Try our <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">PDF Tools now</span>
-                    </h2>
-                    <p className="text-muted-foreground text-base">
-                      Start working with your PDF files now. No registration required, completely free, and secure.
-                    </p>
-                  </div>
-                </AnimateOnScroll>
-                <AnimateOnScroll
-                  animation="animate-in fade-in-0 slide-in-from-right-12"
-                  className="duration-700 w-full lg:w-auto"
-                >
-                  <div className="flex-shrink-0">
-                    <Button asChild size="lg" className="font-bold text-base w-full sm:w-auto shadow-md hover:shadow-lg hover:scale-105 transition-all group">
+                  <div className="flex-shrink-0 w-full sm:w-auto">
+                    <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
                       <Link href="#services">
-                        Explore PDF Tools <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        Explore Services
+                        <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                       </Link>
                     </Button>
                   </div>
-                </AnimateOnScroll>
+                </div>
               </div>
-            </div>
           </AnimateOnScroll>
         </div>
       </section>
