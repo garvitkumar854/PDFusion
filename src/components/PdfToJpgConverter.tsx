@@ -28,6 +28,7 @@ import { Progress } from "./ui/progress";
 import JSZip from 'jszip';
 import { Label } from "./ui/label";
 import Link from "next/link";
+import { PDFDocument } from "pdf-lib";
 
 
 // Set worker path for pdf.js
@@ -200,6 +201,7 @@ export function PdfToJpgConverter() {
     let isEncrypted = false;
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
+        await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); // Test with pdf-lib for encryption
         const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         const totalPages = pdfjsDoc.numPages;
 

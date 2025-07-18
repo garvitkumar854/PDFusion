@@ -139,6 +139,7 @@ export function PdfRotator() {
           const pdfBytes = await singleFile.arrayBuffer();
           // Use pdfjs-dist to check for encryption, as it's more reliable for this purpose
           try {
+             await PDFDocument.load(pdfBytes, {ignoreEncryption: true});
              await pdfjsLib.getDocument({ data: pdfBytes }).promise;
           } catch(e: any) {
              if (e.name === 'PasswordException') {
