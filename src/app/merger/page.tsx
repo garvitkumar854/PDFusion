@@ -17,21 +17,6 @@ export default function MergerPage() {
             <br />
             <span className="relative inline-block">
               <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Ease</span>
-              <svg
-                className="absolute -bottom-2 left-0 w-full"
-                viewBox="0 0 100 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                preserveAspectRatio="none"
-              >
-                <path
-                  d="M1 10.3c15.2-4.1 31.4-6.3 47.7-6.3 16.3 0 32.5 2.2 47.7 6.3"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
             </span>
           </h1>
           <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
