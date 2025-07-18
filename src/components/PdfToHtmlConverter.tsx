@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
-import Link from "next/link";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -98,11 +97,6 @@ export function PdfToHtmlConverter() {
   
   const processConversion = async () => {
     if (!file) return;
-
-    if (file.isEncrypted) {
-      toast({ variant: 'destructive', title: 'File Encrypted', description: 'Please unlock the PDF first before converting.'});
-      return;
-    }
     
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
@@ -112,7 +106,7 @@ export function PdfToHtmlConverter() {
 
     try {
       const pdfBytes = await file.file.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: '' }).promise;
       const totalPages = pdfjsDoc.numPages;
 
       let htmlContent = `<!DOCTYPE html>
@@ -287,9 +281,10 @@ export function PdfToHtmlConverter() {
                     {file.isEncrypted ? (
                          <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <p>This PDF is password-protected. Please <Link href="/unlock-pdf" className="font-semibold underline hover:text-destructive/80">unlock it first</Link> to enable conversion.</p>
+                            <p>This tool may not work correctly with encrypted PDFs. Results may vary.</p>
                         </div>
-                    ) : isProcessing ? (
+                    ) : null}
+                    {isProcessing ? (
                         <div className="p-4 border rounded-lg bg-primary/5">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -302,7 +297,7 @@ export function PdfToHtmlConverter() {
                             <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
                         </div>
                     ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing || file.isEncrypted}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
+                        <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
                     )}
                 </CardContent>
             </Card>

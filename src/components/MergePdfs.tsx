@@ -434,7 +434,7 @@ export function MergePdfs() {
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
-                            <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
+                            <p>Remaining space: {formatBytes(totalSize)}</p>
                         </div>
                     </div>
                 </div>
