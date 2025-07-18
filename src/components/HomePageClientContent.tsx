@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import RotatingWords from '@/components/RotatingWords';
 
 const services = [
     {
@@ -98,7 +99,48 @@ const futureFeatures = [
     },
 ];
 
-export default function HomePageClientContent() {
+export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
+    if (!showServices) {
+        return (
+            <RotatingWords 
+                words={[
+                  "Effortless.",
+                  "Secure.",
+                  "Blazing Speed.",
+                  "Always Free.",
+                  "Privacy First.",
+                  "User-Friendly.",
+                  "Modern.",
+                  "Reliable.",
+                  "Instant Magic.",
+                  "Total Control.",
+                  "Private & Safe.",
+                  "Zero Hassle.",
+                  "Save Time.",
+                  "No Signup.",
+                  "Trusted."
+                ]}
+                colors={[
+                  "#F61067", // Pink
+                  "#00F0B5", // Mint Green
+                  "#2563EB", // Blue
+                  "#5E239D", // Purple
+                  "#F97316", // Orange
+                  "#14b8a6", // Teal
+                  "#f59e0b", // Amber
+                  "#ef4444", // Red
+                  "#8b5cf6", // Violet
+                  "#3b82f6", // Blue 500
+                  "#22c55e", // Green 500
+                  "#ec4899", // Pink 500
+                  "#6366f1", // Indigo 500
+                  "#d946ef", // Fuchsia 500
+                  "#06b6d4"  // Cyan 500
+                ]}
+              />
+        );
+    }
+    
     return (
         <>
             <section id="services" className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
