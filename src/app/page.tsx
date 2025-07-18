@@ -114,8 +114,8 @@ export default function Home() {
               Powerful PDF Tools,
               <br />
               <RotatingWords 
-                words={["Simple.", "Secure.", "Fast.", "Free."]}
-                colors={["#5e4dff", "#00F0B5", "#F61067", "#5E239D"]}
+                words={["Effortless.", "Secure.", "Blazing Fast.", "Always Free.", "Privacy First."]}
+                colors={["#F61067", "#00F0B5", "#2563EB", "#5E239D", "#F97316"]}
               />
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8 mt-4">
