@@ -61,15 +61,6 @@
 }
 
 @layer utilities {
-  @keyframes typing {
-    from {
-      width: 0;
-    }
-    to {
-      width: 100%;
-    }
-  }
-
   @keyframes blink-caret {
     from,
     to {
@@ -80,22 +71,59 @@
     }
   }
 
-  .animate-typing {
-    animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
-  }
-  
-  @keyframes fade-in-up {
+  @keyframes slide-in-from-bottom {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-
-  .animate-fade-in-up {
-    animation: fade-in-up 0.5s ease-out forwards;
+  .animate-slide-in-from-bottom {
+    animation: slide-in-from-bottom 0.5s ease-out forwards;
+  }
+  
+  @keyframes slide-in-from-top {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-slide-in-from-top {
+    animation: slide-in-from-top 0.5s ease-out forwards;
+  }
+  
+  @keyframes slide-in-from-left {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .animate-slide-in-from-left {
+    animation: slide-in-from-left 0.5s ease-out forwards;
+  }
+  
+  @keyframes slide-in-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .animate-slide-in-from-right {
+    animation: slide-in-from-right 0.5s ease-out forwards;
   }
 }
