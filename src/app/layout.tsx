@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: 'Merge and manage your PDF files with ease.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.png?v=2',
+    icon: '/icon-192x192.png',
   }
 };
 
