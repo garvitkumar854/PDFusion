@@ -1,12 +1,11 @@
-
 "use client";
 
 import dynamic from 'next/dynamic';
 import { Skeleton } from './ui/skeleton';
 
-// Use a dynamic import with ssr: false to ensure the editor component is only loaded on the client side.
-// This is the most robust way to prevent SSR-related errors with canvas/fabric.js libraries.
-const PdfEditorComponent = dynamic(() => import('@/components/PdfEditor'), {
+// Dynamically import the editor component with SSR turned off.
+// This is the correct and robust way to prevent server-side rendering issues with client-only libraries like fabric.js.
+const PdfEditorComponent = dynamic(() => import('@/components/PdfEditorComponent'), {
   ssr: false,
   loading: () => (
      <div className="space-y-6">

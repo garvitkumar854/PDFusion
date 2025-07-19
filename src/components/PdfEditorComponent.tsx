@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -21,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument, rgb, StandardFonts, PageSizes, PDFFont } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 import { PasswordDialog } from "./PasswordDialog";
@@ -48,7 +47,7 @@ type EditMode = 'select' | 'text' | 'image' | 'shape';
 // Store objects per page
 type EditorObjects = Record<number, any>;
 
-export default function PdfEditor() {
+export default function PdfEditorComponent() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -384,30 +383,32 @@ export default function PdfEditor() {
 
   if (!file && !isLoading) {
     return (
-      <div {...getRootProps()} className="max-w-lg mx-auto">
-        <input {...getInputProps()} />
-        <Card className="bg-white dark:bg-card shadow-lg cursor-pointer">
-            <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">PDF Editor</CardTitle>
-                <CardDescription>Upload a PDF to start editing.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <div
-                className={cn(
-                "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                "hover:border-primary/50"
-                )}
-            >
-                <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-                <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
-                <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
-                    <FolderOpen className="mr-2 h-4 w-4" />Choose File
-                </Button>
-            </div>
-            </CardContent>
-        </Card>
-         <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
+      <div className="max-w-lg mx-auto">
+        <div {...getRootProps()}>
+            <input {...getInputProps()} />
+            <Card className="bg-white dark:bg-card shadow-lg cursor-pointer">
+                <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">PDF Editor</CardTitle>
+                    <CardDescription>Upload a PDF to start editing.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div
+                    className={cn(
+                    "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
+                    "hover:border-primary/50"
+                    )}
+                >
+                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
+                        <FolderOpen className="mr-2 h-4 w-4" />Choose File
+                    </Button>
+                </div>
+                </CardContent>
+            </Card>
+        </div>
+        <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
       </div>
     );
   }
