@@ -276,6 +276,7 @@ export function PdfEditor() {
         reader.readAsDataURL(file);
     }
     setEditMode('select');
+    e.target.value = ''; // Reset file input
   };
 
   const addShape = () => {
@@ -324,60 +325,35 @@ export function PdfEditor() {
             if (!pageData || !pageData.objects || pageData.objects.length === 0) continue;
 
             const page = pdfDoc.getPage(pageNum - 1);
-            const { width: pageWidth, height: pageHeight } = page.getSize();
-            const fabricCanvas = new fabric.StaticCanvas(null, { width: pageData.width, height: pageData.height });
+            
+            // Create a temporary canvas to render Fabric objects
+            const tempCanvas = document.createElement('canvas');
+            const tempFabricCanvas = new fabric.StaticCanvas(tempCanvas, {
+              width: pageData.width,
+              height: pageData.height,
+            });
 
             await new Promise<void>((resolve) => {
-              fabricCanvas.loadFromJSON(pageData, () => {
-                  fabricCanvas.renderAll();
+              tempFabricCanvas.loadFromJSON(pageData, () => {
+                  tempFabricCanvas.renderAll();
                   resolve();
               });
             });
 
-            const scaleX = pageWidth / fabricCanvas.getWidth();
-            const scaleY = pageHeight / fabricCanvas.getHeight();
+            // Get the image data from the temporary canvas
+            const dataUrl = tempFabricCanvas.toDataURL({ format: 'png' });
+            const overlayImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
+            const overlayImage = await pdfDoc.embedPng(overlayImageBytes);
 
-            for (const obj of fabricCanvas.getObjects()) {
-                const objScaleX = obj.scaleX || 1;
-                const objScaleY = obj.scaleY || 1;
-                const left = obj.left || 0;
-                const top = obj.top || 0;
+            // Overlay the image onto the PDF page
+            page.drawImage(overlayImage, {
+                x: 0,
+                y: 0,
+                width: page.getWidth(),
+                height: page.getHeight(),
+            });
 
-                if (obj.type === 'textbox') {
-                    const textObj = obj as fabric.Textbox;
-                    page.drawText(textObj.text || '', {
-                        x: left * scaleX,
-                        y: pageHeight - (top + (textObj.height || 0) * objScaleY) * scaleY,
-                        font: helveticaFont,
-                        size: (textObj.fontSize || 12) * scaleY * objScaleY,
-                        color: rgb(0,0,0) // Placeholder
-                    });
-                } else if (obj.type === 'rect') {
-                    page.drawRectangle({
-                        x: left * scaleX,
-                        y: pageHeight - (top + (obj.height || 0) * objScaleY) * scaleY,
-                        width: (obj.width || 0) * objScaleX * scaleX,
-                        height: (obj.height || 0) * objScaleY * scaleY,
-                        borderColor: rgb(0,0,1),
-                        borderWidth: (obj.strokeWidth || 1),
-                        color: rgb(0,0,1),
-                        opacity: 0.3
-                    });
-                } else if (obj.type === 'image') {
-                    const imgObj = obj as fabric.Image;
-                    const imageElement = imgObj.getElement();
-                    if (imageElement instanceof HTMLImageElement) {
-                        const imageBytes = await fetch(imageElement.src).then(res => res.arrayBuffer());
-                        const pdfImage = await pdfDoc.embedPng(imageBytes);
-                        page.drawImage(pdfImage, {
-                            x: left * scaleX,
-                            y: pageHeight - (top + (imgObj.height || 0) * objScaleY) * scaleY,
-                            width: (imgObj.width || 0) * objScaleX * scaleX,
-                            height: (imgObj.height || 0) * objScaleY * scaleY,
-                        });
-                    }
-                }
-            }
+            tempFabricCanvas.dispose();
         }
 
         const newPdfBytes = await pdfDoc.save();
@@ -424,7 +400,6 @@ export function PdfEditor() {
                 "hover:border-primary/50"
                 )}
             >
-                <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
                 <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
                 <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
@@ -434,6 +409,7 @@ export function PdfEditor() {
             </div>
             </CardContent>
         </Card>
+         <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
       </div>
     );
   }
