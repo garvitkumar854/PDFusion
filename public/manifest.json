@@ -8,8 +8,8 @@
         "window-controls-overlay",
         "standalone"
     ],
-    "theme_color": "#4B0082",
-    "background_color": "#F5F5F5",
+    "theme_color": "1c05ff",
+    "background_color": "#FFFFFF",
     "orientation": "any",
     "icons": [
         {
