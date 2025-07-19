@@ -1,0 +1,57 @@
+diff --git a/node_modules/workbox-webpack-plugin/build/inject-manifest.js b/node_modules/workbox-webpack-plugin/build/inject-manifest.js
+index 997e3a3..5e21971 100644
+--- a/node_modules/workbox-webpack-plugin/build/inject-manifest.js
++++ b/node_modules/workbox-webpack-plugin/build/inject-manifest.js
+@@ -216,7 +216,7 @@
+         // we need to make sure that we don't accidentally publish any files
+         // that are not under the webpack assets path.
+         // See https://github.com/GoogleChrome/workbox/issues/2158
+-        const checkPath = (inPath) => compilation.compiler.outputPath.endsWith('/') ? inPath.startsWith(compilation.compiler.outputPath) : inPath.startsWith(compilation.compiler.outputPath + path.sep);
++        const checkPath = (inPath) => inPath.startsWith(compilation.compiler.outputPath);
+         for (const [key, value] of Object.entries(this.config.injectionPoint)) {
+             if (typeof value !== 'string' || !checkPath(value)) {
+                 throw new Error(errors_1.errors['invalid-injection-point'] + ` Found '${value}' for key '${key}'.`);
+diff --git a/node_modules/workbox-webpack-plugin/build/lib/get-script-files-for-chunks.js b/node_modules/workbox-webpack-plugin/build/lib/get-script-files-for-chunks.js
+index c70f149..f2c694e 100644
+--- a/node_modules/workbox-webpack-plugin/build/lib/get-script-files-for-chunks.js
++++ b/node_modules/workbox-webpack-plugin/build/lib/get-script-files-for-chunks.js
+@@ -32,7 +32,9 @@
+         const chunk = compilation.chunks.find((c) => c.name === chunkName);
+         if (chunk) {
+             for (const file of chunk.files) {
+-                files.add(file);
++                if (!file.includes('hot-update')) {
++                    files.add(file);
++                }
+             }
+         }
+         else {
+diff --git a/node_modules/workbox-webpack-plugin/build/lib/get-sri-hashes.js b/node_modules/workbox-webpack-plugin/build/lib/get-sri-hashes.js
+index 7254b3d..3913009 100644
+--- a/node_modules/workbox-webpack-plugin/build/lib/get-sri-hashes.js
++++ b/node_modules/workbox-webpack-plugin/build/lib/get-sri-hashes.js
+@@ -37,8 +37,13 @@
+         // Otherwise, if the only other thing in the file is a single
+         // sourceMappingURL comment, then we can assume that the file is
+         // empty for the purpose of SRI.
+-        if (asset.size() > 0 && asset.size() > Buffer.byteLength(sourceMapOrEmpty, 'utf8')) {
+-            const integrity = (0, ssri_1.from)(asset.source(), {
++        const source = asset.source();
++        const integrityOptions = {
++            algorithms: ['sha384'],
++        };
++        if (source.length > 0 && source.length > Buffer.byteLength(sourceMapOrEmpty, 'utf8')) {
++            // See https://github.com/GoogleChrome/workbox/issues/2791
++            const integrity = (0, ssri_1.from)(source.replace(/^\uFEFF/, ''), {
+                 algorithms: this.compilation.options.output.hashFunction ?
+                     [this.compilation.options.output.hashFunction] :
+                     // Use the same defaults as SRI.
+@@ -47,7 +52,7 @@
+                     // and we can fallback to the default.
+                     // See https://github.com/zkat/ssri/issues/14
+                     algorithms: ['sha384'],
+-                },
++                }
+             });
+             // The ssri library will return null if it can't generate an integrity
+             // string for a given algorithm. In that case, we should just omit it.

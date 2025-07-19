@@ -5,6 +5,7 @@ import path from 'path';
 
 const withPWA = withPWAInit({
   dest: 'public',
+  sw: 'sw.js',
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
