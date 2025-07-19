@@ -1,7 +1,7 @@
 {
     "name": "PDFusion",
     "short_name": "PDFusion",
-    "description": "Merge and manage your PDF files with ease.",
+    "description": "Simple & Powerful PDF Toolkit",
     "start_url": "/",
     "display": "standalone",
     "display_override": [
