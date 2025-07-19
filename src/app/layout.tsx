@@ -5,6 +5,7 @@ import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import FooterLoader from '@/components/FooterLoader';
+import UpdateNotifier from '@/components/UpdateNotifier';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -69,6 +70,7 @@ export default function RootLayout({
             </main>
             <FooterLoader />
             <Toaster />
+            <UpdateNotifier />
         </ThemeProvider>
       </body>
     </html>
