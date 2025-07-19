@@ -1,22 +1,17 @@
 {
   "name": "PDFusion",
   "short_name": "PDFusion",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#040B1D",
-  "theme_color": "#5e4dff",
   "description": "Merge and manage your PDF files with ease.",
-  "id": "/?source=pwa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F5",
+  "theme_color": "#4B0082",
   "orientation": "portrait",
+  "id": "/?source=pwa",
   "scope": "/",
   "lang": "en-US",
   "dir": "auto",
-  "iarc_rating_id": "e5c84b32-7f28-4e8c-84d3-72d80d2c9e47",
   "prefer_related_applications": false,
-  "categories": [
-    "utilities",
-    "productivity"
-  ],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -39,16 +34,39 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshot1.png",
+      "src": "https://placehold.co/1080x1920.png",
+      "sizes": "1080x1920",
       "type": "image/png",
-      "sizes": "540x720",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "App Home Screen"
     },
     {
-      "src": "/screenshot2.png",
+      "src": "https://placehold.co/1920x1080.png",
+      "sizes": "1920x1080",
       "type": "image/png",
-      "sizes": "720x540",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "App Home Screen"
+    }
+  ],
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDFs",
+      "url": "/merger",
+      "description": "Combine multiple PDF files into one document."
+    },
+    {
+      "name": "Split PDF",
+      "url": "/split-pdf",
+      "description": "Extract pages from a PDF file."
+    },
+    {
+      "name": "Compress PDF",
+      "url": "/compress-pdf",
+      "description": "Reduce the file size of your PDFs."
     }
   ]
 }
