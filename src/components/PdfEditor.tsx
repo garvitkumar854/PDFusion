@@ -421,7 +421,6 @@ export function PdfEditor() {
                 className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
                 !isLoading && "hover:border-primary/50",
-                isDragActive && "border-primary bg-primary/10",
                 (isLoading || isSaving) && "opacity-70 pointer-events-none"
                 )}
             >
