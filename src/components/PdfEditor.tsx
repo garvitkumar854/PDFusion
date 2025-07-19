@@ -48,7 +48,7 @@ type EditMode = 'select' | 'text' | 'image' | 'shape';
 // Store objects per page
 type EditorObjects = Record<number, any>;
 
-export function PdfEditor() {
+export default function PdfEditor() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -318,8 +318,6 @@ export function PdfEditor() {
         // Save current page state before starting save process
         const finalPageObjects = { ...objects, [activePage]: editor.toObject() };
         
-        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
         for (let pageNum = 1; pageNum <= pdfDoc.getPageCount(); pageNum++) {
             const pageData = finalPageObjects[pageNum];
             if (!pageData || !pageData.objects || pageData.objects.length === 0) continue;
