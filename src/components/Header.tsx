@@ -21,6 +21,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ThemeToggler } from './ThemeToggler';
+import InstallPWA from './InstallPWA';
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -150,6 +151,7 @@ export default function Header() {
         </nav>
 
         <div className="flex-1 flex justify-end items-center gap-2">
+            <InstallPWA />
             <ThemeToggler />
             <div className="md:hidden">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
