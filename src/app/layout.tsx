@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.png',
-    apple: '/512x512.png',
+    apple: '/maskable_icon_x512.png',
   },
 };
 
