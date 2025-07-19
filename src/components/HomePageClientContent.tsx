@@ -175,20 +175,21 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         className="duration-700 h-full"
                         delay={index * 100}
                     >
-                        <Link href={service.href} className="h-full block">
-                        <Card className="group text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border hover:border-primary bg-card h-full flex flex-col">
-                            <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
-                                <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
-                                {service.icon}
-                                </div>
-                                <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
-                                {service.title}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-grow p-4 pt-2 md:p-6 md:pt-2">
-                                <p className="text-muted-foreground text-sm">{service.description}</p>
-                            </CardContent>
-                        </Card>
+                        <Link href={service.href} className="h-full block group relative">
+                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                          <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card h-full flex flex-col">
+                              <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
+                                  <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
+                                  {service.icon}
+                                  </div>
+                                  <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
+                                  {service.title}
+                                  </CardTitle>
+                              </CardHeader>
+                              <CardContent className="flex-grow p-4 pt-2 md:p-6 md:pt-2">
+                                  <p className="text-muted-foreground text-sm">{service.description}</p>
+                              </CardContent>
+                          </Card>
                         </Link>
                     </AnimateOnScroll>
                     ))}
@@ -218,30 +219,33 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                             <AnimateOnScroll
                             key={index}
                             animation="animate-in fade-in-0"
-                            className="duration-700"
+                            className="duration-700 h-full"
                             delay={index * 250}
                             >
-                            <Card className="group bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border p-4 md:p-6 rounded-xl hover:border-primary flex flex-col h-full">
-                                <CardContent className="p-0 flex-grow">
-                                <div className="flex flex-col items-start gap-4 h-full">
-                                    <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
-                                    {feature.icon}
+                            <div className="group relative h-full">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                                <Card className="relative bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 rounded-xl flex flex-col h-full">
+                                    <CardContent className="p-0 flex-grow">
+                                    <div className="flex flex-col items-start gap-4 h-full">
+                                        <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
+                                        {feature.icon}
+                                        </div>
+                                        <div className="space-y-2 flex-grow">
+                                        <h3 className="text-base font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
+                                        <p className="text-muted-foreground text-sm">{feature.description}</p>
+                                        </div>
+                                        <ul className="space-y-3 mt-4">
+                                        {feature.points.map((point, pointIndex) => (
+                                            <li key={pointIndex} className="flex items-center gap-3">
+                                            <CheckIcon className="w-5 h-5 text-primary" />
+                                            <span className="text-muted-foreground text-sm">{point}</span>
+                                            </li>
+                                        ))}
+                                        </ul>
                                     </div>
-                                    <div className="space-y-2 flex-grow">
-                                    <h3 className="text-base font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
-                                    <p className="text-muted-foreground text-sm">{feature.description}</p>
-                                    </div>
-                                    <ul className="space-y-3 mt-4">
-                                    {feature.points.map((point, pointIndex) => (
-                                        <li key={pointIndex} className="flex items-center gap-3">
-                                        <CheckIcon className="w-5 h-5 text-primary" />
-                                        <span className="text-muted-foreground text-sm">{point}</span>
-                                        </li>
-                                    ))}
-                                    </ul>
-                                </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
+                            </div>
                             </AnimateOnScroll>
                         ))}
                         </div>

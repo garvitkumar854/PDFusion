@@ -59,3 +59,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+    @keyframes border-beam {
+        100% {
+            offset-distance: 100%;
+        }
+    }
+}
