@@ -1,6 +1,7 @@
 
 import type {NextConfig} from 'next';
 import withPWAInit from 'next-pwa';
+import path from 'path';
 
 const withPWA = withPWAInit({
   dest: 'public',
@@ -53,6 +54,14 @@ const nextConfig: NextConfig = {
     });
 
     return config;
+  },
+   async rewrites() {
+    return [
+      {
+        source: '/manifest-icon.png',
+        destination: '/_next/static/media/512x512.png',
+      },
+    ]
   },
 };
 

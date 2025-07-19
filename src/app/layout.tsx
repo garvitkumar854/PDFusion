@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
@@ -12,18 +12,36 @@ const poppins = Poppins({
   weight: ['400', '500', '600', '700', '800']
 })
 
+const APP_NAME = "PDFusion";
+const APP_DEFAULT_TITLE = "PDFusion";
+const APP_TITLE_TEMPLATE = "%s - PDFusion";
+const APP_DESCRIPTION = "Merge and manage your PDF files with ease.";
+
+
 export const metadata: Metadata = {
-  title: 'PDFusion',
-  description: 'Merge and manage your PDF files with ease.',
-  manifest: '/manifest.json',
+  applicationName: APP_NAME,
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: APP_TITLE_TEMPLATE,
+  },
+  description: APP_DESCRIPTION,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_DEFAULT_TITLE,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: '/favicon.png',
     apple: '/512x512.png',
   },
-  other: {
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
-  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#4B0082",
 };
 
 export default function RootLayout({
@@ -34,6 +52,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" href="/512x512.png"></link>
         <meta name="theme-color" content="#4B0082" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
