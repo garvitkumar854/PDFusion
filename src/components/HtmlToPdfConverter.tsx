@@ -70,9 +70,8 @@ export function HtmlToPdfConverter() {
             scale: 2,
             useCORS: true,
             logging: false,
-            // Use window a bit wider than a standard A4 page to avoid horizontal scrollbars
-            windowWidth: 1400, 
-            windowHeight: window.innerHeight,
+            windowWidth: 1400,
+            windowHeight: window.screen.height,
         },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
