@@ -28,7 +28,8 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "types": ["fabric", "node"]
   },
   "include": [
     "next-env.d.ts",
