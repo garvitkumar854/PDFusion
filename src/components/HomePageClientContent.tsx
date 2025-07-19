@@ -143,7 +143,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
     
     return (
         <>
-            <section id="services" className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
+            <section className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
                 <div className="container mx-auto px-4">
                 <AnimateOnScroll
                     animation="animate-in fade-in-0 slide-in-from-bottom-12"

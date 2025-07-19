@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4B0082",
+  themeColor: "#5e4dff",
 };
 
 export default function RootLayout({
@@ -54,8 +54,9 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="theme-color" content="#4B0082" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#5e4dff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#040B1D" media="(prefers-color-scheme: dark)" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
         <ThemeProvider
