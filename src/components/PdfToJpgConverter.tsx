@@ -25,9 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
-import JSZip from 'jszip';
+import JSZip from "jszip";
 import { Label } from "./ui/label";
-import Link from "next/link";
 import { PDFDocument } from "pdf-lib";
 
 
@@ -515,7 +514,6 @@ export function PdfToJpgConverter() {
                 <div className="flex flex-col items-center justify-center h-48 text-center">
                     <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
                     <p className="font-semibold text-lg">This PDF is password-protected.</p>
-                    <p className="text-muted-foreground">Please <Link href="/unlock-pdf" className="font-semibold underline text-primary hover:text-primary/80">unlock it first</Link> to enable conversion.</p>
                 </div>
             ) : isProcessing ? (
                 <div className="flex flex-col justify-center items-center h-48">
