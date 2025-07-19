@@ -1,78 +1,73 @@
 {
-    "name": "PDFusion",
-    "short_name": "PDFusion",
-    "description": "Merge and manage your PDF files with ease.",
-    "start_url": "/",
-    "display": "standalone",
-    "display_override": ["window-controls-overlay", "standalone"],
-    "background_color": "#F5F5F5",
-    "theme_color": "#4B0082",
-    "orientation": "any",
-    "icons": [
-        {
-            "src": "/192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "/icon-maskable-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
-        }
-    ],
-    "shortcuts": [
-        {
-            "name": "Merge PDFs",
-            "short_name": "Merge",
-            "description": "Combine multiple PDF files",
-            "url": "/merger",
-            "icons": [
-                {
-                    "src": "/192x192.png",
-                    "sizes": "192x192"
-                },
-                {
-                    "src": "/96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Split PDF",
-            "short_name": "Split",
-            "description": "Extract pages from a PDF",
-            "url": "/split-pdf",
-            "icons": [
-                {
-                    "src": "/192x192.png",
-                    "sizes": "192x192"
-                },
-                {
-                    "src": "/96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        }
-    ],
-    "screenshots": [
-        {
-            "src": "/screenshot1.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow"
-        },
-        {
-            "src": "/screenshot2.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide"
-        }
-    ]
+  "name": "PDFusion",
+  "short_name": "PDFusion",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F5F5",
+  "description": "Merge and manage your PDF files with ease.",
+  "theme_color": "#4B0082",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1080x1920.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "PDFusion Home Page"
+    },
+    {
+      "src": "https://placehold.co/1280x800.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PDFusion Merge Tool"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDFs",
+      "short_name": "Merge",
+      "description": "Combine multiple PDF files into one.",
+      "url": "/merger",
+      "icons": [
+        { "src": "/96x96.png", "sizes": "96x96" }
+      ]
+    },
+    {
+      "name": "Split PDF",
+      "short_name": "Split",
+      "description": "Extract pages from a PDF.",
+      "url": "/split-pdf",
+       "icons": [
+        { "src": "/96x96.png", "sizes": "96x96" }
+      ]
+    },
+    {
+      "name": "Compress PDF",
+      "short_name": "Compress",
+      "description": "Reduce the size of a PDF.",
+      "url": "/compress-pdf",
+       "icons": [
+        { "src": "/96x96.png", "sizes": "96x96" }
+      ]
+    }
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ]
 }
