@@ -39,7 +39,6 @@ export function HtmlToPdfConverter() {
       return;
     }
     
-    // Simple URL validation
     try {
       new URL(url);
     } catch (_) {
@@ -62,28 +61,28 @@ export function HtmlToPdfConverter() {
       const htmlContent = await response.text();
 
       setStatus("converting");
-
-      const element = document.createElement('div');
-      element.innerHTML = htmlContent;
-      // Append to body so styles are applied, but keep it invisible
-      element.style.position = 'absolute';
-      element.style.top = '-9999px';
-      element.style.left = '-9999px';
-      document.body.appendChild(element);
       
       const opt = {
         margin:       0.5,
         filename:     `${new URL(url).hostname}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
+        html2canvas:  {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            // Use window a bit wider than a standard A4 page to avoid horizontal scrollbars
+            windowWidth: 1400, 
+            windowHeight: window.innerHeight,
+        },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
-
-      document.body.removeChild(element);
+      const pdfBlob = await html2pdf().from(htmlContent).set(opt).output('blob');
 
       if (operationId.current !== currentOperationId) return;
+      if (pdfBlob.size === 0) {
+        throw new Error("Conversion resulted in a blank PDF. The website may have complex styling or security that prevents conversion.");
+      }
 
       const pdfUrl = URL.createObjectURL(pdfBlob);
       setResultUrl(pdfUrl);
