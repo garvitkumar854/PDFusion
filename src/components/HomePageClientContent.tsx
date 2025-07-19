@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,13 @@ const services = [
       title: 'Compress PDF',
       description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
       href: '/compress-pdf'
+    },
+    {
+      icon: <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
+      title: 'Edit PDF',
+      description: 'Add text, images, and shapes to your PDF document.',
+      href: '/edit-pdf'
     },
     {
       icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,

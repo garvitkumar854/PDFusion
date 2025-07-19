@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowDownToLine, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -23,32 +23,26 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Detect if the user is on an iOS device
-    const isIOsDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(isIOsDevice);
-    
-    // Check if the app is already installed
-    const standalone = window.matchMedia('(display-mode: standalone)').matches;
-    setIsStandalone(standalone);
+    if (typeof window !== 'undefined') {
+        const standalone = window.matchMedia('(display-mode: standalone)').matches;
+        setIsStandalone(standalone);
+
+        const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        setIsIOS(isIosDevice);
+    }
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
-    
-    // Only add listener if app is not installed
-    if (!standalone) {
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    }
 
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => {
-      if (!standalone) {
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      }
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = useCallback(async () => {
     if (isIOS) {
         toast({
             title: "Installation Guide",
@@ -64,10 +58,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setIsStandalone(true); // Assume installed after prompt accepted
+      setIsStandalone(true);
     }
     setInstallPrompt(null);
-  };
+  }, [installPrompt, isIOS, toast]);
   
   const handleOpenApp = () => {
     // For a PWA, reloading the page within the browser when it's already installed
@@ -77,7 +71,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   
   const buttonClassName = inSheet
     ? "w-full justify-start text-muted-foreground hover:text-primary"
-    : "hidden sm:inline-flex items-center gap-2 rounded-full font-semibold";
+    : "inline-flex items-center gap-2 rounded-full font-semibold";
   
   const buttonVariant = inSheet ? "ghost" : "outline";
   const buttonSize = inSheet ? "default" : "sm";
@@ -89,7 +83,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
             onClick={handleOpenApp}
             variant="outline"
             size="sm"
-            className="hidden sm:inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+            className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
         >
             <ExternalLink className="w-4 h-4" />
             Open App
