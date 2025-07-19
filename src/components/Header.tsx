@@ -57,7 +57,7 @@ const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: s
         <span>{label}</span>
         <span
             className={cn(
-            "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
             isActive ? "w-full" : "w-0 group-hover:w-full"
             )}
         />
@@ -80,7 +80,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         <span>{label}</span>
          <span
             className={cn(
-            "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
             isActive ? "w-full" : "w-0 group-hover:w-full"
             )}
         />
@@ -130,7 +130,7 @@ export default function Header() {
                     <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     <span
                         className={cn(
-                        "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                        "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
                         isServicesActive ? "w-full" : "w-0 group-hover:w-full"
                         )}
                     />
