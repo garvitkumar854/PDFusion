@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Unlock } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -88,7 +88,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 
 const PdfFusionLogo = ({ className }: { className?: string }) => (
   <Image
-    src="/logo.png?v=2"
+    src="/logo.png"
     alt="PDFusion Logo"
     width={32}
     height={32}

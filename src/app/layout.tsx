@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: 'Merge and manage your PDF files with ease.',
   manifest: '/manifest.json',
   icons: {
-    icon: 'https://placehold.co/192x192.png',
+    icon: '/favicon.png',
   }
 };
 
