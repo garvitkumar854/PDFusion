@@ -8,7 +8,7 @@
         "window-controls-overlay",
         "standalone"
     ],
-    "theme_color": "1c05ff",
+    "theme_color": "#1C05FF",
     "background_color": "#FFFFFF",
     "orientation": "any",
     "icons": [
