@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowDownToLine } from 'lucide-react';
+import { ArrowDownToLine, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-// This interface is a subset of the BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
   readonly userChoice: Promise<{
@@ -16,8 +16,9 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-const InstallPWA = () => {
+const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const { toast } = useToast();
 
@@ -27,21 +28,23 @@ const InstallPWA = () => {
     setIsIOS(isIOsDevice);
     
     // Check if the app is already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const standalone = window.matchMedia('(display-mode: standalone)').matches;
+    setIsStandalone(standalone);
 
     const handleBeforeInstallPrompt = (event: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       event.preventDefault();
-      // Stash the event so it can be triggered later.
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
-
-    if (!isStandalone) {
+    
+    // Only add listener if app is not installed
+    if (!standalone) {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }
-    
+
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      if (!standalone) {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      }
     };
   }, []);
 
@@ -57,42 +60,58 @@ const InstallPWA = () => {
     
     if (!installPrompt) return;
     
-    // Show the install prompt
     await installPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
+      setIsStandalone(true); // Assume installed after prompt accepted
     }
-    
-    // We can only use the prompt once, so clear it.
     setInstallPrompt(null);
   };
+  
+  const handleOpenApp = () => {
+    // For a PWA, reloading the page within the browser when it's already installed
+    // often just brings the existing installed app instance into focus.
+    window.location.reload();
+  };
+  
+  const buttonClassName = inSheet
+    ? "w-full justify-start text-muted-foreground hover:text-primary"
+    : "hidden sm:inline-flex items-center gap-2 rounded-full font-semibold";
+  
+  const buttonVariant = inSheet ? "ghost" : "outline";
+  const buttonSize = inSheet ? "default" : "sm";
 
-  if (!installPrompt && !isIOS) {
-    return null;
+
+  if (isStandalone && !inSheet) {
+    return (
+        <Button
+            onClick={handleOpenApp}
+            variant="outline"
+            size="sm"
+            className="hidden sm:inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+        >
+            <ExternalLink className="w-4 h-4" />
+            Open App
+        </Button>
+    );
   }
   
-  // Don't show the button if the app is already installed.
-  if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
-    return null;
+  if (installPrompt || isIOS) {
+    return (
+      <Button
+        onClick={handleInstallClick}
+        variant={buttonVariant}
+        size={buttonSize}
+        className={cn(buttonClassName)}
+      >
+        <ArrowDownToLine className="w-4 h-4 mr-2" />
+        Install App
+      </Button>
+    );
   }
 
-  return (
-    <Button
-      onClick={handleInstallClick}
-      variant="outline"
-      size="sm"
-      className="hidden md:inline-flex items-center gap-2 rounded-full font-semibold"
-    >
-      <ArrowDownToLine className="w-4 h-4" />
-      Install App
-    </Button>
-  );
+  return null;
 };
 
 export default InstallPWA;

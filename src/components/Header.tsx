@@ -187,11 +187,14 @@ export default function Header() {
                                 ))}
                                 <div className="text-lg font-semibold text-foreground pt-2">Services</div>
                                 {services.map((service) => (
-                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4">
+                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1">
                                         {service.icon}
                                         {service.label}
                                     </Link>
                                 ))}
+                                 <div className="pt-4 w-full">
+                                    <InstallPWA inSheet={true} />
+                                </div>
                             </nav>
                         </div>
                     </SheetContent>
