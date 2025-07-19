@@ -6,7 +6,7 @@ import { Skeleton } from './ui/skeleton';
 
 // Use a dynamic import with ssr: false to ensure the editor component is only loaded on the client side.
 // This is the most robust way to prevent SSR-related errors with canvas/fabric.js libraries.
-const PdfEditor = dynamic(() => import('@/components/PdfEditor'), {
+const PdfEditorComponent = dynamic(() => import('@/components/PdfEditor'), {
   ssr: false,
   loading: () => (
      <div className="space-y-6">
@@ -21,5 +21,5 @@ const PdfEditor = dynamic(() => import('@/components/PdfEditor'), {
 });
 
 export default function PdfEditorLoader() {
-  return <PdfEditor />;
+  return <PdfEditorComponent />;
 }
