@@ -39,13 +39,6 @@ const services = [
       href: '/organize-pdf'
     },
     {
-      icon: <Wand2 className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'AI Document Scan',
-      description: 'Analyze your PDF for formatting issues, inconsistencies, and more.',
-      href: '/ai-scan'
-    },
-    {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF to JPG',
@@ -65,6 +58,13 @@ const services = [
       title: 'PDF to HTML',
       description: 'Convert your PDF into a basic, editable HTML file.',
       href: '/pdf-to-html'
+    },
+    {
+      icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-teal-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      title: 'HTML to PDF',
+      description: 'Convert any webpage into a PDF document.',
+      href: '/html-to-pdf'
     },
     {
       icon: <RotateCw className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500 transition-transform duration-300 group-hover:scale-110" />,
