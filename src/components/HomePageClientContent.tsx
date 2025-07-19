@@ -39,6 +39,13 @@ const services = [
       href: '/organize-pdf'
     },
     {
+      icon: <Wand2 className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'AI Document Scan',
+      description: 'Analyze your PDF for formatting issues, inconsistencies, and more.',
+      href: '/ai-scan'
+    },
+    {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF to JPG',
