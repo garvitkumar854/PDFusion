@@ -410,21 +410,20 @@ export function PdfEditor() {
 
   if (!file && !isLoading) {
     return (
-        <Card className="bg-white dark:bg-card shadow-lg max-w-lg mx-auto">
+      <div {...getRootProps()} className="max-w-lg mx-auto">
+        <input {...getInputProps()} />
+        <Card className="bg-white dark:bg-card shadow-lg cursor-pointer">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">PDF Editor</CardTitle>
                 <CardDescription>Upload a PDF to start editing.</CardDescription>
             </CardHeader>
             <CardContent>
             <div
-                {...getRootProps()}
                 className={cn(
                 "flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300",
-                !isLoading && "hover:border-primary/50",
-                (isLoading || isSaving) && "opacity-70 pointer-events-none"
+                "hover:border-primary/50"
                 )}
             >
-                <input {...getInputProps()} />
                 <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
                 <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
                 <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
@@ -432,8 +431,10 @@ export function PdfEditor() {
                 <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
                     <FolderOpen className="mr-2 h-4 w-4" />Choose File
                 </Button>
+            </div>
             </CardContent>
         </Card>
+      </div>
     );
   }
 
