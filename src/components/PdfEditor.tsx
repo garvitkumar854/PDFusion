@@ -46,7 +46,7 @@ type EditMode = 'select' | 'text' | 'image' | 'shape';
 
 // More to be added here for different object types
 type EditorObject = {
-    id: string;
+    id:string;
     type: 'text' | 'image' | 'shape';
     x: number;
     y: number;
@@ -76,6 +76,29 @@ export function PdfEditor() {
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
+  const cleanup = useCallback(() => {
+    if (file?.pdfjsDoc) {
+      file.pdfjsDoc.destroy();
+    }
+    setFile(null);
+    setUnlockedFile(null);
+    setIsLoading(false);
+    setPagePreviews([]);
+    setActivePage(1);
+    setActivePageUrl(null);
+    setObjects({});
+  }, [file]);
+
+  useEffect(() => {
+    // Component unmount cleanup
+    return () => {
+      if (file?.pdfjsDoc) {
+        file.pdfjsDoc.destroy();
+      }
+    };
+  }, [file]);
+
+
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number, scale = 1.5) => {
     if (operationId.current !== currentOperationId) return null;
     try {
@@ -98,13 +121,8 @@ export function PdfEditor() {
   const loadPdf = useCallback(async (fileToLoad: File, isUnlocked = false) => {
     const currentOperationId = ++operationId.current;
     
-    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setFile(null);
-    setUnlockedFile(isUnlocked ? fileToLoad : null);
+    cleanup(); // Clean up previous state before loading new file
     setIsLoading(true);
-    setPagePreviews([]);
-    setActivePage(1);
-    setActivePageUrl(null);
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -150,13 +168,14 @@ export function PdfEditor() {
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+            cleanup();
         }
     } finally {
         if (operationId.current === currentOperationId) {
             setIsLoading(false);
         }
     }
-  }, [file?.pdfjsDoc, toast, renderPage]);
+  }, [cleanup, toast, renderPage]);
 
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -166,9 +185,9 @@ export function PdfEditor() {
   }, [loadPdf]);
 
   const onUnlockSuccess = async (unlocked: File) => {
-      loadPdf(unlocked, true);
-      toast({ title: 'File Unlocked', description: `You can now edit your PDF.`});
       setIsPasswordDialogOpen(false);
+      await loadPdf(unlocked, true);
+      toast({ title: 'File Unlocked', description: `You can now edit your PDF.`});
   };
   
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -186,23 +205,13 @@ export function PdfEditor() {
     toast({ title: "Save functionality coming soon!" });
   };
   
-  const removeFile = () => {
-    operationId.current++;
-    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setFile(null);
-    setUnlockedFile(null);
-    setIsLoading(false);
-    setPagePreviews([]);
-    setActivePage(1);
-    setActivePageUrl(null);
-  };
-
   const handlePageChange = async (pageNumber: number) => {
-    if (!file?.pdfjsDoc || isLoading) return;
+    if (!file?.pdfjsDoc || isLoading || activePage === pageNumber) return;
     setActivePage(pageNumber);
     setActivePageUrl(null); // Show loader
-    const url = await renderPage(file.pdfjsDoc, pageNumber, operationId.current);
-    if (url) {
+    const currentOperationId = operationId.current;
+    const url = await renderPage(file.pdfjsDoc, pageNumber, currentOperationId);
+    if (url && operationId.current === currentOperationId) {
       setActivePageUrl(url);
     }
   };
@@ -214,18 +223,9 @@ export function PdfEditor() {
     { id: 'shape', icon: Square, label: 'Add Shape' },
   ]
 
-  return (
-    <div className="space-y-6">
-        {file?.isEncrypted && !unlockedFile && (
-            <PasswordDialog
-                isOpen={isPasswordDialogOpen}
-                onOpenChange={setIsPasswordDialogOpen}
-                file={file.file}
-                onUnlockSuccess={onUnlockSuccess}
-            />
-        )}
-      {!file && !isLoading ? (
-        <Card className="bg-white dark:bg-card shadow-lg">
+  if (!file && !isLoading) {
+    return (
+        <Card className="bg-white dark:bg-card shadow-lg max-w-lg mx-auto">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">PDF Editor</CardTitle>
                 <CardDescription>Upload a PDF to start editing.</CardDescription>
@@ -250,59 +250,71 @@ export function PdfEditor() {
             </div>
             </CardContent>
         </Card>
-      ) : (
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-            <aside className="w-full lg:w-64 space-y-4 shrink-0">
-                <Card>
-                    <CardHeader className="p-3">
-                        <CardTitle className="text-base">Pages</CardTitle>
-                        <CardDescription className="text-xs">{file?.totalPages} pages</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-2 max-h-96 overflow-y-auto">
-                        {isLoading ? Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] mb-2" />) :
-                        <div className="grid grid-cols-3 lg:grid-cols-2 gap-2">
-                           {pagePreviews.map(p => (
-                            <div 
-                                key={p.page} 
-                                className={cn("rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted cursor-pointer", activePage === p.page ? 'border-primary' : 'border-transparent hover:border-primary/50')}
-                                onClick={() => handlePageChange(p.page)}
-                            >
-                               {p.url ? <img src={p.url} className="w-full h-full object-contain" /> : <Skeleton className="w-full h-full" />}
-                               <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">{p.page}</div>
-                            </div>
-                           ))}
-                        </div>
-                        }
-                    </CardContent>
-                </Card>
-            </aside>
-            <main className="flex-grow min-w-0">
-                <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
-                   <div className="p-2 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex gap-1">
-                            {editorTools.map(tool => (
-                                <Button key={tool.id} variant={editMode === tool.id ? 'secondary' : 'ghost'} size="icon" onClick={() => setEditMode(tool.id as EditMode)} title={tool.label}>
-                                    <tool.icon className="w-5 h-5" />
-                                </Button>
-                            ))}
-                        </div>
-                        <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" className="text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile} disabled={isSaving || isLoading}>
-                                <X className="w-5 h-5" />
-                            </Button>
-                            <Button onClick={handleSave} disabled={isSaving || isLoading || !file || (file.isEncrypted && !unlockedFile)}>
-                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save PDF
-                            </Button>
-                        </div>
-                   </div>
-                </Card>
-                <div className="mt-4 aspect-[8.5/11] bg-white dark:bg-zinc-800 rounded-md shadow-lg border flex items-center justify-center overflow-hidden">
-                    {activePageUrl ? <img src={activePageUrl} alt={`Page ${activePage}`} className="max-w-full max-h-full object-contain" /> : <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-                </div>
-            </main>
-        </div>
-      )}
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+        {file?.isEncrypted && isPasswordDialogOpen && (
+            <PasswordDialog
+                isOpen={isPasswordDialogOpen}
+                onOpenChange={setIsPasswordDialogOpen}
+                file={file.file}
+                onUnlockSuccess={onUnlockSuccess}
+            />
+        )}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <aside className="w-full lg:w-64 space-y-4 shrink-0">
+              <Card>
+                  <CardHeader className="p-3">
+                      <CardTitle className="text-base">Pages</CardTitle>
+                      <CardDescription className="text-xs">{file?.totalPages ? `${file.totalPages} pages` : 'Loading...'}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-2 max-h-[70vh] overflow-y-auto">
+                      {isLoading ? Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] mb-2" />) :
+                      <div className="grid grid-cols-3 lg:grid-cols-2 gap-2">
+                         {pagePreviews.map(p => (
+                          <div 
+                              key={p.page} 
+                              className={cn("rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted cursor-pointer", activePage === p.page ? 'border-primary' : 'border-transparent hover:border-primary/50')}
+                              onClick={() => handlePageChange(p.page)}
+                          >
+                             {p.url ? <img src={p.url} className="w-full h-full object-contain" alt={`Page ${p.page} preview`} /> : <Skeleton className="w-full h-full" />}
+                             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">{p.page}</div>
+                          </div>
+                         ))}
+                      </div>
+                      }
+                  </CardContent>
+              </Card>
+          </aside>
+          <main className="flex-grow min-w-0">
+              <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
+                 <div className="p-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex gap-1">
+                          {editorTools.map(tool => (
+                              <Button key={tool.id} variant={editMode === tool.id ? 'secondary' : 'ghost'} size="icon" onClick={() => setEditMode(tool.id as EditMode)} title={tool.label}>
+                                  <tool.icon className="w-5 h-5" />
+                              </Button>
+                          ))}
+                      </div>
+                      <div className="flex gap-2">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive" onClick={cleanup} disabled={isSaving || isLoading}>
+                              <Trash2 className="w-5 h-5" />
+                          </Button>
+                          <Button onClick={handleSave} disabled={isSaving || isLoading || !file || (file.isEncrypted && !unlockedFile)}>
+                              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                              Save PDF
+                          </Button>
+                      </div>
+                 </div>
+              </Card>
+              <div className="mt-4 aspect-[8.5/11] bg-white dark:bg-zinc-800 rounded-md shadow-lg border flex items-center justify-center overflow-hidden">
+                  {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" /> :
+                   activePageUrl ? <img src={activePageUrl} alt={`Page ${activePage}`} className="max-w-full max-h-full object-contain" /> : <Loader2 className="w-8 h-8 animate-spin text-primary" />}
+              </div>
+          </main>
+      </div>
     </div>
   );
 }
