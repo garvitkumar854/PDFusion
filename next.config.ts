@@ -55,14 +55,6 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-   async rewrites() {
-    return [
-      {
-        source: '/manifest-icon.png',
-        destination: '/_next/static/media/512x512.png',
-      },
-    ]
-  },
 };
 
 export default withPWA(nextConfig);

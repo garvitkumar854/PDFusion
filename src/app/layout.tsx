@@ -52,10 +52,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="apple-touch-icon" href="/512x512.png"></link>
         <meta name="theme-color" content="#4B0082" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
