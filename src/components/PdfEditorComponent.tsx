@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -188,7 +189,7 @@ export default function PdfEditorComponent() {
             cleanup();
         }
     } finally {
-        if (operationId.current === currentOperationId) {
+        if (operationId.current !== currentOperationId) {
             setIsLoading(false);
         }
     }
@@ -480,6 +481,7 @@ export default function PdfEditorComponent() {
               </div>
           </main>
       </div>
+       <input type="file" ref={imageInputRef} style={{display: 'none'}} onChange={addImage} accept="image/*" />
     </div>
   );
 }
