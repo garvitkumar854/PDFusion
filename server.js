@@ -111,9 +111,14 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+app.use(cors());
+app.options('*', cors()); // Enable pre-flight for all routes
 // --- End of CORS Configuration ---
+
+app.use((req, res, next) => {
+  console.log('Request:', req.method, req.url, 'Origin:', req.headers.origin);
+  next();
+});
 
 app.use(express.json());
 
