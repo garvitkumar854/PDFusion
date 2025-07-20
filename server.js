@@ -22,7 +22,9 @@ const upload = multer({ dest: `${uploadsDir}/` });
 function runQpdfCommand(command, res, inputPath, outputPath) {
   exec(command, (error) => {
     // Clean up the uploaded file immediately
-    fs.unlinkSync(inputPath);
+    if (fs.existsSync(inputPath)) {
+      fs.unlinkSync(inputPath);
+    }
 
     if (error) {
       console.error("QPDF Error:", error.message);
@@ -47,26 +49,34 @@ function runQpdfCommand(command, res, inputPath, outputPath) {
 
 // 🔐 LOCK PDF
 app.post('/lock', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
   const inputPath = req.file.path;
   const outputPath = path.join(outputsDir, `locked_${Date.now()}.pdf`);
   const password = req.body.password || '1234';
 
-  const command = `qpdf --encrypt ${password} ${password} 256 -- ${inputPath} ${outputPath}`;
+  const command = `qpdf --encrypt ${password} ${password} 256 -- "${inputPath}" "${outputPath}"`;
   runQpdfCommand(command, res, inputPath, outputPath);
 });
 
 // 🔓 UNLOCK PDF
 app.post('/unlock', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
   const inputPath = req.file.path;
   const outputPath = path.join(outputsDir, `unlocked_${Date.now()}.pdf`);
   const password = req.body.password;
 
   if (!password) {
-    fs.unlinkSync(inputPath);
+    if (fs.existsSync(inputPath)) {
+      fs.unlinkSync(inputPath);
+    }
     return res.status(400).send("Password is required.");
   }
 
-  const command = `qpdf --password=${password} --decrypt ${inputPath} ${outputPath}`;
+  const command = `qpdf --password=${password} --decrypt "${inputPath}" "${outputPath}"`;
   runQpdfCommand(command, res, inputPath, outputPath);
 });
 
