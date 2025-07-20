@@ -90,7 +90,27 @@ async function setupQpdfForLinux() {
 }
 // --- End of QPDF Setup ---
 
-app.use(cors());
+// --- CORS Configuration ---
+const allowedOrigins = [
+    'https://pdf-fusion-ew1vxh9b6-garvit-kumars-projects.vercel.app', // Your production Vercel URL
+    'http://localhost:3000' // For local development
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    }
+};
+
+app.use(cors(corsOptions));
+// --- End of CORS Configuration ---
+
 app.use(express.json());
 
 // Create uploads and outputs directories if they don't exist
