@@ -65,9 +65,10 @@ async function setupQpdfForLinux() {
         const zip = await JSZip.loadAsync(data);
 
         // Find the qpdf binary inside the zip (it's in a subfolder)
-        const qpdfFile = Object.values(zip.files).find(file => file.name.endsWith('/bin/qpdf'));
+        const qpdfFile = Object.values(zip.files).find(file => file.name.match(/bin[\\\/]qpdf$/));
 
         if (!qpdfFile) {
+            console.error('Files in zip:', Object.values(zip.files).map(f => f.name));
             throw new Error('qpdf binary not found in the downloaded zip file.');
         }
 
