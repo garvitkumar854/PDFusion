@@ -92,19 +92,18 @@ async function setupQpdfForLinux() {
 
 // --- CORS Configuration ---
 const allowedOrigins = [
-    'https://pdf-fusion-ew1vxh9b6-garvit-kumars-projects.vercel.app', // Your production Vercel URL
-    'http://localhost:3000' // For local development
+    'https://pdf-fusion-ew1vxh9b6-garvit-kumars-projects.vercel.app',
+    'https://pdf-fusion.vercel.app', // Your new production domain
+    'http://localhost:3000'
 ];
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
         }
-        return callback(null, true);
     }
 };
 
@@ -122,25 +121,39 @@ if (!fs.existsSync(outputsDir)) fs.mkdirSync(outputsDir);
 const upload = multer({ dest: uploadsDir });
 
 function runQpdfCommand(command, res, inputPath, outputPath) {
-  exec(command, (error) => {
-    // Clean up the uploaded file immediately
+  exec(command, (error, stdout, stderr) => {
+    // Always clean up the uploaded file
     if (fs.existsSync(inputPath)) {
-      fs.unlinkSync(inputPath);
+      fs.unlink(inputPath, (err) => {
+        if (err) console.error("Error deleting input file:", err);
+      });
     }
 
     if (error) {
-      console.error("QPDF Error:", error.message);
-      // Attempt to clean up output file on error as well
+      console.error("QPDF Error:", stderr);
+      // Clean up the failed output file
       if (fs.existsSync(outputPath)) {
-        fs.unlinkSync(outputPath);
+        fs.unlink(outputPath, (err) => {
+          if (err) console.error("Error deleting output file on error:", err);
+        });
       }
-      return res.status(500).send("Error processing PDF. The password might be incorrect, or the file may be corrupted.");
+      
+      let userMessage = "Error processing PDF.";
+      if (stderr.includes('password') || stderr.includes('permission to open')) {
+          userMessage = "The password provided is incorrect.";
+      } else if (stderr.includes('is not a PDF file')) {
+          userMessage = "The file is corrupted or not a valid PDF.";
+      }
+      
+      return res.status(500).send(userMessage);
     }
 
     res.download(outputPath, (err) => {
-      // Clean up the output file after download
+      // Clean up the output file after successful download
       if (fs.existsSync(outputPath)) {
-        fs.unlinkSync(outputPath);
+        fs.unlink(outputPath, (unlinkErr) => {
+          if (unlinkErr) console.error("Error deleting output file after download:", unlinkErr);
+        });
       }
       if (err) {
         console.error("Download Error:", err.message);
@@ -172,8 +185,9 @@ app.post('/unlock', upload.single('file'), (req, res) => {
   const password = req.body.password;
 
   if (!password) {
+    // Clean up uploaded file before sending response
     if (fs.existsSync(inputPath)) {
-      fs.unlinkSync(inputPath);
+       fs.unlinkSync(inputPath);
     }
     return res.status(400).send("Password is required.");
   }
@@ -189,7 +203,7 @@ app.get('/', (req, res) => {
 // Initialize QPDF and then start the server
 setupQpdfForLinux().then(() => {
     app.listen(PORT, () => {
-        console.log(`PDF API Server running on http://localhost:${PORT}`);
+        console.log(`PDF API Server running on port ${PORT}`);
     });
 }).catch(err => {
     console.error('Failed to start server:', err);

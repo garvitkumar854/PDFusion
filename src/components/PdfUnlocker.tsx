@@ -125,7 +125,9 @@ export function PdfUnlocker() {
       console.error(err);
       setError(err.message || "An unexpected error occurred. Please check the server connection and password.");
     } finally {
-      setIsProcessing(false);
+      if (operationId.current === currentOperationId) {
+        setIsProcessing(false);
+      }
     }
   };
 
