@@ -32,13 +32,6 @@ const services = [
       href: '/compress-pdf'
     },
     {
-      icon: <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
-      title: 'Edit PDF',
-      description: 'Add text, images, and shapes to your PDF document.',
-      href: '/edit-pdf'
-    },
-    {
       icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Organize PDF',
