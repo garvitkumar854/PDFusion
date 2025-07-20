@@ -2,7 +2,7 @@
 'use client';
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import PdfLockerLoader from '@/components/PdfLockerLoader';
+import PdfEncrypterLoader from '@/components/PdfEncrypterLoader';
 
 export default function LockPdfPage() {
   return (
@@ -29,7 +29,7 @@ export default function LockPdfPage() {
       
       <main className="flex-1 w-full">
         <div className="max-w-4xl mx-auto">
-          <PdfLockerLoader />
+          <PdfEncrypterLoader mode="lock" />
         </div>
       </main>
     </div>

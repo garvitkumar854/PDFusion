@@ -11,6 +11,7 @@ import {
   CheckCircle,
   FolderOpen,
   Loader2,
+  Lock,
   Unlock,
   Eye,
   EyeOff,
@@ -22,10 +23,14 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { callPdfApi } from "@/lib/pdf-api";
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-const API_URL = process.env.NEXT_PUBLIC_PDF_API_URL || 'http://localhost:5000';
+
+interface PdfEncrypterProps {
+  mode: 'lock' | 'unlock';
+}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -36,17 +41,15 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function PdfUnlocker() {
+export function PdfEncrypter({ mode }: PdfEncrypterProps) {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [resultFilename, setResultFilename] = useState<string>("");
+  const [result, setResult] = useState<{ url: string; filename: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
-  const operationId = useRef<number>(0);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (rejectedFiles.length > 0) {
@@ -56,7 +59,7 @@ export function PdfUnlocker() {
     const singleFile = acceptedFiles[0];
     if (singleFile) {
       setFile(singleFile);
-      setResultUrl(null);
+      setResult(null);
       setError(null);
     }
   }, [toast]);
@@ -73,61 +76,42 @@ export function PdfUnlocker() {
 
   const removeFile = () => {
     setFile(null);
-    if(resultUrl) URL.revokeObjectURL(resultUrl);
-    setResultUrl(null);
+    if(result?.url) URL.revokeObjectURL(result.url);
+    setResult(null);
   };
 
-  const handleUnlock = async () => {
+  const handleProcess = async () => {
     if (!file) {
       setError("Please upload a file first.");
       return;
     }
     if (!password) {
-      setError("Please enter the password.");
+      setError(`Please enter a password to ${mode} the PDF.`);
       return;
     }
 
-    const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('password', password);
-
     try {
-      const response = await fetch(`${API_URL}/unlock`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (operationId.current !== currentOperationId) return;
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to unlock the PDF. The password may be incorrect.");
-      }
-
-      const blob = await response.blob();
-      const newResultUrl = URL.createObjectURL(blob);
-      const originalName = file.name.replace(/\.pdf$/i, '');
+      const response = await callPdfApi(mode, file, password);
       
-      setResultUrl(newResultUrl);
-      setResultFilename(`${originalName}_unlocked.pdf`);
+      const originalName = file.name.replace(/\.pdf$/i, '');
+      const newFilename = mode === 'lock' ? `${originalName}_locked.pdf` : `${originalName}_unlocked.pdf`;
+
+      setResult({ url: URL.createObjectURL(response), filename: newFilename });
       
       toast({
-        title: "PDF Unlocked Successfully!",
-        description: "Your unlocked PDF is ready for download.",
+        title: `PDF ${mode === 'lock' ? 'Locked' : 'Unlocked'} Successfully!`,
+        description: `Your ${mode === 'lock' ? 'protected' : 'unlocked'} PDF is ready for download.`,
         action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>,
       });
 
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "An unexpected error occurred. Please check the server connection and password.");
+      setError(err.message || `An unexpected error occurred. Please check the server connection and password.`);
     } finally {
-      if (operationId.current === currentOperationId) {
-        setIsProcessing(false);
-      }
+      setIsProcessing(false);
     }
   };
 
@@ -136,18 +120,45 @@ export function PdfUnlocker() {
     setPassword("");
   };
 
-  if (resultUrl) {
+  const config = {
+    lock: {
+      title: "Lock PDF",
+      description: "Select a PDF file to add password protection.",
+      passwordLabel: "Enter a strong password",
+      passwordPlaceholder: "Password",
+      buttonText: "Lock PDF",
+      buttonProcessingText: "Locking...",
+      Icon: Lock,
+      ResultTitle: "PDF Locked!",
+      ResultDownloadText: "Download Locked PDF",
+      ResultProcessAgainText: "Lock Another PDF",
+    },
+    unlock: {
+      title: "Unlock PDF",
+      description: "Select a password-protected PDF file to unlock.",
+      passwordLabel: "Enter the PDF's current password",
+      passwordPlaceholder: "Current password",
+      buttonText: "Unlock PDF",
+      buttonProcessingText: "Unlocking...",
+      Icon: Unlock,
+      ResultTitle: "PDF Unlocked!",
+      ResultDownloadText: "Download Unlocked PDF",
+      ResultProcessAgainText: "Unlock Another PDF",
+    }
+  }[mode];
+
+  if (result) {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Unlocked!</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{config.ResultTitle}</h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <a href={resultUrl} download={resultFilename}>
+          <a href={result.url} download={result.filename}>
             <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-              <Download className="mr-2 h-5 w-5" /> Download Unlocked PDF
+              <Download className="mr-2 h-5 w-5" /> {config.ResultDownloadText}
             </Button>
           </a>
-          <Button size="lg" variant="outline" onClick={handleProcessAgain}>Unlock Another PDF</Button>
+          <Button size="lg" variant="outline" onClick={handleProcessAgain}>{config.ResultProcessAgainText}</Button>
         </div>
       </div>
     );
@@ -157,8 +168,8 @@ export function PdfUnlocker() {
     <div className="space-y-6">
       <Card className="bg-white dark:bg-card shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
-          <CardDescription>Select a password-protected PDF file to unlock.</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">{config.title}</CardTitle>
+          <CardDescription>{config.description}</CardDescription>
         </CardHeader>
         <CardContent>
           {!file ? (
@@ -191,11 +202,11 @@ export function PdfUnlocker() {
       {file && (
         <Card className="bg-white dark:bg-card shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Enter Password</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Set Password</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="password-input">Enter the PDF's current password</Label>
+              <Label htmlFor="password-input">{config.passwordLabel}</Label>
               <div className="relative">
                 <Input
                   id="password-input"
@@ -207,7 +218,7 @@ export function PdfUnlocker() {
                   type={showPassword ? 'text' : 'password'}
                   className={cn("pr-10", error && "border-destructive")}
                   disabled={isProcessing}
-                  placeholder="Current password"
+                  placeholder={config.passwordPlaceholder}
                 />
                 <Button
                   type="button"
@@ -216,6 +227,7 @@ export function PdfUnlocker() {
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowPassword(p => !p)}
                   disabled={isProcessing}
+                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -225,9 +237,9 @@ export function PdfUnlocker() {
               )}
             </div>
 
-            <Button size="lg" className="w-full text-base font-bold" onClick={handleUnlock} disabled={isProcessing || !password || !file}>
-              {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Unlock className="mr-2 h-5 w-5" />}
-              {isProcessing ? 'Unlocking...' : 'Unlock PDF'}
+            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={isProcessing || !password || !file}>
+              {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <config.Icon className="mr-2 h-5 w-5" />}
+              {isProcessing ? config.buttonProcessingText : config.buttonText}
             </Button>
           </CardContent>
         </Card>
