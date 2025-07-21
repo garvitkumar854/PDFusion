@@ -3,7 +3,7 @@
 import { ArrowUpRight, Wand2, ShieldCheck, FileText, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import RotatingWords from '@/components/RotatingWords';
@@ -105,18 +105,16 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                     >
                         <Link href={service.href} className="h-full block group relative">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card h-full flex flex-col">
-                              <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
-                                  <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
-                                  {service.icon}
-                                  </div>
-                                  <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
-                                  {service.title}
-                                  </CardTitle>
-                              </CardHeader>
-                              <CardContent className="flex-grow p-4 pt-2 md:p-6 md:pt-2">
-                                  <p className="text-muted-foreground text-sm">{service.description}</p>
-                              </CardContent>
+                          <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card h-full flex flex-col p-4 md:p-6">
+                            <CardContent className="p-0 flex items-center gap-4">
+                                <div className={`p-3 rounded-lg ${service.bgColor}`}>
+                                    {service.icon}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">{service.title}</h3>
+                                    <p className="text-muted-foreground text-sm">{service.description}</p>
+                                </div>
+                            </CardContent>
                           </Card>
                         </Link>
                     </AnimateOnScroll>
