@@ -5,90 +5,11 @@ const cors = require('cors');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const https = require('https');
-const JSZip = require('jszip');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// --- QPDF Runtime Installation ---
-const qpdfDir = path.join(__dirname, 'qpdf');
-const qpdfBinDir = path.join(qpdfDir, 'bin');
-let qpdfPath = 'qpdf'; // Default to PATH
-
-async function setupQpdfForLinux() {
-    if (process.platform !== 'linux') {
-        console.log('Skipping QPDF setup: Not on Linux.');
-        return;
-    }
-
-    qpdfPath = path.join(qpdfBinDir, 'qpdf');
-
-    if (fs.existsSync(qpdfPath)) {
-        console.log('QPDF already exists at', qpdfPath);
-        return;
-    }
-
-    console.log('QPDF not found. Starting download and setup...');
-    if (!fs.existsSync(qpdfDir)) fs.mkdirSync(qpdfDir, { recursive: true });
-
-    // URL for a specific, stable version of QPDF for x86_64 Linux
-    const qpdfUrl = 'https://github.com/qpdf/qpdf/releases/download/v11.9.0/qpdf-11.9.0-bin-linux-x86_64.zip';
-    const zipPath = path.join(qpdfDir, 'qpdf.zip');
-
-    try {
-        console.log(`Downloading QPDF from ${qpdfUrl}...`);
-        await new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(zipPath);
-            https.get(qpdfUrl, (response) => {
-                // Follow redirects
-                if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-                    https.get(response.headers.location, (redirectResponse) => {
-                        redirectResponse.pipe(file);
-                        file.on('finish', () => {
-                            file.close();
-                            resolve();
-                        });
-                    }).on('error', reject);
-                } else {
-                    response.pipe(file);
-                    file.on('finish', () => {
-                        file.close();
-                        resolve();
-                    });
-                }
-            }).on('error', reject);
-        });
-
-        console.log('Download complete. Extracting...');
-        const data = fs.readFileSync(zipPath);
-        const zip = await JSZip.loadAsync(data);
-
-        // Find the qpdf binary inside the zip (it's in a subfolder)
-        const qpdfFile = Object.values(zip.files).find(file => file.name.endsWith('/bin/qpdf'));
-
-        if (!qpdfFile) {
-            throw new Error('qpdf binary not found in the downloaded zip file.');
-        }
-
-        // Extract qpdf binary
-        const content = await qpdfFile.async('nodebuffer');
-        if (!fs.existsSync(qpdfBinDir)) fs.mkdirSync(qpdfBinDir, { recursive: true });
-        fs.writeFileSync(qpdfPath, content);
-        
-        console.log('Extraction complete. Setting permissions...');
-        fs.chmodSync(qpdfPath, 0o755); // Make it executable
-        
-        console.log('QPDF setup successful.');
-
-    } catch (error) {
-        console.error('QPDF setup failed:', error);
-        process.exit(1); // Exit if setup fails
-    } finally {
-        if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
-    }
-}
-// --- End of QPDF Setup ---
+let qpdfPath = 'qpdf'; // Use system qpdf
 
 // --- CORS Configuration ---
 const allowedOrigins = [
@@ -98,6 +19,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
+<<<<<<< HEAD
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -107,10 +29,28 @@ const corsOptions = {
     }
     return callback(null, true);
   }
+=======
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+>>>>>>> 519fb6c08f00b008ca713677721943cb7a3f03e1
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
+app.options('*', cors()); // Enable pre-flight for all routes
 // --- End of CORS Configuration ---
+
+app.use((req, res, next) => {
+  console.log('Request:', req.method, req.url, 'Origin:', req.headers.origin);
+  next();
+});
 
 app.use(express.json());
 
@@ -202,11 +142,7 @@ app.get('/', (req, res) => {
   res.send('PDF API Server is running.');
 });
 
-// Initialize QPDF and then start the server
-setupQpdfForLinux().then(() => {
-    app.listen(PORT, () => {
-        console.log(`PDF API Server running on port ${PORT}`);
-    });
-}).catch(err => {
-    console.error('Failed to start server:', err);
+// Start the server
+app.listen(PORT, () => {
+    console.log(`PDF API Server running on port ${PORT}`);
 });

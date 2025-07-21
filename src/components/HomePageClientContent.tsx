@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, Lock, Unlock } from 'lucide-react';
