@@ -128,7 +128,7 @@ export default function Header() {
                 {services.map((service) => (
                     <DropdownMenuItem key={service.href} asChild>
                         <Link href={service.href} className="flex items-center">
-                            {service.icon}
+                            {React.cloneElement(service.icon, { className: "w-4 h-4 mr-2" })}
                             {service.title}
                         </Link>
                     </DropdownMenuItem>
