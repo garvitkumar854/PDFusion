@@ -21,7 +21,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ThemeToggler } from './ThemeToggler';
 import InstallPWA from './InstallPWA';
-import { services } from '@/lib/services';
+import { services } from '@/lib/services.tsx';
 
 const navLinks = [
   { href: "/", label: "Home" },

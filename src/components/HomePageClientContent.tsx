@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import RotatingWords from '@/components/RotatingWords';
-import { services } from '@/lib/services';
+import { services } from '@/lib/services.tsx';
 
 const futureFeatures = [
     {
