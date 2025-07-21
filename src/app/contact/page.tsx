@@ -33,14 +33,22 @@ const contactMethods = [
     details: 'Ajmer, Rajasthan',
     bgColor: 'bg-orange-100/50 dark:bg-orange-900/20 hover:bg-orange-200/60 dark:hover:bg-orange-900/40',
   },
+  {
+    icon: <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 dark:text-green-400" />,
+    title: 'Get Support',
+    description: 'Chat with our support team',
+    href: '#',
+    details: 'Live Chat',
+    bgColor: 'bg-green-100/50 dark:bg-green-900/20 hover:bg-green-200/60 dark:hover:bg-green-900/40',
+  },
 ];
 
 export default function ContactPage() {
   return (
     <section className="py-20 md:py-32">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
-          <div className="text-center lg:text-left lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="text-center lg:text-left">
             <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-500"
@@ -88,7 +96,7 @@ export default function ContactPage() {
           
           <AnimateOnScroll
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
-            className="duration-700 lg:col-span-2"
+            className="duration-700"
             delay={300}
           >
             <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card/20">
