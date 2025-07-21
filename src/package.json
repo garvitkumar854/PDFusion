@@ -67,6 +67,10 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jszip": "^3.4.1",
+    "@types/multer": "^1.4.11",
     "@types/node": "^20",
     "@types/pdfjs-dist": "2.10.378",
     "@types/react": "^18",
