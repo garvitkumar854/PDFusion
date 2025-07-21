@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { PDFDocument, PDFImage, PDFName } from 'pdf-lib';
+import { PDFDocument, PDFImage, PDFName, PNG } from 'pdf-lib';
 
 const CompressPdfInputSchema = z.object({
   pdfDataUri: z
@@ -58,7 +58,7 @@ const compressPdfFlow = ai.defineFlow(
 
       const pdfDoc = await PDFDocument.load(pdfBytes, {
         ignoreEncryption: true,
-        updateMetadata: false
+        updateMetadata: false,
       });
       
       const imageQuality = getImageQuality(compressionLevel);
@@ -80,9 +80,22 @@ const compressPdfFlow = ai.defineFlow(
               if (!imageStream || !('asStream' in imageStream)) continue;
               
               try {
-                  const image = await pdfDoc.embedPdf(imageStream);
-                  if (image.type === 'image' && image.subtype === 'jpeg') {
-                      const compressedImage = await pdfDoc.embedJpg(image.data, { quality: imageQuality });
+                  const subtype = imageStream.asStream().get(PDFName.of('Subtype'));
+                  if (subtype?.toString() !== '/Image') continue;
+                  
+                  let image: PDFImage | null = null;
+
+                  if (imageStream.asStream().get(PDFName.of('Filter'))?.toString() === '/DCTDecode') {
+                     image = await pdfDoc.embedJpg(imageStream.asStream().getContents());
+                  } else {
+                     const png = await PNG.load(imageStream.asStream().getContents());
+                     if (png) {
+                        image = await pdfDoc.embedPng(png.rgb);
+                     }
+                  }
+
+                  if (image) {
+                      const compressedImage = await pdfDoc.embedJpg(await image.asJpg({ quality: imageQuality }));
                       xobjectDict.set(imageName, compressedImage.ref);
                       imagesProcessed++;
                   }
@@ -124,6 +137,9 @@ const compressPdfFlow = ai.defineFlow(
       };
     } catch (error: any) {
       console.error('Error during PDF compression:', error);
+      if (error.message.includes("is not a valid PNG")) {
+          throw new Error("Failed to compress PDF. The file contains an unsupported image format.");
+      }
       throw new Error(`Failed to compress PDF. The file may be corrupted, encrypted, or in an unsupported format.`);
     }
   }
