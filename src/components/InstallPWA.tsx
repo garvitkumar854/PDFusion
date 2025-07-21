@@ -73,8 +73,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, [installPrompt, isIOS, toast]);
 
   const handleOpenApp = () => {
-    const pwaUrl = `${window.location.origin}/?utm_source=pwa`;
-    window.open(pwaUrl, '_blank');
+    window.location.href = '/?utm_source=pwa_open';
   };
   
   const buttonClassName = inSheet
