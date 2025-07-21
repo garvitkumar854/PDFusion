@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Menu, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
@@ -126,7 +127,7 @@ export default function Header() {
             <DropdownMenuContent>
                 {services.map((service) => (
                     <DropdownMenuItem key={service.href} asChild>
-                        <Link href={service.href}>
+                        <Link href={service.href} className="flex items-center">
                             {service.icon}
                             {service.title}
                         </Link>
@@ -175,7 +176,7 @@ export default function Header() {
                                 <div className="text-lg font-semibold text-foreground pt-2">Services</div>
                                 {services.map((service) => (
                                     <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1">
-                                        {service.icon}
+                                        {React.cloneElement(service.icon, { className: "w-4 h-4 mr-2" })}
                                         {service.title}
                                     </Link>
                                 ))}

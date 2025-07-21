@@ -8,6 +8,7 @@ import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import RotatingWords from '@/components/RotatingWords';
 import { services } from '@/lib/services.tsx';
+import React from 'react';
 
 const futureFeatures = [
     {
@@ -107,7 +108,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                           <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card h-full flex flex-col">
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                                   <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
-                                  {service.icon}
+                                  {React.cloneElement(service.icon, { className: "w-6 h-6 sm:w-8 sm:h-8 text-purple-500 transition-transform duration-300 group-hover:scale-110" })}
                                   </div>
                                   <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
                                   {service.title}
