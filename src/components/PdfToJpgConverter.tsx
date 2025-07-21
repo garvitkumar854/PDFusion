@@ -28,6 +28,7 @@ import { Progress } from "./ui/progress";
 import JSZip from "jszip";
 import { Label } from "./ui/label";
 import { PDFDocument } from "pdf-lib";
+import { PasswordDialog } from "./PasswordDialog";
 
 
 // Set worker path for pdf.js
@@ -133,6 +134,7 @@ PagePreviewCard.displayName = 'PagePreviewCard';
 
 export default function PdfToJpgConverter() {
   const [file, setFile] = useState<PDFFile | null>(null);
+  const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionResults, setConversionResults] = useState<ConversionResult[]>([]);
@@ -142,6 +144,8 @@ export default function PdfToJpgConverter() {
 
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   const { toast } = useToast();
   
@@ -192,15 +196,16 @@ export default function PdfToJpgConverter() {
     return null;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File) => {
+  const loadPdf = useCallback(async (fileToLoad: File, isUnlocked = false) => {
     const currentOperationId = ++operationId.current;
+    if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    setFile(null);
+    setUnlockedFile(isUnlocked ? fileToLoad : null);
     setIsProcessing(true);
     setPagePreviews([]);
     
-    let isEncrypted = false;
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
-        await PDFDocument.load(pdfBytes, { ignoreEncryption: true }); // Test with pdf-lib for encryption
         const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         const totalPages = pdfjsDoc.numPages;
 
@@ -214,10 +219,9 @@ export default function PdfToJpgConverter() {
 
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
-
         if (error.name === 'PasswordException') {
-            isEncrypted = true;
-            setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, isEncrypted: true, totalPages: 0, pdfjsDoc: null as any });
+            setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, isEncrypted: true, totalPages: 0, pdfjsDoc: null });
+            setIsPasswordDialogOpen(true);
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -227,27 +231,16 @@ export default function PdfToJpgConverter() {
             setIsProcessing(false);
         }
     }
-  }, [toast]);
+  }, [toast, file?.pdfjsDoc]);
 
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (acceptedFiles.length === 0) {
-        if (rejectedFiles.length > 0) {
-          toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "The file was not a PDF or exceeded size limits." });
-        }
-        return;
-      }
-      
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
       const singleFile = acceptedFiles[0];
-      if (singleFile.size > MAX_FILE_SIZE_BYTES) {
-        toast({ variant: "destructive", title: "File too large", description: `"${singleFile.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
-        return;
-      }
-      
       loadPdf(singleFile);
     },
-    [toast, loadPdf]
+    [loadPdf]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -287,6 +280,7 @@ export default function PdfToJpgConverter() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    maxSize: MAX_FILE_SIZE_BYTES,
     disabled: isProcessing || isConverting,
   });
 
@@ -294,15 +288,28 @@ export default function PdfToJpgConverter() {
     operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
+    setUnlockedFile(null);
     setIsProcessing(false);
     setConversionResults([]);
     setPagePreviews([]);
     setError(null);
   };
+
+  const onUnlockSuccess = async (unlockedFile: File) => {
+    setIsPasswordDialogOpen(false);
+    await loadPdf(unlockedFile, true);
+    toast({ title: 'File Unlocked', description: `You can now convert your PDF.`});
+  };
   
   const handleConvert = async () => {
-    if (!file || file.isEncrypted || !file.pdfjsDoc) {
+    const fileToProcess = unlockedFile || file?.file;
+    
+    if (!fileToProcess || !file?.pdfjsDoc) {
         setError("Please upload an unlocked PDF file first.");
+        return;
+    }
+    if (file.isEncrypted && !unlockedFile) {
+        setIsPasswordDialogOpen(true);
         return;
     }
     if (selectedPages.size === 0) {
@@ -443,6 +450,14 @@ export default function PdfToJpgConverter() {
 
   return (
     <div className="space-y-6">
+      {file?.isEncrypted && (
+        <PasswordDialog 
+            isOpen={isPasswordDialogOpen}
+            onOpenChange={setIsPasswordDialogOpen}
+            file={file.file}
+            onUnlockSuccess={onUnlockSuccess}
+        />
+      )}
       <Card className="bg-white dark:bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF to Convert</CardTitle>
@@ -483,7 +498,7 @@ export default function PdfToJpgConverter() {
                           <>
                             <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                             <span className="text-xs text-muted-foreground">
-                                {formatBytes(file.file.size)} {file.isEncrypted ? '' : `• ${file.totalPages} pages`}
+                                {formatBytes(file.file.size)} {file.isEncrypted ? '(Encrypted)' : `• ${file.totalPages} pages`}
                             </span>
                           </>
                         ) : (
@@ -514,6 +529,7 @@ export default function PdfToJpgConverter() {
                 <div className="flex flex-col items-center justify-center h-48 text-center">
                     <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
                     <p className="font-semibold text-lg">This PDF is password-protected.</p>
+                     <Button variant="link" className="mt-2" onClick={() => setIsPasswordDialogOpen(true)}>Click here to unlock</Button>
                 </div>
             ) : isProcessing ? (
                 <div className="flex flex-col justify-center items-center h-48">
@@ -577,8 +593,8 @@ export default function PdfToJpgConverter() {
                 </div>
               ) : (
                 <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isProcessing || isConverting || !file || file.isEncrypted || selectedPages.size === 0}>
-                  <ImageIcon className="mr-2 h-5 w-5" />
-                  Convert to JPG
+                  {isConverting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isConverting ? "Converting..." : "Convert to JPG"}
                 </Button>
               )}
             </div>

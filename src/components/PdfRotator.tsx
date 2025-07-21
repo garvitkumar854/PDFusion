@@ -362,8 +362,8 @@ export default function PdfRotator() {
                         </div>
                       ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || isEncrypted}>
-                          <RotateCw className="mr-2 h-5 w-5" />
-                          Rotate PDF
+                           {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                           {isProcessing ? 'Rotating...' : 'Rotate PDF'}
                         </Button>
                       )}
                     </div>

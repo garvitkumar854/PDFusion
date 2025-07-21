@@ -31,6 +31,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
+import { PasswordDialog } from "./PasswordDialog";
 
 
 // Set worker path for pdf.js
@@ -137,6 +138,7 @@ PagePreviewCard.displayName = 'PagePreviewCard';
 
 export default function PdfSplitter() {
   const [file, setFile] = useState<PDFFile | null>(null);
+  const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSplitting, setIsSplitting] = useState(false);
   const [splitResults, setSplitResults] = useState<SplitResult[]>([]);
@@ -151,10 +153,9 @@ export default function PdfSplitter() {
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
 
   const [splitError, setSplitError] = useState<string | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   
-
   const { toast } = useToast();
-  
   const operationId = useRef<number>(0);
 
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
@@ -186,10 +187,13 @@ export default function PdfSplitter() {
     return null;
   }, []);
   
-  const initFile = useCallback(async (fileToLoad: File) => {
+  const initFile = useCallback(async (fileToLoad: File, isUnlocked = false) => {
     const currentOperationId = ++operationId.current;
-    setIsProcessing(true);
+    if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    setFile(null);
+    setUnlockedFile(isUnlocked ? fileToLoad : null);
     setPagePreviews([]);
+    setIsProcessing(true);
     
     try {
         const pdfBytes = await fileToLoad.arrayBuffer();
@@ -216,6 +220,7 @@ export default function PdfSplitter() {
 
         if (error.name === 'PasswordException') {
             setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages: 0, pdfjsDoc: null, isEncrypted: true });
+            setIsPasswordDialogOpen(true);
         } else {
             console.error("Error loading PDF:", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -225,21 +230,23 @@ export default function PdfSplitter() {
           setIsProcessing(false);
         }
     }
-  }, [toast]);
+  }, [toast, file?.pdfjsDoc]);
   
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
-      }
+    (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
-      
       const singleFile = acceptedFiles[0];
       initFile(singleFile);
     },
-    [toast, initFile]
+    [initFile]
   );
+  
+  const onUnlockSuccess = async (unlocked: File) => {
+    setIsPasswordDialogOpen(false);
+    await initFile(unlocked, true);
+    toast({ title: 'File Unlocked', description: `You can now split your PDF.` });
+  };
   
   const onPageVisible = useCallback((pageNumber: number) => {
     if (!file || !file.pdfjsDoc) return;
@@ -286,6 +293,7 @@ export default function PdfSplitter() {
     operationId.current++; // Invalidate any running operations
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
+    setUnlockedFile(null);
     setIsProcessing(false);
     setCustomRanges("");
     setSplitResults([]);
@@ -323,11 +331,12 @@ export default function PdfSplitter() {
   };
 
   const handleSplit = async () => {
-    if (!file || !file.pdfjsDoc) return;
+    const sourceFile = unlockedFile || file?.file;
+    if (!sourceFile) return;
 
-    if (file.isEncrypted) {
-      toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password protected. Please unlock it first." });
-      return;
+    if (file?.isEncrypted && !unlockedFile) {
+        setIsPasswordDialogOpen(true);
+        return;
     }
 
     const currentOperationId = ++operationId.current;
@@ -387,7 +396,7 @@ export default function PdfSplitter() {
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       const zip = new JSZip();
 
-      const sourcePdfBytes = await file.file.arrayBuffer();
+      const sourcePdfBytes = await sourceFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(sourcePdfBytes, { ignoreEncryption: true });
 
       for (const group of pageGroups) {
@@ -551,6 +560,14 @@ export default function PdfSplitter() {
 
   return (
     <div className="space-y-6">
+       {file?.isEncrypted && (
+        <PasswordDialog 
+            isOpen={isPasswordDialogOpen}
+            onOpenChange={setIsPasswordDialogOpen}
+            file={file.file}
+            onUnlockSuccess={onUnlockSuccess}
+        />
+       )}
       <Card className="bg-white dark:bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF to Split</CardTitle>
@@ -624,9 +641,10 @@ export default function PdfSplitter() {
           </CardHeader>
           <CardContent>
            {file.isEncrypted ? (
-                <div className="flex flex-col items-center justify-center h-48 text-center">
+                <div className="flex flex-col items-center justify-center h-48 text-center p-4">
                     <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
                     <p className="font-semibold text-lg">This PDF is password-protected.</p>
+                    <Button variant="link" className="mt-2" onClick={() => setIsPasswordDialogOpen(true)}>Click here to unlock</Button>
                 </div>
             ) : (
             <>
