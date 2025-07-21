@@ -153,7 +153,7 @@ export default function Header() {
           <NavLink href="/contact" label="Contact" currentPath={pathname} />
         </nav>
 
-        <div className="flex-1 flex justify-end items-center gap-2">
+        <div className="flex-shrink-0 flex justify-end items-center gap-2">
             <InstallPWA />
             <ThemeToggler />
             <div className="md:hidden">

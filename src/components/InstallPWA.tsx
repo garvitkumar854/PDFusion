@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -20,14 +19,13 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const standalone = window.matchMedia('(display-mode: standalone)').matches;
         if (standalone) {
-            setIsStandalone(true);
+            setIsInstalled(true);
             return;
         }
 
@@ -37,15 +35,6 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
         const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         setIsIOS(isIosDevice);
-
-        if ('getInstalledRelatedApps' in navigator) {
-            navigator.getInstalledRelatedApps().then((relatedApps) => {
-                if (relatedApps.length > 0) {
-                    setIsInstalled(true);
-                    localStorage.setItem('pwa_installed', 'true');
-                }
-            });
-        }
     }
 
     const handleBeforeInstallPrompt = (event: Event) => {
@@ -84,7 +73,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, [installPrompt, isIOS, toast]);
 
   const handleOpenApp = () => {
-    const pwaUrl = `${window.location.origin}${window.location.pathname}?utm_source=pwa`;
+    const pwaUrl = `${window.location.origin}/?utm_source=pwa`;
     window.open(pwaUrl, '_blank');
   };
   
@@ -96,22 +85,21 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonSize = inSheet ? "default" : "sm";
 
 
-  if (isStandalone) {
-    return null;
-  }
-  
-  if (isInstalled && !isIOS) {
-    return (
-        <Button
-            onClick={handleOpenApp}
-            variant="outline"
-            size="sm"
-            className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-        >
-            <ExternalLink className="w-4 h-4" />
-            Open App
-        </Button>
-    );
+  if (isInstalled) {
+      if (window.matchMedia('(display-mode: standalone)').matches) return null;
+      if (isIOS) return null;
+      
+      return (
+          <Button
+              onClick={handleOpenApp}
+              variant="outline"
+              size="sm"
+              className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+          >
+              <ExternalLink className="w-4 h-4" />
+              Open App
+          </Button>
+      );
   }
   
   if (installPrompt || (isIOS && !isInstalled)) {
