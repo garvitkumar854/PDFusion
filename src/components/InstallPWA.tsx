@@ -63,32 +63,16 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
   
-  const handleOpenApp = () => {
-    // For a PWA, reloading the page within the browser when it's already installed
-    // often just brings the existing installed app instance into focus.
-    window.location.reload();
-  };
-  
   const buttonClassName = inSheet
     ? "w-full justify-start text-muted-foreground hover:text-primary"
     : "inline-flex items-center gap-2 rounded-full font-semibold";
   
-  const buttonVariant = inSheet ? "ghost" : "outline";
+  const buttonVariant = inSheet ? "ghost" : "default";
   const buttonSize = inSheet ? "default" : "sm";
 
 
-  if (isStandalone && !inSheet) {
-    return (
-        <Button
-            onClick={handleOpenApp}
-            variant="outline"
-            size="sm"
-            className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-        >
-            <ExternalLink className="w-4 h-4" />
-            Open App
-        </Button>
-    );
+  if (isStandalone) {
+    return null;
   }
   
   if (installPrompt || isIOS) {
