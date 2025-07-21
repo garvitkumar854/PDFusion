@@ -84,7 +84,7 @@ const hexToRgb = (hex: string) => {
     : { r: 0, g: 0, b: 0 };
 };
 
-export function PageNumberAdder() {
+export default function PageNumberAdder() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

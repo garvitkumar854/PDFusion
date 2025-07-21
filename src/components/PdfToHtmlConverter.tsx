@@ -51,7 +51,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export function PdfToHtmlConverter() {
+export default function PdfToHtmlConverter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

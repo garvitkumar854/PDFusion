@@ -41,7 +41,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function PdfEncrypter({ mode }: PdfEncrypterProps) {
+export default function PdfEncrypter({ mode }: PdfEncrypterProps) {
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

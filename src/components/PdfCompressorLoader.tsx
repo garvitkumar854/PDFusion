@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Skeleton } from './ui/skeleton';
 
-const PdfCompressor = dynamic(() => import('@/components/PdfCompressor').then(mod => mod.PdfCompressor), {
+const PdfCompressor = dynamic(() => import('@/components/PdfCompressor'), {
   ssr: false,
   loading: () => (
     <div className="space-y-6">

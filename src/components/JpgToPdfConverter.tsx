@@ -101,7 +101,7 @@ const PagePreview = ({ image, orientation, pageSize, marginSize }: { image: Imag
 }
 
 
-export function JpgToPdfConverter() {
+export default function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
   const [isConverting, setIsConverting] = useState(false);

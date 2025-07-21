@@ -62,7 +62,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export function PdfRotator() {
+export default function PdfRotator() {
   const [file, setFile] = useState<PDFFileInfo | null>(null);
   const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);

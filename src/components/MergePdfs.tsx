@@ -139,7 +139,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function MergePdfs() {
+export default function MergePdfs() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, removingFileId } = state;
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");

@@ -48,7 +48,7 @@ type PDFFile = {
 };
 
 
-export function PdfOrganizer() {
+export default function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);

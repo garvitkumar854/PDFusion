@@ -68,7 +68,7 @@ const getImageQuality = (level: CompressionLevel): number => {
     }
 }
 
-export function PdfCompressor() {
+export default function PdfCompressor() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [compressionResult, setCompressionResult] = useState<CompressionResult | null>(null);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>("recommended");

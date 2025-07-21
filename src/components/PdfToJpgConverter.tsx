@@ -131,7 +131,7 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
 });
 PagePreviewCard.displayName = 'PagePreviewCard';
 
-export function PdfToJpgConverter() {
+export default function PdfToJpgConverter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConverting, setIsConverting] = useState(false);

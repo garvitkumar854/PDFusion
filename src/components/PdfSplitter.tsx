@@ -135,7 +135,7 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
 PagePreviewCard.displayName = 'PagePreviewCard';
 
 
-export function PdfSplitter() {
+export default function PdfSplitter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSplitting, setIsSplitting] = useState(false);
