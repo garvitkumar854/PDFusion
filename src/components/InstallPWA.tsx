@@ -18,21 +18,40 @@ interface BeforeInstallPromptEvent extends Event {
 
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const standalone = window.matchMedia('(display-mode: standalone)').matches;
-        setIsStandalone(standalone);
+        if (standalone) {
+            setIsStandalone(true);
+            return;
+        }
+
+        if (localStorage.getItem('pwa_installed') === 'true') {
+            setIsInstalled(true);
+        }
 
         const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         setIsIOS(isIosDevice);
+
+        if ('getInstalledRelatedApps' in navigator) {
+            navigator.getInstalledRelatedApps().then((relatedApps) => {
+                if (relatedApps.length > 0) {
+                    setIsInstalled(true);
+                    localStorage.setItem('pwa_installed', 'true');
+                }
+            });
+        }
     }
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
+      setIsInstalled(false);
+      localStorage.removeItem('pwa_installed');
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
 
@@ -58,10 +77,16 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setIsStandalone(true);
+      setIsInstalled(true);
+      localStorage.setItem('pwa_installed', 'true');
     }
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
+
+  const handleOpenApp = () => {
+    const pwaUrl = `${window.location.origin}${window.location.pathname}?utm_source=pwa`;
+    window.open(pwaUrl, '_blank');
+  };
   
   const buttonClassName = inSheet
     ? "w-full justify-start text-muted-foreground hover:text-primary"
@@ -75,7 +100,21 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     return null;
   }
   
-  if (installPrompt || isIOS) {
+  if (isInstalled && !isIOS) {
+    return (
+        <Button
+            onClick={handleOpenApp}
+            variant="outline"
+            size="sm"
+            className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+        >
+            <ExternalLink className="w-4 h-4" />
+            Open App
+        </Button>
+    );
+  }
+  
+  if (installPrompt || (isIOS && !isInstalled)) {
     return (
       <Button
         onClick={handleInstallClick}

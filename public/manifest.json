@@ -84,5 +84,12 @@
     "lang": "en",
     "dir": "auto",
     "prefer_related_applications": false,
+    "related_applications": [
+        {
+          "platform": "play",
+          "url": "https://play.google.com/store/apps/details?id=com.example.app1",
+          "id": "com.example.app1"
+        }
+    ],
     "iarc_rating_id": "e84b072d-8323-4467-bdea-f4cff0a8a644"
 }
