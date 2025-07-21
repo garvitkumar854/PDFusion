@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Ban,
   ShieldAlert,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { compressPdf, CompressPdfInput } from "@/ai/flows/compress-pdf-flow";
+import { PDFDocument, PDFImage, PDFName } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 
 if (typeof window !== 'undefined') {
@@ -47,7 +48,7 @@ type CompressionResult = {
 };
 
 type CompressionLevel = "low" | "recommended" | "extreme";
-type CompressionStatus = "idle" | "uploading" | "compressing" | "done" | "error";
+type CompressionStatus = "idle" | "compressing" | "done" | "error";
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -58,14 +59,14 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const fileToDataUri = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
+const getImageQuality = (level: CompressionLevel): number => {
+    switch (level) {
+        case 'low': return 0.75;
+        case 'recommended': return 0.5;
+        case 'extreme': return 0.25;
+        default: return 0.5;
+    }
+}
 
 export function PdfCompressor() {
   const [file, setFile] = useState<PDFFile | null>(null);
@@ -78,23 +79,11 @@ export function PdfCompressor() {
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   
-  const isCompressing = status === 'uploading' || status === 'compressing';
+  const isCompressing = status === 'compressing';
 
   useEffect(() => {
-    let targetProgress = 0;
-    if (status === 'uploading') targetProgress = 50;
-    else if (status === 'compressing') targetProgress = 90;
-    else if (status === 'done' || status === 'error') targetProgress = 100;
-    else targetProgress = 0;
-
-    const timeoutId = setTimeout(() => setProgress(targetProgress), 100);
-    return () => clearTimeout(timeoutId);
-  }, [status]);
-
-  useEffect(() => {
-    // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current++; // Invalidate any running operations
+      operationId.current++;
       if (compressionResult) {
         URL.revokeObjectURL(compressionResult.url);
       }
@@ -115,7 +104,7 @@ export function PdfCompressor() {
       let isEncrypted = false;
       try {
           const pdfBytes = await singleFile.arrayBuffer();
-          await pdfjsLib.getDocument(pdfBytes).promise;
+          await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
       } catch (e: any) {
           if (e.name === 'PasswordException') {
               isEncrypted = true;
@@ -158,44 +147,83 @@ export function PdfCompressor() {
     }
 
     const currentOperationId = ++operationId.current;
-    setStatus('uploading');
+    setStatus('compressing');
     setProgress(0);
     setCompressionResult(null);
 
     try {
-      const pdfDataUri = await fileToDataUri(file.file);
-      
-      if (operationId.current !== currentOperationId) return; // Cancelled
-      
-      setStatus('compressing');
-      
-      const input: CompressPdfInput = { pdfDataUri, compressionLevel };
-      const result = await compressPdf(input);
-      
-      if (operationId.current !== currentOperationId) return; // Cancelled
+        const pdfBytes = await file.file.arrayBuffer();
+        const originalSize = pdfBytes.length;
+        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        
+        const imageQuality = getImageQuality(compressionLevel);
+        let imagesProcessed = 0;
+        const totalPages = pdfDoc.getPageCount();
 
-      const blob = await fetch(result.compressedPdfDataUri).then(res => res.blob());
-      const url = URL.createObjectURL(blob);
-      
-      if (operationId.current !== currentOperationId) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      
-      const originalName = file.file.name.replace(/\.pdf$/i, '');
-      setCompressionResult({
-        url,
-        originalSize: result.originalSize,
-        compressedSize: result.compressedSize,
-        filename: `${originalName}_compressed.pdf`,
-      });
-      setStatus('done');
-      
-      toast({
-        title: "Compression Successful!",
-        description: "Your PDF is ready for download.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
-      });
+        for(let i = 0; i < totalPages; i++) {
+            if (operationId.current !== currentOperationId) return;
+            const page = pdfDoc.getPage(i);
+            const resources = page.node.Resources();
+            if (!resources) continue;
+
+            const xobjects = resources.get(PDFName.of('XObject'));
+            if (!xobjects || !('asDict' in xobjects)) continue;
+            
+            const xobjectDict = xobjects.asDict();
+            const imageNames = xobjectDict.keys();
+
+            for (const imageName of imageNames) {
+                const imageStream = xobjectDict.get(imageName);
+                // Check if it's an image and has a stream-like structure
+                if (!imageStream || !('asStream' in imageStream) || imageStream.asStream().get(PDFName.of('Subtype'))?.toString() !== '/Image') {
+                    continue;
+                }
+                
+                try {
+                    const image = await pdfDoc.embedJpg(imageStream.asStream().getContents());
+                    const compressedImage = await pdfDoc.embedJpg(await image.asJpg({ quality: imageQuality }));
+                    xobjectDict.set(imageName, compressedImage.ref);
+                    imagesProcessed++;
+                } catch (e) {
+                    console.warn(`Could not process an image resource (${imageName.toString()}). It may be in an unsupported format. Skipping.`, e);
+                }
+            }
+            setProgress(Math.round(((i + 1) / totalPages) * 100));
+        }
+
+        if (operationId.current !== currentOperationId) return;
+
+        let compressedPdfBytes: Uint8Array;
+        if (imagesProcessed > 0) {
+            compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
+        } else {
+            compressedPdfBytes = pdfBytes;
+        }
+
+        const compressedSize = compressedPdfBytes.length;
+        
+        if (compressedSize >= originalSize) {
+             toast({
+                title: "Already Optimized!",
+                description: "This PDF is already well-optimized. No further compression was possible.",
+             });
+             setFile(null);
+             setStatus('idle');
+             return;
+        }
+        
+        const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        const originalName = file.file.name.replace(/\.pdf$/i, '');
+        setCompressionResult({
+            url,
+            originalSize: originalSize,
+            compressedSize: compressedSize,
+            filename: `${originalName}_compressed.pdf`,
+        });
+        setStatus('done');
+        toast({ title: "Compression Successful!" });
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
@@ -204,7 +232,7 @@ export function PdfCompressor() {
         toast({
           variant: "destructive",
           title: "Compression Failed",
-          description: error.message || "An unexpected error occurred during compression.",
+          description: error.message || "An unexpected error occurred.",
         });
         setProgress(0);
       }
@@ -227,7 +255,7 @@ export function PdfCompressor() {
     setStatus('idle');
   };
 
-  if (compressionResult) {
+  if (status === 'done' && compressionResult) {
     const { url, originalSize, compressedSize, filename } = compressionResult;
     const reduction = originalSize > 0 ? ((originalSize - compressedSize) / originalSize) * 100 : 0;
     
@@ -248,10 +276,7 @@ export function PdfCompressor() {
           </div>
         </div>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">
-            { reduction > 0 
-                ? <>File size reduced by <span className="font-bold text-primary">{reduction.toFixed(1)}%</span>.</>
-                : <>This PDF is already well-optimized!</>
-            }
+            File size reduced by <span className="font-bold text-primary">{reduction.toFixed(1)}%</span>.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
@@ -267,16 +292,6 @@ export function PdfCompressor() {
         </div>
       </div>
     );
-  }
-
-  const getProgressLabel = () => {
-    switch(status) {
-        case "uploading": return "Uploading to server...";
-        case "compressing": return "Compressing PDF...";
-        case "done": return "Done!";
-        case "error": return "An error occurred.";
-        default: return "";
-    }
   }
 
   return (
@@ -316,7 +331,7 @@ export function PdfCompressor() {
           ) : (
             <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isCompressing && "opacity-70 pointer-events-none")}>
               <div className="flex items-center gap-3 overflow-hidden">
-                <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />
+                {file.isEncrypted ? <Lock className="w-6 h-6 text-yellow-500 sm:w-8 sm:h-8 shrink-0" /> : <FileIcon className="w-6 h-6 text-destructive sm:w-8 sm:h-8 shrink-0" />}
                 <div className="flex flex-col overflow-hidden">
                   <span className="text-sm font-medium truncate" title={file.file.name}>{file.file.name}</span>
                   <span className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</span>
@@ -379,7 +394,7 @@ export function PdfCompressor() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                      <p className="text-sm font-medium text-primary transition-all duration-300">{getProgressLabel()}</p>
+                      <p className="text-sm font-medium text-primary transition-all duration-300">Compressing...</p>
                     </div>
                     <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
                   </div>
