@@ -25,13 +25,6 @@ const services = [
       href: '/split-pdf'
     },
     {
-      icon: <FileArchive className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
-      title: 'Compress PDF',
-      description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
-      href: '/compress-pdf'
-    },
-    {
       icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Organize PDF',
