@@ -33,6 +33,14 @@ const contactMethods = [
     details: 'Ajmer, Rajasthan',
     bgColor: 'bg-orange-100/50 dark:bg-orange-900/20 hover:bg-orange-200/60 dark:hover:bg-orange-900/40',
   },
+  {
+    icon: <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 dark:text-green-400" />,
+    title: 'Live Chat',
+    description: 'Chat with our support team',
+    href: '#',
+    details: 'Available 24/7',
+    bgColor: 'bg-green-100/50 dark:bg-green-900/20 hover:bg-green-200/60 dark:hover:bg-green-900/40',
+  }
 ];
 
 export default function ContactPage() {

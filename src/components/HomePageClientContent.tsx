@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, Lock, Unlock } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,32 +25,11 @@ const services = [
       href: '/split-pdf'
     },
     {
-      icon: <FileArchive className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
-      title: 'Compress PDF',
-      description: 'Reduce the file size of your PDFs while maintaining optimal quality.',
-      href: '/compress-pdf'
-    },
-    {
       icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
-    },
-    {
-      icon: <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Lock PDF',
-      description: 'Add a password and encrypt your PDF file to protect sensitive information.',
-      href: '/lock-pdf'
-    },
-    {
-      icon: <Unlock className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
-      title: 'Unlock PDF',
-      description: 'Remove password protection from your PDF files quickly and easily.',
-      href: '/unlock-pdf'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
