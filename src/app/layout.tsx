@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: '/favicon.png',
+    icon: '/icon.svg',
     apple: '/maskable_icon_x512.png',
   },
 };
