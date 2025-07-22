@@ -57,22 +57,6 @@
             ]
         }
     ],
-    "screenshots": [
-        {
-            "src": "/1080x1920.png",
-            "sizes": "1080x1920",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Home Screen"
-        },
-        {
-            "src": "/1280x800.png",
-            "sizes": "1280x800",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "Home Screen on Desktop"
-        }
-    ],
     "id": "/?utm_source=pwa",
     "launch_handler": {
         "client_mode": "navigate-existing"
