@@ -24,7 +24,6 @@ import { Label } from "@/components/ui/label";
 import { PDFDocument, degrees } from 'pdf-lib';
 import { Progress } from "./ui/progress";
 import * as pdfjsLib from 'pdfjs-dist';
-import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -64,7 +63,6 @@ function formatBytes(bytes: number, decimals = 2) {
 
 export default function PdfRotator() {
   const [file, setFile] = useState<PDFFileInfo | null>(null);
-  const [unlockedFile, setUnlockedFile] = useState<File | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -72,8 +70,6 @@ export default function PdfRotator() {
   const [preview, setPreview] = useState<PreviewInfo | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
@@ -129,7 +125,6 @@ export default function PdfRotator() {
       
       cleanup();
       setFile(null);
-      setUnlockedFile(null);
       setResult(null);
 
       const singleFile = acceptedFiles[0];
@@ -157,7 +152,7 @@ export default function PdfRotator() {
       if (!isEncrypted) {
           generatePreview(singleFile);
       } else {
-          setIsPasswordDialogOpen(true);
+          toast({ variant: 'destructive', title: 'Encrypted PDF', description: 'This file is password-protected and cannot be rotated.' });
       }
     }, [cleanup, generatePreview, toast]);
 
@@ -174,18 +169,15 @@ export default function PdfRotator() {
   const removeFile = () => {
     cleanup();
     setFile(null);
-    setUnlockedFile(null);
     setResult(null);
-    setIsPasswordDialogOpen(false);
   };
   
   const handleProcess = async () => {
-    const fileToProcess = unlockedFile || file?.file;
+    const fileToProcess = file?.file;
     if (!fileToProcess) return;
 
-    if (file?.isEncrypted && !unlockedFile) {
-        toast({ variant: "destructive", title: "Encrypted File", description: "Please provide the correct password to unlock the file." });
-        setIsPasswordDialogOpen(true);
+    if (file?.isEncrypted) {
+        toast({ variant: "destructive", title: "Encrypted File", description: "This file is password-protected and cannot be rotated." });
         return;
     }
     
@@ -245,13 +237,6 @@ export default function PdfRotator() {
     removeFile();
   };
 
-  const onUnlockSuccess = (unlockedFile: File) => {
-    setUnlockedFile(unlockedFile);
-    setIsPasswordDialogOpen(false);
-    toast({ title: "File Unlocked!", description: "You can now rotate your PDF."});
-    generatePreview(unlockedFile);
-  }
-
   if (result) {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
@@ -283,18 +268,10 @@ export default function PdfRotator() {
     ? previewSize.height / previewSize.width 
     : previewSize.width / previewSize.height;
 
-  const isEncrypted = file?.isEncrypted && !unlockedFile;
+  const isEncrypted = file?.isEncrypted;
 
   return (
     <div className="space-y-6">
-      {file && file.isEncrypted && (
-        <PasswordDialog 
-            isOpen={isPasswordDialogOpen}
-            onOpenChange={setIsPasswordDialogOpen}
-            file={file.file}
-            onUnlockSuccess={onUnlockSuccess}
-        />
-      )}
       {!file ? (
         <Card className="bg-white dark:bg-card shadow-lg">
           <CardHeader>
@@ -322,7 +299,7 @@ export default function PdfRotator() {
                         <div>
                             <CardTitle className="text-xl">Uploaded File</CardTitle>
                             <CardDescription className="truncate max-w-[200px] sm:max-w-xs" title={file.file.name}>
-                               {unlockedFile?.name || file.file.name}
+                               {file.file.name}
                             </CardDescription>
                         </div>
                         <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
@@ -337,7 +314,7 @@ export default function PdfRotator() {
                         <div className="mb-4 flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
                             <div>
-                                <p>This PDF is password-protected. <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsPasswordDialogOpen(true)}>Click here to unlock.</Button></p>
+                                <p>This PDF is password-protected and cannot be rotated.</p>
                             </div>
                         </div>
                     )}
