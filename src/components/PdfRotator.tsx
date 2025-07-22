@@ -61,7 +61,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export default function PdfRotator() {
+export function PdfRotator() {
   const [file, setFile] = useState<PDFFileInfo | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -330,17 +330,14 @@ export default function PdfRotator() {
                     <div className="mt-8">
                       {isProcessing ? (
                         <div className="p-4 border rounded-lg bg-primary/5">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2"><Loader2 className="w-5 h-5 text-primary animate-spin" /><p className="text-sm font-medium text-primary transition-all duration-300">Rotating PDF...</p></div>
-                            <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                          </div>
+                          <div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><Loader2 className="w-5 h-5 text-primary animate-spin" /><p className="text-sm font-medium text-primary transition-all duration-300">Rotating PDF...</p></div><p className="text-sm font-medium text-primary">{Math.round(progress)}%</p></div>
                           <Progress value={progress} className="h-2" />
                           <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 h-4" />Cancel</Button></div>
                         </div>
                       ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || isEncrypted}>
-                           {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                           {isProcessing ? 'Rotating...' : 'Rotate PDF'}
+                          <RotateCw className="mr-2 h-5 w-5" />
+                          Rotate PDF
                         </Button>
                       )}
                     </div>
