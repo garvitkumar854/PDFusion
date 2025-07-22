@@ -51,7 +51,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export default function PdfToHtmlConverter() {
+export function PdfToHtmlConverter() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -278,12 +278,12 @@ export default function PdfToHtmlConverter() {
         {file && (
              <Card className="bg-white dark:bg-card shadow-lg">
                 <CardContent className="p-6">
-                    {file.isEncrypted ? (
+                    {file.isEncrypted && (
                          <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
                             <p>This tool may not work correctly with encrypted PDFs. Results may vary.</p>
                         </div>
-                    ) : null}
+                    )}
                     {isProcessing ? (
                         <div className="p-4 border rounded-lg bg-primary/5">
                             <div className="flex items-center justify-between mb-2">

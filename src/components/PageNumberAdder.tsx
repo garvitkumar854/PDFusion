@@ -41,6 +41,7 @@ type PDFFile = {
   id: string;
   file: File;
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
+  isEncrypted: boolean;
 };
 
 type ProcessResult = {
@@ -84,7 +85,7 @@ const hexToRgb = (hex: string) => {
     : { r: 0, g: 0, b: 0 };
 };
 
-export default function PageNumberAdder() {
+export function PageNumberAdder() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -116,25 +117,41 @@ export default function PageNumberAdder() {
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setFirstPagePreviewUrl(null);
+    setFile(null);
+    
+    let isEncrypted = false;
+    let pdfjsDoc: pdfjsLib.PDFDocumentProxy | null = null;
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
-      const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes, password: '' }).promise.catch(async (e) => {
+      try {
+        pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      } catch (e: any) {
         if (e.name === 'PasswordException') {
-            return await pdfjsLib.getDocument({data: pdfBytes, password: ''}).promise;
+          isEncrypted = true;
+        } else {
+          throw e; // Re-throw other errors
         }
-        throw e;
-      });
+      }
       
-      if (operationId.current !== currentOperationId) return;
+      if (operationId.current !== currentOperationId) {
+        pdfjsDoc?.destroy();
+        return;
+      }
 
-      setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc });
+      setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc: pdfjsDoc!, isEncrypted });
       setResult(null);
+      
+      if (isEncrypted) {
+        toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password-protected and cannot be processed." });
+        return;
+      }
+
       setStartPage(1);
-      setEndPage(pdfjsDoc.numPages);
+      setEndPage(pdfjsDoc!.numPages);
 
       // Render first page for preview
-      const page = await pdfjsDoc.getPage(1);
+      const page = await pdfjsDoc!.getPage(1);
       const viewport = page.getViewport({ scale: 1 });
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
@@ -180,6 +197,9 @@ export default function PageNumberAdder() {
   });
 
   const removeFile = () => {
+    if (file?.pdfjsDoc) {
+      file.pdfjsDoc.destroy();
+    }
     setFile(null);
     setFirstPagePreviewUrl(null);
   };
@@ -196,7 +216,7 @@ export default function PageNumberAdder() {
   }
   
   const drawPreview = useCallback(() => {
-    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file) return;
+    if (!previewCanvasRef.current || !firstPagePreviewUrl || !file || file.isEncrypted) return;
 
     const canvas = previewCanvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -247,8 +267,8 @@ export default function PageNumberAdder() {
 
   const handleProcess = async () => {
     const fileToProcess = file?.file;
-    if (!fileToProcess) {
-      toast({ variant: "destructive", title: "File not ready", description: "Please upload a PDF file to process." });
+    if (!fileToProcess || file.isEncrypted) {
+      toast({ variant: "destructive", title: "File not ready", description: "Please upload a valid, unlocked PDF file to process." });
       return;
     }
 
@@ -430,22 +450,30 @@ export default function PageNumberAdder() {
                             <X className="w-4 h-4" />
                         </Button>
                     </CardHeader>
+                    {file.isEncrypted && (
+                        <CardContent className="pt-0">
+                             <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
+                                <ShieldAlert className="h-5 w-5 shrink-0" />
+                                <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
+                            </div>
+                        </CardContent>
+                    )}
                 </Card>
                 <Card className="bg-white dark:bg-card shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
-                       <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
+                       <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold">Position</Label>
                                 <div className="mt-2 grid grid-cols-3 grid-rows-3 gap-1 w-24 h-24 p-1 rounded-lg bg-muted">
                                     {positions.map(p => (
-                                    <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button>
+                                    <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button>
                                     ))}
                                 </div>
                             </div>
                             <div>
                                 <Label className="font-semibold">Format</Label>
-                                <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing}>
+                                <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-2" disabled={isProcessing || file.isEncrypted}>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">Only page number (1)</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page n (Page 1)</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">n / N (1 / {file.pdfjsDoc?.numPages || 'N'})</Label></div>
@@ -453,33 +481,33 @@ export default function PageNumberAdder() {
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
                                 </RadioGroup>
                                 {formatType === 'custom' && (
-                                    <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing} placeholder="e.g. {p} of {n}"/>
+                                    <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing || file.isEncrypted} placeholder="e.g. {p} of {n}"/>
                                 )}
                             </div>
 
                             <div className="space-y-2">
                                 <Label className="font-semibold">Page Range</Label>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc?.numPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-1" disabled={isProcessing}/>
-                                    <Input id="endPage" type="number" value={endPage} min={startPage} max={file.pdfjsDoc?.numPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="startPage" type="number" value={startPage} min="1" max={file.pdfjsDoc?.numPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
+                                    <Input id="endPage" type="number" value={endPage} min={startPage} max={file.pdfjsDoc?.numPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                  <div>
                                     <Label htmlFor="margin" className="font-semibold">Margin (points)</Label>
-                                    <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
                                 </div>
                                 <div>
                                     <Label htmlFor="font-size" className="font-semibold">Font Size (points)</Label>
-                                    <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-1" disabled={isProcessing}/>
+                                    <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="font" className="font-semibold">Font</Label>
-                                    <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}>
+                                    <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing || file.isEncrypted}>
                                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Helvetica">Helvetica</SelectItem>
@@ -491,17 +519,17 @@ export default function PageNumberAdder() {
                                 <div>
                                     <Label className="font-semibold">Style</Label>
                                     <div className="mt-1 flex items-center gap-2">
-                                        <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button>
-                                        <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button>
-                                        <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button>
+                                        <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing || file.isEncrypted}><Bold className="w-4 h-4" /></Button>
+                                        <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing || file.isEncrypted}><Italic className="w-4 h-4" /></Button>
+                                        <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing || file.isEncrypted}><Underline className="w-4 h-4" /></Button>
                                     </div>
                                 </div>
                             </div>
                              <div>
                                 <Label htmlFor="textColor" className="font-semibold">Text Color</Label>
                                 <div className="relative mt-1">
-                                    <Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/>
-                                    <Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" disabled={isProcessing} />
+                                    <Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing || file.isEncrypted}/>
+                                    <Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" disabled={isProcessing || file.isEncrypted} />
                                 </div>
                             </div>
                         </div>
@@ -517,11 +545,19 @@ export default function PageNumberAdder() {
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
                                 <p className="mt-2">Loading preview...</p>
                             </div>
-                        ) : firstPagePreviewUrl ? (
+                        ) : firstPagePreviewUrl && !file.isEncrypted ? (
                             <canvas ref={previewCanvasRef} className="max-w-full h-auto max-h-[500px] lg:max-h-[600px] object-contain shadow-md border rounded-md" />
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-96 text-muted-foreground">
-                                <p>Could not load preview.</p>
+                            <div className="flex flex-col items-center justify-center h-96 text-muted-foreground p-4 text-center">
+                                {file.isEncrypted ? (
+                                    <>
+                                        <Lock className="w-12 h-12 text-muted-foreground mb-4" />
+                                        <h3 className="font-semibold text-lg">Encrypted File</h3>
+                                        <p className="text-muted-foreground">Preview is unavailable for locked files.</p>
+                                    </>
+                                ) : (
+                                    <p>Could not load preview.</p>
+                                )}
                             </div>
                         )}
                     </CardContent>
@@ -541,7 +577,7 @@ export default function PageNumberAdder() {
                                 <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
                             </div>
                         ) : (
-                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
+                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
                         )}
                     </CardContent>
                 </Card>

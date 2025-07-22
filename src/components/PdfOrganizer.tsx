@@ -47,7 +47,7 @@ type PDFFile = {
 };
 
 
-export default function PdfOrganizer() {
+export function PdfOrganizer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +88,7 @@ export default function PdfOrganizer() {
     return undefined;
   }, []);
   
-  const loadPdf = useCallback(async (fileToLoad: File, isUnlocked = false) => {
+  const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
