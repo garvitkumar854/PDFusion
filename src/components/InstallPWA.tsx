@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,14 +17,21 @@ interface BeforeInstallPromptEvent extends Event {
 
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const standalone = window.matchMedia('(display-mode: standalone)').matches;
-        setIsStandalone(standalone);
+        if (standalone) {
+            setIsInstalled(true);
+            return;
+        }
+
+        if (localStorage.getItem('pwa_installed') === 'true') {
+            setIsInstalled(true);
+        }
 
         const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         setIsIOS(isIosDevice);
@@ -33,6 +39,8 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
+      setIsInstalled(false);
+      localStorage.removeItem('pwa_installed');
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
 
@@ -58,40 +66,42 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setIsStandalone(true);
+      setIsInstalled(true);
+      localStorage.setItem('pwa_installed', 'true');
     }
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
-  
+
   const handleOpenApp = () => {
-    // For a PWA, reloading the page within the browser when it's already installed
-    // often just brings the existing installed app instance into focus.
-    window.location.reload();
+    window.location.href = '/?utm_source=pwa_open';
   };
   
   const buttonClassName = inSheet
     ? "w-full justify-start text-muted-foreground hover:text-primary"
     : "inline-flex items-center gap-2 rounded-full font-semibold";
   
-  const buttonVariant = inSheet ? "ghost" : "outline";
+  const buttonVariant = inSheet ? "ghost" : "default";
   const buttonSize = inSheet ? "default" : "sm";
 
 
-  if (isStandalone && !inSheet) {
-    return (
-        <Button
-            onClick={handleOpenApp}
-            variant="outline"
-            size="sm"
-            className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-        >
-            <ExternalLink className="w-4 h-4" />
-            Open App
-        </Button>
-    );
+  if (isInstalled) {
+      if (window.matchMedia('(display-mode: standalone)').matches) return null;
+      if (isIOS) return null;
+      
+      return (
+          <Button
+              onClick={handleOpenApp}
+              variant="outline"
+              size="sm"
+              className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+          >
+              <ExternalLink className="w-4 h-4" />
+              Open App
+          </Button>
+      );
   }
   
-  if (installPrompt || isIOS) {
+  if (installPrompt || (isIOS && !isInstalled)) {
     return (
       <Button
         onClick={handleInstallClick}

@@ -13,7 +13,7 @@ import html2pdf from 'html2pdf.js';
 
 type Status = "idle" | "fetching" | "converting" | "done" | "error";
 
-export default function HtmlToPdfConverter() {
+export function HtmlToPdfConverter() {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);

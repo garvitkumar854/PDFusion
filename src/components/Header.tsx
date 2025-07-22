@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Edit, Lock, Unlock } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,13 +22,24 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ThemeToggler } from './ThemeToggler';
 import InstallPWA from './InstallPWA';
-import { services } from '@/lib/services.tsx';
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+
+const services = [
+    { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
+    { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
+    { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
+    { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
+    { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+    { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
+    { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+    { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
+    { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
+]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
   const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
@@ -94,11 +105,11 @@ export default function Header() {
 
   return (
     <header className="py-4 border-b bg-background/80 sticky top-0 z-50 backdrop-blur-lg">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <div className="flex-1 flex justify-start">
+      <div className="container mx-auto px-4 flex justify-between items-center gap-4">
+        <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
             <PdfFusionLogo />
-            <h1 className="text-xl font-bold tracking-tight">
+            <h1 className="text-xl font-bold tracking-tight hidden sm:block">
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 PDFusion
                 </span>
@@ -106,7 +117,7 @@ export default function Header() {
             </Link>
         </div>
         
-        <nav className="hidden md:flex items-center gap-8 justify-center">
+        <nav className="hidden md:flex flex-1 items-center gap-8 justify-center">
           <NavLink href="/" label="Home" currentPath={pathname} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -127,9 +138,9 @@ export default function Header() {
             <DropdownMenuContent>
                 {services.map((service) => (
                     <DropdownMenuItem key={service.href} asChild>
-                        <Link href={service.href} className="flex items-center">
-                            {React.cloneElement(service.icon, { className: "w-4 h-4 mr-2" })}
-                            {service.title}
+                        <Link href={service.href}>
+                            {service.icon}
+                            {service.label}
                         </Link>
                     </DropdownMenuItem>
                 ))}
@@ -139,7 +150,7 @@ export default function Header() {
           <NavLink href="/contact" label="Contact" currentPath={pathname} />
         </nav>
 
-        <div className="flex-1 flex justify-end items-center gap-2">
+        <div className="flex-shrink-0 flex items-center gap-2">
             <InstallPWA />
             <ThemeToggler />
             <div className="md:hidden">
@@ -176,8 +187,8 @@ export default function Header() {
                                 <div className="text-lg font-semibold text-foreground pt-2">Services</div>
                                 {services.map((service) => (
                                     <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1">
-                                        {React.cloneElement(service.icon, { className: "w-4 h-4 mr-2" })}
-                                        {service.title}
+                                        {service.icon}
+                                        {service.label}
                                     </Link>
                                 ))}
                                  <div className="pt-4 w-full">

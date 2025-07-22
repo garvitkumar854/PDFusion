@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
-import { PasswordDialog } from "./PasswordDialog";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -139,12 +138,10 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export default function MergePdfs() {
+export function MergePdfs() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { files, totalSize, isMerging, mergeProgress, mergedPdfUrl, removingFileId } = state;
   const [outputFilename, setOutputFilename] = useState("merged_document.pdf");
-  
-  const [passwordFile, setPasswordFile] = useState<File | null>(null);
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -265,19 +262,10 @@ export default function MergePdfs() {
     e.preventDefault(); 
   };
 
-  const onFileUnlock = (unlockedFile: File) => {
-    const fileToUpdate = files.find(f => f.file === passwordFile);
-    if(fileToUpdate) {
-        dispatch({ type: 'UPDATE_FILE', file: { ...fileToUpdate, file: unlockedFile, isEncrypted: false } });
-        toast({ title: 'File Unlocked', description: `"${unlockedFile.name}" has been decrypted.`});
-    }
-    setPasswordFile(null);
-  };
-  
   const handleMerge = async () => {
     const firstLockedFile = files.find(f => f.isEncrypted);
     if (firstLockedFile) {
-        setPasswordFile(firstLockedFile.file);
+        toast({ variant: "destructive", title: "Locked file found", description: `"${firstLockedFile.file.name}" is encrypted. Please remove it before merging.` });
         return;
     }
     
@@ -396,14 +384,6 @@ export default function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        {passwordFile && (
-            <PasswordDialog 
-                isOpen={!!passwordFile}
-                onOpenChange={(isOpen) => !isOpen && setPasswordFile(null)}
-                file={passwordFile}
-                onUnlockSuccess={onFileUnlock}
-            />
-        )}
         <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
