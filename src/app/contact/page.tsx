@@ -50,11 +50,17 @@ const contactMethods = [
 ];
 
 const formSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  topic: z.string().min(1, "Please select a topic"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  firstName: z.string()
+    .min(2, "First name must be at least 2 characters.")
+    .max(50, "First name must not exceed 50 characters.")
+    .regex(/^[A-Za-z\s]+$/, "First name can only contain letters and spaces."),
+  lastName: z.string()
+    .min(2, "Last name must be at least 2 characters.")
+    .max(50, "Last name must not exceed 50 characters.")
+    .regex(/^[A-Za-z\s]+$/, "Last name can only contain letters and spaces."),
+  email: z.string().email("Please enter a valid email address."),
+  topic: z.string().min(1, "Please select a topic."),
+  message: z.string().min(20, "Message must be at least 20 characters."),
 });
 
 export default function ContactPage() {
