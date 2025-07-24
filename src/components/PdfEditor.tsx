@@ -337,39 +337,53 @@ export function PdfEditor() {
 
   // Render PDF page to canvas background
   useEffect(() => {
-    if (file?.pdfjsDoc && fabricCanvasRef.current && canvasContainerRef.current) {
-        const canvas = fabricCanvasRef.current;
-        canvas.clear();
+    const renderCanvas = async () => {
+      if (!file?.pdfjsDoc || !fabricCanvasRef.current || !canvasContainerRef.current) {
+        return;
+      }
+      const canvas = fabricCanvasRef.current;
+      canvas.clear();
 
-        file.pdfjsDoc.getPage(activePage + 1).then(page => {
-            const containerWidth = canvasContainerRef.current!.offsetWidth - 16;
-            const containerHeight = canvasContainerRef.current!.offsetHeight - 16;
-            
-            let viewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
-            viewport = page.getViewport({ scale });
-            
-            canvas.setWidth(viewport.width);
-            canvas.setHeight(viewport.height);
+      try {
+        const page = await file.pdfjsDoc.getPage(activePage + 1);
+        const containerWidth = canvasContainerRef.current.offsetWidth - 16; // some padding
+        const containerHeight = canvasContainerRef.current.offsetHeight - 16;
 
-            const bgCanvas = document.createElement('canvas');
-            bgCanvas.width = viewport.width;
-            bgCanvas.height = viewport.height;
-            const bgCtx = bgCanvas.getContext('2d');
-            
-            if (!bgCtx) return;
+        let viewport = page.getViewport({ scale: 1 });
+        const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
+        viewport = page.getViewport({ scale });
+        
+        canvas.setWidth(viewport.width);
+        canvas.setHeight(viewport.height);
 
-            page.render({ canvasContext: bgCtx, viewport }).promise.then(() => {
-                fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-                        scaleX: canvas.width! / img.width!,
-                        scaleY: canvas.height! / img.height!,
-                    });
-                });
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = viewport.width;
+        bgCanvas.height = viewport.height;
+        const bgCtx = bgCanvas.getContext('2d');
+        
+        if (!bgCtx) return;
+
+        await page.render({ canvasContext: bgCtx, viewport }).promise;
+
+        fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                scaleX: canvas.width! / img.width!,
+                scaleY: canvas.height! / img.height!,
             });
         });
-    }
-  }, [activePage, file, file?.id]);
+
+      } catch (error) {
+        console.error("Failed to render page to canvas:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Preview Error',
+          description: 'Could not render the selected page.',
+        });
+      }
+    };
+    
+    renderCanvas();
+  }, [activePage, file?.id, file?.pdfjsDoc, toast]);
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
