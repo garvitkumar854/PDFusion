@@ -68,10 +68,13 @@ export function PdfEditor() {
     selectedObject: null,
   });
   const { file, pages, activePage, isLoading, isSaving, selectedObject } = state;
-
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
-
+  const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 0, height: 0});
+  
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
@@ -99,7 +102,6 @@ export function PdfEditor() {
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setState(s => ({ ...s, file: null, pages: [], isLoading: true, activePage: 0, selectedObject: null }));
     if (fabricCanvas) fabricCanvas.clear();
-
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -301,13 +303,10 @@ export function PdfEditor() {
     if(fabricCanvas) fabricCanvas.clear();
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
-
-  // Effect for initializing and cleaning up the fabric canvas
+  
+  // Effect for initializing Fabric canvas and selection handlers
   useEffect(() => {
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return;
-    
-    const canvas = new fabric.Canvas(canvasEl);
+    const canvas = new fabric.Canvas(canvasRef.current);
     setFabricCanvas(canvas);
 
     const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
@@ -325,52 +324,65 @@ export function PdfEditor() {
 
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
-        canvas.off('selection:created');
-        canvas.off('selection:updated');
-        canvas.off('selection:cleared');
         canvas.dispose();
-        setFabricCanvas(null);
     }
   }, []);
 
-  // Effect for rendering the PDF page to the canvas
+  // Effect for handling container resizing
   useEffect(() => {
-    if (!fabricCanvas || !file?.pdfjsDoc) return;
+    const container = canvasContainerRef.current;
+    if (!container) return;
 
+    const resizeObserver = new ResizeObserver(entries => {
+        const entry = entries[0];
+        if(entry) {
+            setCanvasSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+        }
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+        resizeObserver.disconnect();
+    }
+  }, []);
+  
+  // Effect for rendering the PDF page to the canvas when dependencies change
+  useEffect(() => {
     const renderCanvas = async () => {
+        if (!fabricCanvas || !file?.pdfjsDoc || canvasSize.width === 0 || canvasSize.height === 0) {
+            if (fabricCanvas) fabricCanvas.clear().renderAll();
+            return;
+        }
+        
         fabricCanvas.clear();
-        const container = fabricCanvas.getElement().parentElement;
-        if (!container) return;
-
+        
         try {
-            const page = await file.pdfjsDoc!.getPage(activePage + 1);
-            let viewport = page.getViewport({ scale: 1 });
+            const page = await file.pdfjsDoc.getPage(activePage + 1);
+            const viewport = page.getViewport({ scale: 1 });
             
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
+            const scale = Math.min(
+                canvasSize.width / viewport.width,
+                canvasSize.height / viewport.height
+            );
 
-            const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height, 1);
-            viewport = page.getViewport({ scale });
-            
-            fabricCanvas.setWidth(viewport.width);
-            fabricCanvas.setHeight(viewport.height);
+            const scaledViewport = page.getViewport({ scale });
+
+            fabricCanvas.setWidth(scaledViewport.width);
+            fabricCanvas.setHeight(scaledViewport.height);
 
             const bgCanvas = document.createElement('canvas');
-            bgCanvas.width = viewport.width;
-            bgCanvas.height = viewport.height;
+            bgCanvas.width = scaledViewport.width;
+            bgCanvas.height = scaledViewport.height;
             const bgCtx = bgCanvas.getContext('2d');
             
             if (!bgCtx) return;
 
-            await page.render({ canvasContext: bgCtx, viewport }).promise;
+            await page.render({ canvasContext: bgCtx, viewport: scaledViewport }).promise;
 
             fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-                fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas), {
-                    scaleX: fabricCanvas.width! / img.width!,
-                    scaleY: fabricCanvas.height! / img.height!,
-                });
+                fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
             });
-
         } catch (error) {
             console.error("Failed to render page to canvas:", error);
             toast({ variant: 'destructive', title: 'Preview Error', description: 'Could not render the selected page.' });
@@ -378,7 +390,7 @@ export function PdfEditor() {
     };
     
     renderCanvas();
-  }, [activePage, file?.id, fabricCanvas, toast]);
+  }, [fabricCanvas, file?.id, activePage, canvasSize, file?.pdfjsDoc, toast]);
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
@@ -522,7 +534,7 @@ export function PdfEditor() {
                 )}
               </Card>
               <Card className="flex-1 p-2">
-                <div className="bg-muted/50 w-full h-[70vh] flex justify-center items-center overflow-auto">
+                <div ref={canvasContainerRef} className="bg-muted/50 w-full h-[70vh] flex justify-center items-center overflow-auto">
                   {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     : file?.isEncrypted ? <div className="flex items-center justify-center h-full text-center text-muted-foreground"><ShieldAlert className="w-10 h-10 mx-auto mb-2 text-destructive" /><p>Editing is disabled for encrypted files.</p></div>
                       : <canvas ref={canvasRef} />}
