@@ -7,7 +7,7 @@ export default function Home() {
 
   return (
     <>
-      <section id="services" className="py-20 md:py-32">
+      <section className="py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"

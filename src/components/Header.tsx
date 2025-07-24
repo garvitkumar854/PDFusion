@@ -33,6 +33,7 @@ const services = [
     { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
     { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
     { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
+    { href: "/edit-pdf", label: "Edit PDF", icon: <Edit className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
     { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
@@ -88,13 +89,10 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 };
 
 const PdfFusionLogo = ({ className }: { className?: string }) => (
-  <Image
-    src="/icon.svg"
-    alt="PDFusion Logo"
-    width={32}
-    height={32}
-    className={cn("w-8 h-8", className)}
-  />
+  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256" className={cn("w-8 h-8", className)}>
+    <rect width="256" height="256" fill="hsl(var(--primary))" rx="60" ry="60"></rect>
+    <path fill="hsl(var(--primary-foreground))" d="M128 24a104.11 104.11 0 1 0 104 104.11A104.11 104.11 0 0 0 128 24Zm-1.22 144.31L73.19 142a8 8 0 0 1 0-11.31l53.59-53.6a8 8 0 0 1 11.32 0l53.59 53.6a8 8 0 0 1 0 11.31l-53.59 54.28a8 8 0 0 1-11.32-.67Zm-30.56-43.12L128 95.4l31.78 31.79-31.78 31.78Z"></path>
+  </svg>
 );
 
 
@@ -109,7 +107,7 @@ export default function Header() {
         <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
             <PdfFusionLogo />
-            <h1 className="text-xl font-bold tracking-tight sm:block">
+            <h1 className="text-xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 PDFusion
                 </span>

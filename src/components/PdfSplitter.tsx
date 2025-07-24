@@ -626,6 +626,7 @@ export function PdfSplitter() {
                 <div className="flex flex-col items-center justify-center h-48 text-center">
                     <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
                     <p className="font-semibold text-lg">This PDF is password-protected.</p>
+                    <p className="text-sm text-muted-foreground">Please upload an unlocked file to use the splitter.</p>
                 </div>
             ) : (
             <>

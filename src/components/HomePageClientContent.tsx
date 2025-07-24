@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,13 @@ const services = [
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
+    },
+     {
+      icon: <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      title: 'Edit PDF',
+      description: 'Add text, images, and shapes directly to your PDF files.',
+      href: '/edit-pdf'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
@@ -143,7 +150,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
     
     return (
         <>
-            <section className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
+            <section id="services" className="pb-20 md:pb-32" style={{ scrollMarginTop: '6rem' }}>
                 <div className="container mx-auto px-4">
                 <AnimateOnScroll
                     animation="animate-in fade-in-0 slide-in-from-bottom-12"

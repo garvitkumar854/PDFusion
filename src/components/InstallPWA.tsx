@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -73,7 +74,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, [installPrompt, isIOS, toast]);
 
   const handleOpenApp = () => {
-    window.open('/', '_blank');
+    window.open(window.location.origin, '_blank');
   };
   
   const buttonClassName = inSheet

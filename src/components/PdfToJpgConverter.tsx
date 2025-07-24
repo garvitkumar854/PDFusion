@@ -547,7 +547,7 @@ export function PdfToJpgConverter() {
 
             {error && (
                 <p className="text-sm text-destructive mt-4 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" /> {error}
+                    <ShieldAlert className="w-4 h-4" /> {error}
                 </p>
             )}
             <div className="mt-8 space-y-4">
