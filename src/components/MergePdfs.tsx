@@ -279,7 +279,6 @@ export function MergePdfs() {
         for (let i = 0; i < files.length; i++) {
             const pdfFile = files[i];
             if (pdfFile.isEncrypted) {
-                toast({ variant: "destructive", title: "Locked file found", description: `"${pdfFile.file.name}" is encrypted. Please remove it before merging.` });
                 dispatch({ type: 'MERGE_CANCEL' });
                 return;
             }
@@ -443,7 +442,7 @@ export function MergePdfs() {
                  {files.some(f => f.isEncrypted) && (
                     <div className="mb-4 flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                         <ShieldAlert className="h-5 w-5 shrink-0" />
-                        <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
+                        <div>This PDF is password-protected and cannot be processed. Please remove it before merging.</div>
                     </div>
                  )}
                 <div className={cn("space-y-2 max-h-[266px] overflow-y-auto pr-2", isMerging && "pointer-events-none")}>
@@ -476,7 +475,7 @@ export function MergePdfs() {
                         </div>
                         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             {pdfFile.isEncrypted ? (
-                                <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20">
+                                <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/10">
                                      <Lock className="w-3.5 h-3.5 mr-1" />
                                      Locked
                                 </Badge>
