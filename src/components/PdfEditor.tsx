@@ -27,7 +27,6 @@ import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 import { Input } from "./ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Label } from "./ui/label";
 
 if (typeof window !== 'undefined') {
@@ -306,6 +305,7 @@ export function PdfEditor() {
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
 
+  // Initialize Fabric canvas
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = new fabric.Canvas(canvasRef.current);
@@ -335,6 +335,7 @@ export function PdfEditor() {
     };
   }, []);
 
+  // Render PDF page to canvas background
   useEffect(() => {
     if (file?.pdfjsDoc && fabricCanvasRef.current && canvasContainerRef.current) {
         const canvas = fabricCanvasRef.current;
@@ -356,7 +357,9 @@ export function PdfEditor() {
             bgCanvas.height = viewport.height;
             const bgCtx = bgCanvas.getContext('2d');
             
-            page.render({ canvasContext: bgCtx!, viewport }).promise.then(() => {
+            if (!bgCtx) return;
+
+            page.render({ canvasContext: bgCtx, viewport }).promise.then(() => {
                 fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
                     canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
                         scaleX: canvas.width! / img.width!,
