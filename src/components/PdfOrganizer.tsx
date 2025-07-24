@@ -53,6 +53,9 @@ export function PdfOrganizer() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -61,6 +64,7 @@ export function PdfOrganizer() {
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
     return () => {
       // Cleanup pdf.js document to free memory
       if(file?.pdfjsDoc) {
@@ -219,13 +223,13 @@ export function PdfOrganizer() {
     e.preventDefault();
   }
   
-  const rotatePage = (id: string) => {
+  const rotatePage = useCallback((id: string) => {
     setPages(prev => prev.map(p => p.id === id ? {...p, rotation: (p.rotation + 90) % 360} : p));
-  };
+  }, []);
   
-  const deletePage = (id: string) => {
+  const deletePage = useCallback((id: string) => {
     setPages(prev => prev.filter(p => p.id !== id));
-  };
+  }, []);
   
   const handleSave = async () => {
     const fileToProcess = file?.file;
@@ -279,8 +283,14 @@ export function PdfOrganizer() {
     setFile(null);
     setPages([]);
     setIsLoading(false);
+    setSelectedPageId(null);
   };
   
+  const handlePageClick = useCallback((id: string) => {
+    if (isTouchDevice) {
+        setSelectedPageId(prevId => (prevId === id ? null : id));
+    }
+  }, [isTouchDevice]);
 
   return (
     <div className="space-y-6">
@@ -345,7 +355,19 @@ export function PdfOrganizer() {
                     </CardContent>
                 )}
             </Card>
-            <div {...getRootProps({onDragOver: handleDragOver, className: 'outline-none'})}>
+            <div 
+              {...getRootProps({
+                  onDragOver: handleDragOver, 
+                  className: 'outline-none',
+                  onClick: (e) => {
+                      if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
+                          // Let page card handle its own click
+                      } else {
+                          setSelectedPageId(null);
+                      }
+                  }
+              })}
+            >
               <input {...getInputProps()} />
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {isLoading ? (
@@ -367,13 +389,16 @@ export function PdfOrganizer() {
                           page={page}
                           index={index}
                           onVisible={onPageVisible}
-                          onRotate={rotatePage}
-                          onDelete={deletePage}
-                          onDragStart={handleDragStart}
-                          onDragEnter={handleDragEnter}
+                          onRotate={() => rotatePage(page.id)}
+                          onDelete={() => deletePage(page.id)}
+                          onPageClick={() => handlePageClick(page.id)}
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragEnter={(e) => handleDragEnter(e, index)}
                           onDragEnd={handleDragEnd}
                           isSaving={isSaving}
                           isDragging={isDragging && dragItem.current === index}
+                          isSelected={selectedPageId === page.id}
+                          isTouchDevice={isTouchDevice}
                       />
                     ))
                 )}
@@ -385,7 +410,23 @@ export function PdfOrganizer() {
   );
 }
 
-const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging }: { page: PageInfo, index: number, onVisible: (id: string) => void, onRotate: (id: string) => void, onDelete: (id: string) => void, onDragStart: (e: React.DragEvent<HTMLDivElement>, index: number) => void, onDragEnter: (e: React.DragEvent<HTMLDivElement>, index: number) => void, onDragEnd: () => void, isSaving: boolean, isDragging: boolean }) => {
+interface PageCardProps {
+    page: PageInfo;
+    index: number;
+    onVisible: (id: string) => void;
+    onRotate: () => void;
+    onDelete: () => void;
+    onPageClick: () => void;
+    onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+    onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+    onDragEnd: () => void;
+    isSaving: boolean;
+    isDragging: boolean;
+    isSelected: boolean;
+    isTouchDevice: boolean;
+}
+
+const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPageClick, onDragStart, onDragEnter, onDragEnd, isSaving, isDragging, isSelected, isTouchDevice }: PageCardProps) => {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -404,17 +445,21 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
         };
     }, [page.id, page.dataUrl, onVisible]);
 
+    const showOverlay = !isTouchDevice || (isTouchDevice && isSelected);
+
     return (
         <div 
             ref={ref}
             draggable={!isSaving}
-            onDragStart={(e) => onDragStart(e, index)}
-            onDragEnter={(e) => onDragEnter(e, index)}
+            onDragStart={onDragStart}
+            onDragEnter={onDragEnter}
             onDragEnd={onDragEnd}
+            onClick={onPageClick}
             className={cn(
-                "relative rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-[7/10] bg-muted group shadow-sm",
+                "relative page-card-container rounded-lg overflow-hidden border-2 transition-all duration-300 aspect-[7/10] bg-muted group shadow-sm",
                 isSaving ? "cursor-not-allowed opacity-70" : "cursor-grab",
-                isDragging ? "shadow-2xl scale-105 opacity-50 border-primary" : "border-transparent hover:shadow-md hover:border-primary/50"
+                isDragging ? "shadow-2xl scale-105 opacity-50 border-primary" : "hover:shadow-md hover:border-primary/50",
+                isSelected ? "border-primary" : "border-transparent"
             )}
         >
             <div className="w-full h-full flex items-center justify-center p-1 bg-white">
@@ -425,9 +470,12 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onDra
             )}
             </div>
             
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button title="Rotate" size="icon" variant="secondary" onClick={() => onRotate(page.id)} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><RotateCw className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
-                <Button title="Delete" size="icon" variant="destructive" onClick={() => onDelete(page.id)} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
+            <div className={cn(
+                "absolute inset-0 bg-black/60 transition-opacity flex items-center justify-center gap-2",
+                isTouchDevice ? (isSelected ? "opacity-100" : "opacity-0") : "opacity-0 group-hover:opacity-100"
+            )}>
+                <Button title="Rotate" size="icon" variant="secondary" onClick={(e) => { e.stopPropagation(); onRotate(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><RotateCw className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
+                <Button title="Delete" size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
             </div>
             
             <div className="absolute top-1 right-1 bg-background/80 text-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border shadow">
