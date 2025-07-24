@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,13 @@ const services = [
       title: 'Edit PDF',
       description: 'Add text, images, and shapes directly to your PDF files.',
       href: '/edit-pdf'
+    },
+    {
+      icon: <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-fuchsia-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/20',
+      title: 'Ask PDF (AI)',
+      description: 'Chat with your PDF documents to get answers and summaries.',
+      href: '/ask-pdf'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
