@@ -29,24 +29,17 @@ export async function embedMany(
   texts: string[],
   onProgress?: (progress: number) => void
 ): Promise<number[][]> {
-  const batchSize = 100; // Embeddings models can handle larger batches
-  let allEmbeddings: number[][] = [];
-
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
-    
-    // Directly call ai.embed with the batch of texts.
-    // This is the correct way to handle batching for embeddings.
-    const { embeddings } = await ai.embed({
-      embedder,
-      content: batch,
-    });
-
-    allEmbeddings.push(...embeddings);
-    
-    if (onProgress) {
-      onProgress((i + batch.length) / texts.length);
-    }
+  // ai.embed can handle batching automatically.
+  // We can pass the whole array of texts directly.
+  const { embeddings } = await ai.embed({
+    embedder,
+    content: texts,
+  });
+  
+  // Since the API doesn't provide progress for this, we'll just call onProgress at the end.
+  if (onProgress) {
+    onProgress(1);
   }
-  return allEmbeddings;
+
+  return embeddings;
 }
