@@ -23,9 +23,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFFont, PDFImage } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
+import { Input } from "./ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -37,7 +39,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 type PageInfo = {
   originalIndex: number;
   dataUrl?: string;
-  id: string; 
+  id: string;
 };
 
 type PDFFile = {
@@ -48,24 +50,38 @@ type PDFFile = {
   isEncrypted: boolean;
 };
 
+type EditorState = {
+  file: PDFFile | null;
+  pages: PageInfo[];
+  activePage: number;
+  isLoading: boolean;
+  isSaving: boolean;
+  selectedObject: fabric.Object | null;
+};
+
 export function PdfEditor() {
-  const [file, setFile] = useState<PDFFile | null>(null);
-  const [pages, setPages] = useState<PageInfo[]>([]);
-  const [activePage, setActivePage] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [state, setState] = useState<EditorState>({
+    file: null,
+    pages: [],
+    activePage: 0,
+    isLoading: false,
+    isSaving: false,
+    selectedObject: null,
+  });
+  const { file, pages, activePage, isLoading, isSaving, selectedObject } = state;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
-  const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
+  const renderPageThumbnail = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return undefined;
     try {
       const page = await pdfjsDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 0.5 });
+      const viewport = page.getViewport({ scale: 0.3 });
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
@@ -75,64 +91,66 @@ export function PdfEditor() {
         return canvas.toDataURL('image/jpeg', 0.8);
       }
     } catch (e) {
-      console.error(`Error rendering page ${pageNum}:`, e);
+      console.error(`Error rendering page thumbnail ${pageNum}:`, e);
     }
     return undefined;
   }, []);
-  
+
   const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
-    
-    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setFile(null);
-    setPages([]);
-    setIsLoading(true);
+    if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    setState(s => ({ ...s, file: null, pages: [], isLoading: true }));
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
       const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) });
-      const pdfjsDoc = await loadingTask.promise; 
+      const pdfjsDoc = await loadingTask.promise;
 
       if (operationId.current !== currentOperationId) {
         pdfjsDoc.destroy();
         return;
       }
-      
+
       const pageCount = pdfjsDoc.numPages;
       const initialPages: PageInfo[] = Array.from({ length: pageCount }, (_, i) => ({
         originalIndex: i,
         id: `${i}-${Date.now()}`,
       }));
-      
-      setFile({ 
-        id: `${fileToLoad.name}-${Date.now()}`, 
-        file: fileToLoad, 
-        totalPages: pageCount,
-        pdfjsDoc,
-        isEncrypted: false,
-      });
-      setPages(initialPages);
-      setActivePage(0);
+
+      setState(s => ({
+        ...s,
+        file: {
+          id: `${fileToLoad.name}-${Date.now()}`,
+          file: fileToLoad,
+          totalPages: pageCount,
+          pdfjsDoc,
+          isEncrypted: false,
+        },
+        pages: initialPages,
+        activePage: 0,
+        isLoading: false
+      }));
 
     } catch (error: any) {
-        if (operationId.current !== currentOperationId) return;
-        if (error.name === 'PasswordException') {
-            setFile({
-                id: `${fileToLoad.name}-${Date.now()}`,
-                file: fileToLoad,
-                totalPages: 0,
-                isEncrypted: true,
-                pdfjsDoc: undefined,
-            })
-            toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password-protected and cannot be edited." });
-        } else {
-            console.error("Failed to load PDF", error);
-            toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
-        }
-    } finally {
-        if (operationId.current === currentOperationId) {
-            setIsLoading(false);
-        }
+      if (operationId.current !== currentOperationId) return;
+      if (error.name === 'PasswordException') {
+        setState(s => ({
+            ...s,
+            file: {
+              id: `${fileToLoad.name}-${Date.now()}`,
+              file: fileToLoad,
+              totalPages: 0,
+              isEncrypted: true,
+              pdfjsDoc: undefined,
+            },
+            isLoading: false
+        }))
+        toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password-protected and cannot be edited." });
+      } else {
+        console.error("Failed to load PDF", error);
+        toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
+        setState(s => ({ ...s, isLoading: false }));
+      }
     }
   }, [file?.pdfjsDoc, toast]);
 
@@ -152,244 +170,370 @@ export function PdfEditor() {
     noKeyboard: true,
     disabled: isLoading || isSaving,
   });
-  
+
   const onPageVisible = useCallback((id: string) => {
     if (!file || isLoading || !file.pdfjsDoc) return;
     const currentOperationId = operationId.current;
 
-    setPages(prev => {
-        const pageIndex = prev.findIndex(p => p.id === id);
-        if (pageIndex === -1 || prev[pageIndex].dataUrl) {
-            return prev;
-        }
-        const newPages = [...prev];
-        renderPage(file.pdfjsDoc!, pageIndex + 1, currentOperationId).then(dataUrl => {
-            if (dataUrl && operationId.current === currentOperationId) {
-                setPages(current => {
-                    const latestIndex = current.findIndex(p => p.id === id);
-                    if (latestIndex > -1) {
-                       const finalPages = [...current];
-                       finalPages[latestIndex] = { ...finalPages[latestIndex], dataUrl };
-                       return finalPages;
-                    }
-                    return current;
-                });
+    setState(prev => {
+      const pageIndex = prev.pages.findIndex(p => p.id === id);
+      if (pageIndex === -1 || prev.pages[pageIndex].dataUrl) {
+        return prev;
+      }
+      const newPages = [...prev.pages];
+      renderPageThumbnail(file.pdfjsDoc!, pageIndex + 1, currentOperationId).then(dataUrl => {
+        if (dataUrl && operationId.current === currentOperationId) {
+          setState(current => {
+            const latestIndex = current.pages.findIndex(p => p.id === id);
+            if (latestIndex > -1) {
+              const finalPages = [...current.pages];
+              finalPages[latestIndex] = { ...finalPages[latestIndex], dataUrl };
+              return { ...current, pages: finalPages };
             }
-        });
-        return newPages;
+            return current;
+          });
+        }
+      });
+      return prev;
     });
-  }, [file, renderPage, isLoading]);
-  
-  const handleSave = async () => {
-    if(!file || !fabricCanvasRef.current) return;
-    
-    setIsSaving(true);
-    try {
-        const pdfBytes = await file.file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        
-        const fabricObjects = fabricCanvasRef.current.getObjects();
-        const page = pdfDoc.getPages()[activePage];
-        
-        for (const obj of fabricObjects) {
-            // This is a simplified example. A full implementation would need to handle
-            // different object types (text, images, shapes), rotations, colors, etc.
-            if(obj.type === 'textbox') {
-                 // Text object handling would go here
-            } else if (obj.type === 'image') {
-                 // Image object handling would go here
-            }
-        }
-        
-        // This is a placeholder for a more complex save logic.
-        // For now, it just re-saves the original to show the flow.
-        const newPdfBytes = await pdfDoc.save();
-        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-      
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${file.file.name.replace(/\.pdf$/i, '')}_edited.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      
-        toast({ title: "Successfully saved!", description: "Your edited PDF has been downloaded." });
+  }, [file, renderPageThumbnail, isLoading]);
 
+  const handleSave = async () => {
+    if (!file || !fabricCanvasRef.current) return;
+    setState(s => ({...s, isSaving: true}));
+
+    try {
+      const pdfBytes = await file.file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const fabricCanvas = fabricCanvasRef.current;
+
+      const page = pdfDoc.getPages()[activePage];
+      const { width: pageWidth, height: pageHeight } = page.getSize();
+      const canvasScale = Math.min(fabricCanvas.getWidth() / pageWidth, fabricCanvas.getHeight() / pageHeight);
+
+      const fabricObjects = fabricCanvas.getObjects();
+      for (const obj of fabricObjects) {
+        const scaleX = obj.scaleX || 1;
+        const scaleY = obj.scaleY || 1;
+        const left = (obj.left || 0) / canvasScale;
+        const top = (obj.top || 0) / canvasScale;
+        const angle = obj.angle || 0;
+
+        if (obj.type === 'textbox') {
+            const textbox = obj as fabric.Textbox;
+            const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            const fontSize = (textbox.fontSize || 12) / canvasScale;
+            page.drawText(textbox.text || '', {
+                x: left,
+                y: pageHeight - top - (fontSize * scaleY),
+                font,
+                size: fontSize,
+                color: rgb(0,0,0), // Simplified color
+                lineHeight: (textbox.lineHeight || 1) * fontSize,
+                rotate: degrees(-angle),
+            });
+        } else if (obj.type === 'rect') {
+            page.drawRectangle({
+                x: left,
+                y: pageHeight - top - ((obj.height || 0) * scaleY),
+                width: (obj.width || 0) * scaleX,
+                height: (obj.height || 0) * scaleY,
+                fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
+                borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
+                borderWidth: obj.strokeWidth,
+                rotate: degrees(-angle),
+            });
+        } else if (obj.type === 'circle') {
+             page.drawCircle({
+                x: left + ((obj.radius || 0) * scaleX),
+                y: pageHeight - top - ((obj.radius || 0) * scaleY),
+                radius: (obj.radius || 0) * canvasScale,
+                fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
+                borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
+                borderWidth: obj.strokeWidth,
+                // Note: pdf-lib doesn't support rotating circles directly.
+            });
+        } else if (obj.type === 'image') {
+            const imageObj = obj as fabric.Image;
+            const imageBytes = await fetch(imageObj.getSrc()).then(res => res.arrayBuffer());
+            const pdfImage = await pdfDoc.embedJpg(imageBytes);
+            page.drawImage(pdfImage, {
+                x: left,
+                y: pageHeight - top - (imageObj.getScaledHeight()),
+                width: imageObj.getScaledWidth(),
+                height: imageObj.getScaledHeight(),
+                rotate: degrees(-angle)
+            });
+        }
+      }
+
+      const newPdfBytes = await pdfDoc.save();
+      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${file.file.name.replace(/\.pdf$/i, '')}_edited.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Successfully saved!", description: "Your edited PDF has been downloaded." });
     } catch (e: any) {
-        console.error("Failed to save PDF", e);
-        toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message});
+      console.error("Failed to save PDF", e);
+      toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message });
     } finally {
-      setIsSaving(false);
+      setState(s => ({...s, isSaving: false}));
     }
   };
-  
+
   const removeFile = () => {
     operationId.current++;
-    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setFile(null);
-    setPages([]);
-    setIsLoading(false);
+    if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
 
-  // Effect for initializing and cleaning up the fabric canvas
   useEffect(() => {
-    if (canvasRef.current) {
-      fabricCanvasRef.current = new fabric.Canvas(canvasRef.current);
-    }
+    const canvas = new fabric.Canvas(canvasRef.current);
+    fabricCanvasRef.current = canvas;
     
+    const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
+    const handleSelectionCleared = () => setState(s => ({...s, selectedObject: null }));
+
+    canvas.on('selection:created', handleSelection);
+    canvas.on('selection:updated', handleSelection);
+    canvas.on('selection:cleared', handleSelectionCleared);
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
+            canvas.remove(canvas.getActiveObject()!);
+        }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.dispose();
-        fabricCanvasRef.current = null;
-      }
+      window.removeEventListener('keydown', handleKeyDown);
+      canvas.off('selection:created', handleSelection);
+      canvas.off('selection:updated', handleSelection);
+      canvas.off('selection:cleared', handleSelectionCleared);
+      canvas.dispose();
+      fabricCanvasRef.current = null;
     };
   }, []);
 
-  // Effect for rendering the active page on the canvas
   useEffect(() => {
-    if (file?.pdfjsDoc && fabricCanvasRef.current) {
-      const canvas = fabricCanvasRef.current;
-      canvas.clear();
-      
-      file.pdfjsDoc.getPage(activePage + 1).then(page => {
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.setWidth(viewport.width);
-        canvas.setHeight(viewport.height);
+    if (file?.pdfjsDoc && fabricCanvasRef.current && canvasContainerRef.current) {
+        const canvas = fabricCanvasRef.current;
+        canvas.clear();
 
-        const bgCanvas = document.createElement('canvas');
-        bgCanvas.width = viewport.width;
-        bgCanvas.height = viewport.height;
-        const bgCtx = bgCanvas.getContext('2d');
-        
-        page.render({ canvasContext: bgCtx!, viewport }).promise.then(() => {
-          fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-            if (fabricCanvasRef.current) { // Check if canvas still exists
-                fabricCanvasRef.current.setBackgroundImage(img, fabricCanvasRef.current.renderAll.bind(fabricCanvasRef.current), {
-                    scaleX: canvas.width! / img.width!,
-                    scaleY: canvas.height! / img.height!,
+        file.pdfjsDoc.getPage(activePage + 1).then(page => {
+            const containerWidth = canvasContainerRef.current!.offsetWidth - 16; // a little padding
+            const containerHeight = canvasContainerRef.current!.offsetHeight - 16;
+            
+            let viewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
+            viewport = page.getViewport({ scale });
+            
+            canvas.setWidth(viewport.width);
+            canvas.setHeight(viewport.height);
+
+            const bgCanvas = document.createElement('canvas');
+            bgCanvas.width = viewport.width;
+            bgCanvas.height = viewport.height;
+            const bgCtx = bgCanvas.getContext('2d');
+            
+            page.render({ canvasContext: bgCtx!, viewport }).promise.then(() => {
+                fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                        scaleX: canvas.width! / img.width!,
+                        scaleY: canvas.height! / img.height!,
+                    });
                 });
-            }
-          });
+            });
         });
-      });
     }
   }, [activePage, file]);
   
+  const fabricColorToRgb = (color: string) => {
+    const fColor = new fabric.Color(color);
+    const [r, g, b] = fColor.getSource();
+    return rgb(r / 255, g / 255, b / 255);
+  };
+
   const addText = () => {
-    if(!fabricCanvasRef.current) return;
+    if (!fabricCanvasRef.current) return;
     const textbox = new fabric.Textbox('Type something...', {
-        left: 50,
-        top: 50,
-        width: 150,
-        fontSize: 20,
-        fill: '#000000',
+      left: 50,
+      top: 50,
+      width: 150,
+      fontSize: 20,
+      fill: '#000000',
     });
     fabricCanvasRef.current.add(textbox);
     fabricCanvasRef.current.setActiveObject(textbox);
+  }
+  
+  const addShape = (type: 'rect' | 'circle') => {
+    if(!fabricCanvasRef.current) return;
+    let shape;
+    if(type === 'rect') {
+        shape = new fabric.Rect({ left: 100, top: 100, fill: '#0000ff', width: 60, height: 70 });
+    } else {
+        shape = new fabric.Circle({ left: 100, top: 100, fill: '#ff0000', radius: 50 });
+    }
+    fabricCanvasRef.current.add(shape);
+  }
+
+  const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imgData = event.target?.result as string;
+            fabric.Image.fromURL(imgData, (img) => {
+                fabricCanvasRef.current?.add(img);
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+  }
+
+  const updateSelectedObject = (props: any) => {
+    const activeObj = fabricCanvasRef.current?.getActiveObject();
+    if(activeObj) {
+        activeObj.set(props);
+        fabricCanvasRef.current?.renderAll();
+    }
+  }
+
+  const deleteSelectedObject = () => {
+    const activeObj = fabricCanvasRef.current?.getActiveObject();
+    if(activeObj) {
+        fabricCanvasRef.current?.remove(activeObj);
+    }
   }
 
   return (
     <div className="space-y-6">
       {!file && !isLoading ? (
         <Card className="bg-white dark:bg-card shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Edit PDF</CardTitle>
-                <CardDescription>Upload a PDF to start editing.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <CardHeader>
+            <CardTitle className="text-xl sm:text-2xl">Edit PDF</CardTitle>
+            <CardDescription>Upload a PDF to start editing.</CardDescription>
+          </CardHeader>
+          <CardContent>
             <div
-                {...getRootProps()}
-                className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", !isLoading && "hover:border-primary/50", isDragActive && "border-primary bg-primary/10", (isLoading || isSaving) && "opacity-70 pointer-events-none")}>
-                <input {...getInputProps()} />
-                <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-                <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
-                <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}><FolderOpen className="mr-2 h-4 w-4" />Choose File</Button>
+              {...getRootProps()}
+              className={cn("flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed transition-colors duration-300", !isLoading && "hover:border-primary/50", isDragActive && "border-primary bg-primary/10", (isLoading || isSaving) && "opacity-70 pointer-events-none")}>
+              <input {...getInputProps()} />
+              <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+              <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
+              <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}><FolderOpen className="mr-2 h-4 w-4" />Choose File</Button>
             </div>
-            </CardContent>
+          </CardContent>
         </Card>
       ) : (
         <>
-            <Card className="sticky top-20 z-20 bg-background/80 backdrop-blur-sm">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
-                    <div className="flex-grow min-w-0">
-                        <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
-                            Editing: <span className="font-normal">{file?.file.name || 'Loading...'}</span>
-                        </CardTitle>
-                    </div>
-                    <div className="flex gap-2 self-end sm:self-center">
-                         <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSaving || isLoading}><X className="w-5 h-5" /><span className="sr-only">Change File</span></Button>
-                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save</Button>
-                    </div>
-                </CardHeader>
-            </Card>
+          <Card className="sticky top-20 z-20 bg-background/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
+              <div className="flex-grow min-w-0">
+                <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
+                  Editing: <span className="font-normal">{file?.file.name || 'Loading...'}</span>
+                </CardTitle>
+              </div>
+              <div className="flex gap-2 self-end sm:self-center">
+                <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSaving || isLoading}><X className="w-5 h-5" /><span className="sr-only">Change File</span></Button>
+                <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save</Button>
+              </div>
+            </CardHeader>
+          </Card>
 
-            <div className="flex flex-col md:flex-row gap-6">
-                {/* Sidebar */}
-                <div className="md:w-1/4 lg:w-1/5 space-y-4">
-                     <Card className="p-2">
-                        <CardContent className="p-2 max-h-[70vh] overflow-y-auto">
-                            {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] mb-2" />) 
-                            : file?.isEncrypted ? <div className="flex items-center justify-center p-4 text-center text-muted-foreground"><ShieldAlert className="w-8 h-8 mx-auto mb-2 text-destructive" /><p>This PDF is encrypted and cannot be edited.</p></div>
-                            : pages.map((page, index) => (
-                                <PageThumbnail key={page.id} page={page} index={index} isActive={activePage === index} onSelect={() => setActivePage(index)} onVisible={onPageVisible}/>
-                            ))}
-                        </CardContent>
-                     </Card>
-                </div>
-                
-                {/* Main Content */}
-                <div className="flex-1">
-                    <Card className="p-2">
-                        {/* Editor Toolbar */}
-                        <div className="p-2 border-b flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={addText} disabled={isLoading || isSaving || file?.isEncrypted}><Type className="mr-2 h-4 w-4" /> Add Text</Button>
-                        </div>
-                        {/* Canvas Area */}
-                        <CardContent className="p-2 mt-2 bg-muted/50 flex justify-center items-start overflow-auto h-[70vh]">
-                            {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" /> 
-                            : file?.isEncrypted ? <div className="flex items-center justify-center h-full text-center text-muted-foreground"><ShieldAlert className="w-10 h-10 mx-auto mb-2 text-destructive" /><p>Editing is disabled for encrypted files.</p></div>
-                            : <canvas ref={canvasRef} />}
-                        </CardContent>
-                    </Card>
-                </div>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="md:w-1/4 lg:w-1/5 space-y-4">
+              <Card className="p-2">
+                <CardContent className="p-2 max-h-[70vh] overflow-y-auto">
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="w-full aspect-[7/10] mb-2" />)
+                    : file?.isEncrypted ? <div className="flex items-center justify-center p-4 text-center text-muted-foreground"><ShieldAlert className="w-8 h-8 mx-auto mb-2 text-destructive" /><p>This PDF is encrypted and cannot be edited.</p></div>
+                      : pages.map((page, index) => (
+                        <PageThumbnail key={page.id} page={page} index={index} isActive={activePage === index} onSelect={() => setState(s => ({...s, activePage: index}))} onVisible={onPageVisible} />
+                      ))}
+                </CardContent>
+              </Card>
             </div>
+
+            <div className="flex-1 flex flex-col gap-4">
+              <Card className="p-2">
+                <div className="p-2 border-b flex items-center gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={addText} disabled={isLoading || isSaving || file?.isEncrypted}><Type className="mr-2 h-4 w-4" />Text</Button>
+                  <Button variant="outline" size="sm" onClick={() => addShape('rect')} disabled={isLoading || isSaving || file?.isEncrypted}><Square className="mr-2 h-4 w-4" />Rectangle</Button>
+                   <Button variant="outline" size="sm" onClick={() => addShape('circle')} disabled={isLoading || isSaving || file?.isEncrypted}><CircleIcon className="mr-2 h-4 w-4" />Circle</Button>
+                   <Button asChild variant="outline" size="sm" disabled={isLoading || isSaving || file?.isEncrypted}><label htmlFor="image-upload" className="cursor-pointer"><ImageIcon className="mr-2 h-4 w-4" />Image</label></Button>
+                   <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={addImage} />
+                   <Button variant="destructive" size="sm" onClick={deleteSelectedObject} disabled={!selectedObject}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                </div>
+                 {selectedObject && (
+                    <div className="p-2 flex items-center gap-4 flex-wrap">
+                        {selectedObject.type === 'textbox' && (
+                            <>
+                                <Input type="number" value={(selectedObject as fabric.Textbox).fontSize} onChange={e => updateSelectedObject({fontSize: parseInt(e.target.value)})} className="w-20" aria-label="Font Size" />
+                                <Input type="color" value={(selectedObject as fabric.Textbox).fill as string} onChange={e => updateSelectedObject({fill: e.target.value})} className="w-12 h-8 p-1" aria-label="Text Color" />
+                            </>
+                        )}
+                         {(selectedObject.type === 'rect' || selectedObject.type === 'circle') && (
+                            <>
+                                <Label>Fill:</Label>
+                                <Input type="color" value={selectedObject.fill as string} onChange={e => updateSelectedObject({fill: e.target.value})} className="w-12 h-8 p-1" aria-label="Fill Color" />
+                                <Label>Stroke:</Label>
+                                <Input type="color" value={selectedObject.stroke as string} onChange={e => updateSelectedObject({stroke: e.target.value})} className="w-12 h-8 p-1" aria-label="Stroke Color" />
+                            </>
+                        )}
+                    </div>
+                )}
+              </Card>
+              <Card className="flex-1 p-2">
+                <CardContent ref={canvasContainerRef} className="p-2 mt-2 bg-muted/50 flex justify-center items-center overflow-auto h-[70vh]">
+                  {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    : file?.isEncrypted ? <div className="flex items-center justify-center h-full text-center text-muted-foreground"><ShieldAlert className="w-10 h-10 mx-auto mb-2 text-destructive" /><p>Editing is disabled for encrypted files.</p></div>
+                      : <canvas ref={canvasRef} />}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </>
       )}
     </div>
   );
 }
 
+const PageThumbnail = React.memo(({ page, index, isActive, onSelect, onVisible }: { page: PageInfo, index: number, isActive: boolean, onSelect: () => void, onVisible: (id: string) => void }) => {
+  const ref = useRef<HTMLDivElement>(null);
 
-const PageThumbnail = React.memo(({ page, index, isActive, onSelect, onVisible }: { page: PageInfo, index: number, isActive: boolean, onSelect: () => void, onVisible: (id: string) => void}) => {
-    const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !page.dataUrl) {
+        onVisible(page.id);
+        if (ref.current) observer.unobserve(ref.current);
+      }
+    }, { threshold: 0.1 });
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting && !page.dataUrl) {
-                onVisible(page.id);
-                if (ref.current) observer.unobserve(ref.current);
-            }
-        }, { threshold: 0.1 });
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
 
-        const currentRef = ref.current;
-        if (currentRef) observer.observe(currentRef);
+    return () => { if (currentRef) observer.unobserve(currentRef); };
+  }, [page.id, page.dataUrl, onVisible]);
 
-        return () => { if (currentRef) observer.unobserve(currentRef); };
-    }, [page.id, page.dataUrl, onVisible]);
-
-    return (
-        <div ref={ref} onClick={onSelect} className={cn("relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted group shadow-sm cursor-pointer mb-2", isActive ? "border-primary" : "border-transparent hover:border-primary/50")}>
-            <div className="w-full h-full flex items-center justify-center p-1 bg-white">
-            {page.dataUrl ? (<img src={page.dataUrl} alt={`Page ${page.originalIndex + 1}`} className="w-full h-full object-contain" />) 
-            : (<div className="flex flex-col items-center gap-1 text-xs text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin text-primary" /> Page {index + 1}</div>)}
-            </div>
-             <div className="absolute bottom-0 left-0 bg-background/80 text-foreground text-xs font-bold rounded-tr-md px-2 py-1 flex items-center justify-center border-t border-r shadow">
-                {index + 1}
-            </div>
-        </div>
-    );
+  return (
+    <div ref={ref} onClick={onSelect} className={cn("relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted group shadow-sm cursor-pointer mb-2", isActive ? "border-primary" : "border-transparent hover:border-primary/50")}>
+      <div className="w-full h-full flex items-center justify-center p-1 bg-white">
+        {page.dataUrl ? (<img src={page.dataUrl} alt={`Page ${page.originalIndex + 1}`} className="w-full h-full object-contain" />)
+          : (<div className="flex flex-col items-center gap-1 text-xs text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin text-primary" /> Page {index + 1}</div>)}
+      </div>
+      <div className="absolute bottom-0 left-0 bg-background/80 text-foreground text-xs font-bold rounded-tr-md px-2 py-1 flex items-center justify-center border-t border-r shadow">
+        {index + 1}
+      </div>
+    </div>
+  );
 });
 PageThumbnail.displayName = 'PageThumbnail';
