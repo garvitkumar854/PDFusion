@@ -10,7 +10,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { run } from 'genkit';
 import { z } from 'zod';
 
 const embedder = 'googleai/text-embedding-v1';
@@ -47,7 +46,7 @@ export async function embedMany(
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    const batchEmbeddings = await run(embedManyFlow, batch);
+    const batchEmbeddings = await embedManyFlow(batch);
     allEmbeddings.push(...batchEmbeddings);
     if (onProgress) {
       onProgress((i + batch.length) / texts.length);
