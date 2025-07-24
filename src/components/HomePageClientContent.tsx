@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare, FileArchive } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,13 @@ const services = [
       title: 'Split PDF',
       description: 'Extract specific pages or page ranges from a PDF into separate files.',
       href: '/split-pdf'
+    },
+    {
+      icon: <FileArchive className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Compress PDF',
+      description: 'Reduce the file size of your PDFs while maintaining quality.',
+      href: '/compress-pdf'
     },
     {
       icon: <ListOrdered className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-500 transition-transform duration-300 group-hover:scale-110" />,

@@ -32,6 +32,7 @@ const navLinks = [
 const services = [
     { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
     { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
+    { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
     { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
     { href: "/edit-pdf", label: "Edit PDF", icon: <Edit className="mr-2 h-4 w-4" /> },
     { href: "/ask-pdf", label: "Ask PDF (AI)", icon: <MessageSquare className="mr-2 h-4 w-4" /> },
