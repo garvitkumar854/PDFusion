@@ -16,6 +16,7 @@ import {
   Ban,
   Lock,
   Unlock,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -263,12 +264,6 @@ export function MergePdfs() {
   };
 
   const handleMerge = async () => {
-    const firstLockedFile = files.find(f => f.isEncrypted);
-    if (firstLockedFile) {
-        toast({ variant: "destructive", title: "Locked file found", description: `"${firstLockedFile.file.name}" is encrypted. Please remove it before merging.` });
-        return;
-    }
-    
     if (files.length < 2) {
         toast({ variant: "destructive", title: "Not enough files", description: "Please upload at least two files to merge." });
         return;
@@ -283,6 +278,11 @@ export function MergePdfs() {
 
         for (let i = 0; i < files.length; i++) {
             const pdfFile = files[i];
+            if (pdfFile.isEncrypted) {
+                toast({ variant: "destructive", title: "Locked file found", description: `"${pdfFile.file.name}" is encrypted. Please remove it before merging.` });
+                dispatch({ type: 'MERGE_CANCEL' });
+                return;
+            }
             if (operationId.current !== currentOperationId) return;
 
             const pdfBytes = await pdfFile.file.arrayBuffer();
@@ -361,7 +361,7 @@ export function MergePdfs() {
     dispatch({ type: 'RESET_MERGE_RESULTS' });
   };
   
-  const mergeButtonDisabled = isMerging || files.length < 2;
+  const mergeButtonDisabled = isMerging || files.length < 2 || files.some(f => f.isEncrypted);
 
   if (mergedPdfUrl) {
     return (
@@ -440,6 +440,12 @@ export function MergePdfs() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
+                 {files.some(f => f.isEncrypted) && (
+                    <div className="mb-4 flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
+                        <ShieldAlert className="h-5 w-5 shrink-0" />
+                        <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
+                    </div>
+                 )}
                 <div className={cn("space-y-2 max-h-[266px] overflow-y-auto pr-2", isMerging && "pointer-events-none")}>
                     {files.map((pdfFile, index) => (
                         <div
@@ -534,7 +540,7 @@ export function MergePdfs() {
                     ) : (
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
                             <Layers className="mr-2 h-5 w-5" />
-                            {files.some(f => f.isEncrypted) ? "Unlock & Merge PDFs" : "Merge PDFs"}
+                            Merge PDFs
                         </Button>
                     )}
                 </div>

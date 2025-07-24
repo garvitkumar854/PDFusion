@@ -143,7 +143,6 @@ export function PageNumberAdder() {
       setResult(null);
       
       if (isEncrypted) {
-        toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password-protected and cannot be processed." });
         return;
       }
 
@@ -268,7 +267,6 @@ export function PageNumberAdder() {
   const handleProcess = async () => {
     const fileToProcess = file?.file;
     if (!fileToProcess || file.isEncrypted) {
-      toast({ variant: "destructive", title: "File not ready", description: "Please upload a valid, unlocked PDF file to process." });
       return;
     }
 

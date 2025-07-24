@@ -289,7 +289,7 @@ export function PdfToJpgConverter() {
     const fileToProcess = file?.file;
     
     if (!fileToProcess || !file?.pdfjsDoc) {
-        setError("Please upload an unlocked PDF file first.");
+        setError("Please upload a PDF file first.");
         return;
     }
     if (file.isEncrypted) {
@@ -505,6 +505,7 @@ export function PdfToJpgConverter() {
                 <div className="flex flex-col items-center justify-center h-48 text-center">
                     <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
                     <p className="font-semibold text-lg">This PDF is password-protected.</p>
+                    <p className="text-sm text-muted-foreground">Please upload an unlocked file to convert.</p>
                 </div>
             ) : isProcessing ? (
                 <div className="flex flex-col justify-center items-center h-48">

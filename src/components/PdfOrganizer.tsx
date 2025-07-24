@@ -133,7 +133,6 @@ export function PdfOrganizer() {
                 isEncrypted: true,
                 pdfjsDoc: undefined,
             })
-            toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password-protected and cannot be organized." });
         } else {
             console.error("Failed to load PDF", error);
             toast({ variant: "destructive", title: "Could not read PDF", description: "The file might be corrupted or in an unsupported format." });
@@ -231,7 +230,6 @@ export function PdfOrganizer() {
   const handleSave = async () => {
     const fileToProcess = file?.file;
     if (!fileToProcess || pages.length === 0 || file?.isEncrypted) {
-      toast({ variant: "destructive", title: "No pages to save or file is encrypted." });
       return;
     }
 
@@ -342,7 +340,7 @@ export function PdfOrganizer() {
                     <CardContent className="p-4 pt-0">
                          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <div>This PDF is password-protected and cannot be organized.</div>
+                            <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
                         </div>
                     </CardContent>
                 )}
@@ -360,7 +358,7 @@ export function PdfOrganizer() {
                      <div className="col-span-full flex flex-col items-center justify-center text-center p-10 bg-muted rounded-lg">
                         <Lock className="w-12 h-12 text-muted-foreground mb-4" />
                         <h3 className="font-semibold text-lg">Encrypted File</h3>
-                        <p className="text-muted-foreground">Page previews are unavailable for locked files.</p>
+                        <p className="text-muted-foreground">This PDF is password-protected and cannot be processed. Please upload an unlocked file.</p>
                     </div>
                 ) : (
                     pages.map((page, index) => (

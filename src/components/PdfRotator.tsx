@@ -151,8 +151,6 @@ export function PdfRotator() {
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
       if (!isEncrypted) {
           generatePreview(singleFile);
-      } else {
-          toast({ variant: 'destructive', title: 'Encrypted PDF', description: 'This file is password-protected and cannot be rotated.' });
       }
     }, [cleanup, generatePreview, toast]);
 
@@ -174,10 +172,7 @@ export function PdfRotator() {
   
   const handleProcess = async () => {
     const fileToProcess = file?.file;
-    if (!fileToProcess) return;
-
-    if (file?.isEncrypted) {
-        toast({ variant: "destructive", title: "Encrypted File", description: "This file is password-protected and cannot be rotated." });
+    if (!fileToProcess || file?.isEncrypted) {
         return;
     }
     
@@ -313,9 +308,7 @@ export function PdfRotator() {
                     {isEncrypted && (
                         <div className="mb-4 flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <div>
-                                <p>This PDF is password-protected and cannot be rotated.</p>
-                            </div>
+                            <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
                         </div>
                     )}
                     <div className={cn((isProcessing || isEncrypted) && "opacity-50 pointer-events-none")}>
@@ -357,8 +350,7 @@ export function PdfRotator() {
                         ) : isEncrypted ? (
                              <div className="flex flex-col items-center justify-center h-96 text-muted-foreground text-center p-4">
                                 <Lock className="w-8 h-8 text-primary mb-4" />
-                                <p className="font-semibold">Preview unavailable for locked files.</p>
-                                <p className="text-sm">Unlock the file to enable previews.</p>
+                                <p className="font-semibold">This PDF is password-protected and cannot be processed. Please upload an unlocked file.</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-96 text-muted-foreground"><p>Could not load preview.</p></div>

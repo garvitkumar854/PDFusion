@@ -96,7 +96,7 @@ export function PdfToHtmlConverter() {
   };
   
   const processConversion = async () => {
-    if (!file) return;
+    if (!file || file.isEncrypted) return;
     
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
@@ -279,26 +279,28 @@ export function PdfToHtmlConverter() {
              <Card className="bg-white dark:bg-card shadow-lg">
                 <CardContent className="p-6">
                     {file.isEncrypted && (
-                         <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                         <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
-                            <p>This tool may not work correctly with encrypted PDFs. Results may vary.</p>
+                            <p>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</p>
                         </div>
                     )}
-                    {isProcessing ? (
-                        <div className="p-4 border rounded-lg bg-primary/5">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                <p className="text-sm font-medium text-primary">{progressText}</p>
-                                </div>
-                                <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                            </div>
-                            <Progress value={progress} className="h-2" />
-                            <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
-                        </div>
-                    ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
-                    )}
+                    <div className="mt-6">
+                      {isProcessing ? (
+                          <div className="p-4 border rounded-lg bg-primary/5">
+                              <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                  <p className="text-sm font-medium text-primary">{progressText}</p>
+                                  </div>
+                                  <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
+                              </div>
+                              <Progress value={progress} className="h-2" />
+                              <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
+                          </div>
+                      ) : (
+                          <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing || file.isEncrypted}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
+                      )}
+                    </div>
                 </CardContent>
             </Card>
         )}

@@ -325,7 +325,6 @@ export function PdfSplitter() {
     if (!file || !file.pdfjsDoc) return;
 
     if (file.isEncrypted) {
-      toast({ variant: "destructive", title: "Encrypted PDF", description: "This file is password protected. Please unlock it first." });
       return;
     }
 
@@ -623,10 +622,9 @@ export function PdfSplitter() {
           </CardHeader>
           <CardContent>
            {file.isEncrypted ? (
-                <div className="flex flex-col items-center justify-center h-48 text-center">
-                    <ShieldAlert className="w-10 h-10 text-destructive mb-4" />
-                    <p className="font-semibold text-lg">This PDF is password-protected.</p>
-                    <p className="text-sm text-muted-foreground">Please upload an unlocked file to use the splitter.</p>
+                <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
+                    <ShieldAlert className="h-5 w-5 shrink-0" />
+                    <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
                 </div>
             ) : (
             <>
