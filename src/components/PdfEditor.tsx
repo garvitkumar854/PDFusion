@@ -23,11 +23,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument, rgb, StandardFonts, PDFFont, PDFImage } from 'pdf-lib';
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 import { Input } from "./ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Label } from "./ui/label";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -99,7 +100,9 @@ export function PdfEditor() {
   const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setState(s => ({ ...s, file: null, pages: [], isLoading: true }));
+    setState(s => ({ ...s, file: null, pages: [], isLoading: true, activePage: 0, selectedObject: null }));
+    if (fabricCanvasRef.current) fabricCanvasRef.current.clear();
+
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -127,7 +130,6 @@ export function PdfEditor() {
           isEncrypted: false,
         },
         pages: initialPages,
-        activePage: 0,
         isLoading: false
       }));
 
@@ -180,7 +182,7 @@ export function PdfEditor() {
       if (pageIndex === -1 || prev.pages[pageIndex].dataUrl) {
         return prev;
       }
-      const newPages = [...prev.pages];
+      
       renderPageThumbnail(file.pdfjsDoc!, pageIndex + 1, currentOperationId).then(dataUrl => {
         if (dataUrl && operationId.current === currentOperationId) {
           setState(current => {
@@ -213,22 +215,24 @@ export function PdfEditor() {
 
       const fabricObjects = fabricCanvas.getObjects();
       for (const obj of fabricObjects) {
+        if (!obj.left || !obj.top) continue;
+
         const scaleX = obj.scaleX || 1;
         const scaleY = obj.scaleY || 1;
-        const left = (obj.left || 0) / canvasScale;
-        const top = (obj.top || 0) / canvasScale;
+        const left = obj.left / canvasScale;
+        const top = obj.top / canvasScale;
         const angle = obj.angle || 0;
 
         if (obj.type === 'textbox') {
             const textbox = obj as fabric.Textbox;
             const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const fontSize = (textbox.fontSize || 12) / canvasScale;
+            const fontSize = (textbox.fontSize || 12) / canvasScale * scaleY; // Apply scale to font size
             page.drawText(textbox.text || '', {
                 x: left,
-                y: pageHeight - top - (fontSize * scaleY),
+                y: pageHeight - top - (fontSize),
                 font,
                 size: fontSize,
-                color: rgb(0,0,0), // Simplified color
+                color: textbox.fill ? fabricColorToRgb(textbox.fill as string) : rgb(0,0,0),
                 lineHeight: (textbox.lineHeight || 1) * fontSize,
                 rotate: degrees(-angle),
             });
@@ -247,21 +251,28 @@ export function PdfEditor() {
              page.drawCircle({
                 x: left + ((obj.radius || 0) * scaleX),
                 y: pageHeight - top - ((obj.radius || 0) * scaleY),
-                radius: (obj.radius || 0) * canvasScale,
+                radius: (obj.radius || 0) * scaleX, // Use consistent scaling
                 fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
                 borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
                 borderWidth: obj.strokeWidth,
-                // Note: pdf-lib doesn't support rotating circles directly.
             });
         } else if (obj.type === 'image') {
             const imageObj = obj as fabric.Image;
             const imageBytes = await fetch(imageObj.getSrc()).then(res => res.arrayBuffer());
-            const pdfImage = await pdfDoc.embedJpg(imageBytes);
+            
+            let pdfImage;
+            // A basic check for image type based on data URL prefix
+            if (imageObj.getSrc().startsWith('data:image/jpeg')) {
+                pdfImage = await pdfDoc.embedJpg(imageBytes);
+            } else {
+                pdfImage = await pdfDoc.embedPng(imageBytes);
+            }
+
             page.drawImage(pdfImage, {
                 x: left,
                 y: pageHeight - top - (imageObj.getScaledHeight()),
-                width: imageObj.getScaledWidth(),
-                height: imageObj.getScaledHeight(),
+                width: imageObj.getScaledWidth() / canvasScale,
+                height: imageObj.getScaledHeight() / canvasScale,
                 rotate: degrees(-angle)
             });
         }
@@ -291,10 +302,12 @@ export function PdfEditor() {
   const removeFile = () => {
     operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
+    if(fabricCanvasRef.current) fabricCanvasRef.current.clear();
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
 
   useEffect(() => {
+    if (!canvasRef.current) return;
     const canvas = new fabric.Canvas(canvasRef.current);
     fabricCanvasRef.current = canvas;
     
@@ -328,7 +341,7 @@ export function PdfEditor() {
         canvas.clear();
 
         file.pdfjsDoc.getPage(activePage + 1).then(page => {
-            const containerWidth = canvasContainerRef.current!.offsetWidth - 16; // a little padding
+            const containerWidth = canvasContainerRef.current!.offsetWidth - 16;
             const containerHeight = canvasContainerRef.current!.offsetHeight - 16;
             
             let viewport = page.getViewport({ scale: 1 });
@@ -353,7 +366,7 @@ export function PdfEditor() {
             });
         });
     }
-  }, [activePage, file]);
+  }, [activePage, file, file?.id]);
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
@@ -378,9 +391,9 @@ export function PdfEditor() {
     if(!fabricCanvasRef.current) return;
     let shape;
     if(type === 'rect') {
-        shape = new fabric.Rect({ left: 100, top: 100, fill: '#0000ff', width: 60, height: 70 });
+        shape = new fabric.Rect({ left: 100, top: 100, fill: '#0000ff', width: 60, height: 70, stroke: '#000000', strokeWidth: 1 });
     } else {
-        shape = new fabric.Circle({ left: 100, top: 100, fill: '#ff0000', radius: 50 });
+        shape = new fabric.Circle({ left: 100, top: 100, fill: '#ff0000', radius: 50, stroke: '#000000', strokeWidth: 1 });
     }
     fabricCanvasRef.current.add(shape);
   }
@@ -470,14 +483,16 @@ export function PdfEditor() {
                   <Button variant="outline" size="sm" onClick={() => addShape('rect')} disabled={isLoading || isSaving || file?.isEncrypted}><Square className="mr-2 h-4 w-4" />Rectangle</Button>
                    <Button variant="outline" size="sm" onClick={() => addShape('circle')} disabled={isLoading || isSaving || file?.isEncrypted}><CircleIcon className="mr-2 h-4 w-4" />Circle</Button>
                    <Button asChild variant="outline" size="sm" disabled={isLoading || isSaving || file?.isEncrypted}><label htmlFor="image-upload" className="cursor-pointer"><ImageIcon className="mr-2 h-4 w-4" />Image</label></Button>
-                   <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={addImage} />
-                   <Button variant="destructive" size="sm" onClick={deleteSelectedObject} disabled={!selectedObject}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
+                   <input type="file" id="image-upload" className="hidden" accept="image/png, image/jpeg" onChange={addImage} />
+                   {selectedObject && <Button variant="destructive" size="sm" onClick={deleteSelectedObject}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>}
                 </div>
                  {selectedObject && (
                     <div className="p-2 flex items-center gap-4 flex-wrap">
                         {selectedObject.type === 'textbox' && (
                             <>
+                                <Label>Font Size:</Label>
                                 <Input type="number" value={(selectedObject as fabric.Textbox).fontSize} onChange={e => updateSelectedObject({fontSize: parseInt(e.target.value)})} className="w-20" aria-label="Font Size" />
+                                <Label>Color:</Label>
                                 <Input type="color" value={(selectedObject as fabric.Textbox).fill as string} onChange={e => updateSelectedObject({fill: e.target.value})} className="w-12 h-8 p-1" aria-label="Text Color" />
                             </>
                         )}
