@@ -42,7 +42,7 @@ const askPdfFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await askPdfPrompt(input);
-    return output!;
+    return output ?? "Sorry, I couldn't find an answer to that in the document.";
   }
 );
 
