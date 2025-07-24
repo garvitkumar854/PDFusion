@@ -417,7 +417,7 @@ export function MergePdfs() {
 
         {files.length > 0 && (
           <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70")}>
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between pb-2 pr-4">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between pb-2 p-4 sm:p-6">
               <div className="flex-grow">
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
