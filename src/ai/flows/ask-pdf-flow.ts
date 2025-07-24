@@ -3,13 +3,13 @@
 /**
  * @fileOverview A flow for answering questions about a PDF document.
  *
- * - askPdfFlow - A function that takes PDF context and a question, and returns an answer.
- * - AskPdfInput - The input type for the askPdfFlow function.
+ * - askPdf - A function that takes PDF context and a question, and returns an answer.
+ * - AskPdfInput - The input type for the askPdf function.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const AskPdfInputSchema = z.object({
+const AskPdfInputSchema = z.object({
   context: z.string().describe('The full text content extracted from the PDF file.'),
   question: z.string().describe('The user\'s question about the document.'),
 });
@@ -34,7 +34,7 @@ USER'S QUESTION:
 Based on the document, what is the answer?`,
 });
 
-export const askPdfFlow = ai.defineFlow(
+const askPdfFlow = ai.defineFlow(
   {
     name: 'askPdfFlow',
     inputSchema: AskPdfInputSchema,
@@ -45,3 +45,7 @@ export const askPdfFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export async function askPdf(input: AskPdfInput): Promise<string> {
+  return await askPdfFlow(input);
+}

@@ -21,7 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as pdfjsLib from 'pdfjs-dist';
-import { askPdfFlow } from "@/ai/flows/ask-pdf-flow";
+import { askPdf } from "@/ai/flows/ask-pdf-flow";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -160,11 +160,12 @@ export function AskPdf() {
 
     const newHistory: ChatMessage[] = [...chatHistory, { role: "user", content: question }];
     setChatHistory(newHistory);
+    const currentQuestion = question;
     setQuestion('');
     setIsAnswering(true);
     
     try {
-        const answer = await askPdfFlow({ context: extractedText, question });
+        const answer = await askPdf({ context: extractedText, question: currentQuestion });
         setChatHistory(prev => [...prev, { role: 'assistant', content: answer }]);
     } catch(err: any) {
         console.error(err);
