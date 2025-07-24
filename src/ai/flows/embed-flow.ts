@@ -10,12 +10,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { defineFlow, run } from 'genkit';
+import { run } from 'genkit';
 import { z } from 'zod';
 
 const embedder = 'googleai/text-embedding-v1';
 
-const embedManyFlow = defineFlow(
+const embedManyFlow = ai.defineFlow(
   {
     name: 'embedManyFlow',
     inputSchema: z.array(z.string()),
