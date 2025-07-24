@@ -14,20 +14,8 @@ import { z } from 'zod';
 
 const embedder = 'googleai/text-embedding-v1';
 
-const embedManyFlow = ai.defineFlow(
-  {
-    name: 'embedManyFlow',
-    inputSchema: z.array(z.string()),
-    outputSchema: z.array(z.array(z.number())),
-  },
-  async (texts) => {
-    const { embeddings } = await ai.embed({
-      embedder,
-      content: texts,
-    });
-    return embeddings;
-  }
-);
+// This is the model used for generating text embeddings.
+// It's defined here to be reusable across the functions.
 
 export async function embed(text: string): Promise<number[]> {
   const { embedding } = await ai.embed({
@@ -41,13 +29,21 @@ export async function embedMany(
   texts: string[],
   onProgress?: (progress: number) => void
 ): Promise<number[][]> {
-  const batchSize = 50;
+  const batchSize = 100; // Embeddings models can handle larger batches
   let allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    const batchEmbeddings = await embedManyFlow(batch);
-    allEmbeddings.push(...batchEmbeddings);
+    
+    // Directly call ai.embed with the batch of texts.
+    // This is the correct way to handle batching for embeddings.
+    const { embeddings } = await ai.embed({
+      embedder,
+      content: batch,
+    });
+
+    allEmbeddings.push(...embeddings);
+    
     if (onProgress) {
       onProgress((i + batch.length) / texts.length);
     }
