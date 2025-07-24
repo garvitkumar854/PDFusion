@@ -45,7 +45,7 @@ type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfjsDoc?: pdfjsLib.PDFDocumentProxy;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
   isEncrypted: boolean;
 };
 
@@ -72,9 +72,26 @@ export function PdfEditor() {
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 0, height: 0});
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
+  
+  // Initialize ResizeObserver
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+    
+    const resizeObserver = new ResizeObserver(entries => {
+      if (!entries || entries.length === 0) return;
+      const { width, height } = entries[0].contentRect;
+      setCanvasSize({ width, height });
+    });
+    
+    resizeObserver.observe(container);
+    
+    return () => resizeObserver.unobserve(container);
+  }, []);
 
   const renderPageThumbnail = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return undefined;
@@ -140,7 +157,7 @@ export function PdfEditor() {
               file: fileToLoad,
               totalPages: 0,
               isEncrypted: true,
-              pdfjsDoc: undefined,
+              pdfjsDoc: null as any,
             },
             isLoading: false
         }))
@@ -202,98 +219,102 @@ export function PdfEditor() {
     setState(s => ({...s, isSaving: true}));
 
     try {
-      const pdfBytes = await file.file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-      
-      const page = pdfDoc.getPages()[activePage];
-      const { width: pageWidth, height: pageHeight } = page.getSize();
-      const canvasScale = Math.min(fabricCanvasRef.current.getWidth() / pageWidth, fabricCanvasRef.current.getHeight() / pageHeight);
+        const pdfBytes = await file.file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+        
+        const page = pdfDoc.getPages()[activePage];
+        const { width: pageWidth, height: pageHeight } = page.getSize();
+        
+        const fabricObjects = fabricCanvasRef.current.getObjects();
+        for (const obj of fabricObjects) {
+            if (!obj.left || !obj.top) continue;
 
-      const fabricObjects = fabricCanvasRef.current.getObjects();
-      for (const obj of fabricObjects) {
-        if (!obj.left || !obj.top) continue;
+            const scaleX = obj.scaleX || 1;
+            const scaleY = obj.scaleY || 1;
+            const angle = obj.angle || 0;
 
-        const scaleX = obj.scaleX || 1;
-        const scaleY = obj.scaleY || 1;
-        const left = obj.left / canvasScale;
-        const top = obj.top / canvasScale;
-        const angle = obj.angle || 0;
-
-        if (obj.type === 'textbox') {
-            const textbox = obj as fabric.Textbox;
-            const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const fontSize = (textbox.fontSize || 12) / canvasScale * scaleY;
-            page.drawText(textbox.text || '', {
-                x: left,
-                y: pageHeight - top - (fontSize),
-                font,
-                size: fontSize,
-                color: textbox.fill ? fabricColorToRgb(textbox.fill as string) : rgb(0,0,0),
-                lineHeight: (textbox.lineHeight || 1) * fontSize,
-                rotate: degrees(-angle),
-            });
-        } else if (obj.type === 'rect') {
-            page.drawRectangle({
-                x: left,
-                y: pageHeight - top - ((obj.height || 0) * scaleY),
-                width: (obj.width || 0) * scaleX,
-                height: (obj.height || 0) * scaleY,
-                fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
-                borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
-                borderWidth: obj.strokeWidth,
-                rotate: degrees(-angle),
-            });
-        } else if (obj.type === 'circle') {
-             page.drawCircle({
-                x: left + ((obj.radius || 0) * scaleX),
-                y: pageHeight - top - ((obj.radius || 0) * scaleY),
-                radius: (obj.radius || 0) * scaleX,
-                fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
-                borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
-                borderWidth: obj.strokeWidth,
-            });
-        } else if (obj.type === 'image') {
-            const imageObj = obj as fabric.Image;
-            const imageEl = imageObj.getElement();
-            const imageBytes = await fetch(imageEl.src).then(res => res.arrayBuffer());
+            const canvasScaleX = fabricCanvasRef.current.getWidth() / pageWidth;
+            const canvasScaleY = fabricCanvasRef.current.getHeight() / pageHeight;
             
-            let pdfImage;
-            if (imageEl.src.startsWith('data:image/jpeg')) {
-                pdfImage = await pdfDoc.embedJpg(imageBytes);
-            } else {
-                pdfImage = await pdfDoc.embedPng(imageBytes);
+            const left = obj.left / canvasScaleX;
+            const top = obj.top / canvasScaleY;
+            
+
+            if (obj.type === 'textbox') {
+                const textbox = obj as fabric.Textbox;
+                const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                const fontSize = (textbox.fontSize || 12) / canvasScaleY * scaleY;
+
+                page.drawText(textbox.text || '', {
+                    x: left,
+                    y: pageHeight - top - (fontSize),
+                    font,
+                    size: fontSize,
+                    color: textbox.fill ? fabricColorToRgb(textbox.fill as string) : rgb(0, 0, 0),
+                    rotate: degrees(-angle),
+                });
+            } else if (obj.type === 'rect') {
+                page.drawRectangle({
+                    x: left,
+                    y: pageHeight - top - ((obj.height || 0) * scaleY / canvasScaleY),
+                    width: (obj.width || 0) * scaleX / canvasScaleX,
+                    height: (obj.height || 0) * scaleY / canvasScaleY,
+                    fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
+                    borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
+                    borderWidth: obj.strokeWidth,
+                    rotate: degrees(-angle),
+                });
+            } else if (obj.type === 'circle') {
+                page.drawCircle({
+                    x: left + ((obj.radius || 0) * scaleX / canvasScaleX),
+                    y: pageHeight - top - ((obj.radius || 0) * scaleY / canvasScaleY),
+                    radius: (obj.radius || 0) * scaleX / canvasScaleX,
+                    fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
+                    borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
+                    borderWidth: obj.strokeWidth,
+                });
+            } else if (obj.type === 'image') {
+                const imageObj = obj as fabric.Image;
+                const imageEl = imageObj.getElement() as HTMLImageElement;
+                const imageBytes = await fetch(imageEl.src).then(res => res.arrayBuffer());
+
+                let pdfImage;
+                if (imageEl.src.startsWith('data:image/jpeg')) {
+                    pdfImage = await pdfDoc.embedJpg(imageBytes);
+                } else {
+                    pdfImage = await pdfDoc.embedPng(imageBytes);
+                }
+
+                page.drawImage(pdfImage, {
+                    x: left,
+                    y: pageHeight - top - ((imageObj.height || 0) * scaleY / canvasScaleY),
+                    width: (imageObj.width || 0) * scaleX / canvasScaleX,
+                    height: (imageObj.height || 0) * scaleY / canvasScaleY,
+                    rotate: degrees(-angle)
+                });
             }
-
-            page.drawImage(pdfImage, {
-                x: left,
-                y: pageHeight - top - ((imageObj.height || 0) * scaleY),
-                width: (imageObj.width || 0) * scaleX,
-                height: (imageObj.height || 0) * scaleY,
-                rotate: degrees(-angle)
-            });
         }
-      }
 
-      const newPdfBytes = await pdfDoc.save();
-      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+        const newPdfBytes = await pdfDoc.save();
+        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
 
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${file.file.name.replace(/\.pdf$/i, '')}_edited.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${file.file.name.replace(/\.pdf$/i, '')}_edited.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
-      toast({ title: "Successfully saved!", description: "Your edited PDF has been downloaded." });
+        toast({ title: "Successfully saved!", description: "Your edited PDF has been downloaded." });
     } catch (e: any) {
-      console.error("Failed to save PDF", e);
-      toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message });
+        console.error("Failed to save PDF", e);
+        toast({ variant: "destructive", title: "Failed to save PDF.", description: "An unexpected error occurred. " + e.message });
     } finally {
-      setState(s => ({...s, isSaving: false}));
+        setState(s => ({ ...s, isSaving: false }));
     }
-  };
+};
 
   const removeFile = () => {
     operationId.current++;
@@ -330,49 +351,51 @@ export function PdfEditor() {
   // Effect for rendering the PDF page to the canvas when dependencies change
   useEffect(() => {
     const renderCanvas = async () => {
-        const canvas = fabricCanvasRef.current;
-        const container = canvasContainerRef.current;
-        if (!canvas || !container || !file?.pdfjsDoc || file.isEncrypted) {
-            if (canvas) canvas.clear().renderAll();
-            return;
-        }
-        
-        canvas.clear();
-        
-        try {
-            const page = await file.pdfjsDoc.getPage(activePage + 1);
-            const viewport = page.getViewport({ scale: 1 });
-            
-            const scale = Math.min(
-                container.clientWidth / viewport.width,
-                container.clientHeight / viewport.height
-            );
-
-            const scaledViewport = page.getViewport({ scale });
-
-            canvas.setWidth(scaledViewport.width);
-            canvas.setHeight(scaledViewport.height);
-
-            const bgCanvas = document.createElement('canvas');
-            bgCanvas.width = scaledViewport.width;
-            bgCanvas.height = scaledViewport.height;
-            const bgCtx = bgCanvas.getContext('2d');
-            
-            if (!bgCtx) return;
-
-            await page.render({ canvasContext: bgCtx, viewport: scaledViewport }).promise;
-
-            fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
-            });
-        } catch (error) {
-            console.error("Failed to render page to canvas:", error);
-            toast({ variant: 'destructive', title: 'Preview Error', description: 'Could not render the selected page.' });
-        }
+      const canvas = fabricCanvasRef.current;
+      if (!canvas || !file?.pdfjsDoc || file.isEncrypted || canvasSize.width === 0) {
+        if(canvas) canvas.clear().renderAll();
+        return;
+      }
+  
+      canvas.clear();
+  
+      try {
+        const page = await file.pdfjsDoc.getPage(activePage + 1);
+        const viewport = page.getViewport({ scale: 1 });
+  
+        const scale = Math.min(
+          canvasSize.width / viewport.width,
+          canvasSize.height / viewport.height
+        );
+        const scaledViewport = page.getViewport({ scale });
+  
+        canvas.setWidth(scaledViewport.width);
+        canvas.setHeight(scaledViewport.height);
+  
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = scaledViewport.width;
+        bgCanvas.height = scaledViewport.height;
+        const bgCtx = bgCanvas.getContext('2d');
+  
+        if (!bgCtx) return;
+  
+        await page.render({ canvasContext: bgCtx, viewport: scaledViewport }).promise;
+  
+        fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
+          canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+            scaleX: canvas.width! / img.width!,
+            scaleY: canvas.height! / img.height!,
+          });
+        });
+      } catch (error) {
+        console.error("Failed to render page to canvas:", error);
+        toast({ variant: 'destructive', title: 'Preview Error', description: 'Could not render the selected page.' });
+      }
     };
-    
+  
     renderCanvas();
-  }, [file, activePage, file?.id, toast]);
+  }, [file, activePage, file?.id, toast, canvasSize]);
+
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
