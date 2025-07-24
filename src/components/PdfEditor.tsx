@@ -301,7 +301,8 @@ export function PdfEditor() {
     if(fabricCanvas) fabricCanvas.clear();
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
-  
+
+  // Effect for initializing and cleaning up the fabric canvas
   useEffect(() => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
@@ -311,16 +312,15 @@ export function PdfEditor() {
 
     const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
     const handleSelectionCleared = () => setState(s => ({...s, selectedObject: null }));
-
-    canvas.on('selection:created', handleSelection);
-    canvas.on('selection:updated', handleSelection);
-    canvas.on('selection:cleared', handleSelectionCleared);
-
     const handleKeyDown = (e: KeyboardEvent) => {
         if((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
             canvas.remove(canvas.getActiveObject()!);
         }
     }
+
+    canvas.on('selection:created', handleSelection);
+    canvas.on('selection:updated', handleSelection);
+    canvas.on('selection:cleared', handleSelectionCleared);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -329,12 +329,14 @@ export function PdfEditor() {
         canvas.off('selection:updated');
         canvas.off('selection:cleared');
         canvas.dispose();
+        setFabricCanvas(null);
     }
   }, []);
 
+  // Effect for rendering the PDF page to the canvas
   useEffect(() => {
-    if (!file?.pdfjsDoc || !fabricCanvas) return;
-    
+    if (!fabricCanvas || !file?.pdfjsDoc) return;
+
     const renderCanvas = async () => {
         fabricCanvas.clear();
         const container = fabricCanvas.getElement().parentElement;
@@ -377,7 +379,6 @@ export function PdfEditor() {
     
     renderCanvas();
   }, [activePage, file?.id, fabricCanvas, toast]);
-
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
