@@ -233,41 +233,49 @@ export function PdfEditor() {
     setIsLoading(false);
   };
 
+  // Effect for initializing and cleaning up the fabric canvas
   useEffect(() => {
-    if(canvasRef.current && !fabricCanvasRef.current) {
-        fabricCanvasRef.current = new fabric.Canvas(canvasRef.current);
+    if (canvasRef.current) {
+      fabricCanvasRef.current = new fabric.Canvas(canvasRef.current);
     }
     
-    if(file?.pdfjsDoc && activePage < pages.length && fabricCanvasRef.current) {
-        const canvas = fabricCanvasRef.current;
-        file.pdfjsDoc.getPage(activePage + 1).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.setWidth(viewport.width);
-            canvas.setHeight(viewport.height);
-
-            const bgCanvas = document.createElement('canvas');
-            bgCanvas.width = viewport.width;
-            bgCanvas.height = viewport.height;
-            const bgCtx = bgCanvas.getContext('2d');
-            
-            page.render({ canvasContext: bgCtx!, viewport }).promise.then(() => {
-                fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-                        scaleX: canvas.width! / img.width!,
-                        scaleY: canvas.height! / img.height!,
-                    });
-                });
-            });
-        });
-    }
-
     return () => {
-        if (fabricCanvasRef.current) {
-            fabricCanvasRef.current.dispose();
-            fabricCanvasRef.current = null;
-        }
+      if (fabricCanvasRef.current) {
+        fabricCanvasRef.current.dispose();
+        fabricCanvasRef.current = null;
+      }
+    };
+  }, []);
+
+  // Effect for rendering the active page on the canvas
+  useEffect(() => {
+    if (file?.pdfjsDoc && fabricCanvasRef.current) {
+      const canvas = fabricCanvasRef.current;
+      canvas.clear();
+      
+      file.pdfjsDoc.getPage(activePage + 1).then(page => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.setWidth(viewport.width);
+        canvas.setHeight(viewport.height);
+
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = viewport.width;
+        bgCanvas.height = viewport.height;
+        const bgCtx = bgCanvas.getContext('2d');
+        
+        page.render({ canvasContext: bgCtx!, viewport }).promise.then(() => {
+          fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
+            if (fabricCanvasRef.current) { // Check if canvas still exists
+                fabricCanvasRef.current.setBackgroundImage(img, fabricCanvasRef.current.renderAll.bind(fabricCanvasRef.current), {
+                    scaleX: canvas.width! / img.width!,
+                    scaleY: canvas.height! / img.height!,
+                });
+            }
+          });
+        });
+      });
     }
-  }, [activePage, file, pages]);
+  }, [activePage, file]);
   
   const addText = () => {
     if(!fabricCanvasRef.current) return;
