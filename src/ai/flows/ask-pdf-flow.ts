@@ -19,9 +19,11 @@ export type AskPdfInput = z.infer<typeof AskPdfInputSchema>;
 const askPdfPrompt = ai.definePrompt({
   name: 'askPdfPrompt',
   input: { schema: AskPdfInputSchema },
-  prompt: `You are an intelligent assistant designed to answer questions based on the content of a provided document.
+  prompt: `You are an expert AI assistant. Your task is to provide clear, helpful, and insightful answers based on the user's question and the provided document content.
 
-Analyze the following document content and answer the user's question. Your answer must be based *only* on the information present in the document. Do not use any external knowledge. If the answer cannot be found in the document, state that clearly.
+Use the document content as the primary source of truth. You can summarize, explain, and synthesize information from the document. While your answer should be grounded in the document's content, you can use your general knowledge to provide more comprehensive explanations where appropriate.
+
+If the question is completely unrelated to the document, politely state that you can only answer questions about the provided content.
 
 DOCUMENT CONTENT:
 ---
@@ -31,7 +33,7 @@ DOCUMENT CONTENT:
 USER'S QUESTION:
 "{{{question}}}"
 
-Based on the document, what is the answer?`,
+Provide a helpful and detailed answer.`,
 });
 
 const askPdfFlow = ai.defineFlow(
