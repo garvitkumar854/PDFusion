@@ -69,9 +69,7 @@ export function PdfEditor() {
   });
   const { file, pages, activePage, isLoading, isSaving, selectedObject } = state;
   
-  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
-  const [canvasSize, setCanvasSize] = useState<{width: number, height: number}>({width: 0, height: 0});
-  
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -101,7 +99,7 @@ export function PdfEditor() {
     const currentOperationId = ++operationId.current;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setState(s => ({ ...s, file: null, pages: [], isLoading: true, activePage: 0, selectedObject: null }));
-    if (fabricCanvas) fabricCanvas.clear();
+    if (fabricCanvasRef.current) fabricCanvasRef.current.clear();
 
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -153,7 +151,7 @@ export function PdfEditor() {
         setState(s => ({ ...s, isLoading: false }));
       }
     }
-  }, [file?.pdfjsDoc, toast, fabricCanvas]);
+  }, [file?.pdfjsDoc, toast]);
 
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -200,7 +198,7 @@ export function PdfEditor() {
   }, [file, renderPageThumbnail, isLoading]);
 
   const handleSave = async () => {
-    if (!file || !fabricCanvas) return;
+    if (!file || !fabricCanvasRef.current) return;
     setState(s => ({...s, isSaving: true}));
 
     try {
@@ -209,9 +207,9 @@ export function PdfEditor() {
       
       const page = pdfDoc.getPages()[activePage];
       const { width: pageWidth, height: pageHeight } = page.getSize();
-      const canvasScale = Math.min(fabricCanvas.getWidth() / pageWidth, fabricCanvas.getHeight() / pageHeight);
+      const canvasScale = Math.min(fabricCanvasRef.current.getWidth() / pageWidth, fabricCanvasRef.current.getHeight() / pageHeight);
 
-      const fabricObjects = fabricCanvas.getObjects();
+      const fabricObjects = fabricCanvasRef.current.getObjects();
       for (const obj of fabricObjects) {
         if (!obj.left || !obj.top) continue;
 
@@ -300,20 +298,20 @@ export function PdfEditor() {
   const removeFile = () => {
     operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    if(fabricCanvas) fabricCanvas.clear();
+    if(fabricCanvasRef.current) fabricCanvasRef.current.clear();
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
   
   // Effect for initializing Fabric canvas and selection handlers
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasRef.current);
-    setFabricCanvas(canvas);
+    fabricCanvasRef.current = canvas;
 
     const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
     const handleSelectionCleared = () => setState(s => ({...s, selectedObject: null }));
     const handleKeyDown = (e: KeyboardEvent) => {
-        if((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
-            canvas.remove(canvas.getActiveObject()!);
+        if((e.key === 'Delete' || e.key === 'Backspace') && fabricCanvasRef.current?.getActiveObject()) {
+            fabricCanvasRef.current?.remove(fabricCanvasRef.current.getActiveObject()!);
         }
     }
 
@@ -324,52 +322,36 @@ export function PdfEditor() {
 
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
-        canvas.dispose();
+        fabricCanvasRef.current?.dispose();
     }
   }, []);
 
-  // Effect for handling container resizing
-  useEffect(() => {
-    const container = canvasContainerRef.current;
-    if (!container) return;
-
-    const resizeObserver = new ResizeObserver(entries => {
-        const entry = entries[0];
-        if(entry) {
-            setCanvasSize({ width: entry.contentRect.width, height: entry.contentRect.height });
-        }
-    });
-
-    resizeObserver.observe(container);
-
-    return () => {
-        resizeObserver.disconnect();
-    }
-  }, []);
   
   // Effect for rendering the PDF page to the canvas when dependencies change
   useEffect(() => {
     const renderCanvas = async () => {
-        if (!fabricCanvas || !file?.pdfjsDoc || canvasSize.width === 0 || canvasSize.height === 0) {
-            if (fabricCanvas) fabricCanvas.clear().renderAll();
+        const canvas = fabricCanvasRef.current;
+        const container = canvasContainerRef.current;
+        if (!canvas || !container || !file?.pdfjsDoc || file.isEncrypted) {
+            if (canvas) canvas.clear().renderAll();
             return;
         }
         
-        fabricCanvas.clear();
+        canvas.clear();
         
         try {
             const page = await file.pdfjsDoc.getPage(activePage + 1);
             const viewport = page.getViewport({ scale: 1 });
             
             const scale = Math.min(
-                canvasSize.width / viewport.width,
-                canvasSize.height / viewport.height
+                container.clientWidth / viewport.width,
+                container.clientHeight / viewport.height
             );
 
             const scaledViewport = page.getViewport({ scale });
 
-            fabricCanvas.setWidth(scaledViewport.width);
-            fabricCanvas.setHeight(scaledViewport.height);
+            canvas.setWidth(scaledViewport.width);
+            canvas.setHeight(scaledViewport.height);
 
             const bgCanvas = document.createElement('canvas');
             bgCanvas.width = scaledViewport.width;
@@ -381,7 +363,7 @@ export function PdfEditor() {
             await page.render({ canvasContext: bgCtx, viewport: scaledViewport }).promise;
 
             fabric.Image.fromURL(bgCanvas.toDataURL(), (img) => {
-                fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
             });
         } catch (error) {
             console.error("Failed to render page to canvas:", error);
@@ -390,7 +372,7 @@ export function PdfEditor() {
     };
     
     renderCanvas();
-  }, [fabricCanvas, file?.id, activePage, canvasSize, file?.pdfjsDoc, toast]);
+  }, [file, activePage, file?.id, toast]);
   
   const fabricColorToRgb = (color: string) => {
     const fColor = new fabric.Color(color);
@@ -399,7 +381,7 @@ export function PdfEditor() {
   };
 
   const addText = () => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvasRef.current) return;
     const textbox = new fabric.Textbox('Type something...', {
       left: 50,
       top: 50,
@@ -407,19 +389,19 @@ export function PdfEditor() {
       fontSize: 20,
       fill: '#000000',
     });
-    fabricCanvas.add(textbox);
-    fabricCanvas.setActiveObject(textbox);
+    fabricCanvasRef.current.add(textbox);
+    fabricCanvasRef.current.setActiveObject(textbox);
   }
   
   const addShape = (type: 'rect' | 'circle') => {
-    if(!fabricCanvas) return;
+    if(!fabricCanvasRef.current) return;
     let shape;
     if(type === 'rect') {
         shape = new fabric.Rect({ left: 100, top: 100, fill: '#0000ff', width: 60, height: 70, stroke: '#000000', strokeWidth: 1 });
     } else {
         shape = new fabric.Circle({ left: 100, top: 100, fill: '#ff0000', radius: 50, stroke: '#000000', strokeWidth: 1 });
     }
-    fabricCanvas.add(shape);
+    fabricCanvasRef.current.add(shape);
   }
 
   const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -429,8 +411,8 @@ export function PdfEditor() {
         reader.onload = (event) => {
             const imgData = event.target?.result as string;
             fabric.Image.fromURL(imgData, (img) => {
-                fabricCanvas?.add(img.scaleToWidth(150));
-                fabricCanvas?.renderAll();
+                fabricCanvasRef.current?.add(img.scaleToWidth(150));
+                fabricCanvasRef.current?.renderAll();
             });
         };
         reader.readAsDataURL(file);
@@ -439,17 +421,17 @@ export function PdfEditor() {
   }
 
   const updateSelectedObject = (props: any) => {
-    const activeObj = fabricCanvas?.getActiveObject();
+    const activeObj = fabricCanvasRef.current?.getActiveObject();
     if(activeObj) {
         activeObj.set(props);
-        fabricCanvas?.renderAll();
+        fabricCanvasRef.current?.renderAll();
     }
   }
 
   const deleteSelectedObject = () => {
-    const activeObj = fabricCanvas?.getActiveObject();
+    const activeObj = fabricCanvasRef.current?.getActiveObject();
     if(activeObj) {
-        fabricCanvas?.remove(activeObj);
+        fabricCanvasRef.current?.remove(activeObj);
     }
   }
 
