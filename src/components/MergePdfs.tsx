@@ -292,11 +292,6 @@ export function MergePdfs() {
             } catch (error: any) {
                 skippedFiles++;
                 console.warn(`Skipping file: ${pdfFile.file.name}`, error);
-                toast({
-                    variant: "destructive",
-                    title: "Skipped a corrupted file",
-                    description: `Could not process "${pdfFile.file.name}".`
-                });
             }
             dispatch({ type: 'MERGE_PROGRESS', progress: Math.round(((i + 1) / files.length) * 100) });
         }
@@ -422,8 +417,8 @@ export function MergePdfs() {
 
         {files.length > 0 && (
           <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70")}>
-            <CardHeader className="flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-2 pr-4">
-              <div>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between pb-2 pr-4">
+              <div className="flex-grow">
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
                 <CardDescription>Drag to reorder merge sequence</CardDescription>
               </div>
@@ -431,7 +426,7 @@ export function MergePdfs() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md -ml-2 sm:ml-0"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md self-end sm:self-center"
                 disabled={isMerging}
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
