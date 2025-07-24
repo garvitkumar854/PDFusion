@@ -73,7 +73,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-lg font-semibold transition-colors w-fit",
+            "group relative py-1 text-lg font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -172,7 +172,7 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-3 items-start px-2 mb-6">
+                            <nav className="flex flex-col gap-1 items-start px-2 mb-6">
                                 {navLinks.map((link) => (
                                     <MobileNavLink 
                                     key={link.href + link.label} 
@@ -182,9 +182,9 @@ export default function Header() {
                                     onClick={() => setIsOpen(false)} 
                                     />
                                 ))}
-                                <div className="text-lg font-semibold text-foreground pt-2">Services</div>
+                                <div className="text-lg font-semibold text-foreground pt-3">Services</div>
                                 {services.map((service) => (
-                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1">
+                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
                                         {service.icon}
                                         {service.label}
                                     </Link>
