@@ -222,7 +222,7 @@ export function PdfEditor() {
         if (obj.type === 'textbox') {
             const textbox = obj as fabric.Textbox;
             const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const fontSize = (textbox.fontSize || 12) / canvasScale * scaleY; // Apply scale to font size
+            const fontSize = (textbox.fontSize || 12) / canvasScale * scaleY;
             page.drawText(textbox.text || '', {
                 x: left,
                 y: pageHeight - top - (fontSize),
@@ -247,7 +247,7 @@ export function PdfEditor() {
              page.drawCircle({
                 x: left + ((obj.radius || 0) * scaleX),
                 y: pageHeight - top - ((obj.radius || 0) * scaleY),
-                radius: (obj.radius || 0) * scaleX, // Use consistent scaling
+                radius: (obj.radius || 0) * scaleX,
                 fillColor: obj.fill ? fabricColorToRgb(obj.fill as string) : undefined,
                 borderColor: obj.stroke ? fabricColorToRgb(obj.stroke as string) : undefined,
                 borderWidth: obj.strokeWidth,
@@ -266,9 +266,9 @@ export function PdfEditor() {
 
             page.drawImage(pdfImage, {
                 x: left,
-                y: pageHeight - top - (imageObj.getScaledHeight() / canvasScale),
-                width: imageObj.getScaledWidth() / canvasScale,
-                height: imageObj.getScaledHeight() / canvasScale,
+                y: pageHeight - top - ((imageObj.height || 0) * scaleY),
+                width: (imageObj.width || 0) * scaleX,
+                height: (imageObj.height || 0) * scaleY,
                 rotate: degrees(-angle)
             });
         }
@@ -301,55 +301,52 @@ export function PdfEditor() {
     if(fabricCanvas) fabricCanvas.clear();
     setState({ file: null, pages: [], activePage: 0, isLoading: false, isSaving: false, selectedObject: null });
   };
-
-  // Initialize Fabric canvas
-  const canvasContainerRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-        const canvasEl = canvasRef.current;
-        if(canvasEl) {
-            const canvas = new fabric.Canvas(canvasEl);
-            setFabricCanvas(canvas);
-
-            const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
-            const handleSelectionCleared = () => setState(s => ({...s, selectedObject: null }));
-
-            canvas.on('selection:created', handleSelection);
-            canvas.on('selection:updated', handleSelection);
-            canvas.on('selection:cleared', handleSelectionCleared);
-        }
-    }
-  }, []);
   
   useEffect(() => {
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
+    
+    const canvas = new fabric.Canvas(canvasEl);
+    setFabricCanvas(canvas);
+
+    const handleSelection = (e: fabric.IEvent) => setState(s => ({...s, selectedObject: e.selected?.[0] || null }));
+    const handleSelectionCleared = () => setState(s => ({...s, selectedObject: null }));
+
+    canvas.on('selection:created', handleSelection);
+    canvas.on('selection:updated', handleSelection);
+    canvas.on('selection:cleared', handleSelectionCleared);
+
     const handleKeyDown = (e: KeyboardEvent) => {
-        if((e.key === 'Delete' || e.key === 'Backspace') && fabricCanvas?.getActiveObject()) {
-            fabricCanvas.remove(fabricCanvas.getActiveObject()!);
+        if((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
+            canvas.remove(canvas.getActiveObject()!);
         }
     }
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
-        fabricCanvas?.dispose();
+        canvas.off('selection:created');
+        canvas.off('selection:updated');
+        canvas.off('selection:cleared');
+        canvas.dispose();
     }
-  }, [fabricCanvas]);
+  }, []);
 
-  // Render PDF page to canvas background
   useEffect(() => {
-    if (!file?.pdfjsDoc || !fabricCanvas || !canvasContainerRef) return;
+    if (!file?.pdfjsDoc || !fabricCanvas) return;
     
     const renderCanvas = async () => {
         fabricCanvas.clear();
-        
+        const container = fabricCanvas.getElement().parentElement;
+        if (!container) return;
+
         try {
             const page = await file.pdfjsDoc!.getPage(activePage + 1);
-            const container = fabricCanvas.getElement().parentElement?.parentElement;
-            if (!container) return;
-
-            const containerWidth = container.offsetWidth - 16;
-            const containerHeight = container.offsetHeight - 16;
-
             let viewport = page.getViewport({ scale: 1 });
+            
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+
             const scale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height, 1);
             viewport = page.getViewport({ scale });
             
@@ -379,7 +376,7 @@ export function PdfEditor() {
     };
     
     renderCanvas();
-  }, [activePage, file, fabricCanvas, toast]);
+  }, [activePage, file?.id, fabricCanvas, toast]);
 
   
   const fabricColorToRgb = (color: string) => {
@@ -419,12 +416,13 @@ export function PdfEditor() {
         reader.onload = (event) => {
             const imgData = event.target?.result as string;
             fabric.Image.fromURL(imgData, (img) => {
-                fabricCanvas?.add(img);
+                fabricCanvas?.add(img.scaleToWidth(150));
+                fabricCanvas?.renderAll();
             });
         };
         reader.readAsDataURL(file);
     }
-    e.target.value = ''; // Reset input
+    e.target.value = '';
   }
 
   const updateSelectedObject = (props: any) => {
@@ -523,7 +521,7 @@ export function PdfEditor() {
                 )}
               </Card>
               <Card className="flex-1 p-2">
-                <div ref={canvasContainerRef} className="p-2 mt-2 bg-muted/50 flex justify-center items-center overflow-auto h-[70vh]">
+                <div className="bg-muted/50 w-full h-[70vh] flex justify-center items-center overflow-auto">
                   {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     : file?.isEncrypted ? <div className="flex items-center justify-center h-full text-center text-muted-foreground"><ShieldAlert className="w-10 h-10 mx-auto mb-2 text-destructive" /><p>Editing is disabled for encrypted files.</p></div>
                       : <canvas ref={canvasRef} />}
