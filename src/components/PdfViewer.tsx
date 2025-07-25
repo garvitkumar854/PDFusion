@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 
@@ -89,33 +89,42 @@ export function PdfViewer() {
   const { toast } = useToast();
   const mainCanvasContainerRef = useRef<HTMLDivElement>(null);
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isInitialRender, setIsInitialRender] = useState(true);
   
   const renderPage = useCallback(async (
     pdfDoc: pdfjsLib.PDFDocumentProxy,
     pageNum: number,
     canvas: HTMLCanvasElement,
     currentZoom: number,
+    isInitial: boolean
   ) => {
     try {
         const page = await pdfDoc.getPage(pageNum);
-        
         const container = mainCanvasContainerRef.current;
         if (!container) return;
 
-        // Calculate scale to fit the page within the container
-        const viewport = page.getViewport({ scale: 1 });
-        const scaleX = container.clientWidth / viewport.width;
-        const scaleY = container.clientHeight / viewport.height;
-        const fitScale = Math.min(scaleX, scaleY);
-
-        const scaledViewport = page.getViewport({ scale: fitScale * currentZoom });
+        const viewportDefault = page.getViewport({ scale: 1 });
         
+        let scale;
+        if (isInitial) {
+            const fitScale = Math.min(
+                container.clientWidth / viewportDefault.width,
+                container.clientHeight / viewportDefault.height
+            );
+            scale = fitScale;
+            setZoom(fitScale);
+        } else {
+            scale = currentZoom;
+        }
+
+        const viewport = page.getViewport({ scale: scale });
+
         const context = canvas.getContext('2d');
-        canvas.height = scaledViewport.height;
-        canvas.width = scaledViewport.width;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
         if (context) {
-            await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+            await page.render({ canvasContext: context, viewport }).promise;
         }
     } catch(e) {
         console.error("Failed to render page:", e);
@@ -133,6 +142,7 @@ export function PdfViewer() {
     setFile(null);
     setPagePreviews([]);
     setZoom(INITIAL_ZOOM);
+    setIsInitialRender(true);
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -201,9 +211,12 @@ export function PdfViewer() {
 
   useEffect(() => {
     if (file?.pdfjsDoc && mainCanvasRef.current) {
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, isInitialRender);
+        if (isInitialRender) {
+            setIsInitialRender(false);
+        }
     }
-  }, [file, currentPage, zoom, renderPage]);
+  }, [file, currentPage, zoom, renderPage, isInitialRender]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -240,6 +253,7 @@ export function PdfViewer() {
   }
 
   const changeZoom = (direction: 'in' | 'out') => {
+      setIsInitialRender(false);
       setZoom(prevZoom => {
           let newZoom = direction === 'in' ? prevZoom + ZOOM_INCREMENT : prevZoom - ZOOM_INCREMENT;
           return Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
@@ -248,6 +262,7 @@ export function PdfViewer() {
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    setIsInitialRender(false);
     if (val === '') {
         setCurrentPage('' as any); // Allow empty input temporarily
     } else {
@@ -256,6 +271,15 @@ export function PdfViewer() {
             setCurrentPage(Math.max(1, Math.min(num, file.totalPages)));
         }
     }
+  }
+  
+  const resetZoom = () => {
+    setIsInitialRender(true); // Re-trigger the initial "fit" logic
+  };
+
+  const handlePageSelect = (pageNumber: number) => {
+    setIsInitialRender(false);
+    setCurrentPage(pageNumber);
   }
 
   if (!file && !isLoading) {
@@ -309,7 +333,7 @@ export function PdfViewer() {
             <Card className="hidden md:block">
                 <div className="p-2 h-full overflow-y-auto">
                     {pagePreviews.map(p => (
-                        <PageThumbnail key={p.pageNumber} page={p} onSelect={() => setCurrentPage(p.pageNumber)} isActive={currentPage === p.pageNumber} />
+                        <PageThumbnail key={p.pageNumber} page={p} onSelect={() => handlePageSelect(p.pageNumber)} isActive={currentPage === p.pageNumber} />
                     ))}
                 </div>
             </Card>
@@ -318,16 +342,16 @@ export function PdfViewer() {
                 <Card>
                     <div className="p-2 flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
+                            <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage - 1)} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
                             <div className="flex items-center gap-1.5 text-sm font-medium">
                                 <Input type="number" value={currentPage} onChange={handlePageInputChange} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
                                 <span>/ {file.totalPages}</span>
                             </div>
-                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.min(file.totalPages, p + 1))} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
+                            <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage + 1)} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="icon" onClick={() => changeZoom('out')} disabled={zoom <= MIN_ZOOM}><ZoomOut className="h-4 w-4"/></Button>
-                            <Button variant="outline" size="icon" onClick={() => setZoom(INITIAL_ZOOM)}><RotateCw className="h-4 w-4"/></Button>
+                            <Button variant="outline" size="icon" onClick={resetZoom}><RotateCw className="h-4 w-4"/></Button>
                             <Button variant="outline" size="icon" onClick={() => changeZoom('in')} disabled={zoom >= MAX_ZOOM}><ZoomIn className="h-4 w-4"/></Button>
                         </div>
                         <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}><X className="w-4 h-4" /></Button>
@@ -342,3 +366,5 @@ export function PdfViewer() {
     </div>
   );
 }
+
+    
