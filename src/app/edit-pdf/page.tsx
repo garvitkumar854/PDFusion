@@ -19,7 +19,10 @@ const PdfEditorLoader = dynamic(() => import('@/components/PdfEditorLoader'), {
   )
 });
 
+import ComingSoon from 'src/components/ComingSoon';
+
 export default function EditPdfPage() {
+  return <ComingSoon />
   return (
     <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-12">
