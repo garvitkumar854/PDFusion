@@ -190,7 +190,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         delay={index * 100}
                     >
                         <Link href={service.href} className="h-full block group relative">
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                           <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card h-full flex flex-col">
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                                   <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
@@ -237,8 +237,8 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                             delay={index * 250}
                             >
                             <div className="group relative h-full">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                                <Card className="relative bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 rounded-xl flex flex-col h-full">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                                <Card className="relative bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
                                     <CardContent className="p-0 flex-grow">
                                     <div className="flex flex-col items-start gap-4 h-full">
                                         <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -273,7 +273,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         animation="animate-in fade-in-0 zoom-in-95"
                         className="duration-700"
                     >
-                    <div className="relative bg-white dark:bg-card rounded-2xl p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20">
+                    <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                             <div className="w-full">
