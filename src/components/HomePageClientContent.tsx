@@ -112,8 +112,8 @@ const futureFeatures = [
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
     },
     {
-      icon: <FileText className="w-5 h-5 text-blue-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      icon: <FileText className="w-5 h-5 text-green-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Advanced Features',
       description: 'Powerful tools to handle your PDF needs',
       points: ['Page reordering', 'Rotation support', 'Preview thumbnails'],
@@ -269,32 +269,34 @@ export default function HomePageClientContent({ showServices }: { showServices?:
 
             <section className="pb-20 md:pb-32">
                 <div className="container mx-auto px-4">
-                <AnimateOnScroll
-                        animation="animate-in fade-in-0 zoom-in-95"
-                        className="duration-700"
-                    >
                     <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
-                            <div className="w-full">
-                            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
-                                Ready to <span className="text-primary">Streamline</span> Your PDFs?
-                            </h2>
-                            <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
-                                Experience the simplicity and security of PDFusion for yourself.
-                            </p>
-                            </div>
-                        <div className="flex-shrink-0 w-full sm:w-auto">
-                            <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
-                            <Link href="#services">
-                                Explore Services
-                                <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                            </Link>
-                            </Button>
-                        </div>
+                            <AnimateOnScroll
+                                animation="animate-in fade-in-0 slide-in-from-left-12"
+                                className="duration-700 w-full"
+                            >
+                                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
+                                    Ready to <span className="text-primary">Streamline</span> Your PDFs?
+                                </h2>
+                                <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
+                                    Experience the simplicity and security of PDFusion for yourself.
+                                </p>
+                            </AnimateOnScroll>
+                            <AnimateOnScroll
+                                animation="animate-in fade-in-0 slide-in-from-right-12"
+                                className="duration-700 flex-shrink-0 w-full lg:w-auto"
+                                delay={200}
+                            >
+                                <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
+                                <Link href="#services">
+                                    Explore Services
+                                    <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                </Link>
+                                </Button>
+                            </AnimateOnScroll>
                         </div>
                     </div>
-                </AnimateOnScroll>
                 </div>
             </section>
         </>
