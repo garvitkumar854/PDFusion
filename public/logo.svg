@@ -1,0 +1,5 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="16" cy="16" r="15" fill="hsl(var(--primary))"/>
+    <path d="M13 10H18C20.2091 10 22 11.7909 22 14C22 16.2091 20.2091 18 18 18H13V10Z" fill="hsl(var(--primary-foreground))"/>
+    <path d="M13 18V24" stroke="hsl(var(--primary-foreground))" stroke-width="4" stroke-linecap="round"/>
+</svg>

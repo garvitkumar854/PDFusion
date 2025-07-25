@@ -90,14 +90,6 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
   );
 };
 
-const PdfFusionLogo = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256" className={cn("w-8 h-8", className)}>
-    <rect width="256" height="256" fill="hsl(var(--primary))" rx="60" ry="60"></rect>
-    <path fill="hsl(var(--primary-foreground))" d="M128 24a104.11 104.11 0 1 0 104 104.11A104.11 104.11 0 0 0 128 24Zm-1.22 144.31L73.19 142a8 8 0 0 1 0-11.31l53.59-53.6a8 8 0 0 1 11.32 0l53.59 53.6a8 8 0 0 1 0 11.31l-53.59 54.28a8 8 0 0 1-11.32-.67Zm-30.56-43.12L128 95.4l31.78 31.79-31.78 31.78Z"></path>
-  </svg>
-);
-
-
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -108,7 +100,7 @@ export default function Header() {
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">
-            <PdfFusionLogo />
+            <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
             <h1 className="text-xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 PDFusion
@@ -166,7 +158,7 @@ export default function Header() {
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">
                                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-                                    <PdfFusionLogo />
+                                    <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
                                     <h1 className="text-xl font-bold tracking-tight">
                                     <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                                         PDFusion
