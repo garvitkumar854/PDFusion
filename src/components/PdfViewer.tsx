@@ -86,7 +86,6 @@ export function PdfViewer() {
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
-  const pagesContainerRef = useRef<HTMLDivElement>(null);
   const mainCanvasContainerRef = useRef<HTMLDivElement>(null);
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -95,13 +94,18 @@ export function PdfViewer() {
     pageNum: number,
     canvas: HTMLCanvasElement,
     currentZoom: number,
-    containerWidth: number
+    containerWidth: number,
+    containerHeight: number,
   ) => {
     try {
         const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: 1 });
         
-        const scale = (containerWidth / viewport.width) * currentZoom;
+        const scale = Math.min(
+            containerWidth / viewport.width,
+            containerHeight / viewport.height
+        ) * currentZoom;
+
         const scaledViewport = page.getViewport({ scale });
         
         const context = canvas.getContext('2d');
@@ -191,10 +195,19 @@ export function PdfViewer() {
   }, [file, toast]);
 
   useEffect(() => {
-    if (file?.pdfjsDoc && mainCanvasRef.current && mainCanvasContainerRef.current) {
-        const containerWidth = mainCanvasContainerRef.current.clientWidth;
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, containerWidth);
+    const observer = new ResizeObserver(() => {
+        if (file?.pdfjsDoc && mainCanvasRef.current && mainCanvasContainerRef.current) {
+            const containerWidth = mainCanvasContainerRef.current.clientWidth - 32; // padding
+            const containerHeight = mainCanvasContainerRef.current.clientHeight - 32; // padding
+            renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, containerWidth, containerHeight);
+        }
+    });
+
+    if (mainCanvasContainerRef.current) {
+        observer.observe(mainCanvasContainerRef.current);
     }
+    
+    return () => observer.disconnect();
   }, [file, currentPage, zoom, renderPage]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -224,7 +237,10 @@ export function PdfViewer() {
   };
   
   const handlePasswordSubmit = () => {
-      if (file?.file) loadPdf(file.file, password);
+      const currentFile = file?.file;
+      if (currentFile) {
+          loadPdf(currentFile, password);
+      }
   }
 
   const changeZoom = (direction: 'in' | 'out') => {
@@ -236,9 +252,9 @@ export function PdfViewer() {
 
   if (!file && !isLoading) {
     return (
-        <Card className="bg-white dark:bg-card shadow-lg">
-            <CardContent className="p-6">
-                <div {...getRootProps()} className={cn("flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors", isDragActive ? "border-primary bg-primary/10" : "hover:border-primary/50")}>
+        <Card className="bg-white dark:bg-card shadow-lg h-full flex flex-col">
+            <CardContent className="p-6 flex-1 flex flex-col items-center justify-center">
+                <div {...getRootProps()} className={cn("w-full h-full flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors", isDragActive ? "border-primary bg-primary/10" : "hover:border-primary/50")}>
                     <input {...getInputProps()} />
                     <UploadCloud className="w-12 h-12 text-muted-foreground" />
                     <p className="mt-4 text-lg font-semibold">Drop PDF here or click to upload</p>
@@ -250,7 +266,7 @@ export function PdfViewer() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full flex flex-col">
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
           <div className="flex items-center gap-3 overflow-hidden">
@@ -291,7 +307,7 @@ export function PdfViewer() {
           </CardContent>
         </Card>
       ) : file && (
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 h-[75vh]">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 flex-1 min-h-0">
             <Card className="hidden md:block">
                 <div className="p-2 h-full overflow-y-auto">
                     {pagePreviews.map(p => (
@@ -300,7 +316,7 @@ export function PdfViewer() {
                 </div>
             </Card>
 
-            <div className="flex flex-col gap-4 h-full">
+            <div className="flex flex-col gap-4 h-full min-h-0">
                 <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
                     <div className="p-2 flex items-center justify-between">
                         <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>

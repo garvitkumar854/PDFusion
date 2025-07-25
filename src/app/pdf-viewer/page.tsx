@@ -50,7 +50,7 @@ export default function PdfViewerPage() {
       </section>
       
       <main className="flex-1 w-full">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto h-[85vh]">
           <PdfViewerLoader />
         </div>
       </main>
