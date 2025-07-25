@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 
 if (typeof window !== 'undefined') {
@@ -81,7 +81,6 @@ export function PdfViewer() {
   const [pagePreviews, setPagePreviews] = useState<PageInfo[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
-  const [isResetZoom, setIsResetZoom] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const operationId = useRef<number>(0);
@@ -96,8 +95,7 @@ export function PdfViewer() {
     pdfDoc: pdfjsLib.PDFDocumentProxy,
     pageNum: number,
     canvas: HTMLCanvasElement,
-    currentZoom: number,
-    shouldFit: boolean
+    currentZoom?: number
   ) => {
     if (renderTask.current) {
         renderTask.current.cancel();
@@ -107,16 +105,15 @@ export function PdfViewer() {
         const container = mainCanvasContainerRef.current;
         if (!container) return;
 
-        let scale;
-        if (shouldFit) {
+        let scale = currentZoom;
+
+        if (!scale) { // Auto-fit logic
             const viewportDefault = page.getViewport({ scale: 1 });
             scale = Math.min(
                 container.clientWidth / viewportDefault.width,
                 container.clientHeight / viewportDefault.height
             ) * 0.98;
             setZoom(scale);
-        } else {
-            scale = currentZoom;
         }
 
         const viewport = page.getViewport({ scale });
@@ -173,7 +170,10 @@ export function PdfViewer() {
       }));
       setPagePreviews(previews);
       setCurrentPage(1);
-      setIsResetZoom(true); // Trigger initial fit-to-view render
+      
+      if (mainCanvasRef.current) {
+        renderPage(pdfjsDoc, 1, mainCanvasRef.current);
+      }
 
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
@@ -217,17 +217,14 @@ export function PdfViewer() {
     } finally {
       if (operationId.current === currentOperationId) setIsLoading(false);
     }
-  }, [file?.pdfjsDoc, toast]);
+  }, [file?.pdfjsDoc, toast, renderPage]);
 
   useEffect(() => {
     if (file?.pdfjsDoc && mainCanvasRef.current) {
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, isResetZoom);
-        if (isResetZoom) {
-            setIsResetZoom(false);
-        }
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
     }
-  }, [file, currentPage, zoom, renderPage, isResetZoom]);
-
+  }, [file, currentPage, zoom, renderPage]);
+  
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     loadPdf(acceptedFiles[0]);
@@ -264,7 +261,6 @@ export function PdfViewer() {
   }
 
   const changeZoom = (direction: 'in' | 'out') => {
-      setIsResetZoom(false);
       setZoom(prevZoom => {
           let newZoom = direction === 'in' ? prevZoom + ZOOM_INCREMENT : prevZoom - ZOOM_INCREMENT;
           return Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
@@ -281,18 +277,21 @@ export function PdfViewer() {
             const newPage = Math.max(1, Math.min(num, file.totalPages));
             if (newPage !== currentPage) {
                 setCurrentPage(newPage);
-                setIsResetZoom(true);
             }
         }
     }
   }
   
-  const resetZoom = () => setIsResetZoom(true);
+  const resetZoom = () => {
+    if (file?.pdfjsDoc && mainCanvasRef.current) {
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current);
+    }
+  }
   
   const handlePageSelect = (pageNumber: number) => {
     if (pageNumber !== currentPage) {
       setCurrentPage(pageNumber);
-      setIsResetZoom(true);
+      resetZoom();
     }
   }
 
@@ -411,7 +410,7 @@ export function PdfViewer() {
             </Card>
             <div 
                 ref={mainCanvasContainerRef} 
-                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-start items-start p-4 cursor-grab"
+                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center items-start p-4 cursor-grab"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
