@@ -94,20 +94,6 @@ const services = [
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
     },
-    {
-      icon: <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-gray-100 dark:bg-gray-900/20',
-      title: 'Lock PDF',
-      description: 'Add a password to your PDF to protect it from unauthorized access.',
-      href: '/lock-pdf'
-    },
-    {
-      icon: <Unlock className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-emerald-100 dark:bg-emerald-900/20',
-      title: 'Unlock PDF',
-      description: 'Remove a password from a PDF file so you can edit or view it.',
-      href: '/unlock-pdf'
-    },
 ];
 
 const futureFeatures = [
