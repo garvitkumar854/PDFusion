@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
 
@@ -95,20 +95,20 @@ export function PdfViewer() {
     pageNum: number,
     canvas: HTMLCanvasElement,
     currentZoom: number,
-    containerWidth: number,
-    containerHeight: number,
   ) => {
     try {
         const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1 });
         
-        const scale = Math.min(
-            containerWidth / viewport.width,
-            containerHeight / viewport.height,
-            MAX_ZOOM
-        ) * currentZoom;
+        const container = mainCanvasContainerRef.current;
+        if (!container) return;
 
-        const scaledViewport = page.getViewport({ scale });
+        // Calculate scale to fit the page within the container
+        const viewport = page.getViewport({ scale: 1 });
+        const scaleX = container.clientWidth / viewport.width;
+        const scaleY = container.clientHeight / viewport.height;
+        const fitScale = Math.min(scaleX, scaleY);
+
+        const scaledViewport = page.getViewport({ scale: fitScale * currentZoom });
         
         const context = canvas.getContext('2d');
         canvas.height = scaledViewport.height;
@@ -119,8 +119,9 @@ export function PdfViewer() {
         }
     } catch(e) {
         console.error("Failed to render page:", e);
+        toast({ variant: "destructive", title: "Render Error", description: "Could not display the page." });
     }
-  }, []);
+  }, [toast]);
 
   const loadPdf = useCallback(async (fileToLoad: File, providedPassword = "") => {
     const currentOperationId = ++operationId.current;
@@ -174,7 +175,9 @@ export function PdfViewer() {
           if (operationId.current === currentOperationId) {
               setPagePreviews(prev => {
                   const newPreviews = [...prev];
-                  newPreviews[i] = {...newPreviews[i], dataUrl};
+                  if(newPreviews[i]) {
+                    newPreviews[i] = {...newPreviews[i], dataUrl};
+                  }
                   return newPreviews;
               });
           }
@@ -185,6 +188,7 @@ export function PdfViewer() {
 
       if (err.name === 'PasswordException') {
         setIsEncrypted(true);
+        setFile({ file: fileToLoad } as any); // Set a placeholder to show the password field
         setError("This PDF is password-protected. Please enter the password to view it.");
       } else {
         setError("Could not read the PDF file. It might be corrupted or in an unsupported format.");
@@ -196,10 +200,8 @@ export function PdfViewer() {
   }, [file?.pdfjsDoc, toast]);
 
   useEffect(() => {
-    if (file?.pdfjsDoc && mainCanvasRef.current && mainCanvasContainerRef.current) {
-        const containerWidth = mainCanvasContainerRef.current.clientWidth - 32; // padding
-        const containerHeight = mainCanvasContainerRef.current.clientHeight - 32; // padding
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, containerWidth, containerHeight);
+    if (file?.pdfjsDoc && mainCanvasRef.current) {
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
     }
   }, [file, currentPage, zoom, renderPage]);
 
@@ -229,8 +231,9 @@ export function PdfViewer() {
     setError(null);
   };
   
-  const handlePasswordSubmit = () => {
-      const currentFile = file?.file || (getInputProps().value as unknown as File);
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const currentFile = file?.file;
       if (currentFile) {
           loadPdf(currentFile, password);
       }
@@ -243,9 +246,21 @@ export function PdfViewer() {
       });
   }
 
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === '') {
+        setCurrentPage('' as any); // Allow empty input temporarily
+    } else {
+        const num = parseInt(val, 10);
+        if (!isNaN(num) && file) {
+            setCurrentPage(Math.max(1, Math.min(num, file.totalPages)));
+        }
+    }
+  }
+
   if (!file && !isLoading) {
     return (
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className="bg-white dark:bg-card shadow-lg max-w-lg mx-auto">
             <CardHeader>
               <CardTitle className="text-xl sm:text-2xl">PDF Viewer</CardTitle>
               <CardDescription>Select a PDF file to view its content.</CardDescription>
@@ -264,48 +279,32 @@ export function PdfViewer() {
   
   return (
     <div className="h-full flex flex-col gap-4">
-      {file && (
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
-            <div className="flex items-center gap-3 overflow-hidden">
-               {isEncrypted ? <Lock className="w-6 h-6 text-yellow-500 shrink-0" /> : <div className="w-6 h-6 shrink-0" />}
-               <div className="flex flex-col overflow-hidden">
-                  <CardTitle className="truncate max-w-[200px] sm:max-w-md">{file?.file.name || "Loading..."}</CardTitle>
-                  <CardDescription>{file ? `${file.totalPages} pages` : 'Please wait'}</CardDescription>
-               </div>
-            </div>
-            <div className="flex items-center gap-2 self-end sm:self-center">
-               <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isLoading}><X className="w-4 h-4" /></Button>
-            </div>
-          </CardHeader>
-        </Card>
-      )}
-
-      {(isLoading || error) ? (
+      {(isLoading || error || isEncrypted) && !file?.pdfjsDoc ? (
         <Card className="flex-1 flex items-center justify-center">
           <CardContent className="p-4 text-center">
              {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" /> : (
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-sm mx-auto">
                     <AlertTriangle className="w-8 h-8 text-destructive mx-auto"/>
                     <p className="text-destructive font-medium">{error}</p>
                     {isEncrypted && (
-                      <div className="max-w-sm mx-auto space-y-2">
+                      <form onSubmit={handlePasswordSubmit} className="space-y-2">
                         <div className="relative">
                           <Input id="password-input" value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} className="pr-10" placeholder="Enter password" />
                           <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(p => !p)}>
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </Button>
                         </div>
-                        <Button onClick={handlePasswordSubmit} disabled={!password}>
+                        <Button type="submit" disabled={!password}>
                             <Unlock className="mr-2 h-4 w-4"/> Unlock & View
                         </Button>
-                      </div>
+                      </form>
                     )}
+                    <Button variant="outline" onClick={removeFile}>Choose a different file</Button>
                 </div>
              )}
           </CardContent>
         </Card>
-      ) : file && (
+      ) : file?.pdfjsDoc && (
           <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 flex-1 min-h-0">
             <Card className="hidden md:block">
                 <div className="p-2 h-full overflow-y-auto">
@@ -318,20 +317,23 @@ export function PdfViewer() {
             <div className="flex flex-col gap-4 h-full min-h-0">
                 <Card>
                     <div className="p-2 flex items-center justify-between flex-wrap gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                            <Input type="number" value={currentPage} onChange={e => setCurrentPage(parseInt(e.target.value,10))} onBlur={() => setCurrentPage(p => Math.max(1, Math.min(p, file.totalPages)))} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
-                            <span>/ {file.totalPages}</span>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
+                            <div className="flex items-center gap-1.5 text-sm font-medium">
+                                <Input type="number" value={currentPage} onChange={handlePageInputChange} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
+                                <span>/ {file.totalPages}</span>
+                            </div>
+                            <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.min(file.totalPages, p + 1))} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="icon" onClick={() => changeZoom('out')} disabled={zoom <= MIN_ZOOM}><ZoomOut className="h-4 w-4"/></Button>
                             <Button variant="outline" size="icon" onClick={() => setZoom(INITIAL_ZOOM)}><RotateCw className="h-4 w-4"/></Button>
                             <Button variant="outline" size="icon" onClick={() => changeZoom('in')} disabled={zoom >= MAX_ZOOM}><ZoomIn className="h-4 w-4"/></Button>
                         </div>
-                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.min(file.totalPages, p + 1))} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}><X className="w-4 h-4" /></Button>
                     </div>
                 </Card>
-                <div ref={mainCanvasContainerRef} className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center p-4">
+                <div ref={mainCanvasContainerRef} className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center items-start p-4">
                     <canvas ref={mainCanvasRef} className="bg-white dark:bg-card shadow-lg rounded-md" />
                 </div>
             </div>
