@@ -32,17 +32,17 @@ const RotatingWords: React.FC<RotatingWordsProps> = ({ words, colors, className 
     animate: (i: number) => ({
       y: 0,
       transition: {
-        duration: 0.5,
-        ease: [0.6, 0.01, -0.05, 0.95],
-        delay: i * 0.025,
+        duration: 0.6,
+        ease: [0.4, 0, 0.2, 1],
+        delay: i * 0.03,
       },
     }),
     exit: (i: number) => ({
        y: "-100%",
         transition: {
-            duration: 0.3,
-            ease: [0.6, 0.01, -0.05, 0.95],
-            delay: i * 0.025,
+            duration: 0.4,
+            ease: [0.4, 0, 0.2, 1],
+            delay: i * 0.03,
         },
     })
   };
@@ -54,10 +54,10 @@ const RotatingWords: React.FC<RotatingWordsProps> = ({ words, colors, className 
         <motion.div
             key={currentWord}
             className="flex"
-            style={{ color: currentColor, willChange: 'transform, opacity' }}
+            style={{ color: currentColor }}
         >
           {currentWord.split("").map((char, i) => (
-             <div key={i} className="overflow-hidden">
+             <div key={i} className="overflow-hidden py-1">
                 <motion.span
                     custom={i}
                     variants={slideUp}
@@ -65,6 +65,7 @@ const RotatingWords: React.FC<RotatingWordsProps> = ({ words, colors, className 
                     animate="animate"
                     exit="exit"
                     className="inline-block"
+                    style={{ willChange: 'transform' }}
                 >
                     {char === " " ? "\u00A0" : char}
                 </motion.span>
