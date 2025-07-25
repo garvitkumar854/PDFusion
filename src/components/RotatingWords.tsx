@@ -19,21 +19,22 @@ export const FlipWords = ({
   const [index, setIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [containerSize, setContainerSize] = useState({ width: "auto", height: "auto" });
-  
+
   const sizerRef = useRef<HTMLSpanElement>(null);
+
+  // Recalculate container size whenever the word changes
+  useEffect(() => {
+    if (sizerRef.current) {
+      const { width, height } = sizerRef.current.getBoundingClientRect();
+      setContainerSize({ width: `${width}px`, height: `${height}px` });
+    }
+  }, [index, words]);
 
   const startAnimation = useCallback(() => {
     const nextIndex = (index + 1) % words.length;
     setIndex(nextIndex);
     setIsAnimating(true);
   }, [index, words.length]);
-
-  useEffect(() => {
-    if (sizerRef.current) {
-        const { width, height } = sizerRef.current.getBoundingClientRect();
-        setContainerSize({ width: `${width}px`, height: `${height}px` });
-    }
-  }, [index, words]);
 
   useEffect(() => {
     if (!isAnimating) {
@@ -47,14 +48,14 @@ export const FlipWords = ({
   const onExitComplete = () => {
     setIsAnimating(false);
   };
-  
+
   const currentWord = words[index];
   const currentColor = colors[index % colors.length];
 
   return (
     <div 
         style={{ width: containerSize.width, height: containerSize.height }}
-        className="relative inline-block"
+        className="relative inline-block align-bottom"
     >
       {/* Sizer element to measure the word size without affecting layout */}
       <span ref={sizerRef} className="absolute invisible whitespace-nowrap" aria-hidden="true">
@@ -64,14 +65,8 @@ export const FlipWords = ({
       <AnimatePresence onExitComplete={onExitComplete}>
         <motion.div
           key={currentWord}
-          initial={{
-            opacity: 0,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
             type: "spring",
             stiffness: 100,
