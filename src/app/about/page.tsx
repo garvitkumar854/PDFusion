@@ -13,8 +13,8 @@ const whyChooseUsFeatures = [
       description: 'Our intuitive interface makes merging, splitting, and compressing PDFs as easy as a few clicks.',
     },
     {
-      icon: <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-primary/10',
+      icon: <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Privacy First',
       description: 'Your files never leave your browser. We process everything locally to ensure maximum security.',
     },
@@ -66,7 +66,7 @@ const howItWorksSteps = [
 export default function AboutPage() {
   return (
     <>
-      <section className="relative py-20 md:py-32 overflow-hidden">
+      <section className="relative py-20 md:py-24 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.3),rgba(255,255,255,0))]"></div>
         </div>
@@ -92,7 +92,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="py-20 md:py-32 bg-background">
+      <section className="py-20 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">
             <AnimateOnScroll
                 animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -140,7 +140,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-       <section className="py-20 md:py-32">
+       <section className="py-20 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <AnimateOnScroll
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -183,7 +183,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="py-20 md:py-32">
+      <section className="py-20 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <AnimateOnScroll
               animation="animate-in fade-in-0"
@@ -219,7 +219,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="pb-20 md:pb-32">
+      <section className="pb-20 md:pb-24">
         <div className="container mx-auto px-4">
            <AnimateOnScroll
                 animation="animate-in fade-in-0 zoom-in-95"
