@@ -95,61 +95,65 @@ export function PdfCompressor() {
   
   const handleProcess = async () => {
     if (!file || file.isEncrypted) return;
-    
+
     const currentOperationId = ++operationId.current;
     setIsProcessing(true);
     setResult(null);
 
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file.file);
-      reader.onload = async () => {
-        const input: CompressPdfInput = {
-          pdfDataUri: reader.result as string,
-          quality,
-        };
-        const response = await compressPdf(input);
-        
-        if (operationId.current !== currentOperationId) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file.file);
+    reader.onload = async () => {
+        try {
+            const input: CompressPdfInput = {
+                pdfDataUri: reader.result as string,
+                quality,
+            };
 
-        if (response.error) {
-            throw new Error(response.error);
+            const response = await compressPdf(input);
+
+            if (operationId.current !== currentOperationId) return;
+
+            if (response.error) {
+                throw new Error(response.error);
+            }
+
+            const byteCharacters = atob(response.pdfDataUri!.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+            const url = URL.createObjectURL(blob);
+            const originalName = file.file.name.replace(/\.pdf$/i, '');
+
+            setResult({
+                url,
+                filename: `${originalName}_compressed.pdf`,
+                stats: response.stats!,
+            });
+
+            toast({
+                title: "Compression Complete!",
+                description: "Your PDF has been successfully compressed.",
+                action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
+            });
+        } catch (error: any) {
+            if (operationId.current === currentOperationId) {
+                toast({ variant: "destructive", title: "Compression Failed", description: error.message || "An unexpected error occurred." });
+            }
+        } finally {
+            if (operationId.current === currentOperationId) {
+                setIsProcessing(false);
+            }
         }
-        
-        const byteCharacters = atob(response.pdfDataUri!.split(',')[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        const url = URL.createObjectURL(blob);
-        const originalName = file.file.name.replace(/\.pdf$/i, '');
-        
-        setResult({
-            url,
-            filename: `${originalName}_compressed.pdf`,
-            stats: response.stats!,
-        });
-
-        toast({
-            title: "Compression Complete!",
-            description: "Your PDF has been successfully compressed.",
-            action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
-        });
-      };
-
-    } catch (error: any) {
-      if (operationId.current === currentOperationId) {
-        toast({ variant: "destructive", title: "Compression Failed", description: error.message || "An unexpected error occurred." });
-      }
-    } finally {
-      if (operationId.current === currentOperationId) {
+    };
+    reader.onerror = (error) => {
+        toast({ variant: "destructive", title: "File Read Error", description: "Could not read the uploaded file." });
         setIsProcessing(false);
-      }
-    }
-  };
+    };
+};
 
 
   const handleCancel = () => {
