@@ -115,7 +115,7 @@ export default function AboutPage() {
                     <AnimateOnScroll
                       key={index}
                       animation="animate-in fade-in-0 zoom-in-95"
-                      className="duration-700 h-full"
+                      className="duration-500 h-full"
                       delay={index * 150}
                     >
                       <div className="group relative h-full">
