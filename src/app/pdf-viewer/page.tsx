@@ -14,7 +14,7 @@ const PdfViewerLoader = dynamic(() => import('@/components/PdfViewerLoader'), {
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-8 w-24" />
         </div>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_4fr] gap-4 h-full">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 h-full">
             <div className="h-full hidden md:block">
                 <Skeleton className="h-full w-full" />
             </div>
@@ -49,8 +49,8 @@ export default function PdfViewerPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full">
-        <div className="max-w-7xl mx-auto h-[85vh]">
+      <main className="flex-1 w-full h-[85vh]">
+        <div className="max-w-7xl mx-auto h-full">
           <PdfViewerLoader />
         </div>
       </main>

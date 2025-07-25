@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
+import { Skeleton } from "./ui/skeleton";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -88,7 +89,7 @@ export function PdfViewer() {
   const { toast } = useToast();
   const mainCanvasContainerRef = useRef<HTMLDivElement>(null);
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
-
+  
   const renderPage = useCallback(async (
     pdfDoc: pdfjsLib.PDFDocumentProxy,
     pageNum: number,
@@ -103,7 +104,8 @@ export function PdfViewer() {
         
         const scale = Math.min(
             containerWidth / viewport.width,
-            containerHeight / viewport.height
+            containerHeight / viewport.height,
+            MAX_ZOOM
         ) * currentZoom;
 
         const scaledViewport = page.getViewport({ scale });
@@ -152,7 +154,6 @@ export function PdfViewer() {
       setPagePreviews(previews);
       setCurrentPage(1);
 
-      // Lazy load thumbnails
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
           const viewport = page.getViewport({ scale: 0.3 });
@@ -192,22 +193,14 @@ export function PdfViewer() {
     } finally {
       if (operationId.current === currentOperationId) setIsLoading(false);
     }
-  }, [file, toast]);
+  }, [file?.pdfjsDoc, toast]);
 
   useEffect(() => {
-    const observer = new ResizeObserver(() => {
-        if (file?.pdfjsDoc && mainCanvasRef.current && mainCanvasContainerRef.current) {
-            const containerWidth = mainCanvasContainerRef.current.clientWidth - 32; // padding
-            const containerHeight = mainCanvasContainerRef.current.clientHeight - 32; // padding
-            renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, containerWidth, containerHeight);
-        }
-    });
-
-    if (mainCanvasContainerRef.current) {
-        observer.observe(mainCanvasContainerRef.current);
+    if (file?.pdfjsDoc && mainCanvasRef.current && mainCanvasContainerRef.current) {
+        const containerWidth = mainCanvasContainerRef.current.clientWidth - 32; // padding
+        const containerHeight = mainCanvasContainerRef.current.clientHeight - 32; // padding
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, containerWidth, containerHeight);
     }
-    
-    return () => observer.disconnect();
   }, [file, currentPage, zoom, renderPage]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -237,7 +230,7 @@ export function PdfViewer() {
   };
   
   const handlePasswordSubmit = () => {
-      const currentFile = file?.file;
+      const currentFile = file?.file || (getInputProps().value as unknown as File);
       if (currentFile) {
           loadPdf(currentFile, password);
       }
@@ -252,9 +245,13 @@ export function PdfViewer() {
 
   if (!file && !isLoading) {
     return (
-        <Card className="bg-white dark:bg-card shadow-lg h-full flex flex-col">
-            <CardContent className="p-6 flex-1 flex flex-col items-center justify-center">
-                <div {...getRootProps()} className={cn("w-full h-full flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors", isDragActive ? "border-primary bg-primary/10" : "hover:border-primary/50")}>
+        <Card className="bg-white dark:bg-card shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl sm:text-2xl">PDF Viewer</CardTitle>
+              <CardDescription>Select a PDF file to view its content.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div {...getRootProps()} className={cn("flex flex-col items-center justify-center p-10 rounded-lg border-2 border-dashed transition-colors", isDragActive ? "border-primary bg-primary/10" : "hover:border-primary/50")}>
                     <input {...getInputProps()} />
                     <UploadCloud className="w-12 h-12 text-muted-foreground" />
                     <p className="mt-4 text-lg font-semibold">Drop PDF here or click to upload</p>
@@ -264,26 +261,28 @@ export function PdfViewer() {
         </Card>
     );
   }
-
+  
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
-          <div className="flex items-center gap-3 overflow-hidden">
-             <Lock className="w-6 h-6 text-destructive shrink-0" />
-             <div className="flex flex-col overflow-hidden">
-                <CardTitle className="truncate max-w-[200px] sm:max-w-md">{file?.file.name || "Loading..."}</CardTitle>
-                <CardDescription>{file ? `${file.totalPages} pages` : 'Please wait'}</CardDescription>
-             </div>
-          </div>
-          <div className="flex items-center gap-2 self-end sm:self-center">
-             <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isLoading}><X className="w-4 h-4" /></Button>
-          </div>
-        </CardHeader>
-      </Card>
+    <div className="h-full flex flex-col gap-4">
+      {file && (
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3 overflow-hidden">
+               {isEncrypted ? <Lock className="w-6 h-6 text-yellow-500 shrink-0" /> : <div className="w-6 h-6 shrink-0" />}
+               <div className="flex flex-col overflow-hidden">
+                  <CardTitle className="truncate max-w-[200px] sm:max-w-md">{file?.file.name || "Loading..."}</CardTitle>
+                  <CardDescription>{file ? `${file.totalPages} pages` : 'Please wait'}</CardDescription>
+               </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-center">
+               <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isLoading}><X className="w-4 h-4" /></Button>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       {(isLoading || error) ? (
-        <Card className="h-[70vh] flex items-center justify-center">
+        <Card className="flex-1 flex items-center justify-center">
           <CardContent className="p-4 text-center">
              {isLoading ? <Loader2 className="w-8 h-8 animate-spin text-primary" /> : (
                 <div className="space-y-4">
@@ -317,8 +316,8 @@ export function PdfViewer() {
             </Card>
 
             <div className="flex flex-col gap-4 h-full min-h-0">
-                <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
-                    <div className="p-2 flex items-center justify-between">
+                <Card>
+                    <div className="p-2 flex items-center justify-between flex-wrap gap-2">
                         <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
                         <div className="flex items-center gap-2 text-sm font-medium">
                             <Input type="number" value={currentPage} onChange={e => setCurrentPage(parseInt(e.target.value,10))} onBlur={() => setCurrentPage(p => Math.max(1, Math.min(p, file.totalPages)))} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
