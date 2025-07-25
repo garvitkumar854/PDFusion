@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare, FileArchive, Lock, Unlock } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare, FileArchive, Lock, Unlock, View } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,13 @@ const services = [
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
+    },
+    {
+      icon: <View className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      title: 'PDF Viewer',
+      description: 'View any PDF directly in your browser, including encrypted files.',
+      href: '/pdf-viewer'
     },
      {
       icon: <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
@@ -267,7 +274,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                 </AnimateOnScroll>
             </section>
 
-            <section className="pb-20 md:pb-32">
+            <section className="pb-20 md:pb-24">
                 <div className="container mx-auto px-4">
                     <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
