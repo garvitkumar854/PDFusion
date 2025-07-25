@@ -42,6 +42,8 @@ const services = [
     { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
     { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
     { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
+    { href: "/lock-pdf", label: "Lock PDF", icon: <Lock className="mr-2 h-4 w-4" /> },
+    { href: "/unlock-pdf", label: "Unlock PDF", icon: <Unlock className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
