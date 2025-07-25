@@ -16,7 +16,7 @@ import {
   ChevronRight,
   ZoomIn,
   ZoomOut,
-  RotateCw,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -31,10 +31,9 @@ if (typeof window !== 'undefined') {
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-const INITIAL_ZOOM = 1;
 const ZOOM_INCREMENT = 0.2;
 const MAX_ZOOM = 3;
-const MIN_ZOOM = 0.4;
+const MIN_ZOOM = 0.2;
 
 type PDFFile = {
   id: string;
@@ -81,23 +80,24 @@ export function PdfViewer() {
   const [showPassword, setShowPassword] = useState(false);
   const [pagePreviews, setPagePreviews] = useState<PageInfo[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [zoom, setZoom] = useState(INITIAL_ZOOM);
+  const [zoom, setZoom] = useState(1);
+  const [isResetZoom, setIsResetZoom] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
   const mainCanvasContainerRef = useRef<HTMLDivElement>(null);
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [isInitialRender, setIsInitialRender] = useState(true);
   
   const renderTask = useRef<pdfjsLib.RenderTask | null>(null);
+  const panState = useRef({ isPanning: false, startX: 0, startY: 0, lastX: 0, lastY: 0 });
 
   const renderPage = useCallback(async (
     pdfDoc: pdfjsLib.PDFDocumentProxy,
     pageNum: number,
     canvas: HTMLCanvasElement,
     currentZoom: number,
-    isInitial: boolean
+    shouldFit: boolean
   ) => {
     if (renderTask.current) {
         renderTask.current.cancel();
@@ -107,24 +107,27 @@ export function PdfViewer() {
         const container = mainCanvasContainerRef.current;
         if (!container) return;
 
-        const viewportDefault = page.getViewport({ scale: 1 });
-        
         let scale;
-        if (isInitial) {
+        if (shouldFit) {
+            const viewportDefault = page.getViewport({ scale: 1 });
             scale = Math.min(
                 container.clientWidth / viewportDefault.width,
                 container.clientHeight / viewportDefault.height
-            ) * 0.95; // Add a little padding
+            ) * 0.98;
             setZoom(scale);
         } else {
             scale = currentZoom;
         }
 
-        const viewport = page.getViewport({ scale: scale });
-
+        const viewport = page.getViewport({ scale });
         const context = canvas.getContext('2d');
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        
+        mainCanvasContainerRef.current.scrollLeft = (canvas.width - container.clientWidth) / 2;
+        mainCanvasContainerRef.current.scrollTop = (canvas.height - container.clientHeight) / 2;
+        
+        panState.current = { isPanning: false, startX: 0, startY: 0, lastX: (canvas.width - container.clientWidth) / 2, lastY: (canvas.height - container.clientHeight) / 2 };
 
         if (context) {
             const task = page.render({ canvasContext: context, viewport });
@@ -149,8 +152,6 @@ export function PdfViewer() {
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setPagePreviews([]);
-    setZoom(INITIAL_ZOOM);
-    setIsInitialRender(true);
     
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
@@ -172,6 +173,7 @@ export function PdfViewer() {
       }));
       setPagePreviews(previews);
       setCurrentPage(1);
+      setIsResetZoom(true); // Trigger initial fit-to-view render
 
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
@@ -219,12 +221,12 @@ export function PdfViewer() {
 
   useEffect(() => {
     if (file?.pdfjsDoc && mainCanvasRef.current) {
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, isInitialRender);
-        if (isInitialRender) {
-            setIsInitialRender(false);
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom, isResetZoom);
+        if (isResetZoom) {
+            setIsResetZoom(false);
         }
     }
-  }, [file, currentPage, zoom, renderPage, isInitialRender]);
+  }, [file, currentPage, zoom, renderPage, isResetZoom]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -262,33 +264,67 @@ export function PdfViewer() {
   }
 
   const changeZoom = (direction: 'in' | 'out') => {
-      setIsInitialRender(false);
+      setIsResetZoom(false);
       setZoom(prevZoom => {
           let newZoom = direction === 'in' ? prevZoom + ZOOM_INCREMENT : prevZoom - ZOOM_INCREMENT;
           return Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
       });
   }
-
+  
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setIsInitialRender(false);
     if (val === '') {
-        setCurrentPage('' as any); // Allow empty input temporarily
+        setCurrentPage('' as any);
     } else {
         const num = parseInt(val, 10);
         if (!isNaN(num) && file) {
-            setCurrentPage(Math.max(1, Math.min(num, file.totalPages)));
+            const newPage = Math.max(1, Math.min(num, file.totalPages));
+            if (newPage !== currentPage) {
+                setCurrentPage(newPage);
+                setIsResetZoom(true);
+            }
         }
     }
   }
   
-  const resetZoom = () => {
-    setIsInitialRender(true); // Re-trigger the initial "fit" logic
+  const resetZoom = () => setIsResetZoom(true);
+  
+  const handlePageSelect = (pageNumber: number) => {
+    if (pageNumber !== currentPage) {
+      setCurrentPage(pageNumber);
+      setIsResetZoom(true);
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    panState.current.isPanning = true;
+    panState.current.startX = e.pageX - mainCanvasContainerRef.current!.offsetLeft;
+    panState.current.startY = e.pageY - mainCanvasContainerRef.current!.offsetTop;
+    panState.current.lastX = mainCanvasContainerRef.current!.scrollLeft;
+    panState.current.lastY = mainCanvasContainerRef.current!.scrollTop;
+    mainCanvasContainerRef.current!.style.cursor = 'grabbing';
   };
 
-  const handlePageSelect = (pageNumber: number) => {
-    setIsInitialRender(false);
-    setCurrentPage(pageNumber);
+  const handleMouseUp = () => {
+    panState.current.isPanning = false;
+    mainCanvasContainerRef.current!.style.cursor = 'grab';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!panState.current.isPanning) return;
+    e.preventDefault();
+    const x = e.pageX - mainCanvasContainerRef.current!.offsetLeft;
+    const y = e.pageY - mainCanvasContainerRef.current!.offsetTop;
+    const walkX = (x - panState.current.startX);
+    const walkY = (y - panState.current.startY);
+    mainCanvasContainerRef.current!.scrollLeft = panState.current.lastX - walkX;
+    mainCanvasContainerRef.current!.scrollTop = panState.current.lastY - walkY;
+  };
+  
+  const handleMouseLeave = () => {
+      panState.current.isPanning = false;
+      mainCanvasContainerRef.current!.style.cursor = 'grab';
   }
 
   if (!file && !isLoading) {
@@ -346,38 +382,44 @@ export function PdfViewer() {
   }
 
   return file?.pdfjsDoc ? (
-    <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-4 h-full">
-      <Card className="hidden md:block">
-          <div className="p-2 h-full overflow-y-auto">
-              {pagePreviews.map(p => (
-                  <PageThumbnail key={p.pageNumber} page={p} onSelect={() => handlePageSelect(p.pageNumber)} isActive={currentPage === p.pageNumber} />
-              ))}
-          </div>
-      </Card>
-
-      <div className="flex flex-col gap-4 h-full">
-          <Card>
-              <div className="p-2 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage - 1)} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
-                      <div className="flex items-center gap-1.5 text-sm font-medium">
-                          <Input type="number" value={currentPage} onChange={handlePageInputChange} onBlur={(e) => !e.target.value && setCurrentPage(1)} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
-                          <span>/ {file.totalPages}</span>
-                      </div>
-                      <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage + 1)} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon" onClick={() => changeZoom('out')} disabled={zoom <= MIN_ZOOM}><ZoomOut className="h-4 w-4"/></Button>
-                      <Button variant="outline" size="icon" onClick={resetZoom}><RotateCw className="h-4 w-4"/></Button>
-                      <Button variant="outline" size="icon" onClick={() => changeZoom('in')} disabled={zoom >= MAX_ZOOM}><ZoomIn className="h-4 w-4"/></Button>
-                  </div>
-                  <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}><X className="w-4 h-4" /></Button>
-              </div>
-          </Card>
-          <div ref={mainCanvasContainerRef} className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center items-start p-4">
-              <canvas ref={mainCanvasRef} className="bg-white dark:bg-card shadow-lg rounded-md" />
-          </div>
-      </div>
+    <div className="flex flex-col h-full gap-4">
+        <Card>
+            <div className="p-2 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage - 1)} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                        <Input type="number" value={currentPage} onChange={handlePageInputChange} onBlur={(e) => !e.target.value && setCurrentPage(1)} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
+                        <span>/ {file.totalPages}</span>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage + 1)} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => changeZoom('out')} disabled={zoom <= MIN_ZOOM}><ZoomOut className="h-4 w-4"/></Button>
+                    <Button variant="outline" size="icon" onClick={resetZoom}><RefreshCw className="h-4 w-4"/></Button>
+                    <Button variant="outline" size="icon" onClick={() => changeZoom('in')} disabled={zoom >= MAX_ZOOM}><ZoomIn className="h-4 w-4"/></Button>
+                </div>
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile}><X className="w-4 h-4" /></Button>
+            </div>
+        </Card>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-4 min-h-0">
+            <Card className="hidden md:block">
+                <div className="p-2 h-full overflow-y-auto">
+                    {pagePreviews.map(p => (
+                        <PageThumbnail key={p.pageNumber} page={p} onSelect={() => handlePageSelect(p.pageNumber)} isActive={currentPage === p.pageNumber} />
+                    ))}
+                </div>
+            </Card>
+            <div 
+                ref={mainCanvasContainerRef} 
+                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-start items-start p-4 cursor-grab"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+            >
+                <canvas ref={mainCanvasRef} className="bg-white dark:bg-card shadow-lg rounded-md" />
+            </div>
+        </div>
     </div>
   ) : null;
 }
