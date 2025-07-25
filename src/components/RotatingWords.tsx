@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const FlipWords = ({
   words,
   colors,
-  duration = 2500,
+  duration = 3000,
   className,
 }: {
   words: string[];
@@ -18,21 +18,24 @@ export const FlipWords = ({
 }) => {
   const [index, setIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const [containerWidth, setContainerWidth] = useState<number | "auto">("auto");
+  const [containerSize, setContainerSize] = useState({ width: "auto", height: "auto" });
 
-  const wordRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (wordRef.current) {
-        setContainerWidth(wordRef.current.offsetWidth);
-    }
-  }, [index, words]);
+  const textRef = useRef<HTMLSpanElement>(null);
 
   const startAnimation = useCallback(() => {
     const nextIndex = (index + 1) % words.length;
     setIndex(nextIndex);
     setIsAnimating(true);
   }, [index, words.length]);
+  
+  useEffect(() => {
+    if (textRef.current) {
+        setContainerSize({
+            width: textRef.current.offsetWidth,
+            height: textRef.current.offsetHeight,
+        });
+    }
+  }, [index, words]);
 
   useEffect(() => {
     if (!isAnimating) {
@@ -43,43 +46,63 @@ export const FlipWords = ({
     }
   }, [isAnimating, duration, startAnimation]);
 
+  const onExitComplete = () => {
+    setIsAnimating(false);
+  };
+
   const currentWord = words[index];
   const currentColor = colors[index % colors.length];
   const nextWord = words[(index + 1) % words.length];
 
   return (
     <div
-      style={{ width: containerWidth }}
-      className="relative inline-block transition-all duration-300 ease-in-out"
+      style={{
+        width: containerSize.width,
+        height: containerSize.height,
+      }}
+      className="relative inline-block transition-all duration-300 ease-in-out align-bottom"
     >
-      <span
-        ref={wordRef}
-        className="absolute invisible whitespace-nowrap"
-        aria-hidden="true"
-      >
+      <span ref={textRef} className="absolute invisible whitespace-nowrap" aria-hidden="true">
         {nextWord}
       </span>
-
-      <AnimatePresence
-        initial={false}
-        onExitComplete={() => {
-            setIsAnimating(false);
-        }}
-      >
+      <AnimatePresence initial={false} onExitComplete={onExitComplete}>
         <motion.div
-            key={currentWord}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 20,
-            }}
-            className={cn("absolute left-0 right-0", className)}
-            style={{ color: currentColor, willChange: 'transform, opacity' }}
+          key={currentWord}
+          initial={{
+            opacity: 0,
+            y: 10,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          exit={{
+            opacity: 0,
+            y: -10,
+            filter: "blur(2px)",
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 10,
+          }}
+          className={cn("absolute left-0 right-0 whitespace-nowrap", className)}
+          style={{ color: currentColor, willChange: 'transform, opacity' }}
         >
-          {currentWord}
+          {currentWord.split("").map((letter, letterIndex) => (
+             <motion.span
+                key={currentWord + letterIndex}
+                initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{
+                  delay: letterIndex * 0.05,
+                  duration: 0.2,
+                }}
+                className="inline-block"
+              >
+                {letter}
+              </motion.span>
+          ))}
         </motion.div>
       </AnimatePresence>
     </div>
