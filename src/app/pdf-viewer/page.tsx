@@ -8,12 +8,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 const PdfViewerLoader = dynamic(() => import('@/components/PdfViewerLoader'), {
   ssr: false,
   loading: () => (
-    <div className="space-y-6">
-        <div className="flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed">
-             <Skeleton className="w-12 h-12 rounded-full" />
-             <Skeleton className="h-6 w-48 mt-4" />
-             <Skeleton className="h-4 w-64 mt-2" />
-             <Skeleton className="h-10 w-32 mt-4" />
+    <div className="flex flex-col flex-1 w-full h-[85vh] space-y-4">
+        <div className="flex justify-between items-center p-2 border rounded-lg">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-24" />
+        </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_4fr] gap-4 h-full">
+            <div className="h-full hidden md:block">
+                <Skeleton className="h-full w-full" />
+            </div>
+            <div className="h-full">
+                <Skeleton className="h-full w-full" />
+            </div>
         </div>
     </div>
   )
@@ -43,7 +50,7 @@ export default function PdfViewerPage() {
       </section>
       
       <main className="flex-1 w-full">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <PdfViewerLoader />
         </div>
       </main>
