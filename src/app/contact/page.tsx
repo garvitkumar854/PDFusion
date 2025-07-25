@@ -146,7 +146,7 @@ ${values.message}
             className="duration-700 lg:col-span-2"
             delay={300}
           >
-            <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card/20">
+            <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card">
               <CardHeader className="p-0 mb-6">
                 <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">Send a Message</CardTitle>
                 <CardDescription>We'll get back to you as soon as possible.</CardDescription>
