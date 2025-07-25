@@ -19,21 +19,19 @@ export const FlipWords = ({
   const [index, setIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [containerSize, setContainerSize] = useState({ width: "auto", height: "auto" });
-
-  const textRef = useRef<HTMLSpanElement>(null);
+  
+  const sizerRef = useRef<HTMLSpanElement>(null);
 
   const startAnimation = useCallback(() => {
     const nextIndex = (index + 1) % words.length;
     setIndex(nextIndex);
     setIsAnimating(true);
   }, [index, words.length]);
-  
+
   useEffect(() => {
-    if (textRef.current) {
-        setContainerSize({
-            width: textRef.current.offsetWidth,
-            height: textRef.current.offsetHeight,
-        });
+    if (sizerRef.current) {
+        const { width, height } = sizerRef.current.getBoundingClientRect();
+        setContainerSize({ width: `${width}px`, height: `${height}px` });
     }
   }, [index, words]);
 
@@ -49,23 +47,21 @@ export const FlipWords = ({
   const onExitComplete = () => {
     setIsAnimating(false);
   };
-
+  
   const currentWord = words[index];
   const currentColor = colors[index % colors.length];
-  const nextWord = words[(index + 1) % words.length];
 
   return (
-    <div
-      style={{
-        width: containerSize.width,
-        height: containerSize.height,
-      }}
-      className="relative inline-block transition-all duration-300 ease-in-out align-bottom"
+    <div 
+        style={{ width: containerSize.width, height: containerSize.height }}
+        className="relative inline-block"
     >
-      <span ref={textRef} className="absolute invisible whitespace-nowrap" aria-hidden="true">
-        {nextWord}
+      {/* Sizer element to measure the word size without affecting layout */}
+      <span ref={sizerRef} className="absolute invisible whitespace-nowrap" aria-hidden="true">
+        {currentWord}
       </span>
-      <AnimatePresence initial={false} onExitComplete={onExitComplete}>
+
+      <AnimatePresence onExitComplete={onExitComplete}>
         <motion.div
           key={currentWord}
           initial={{
@@ -76,32 +72,35 @@ export const FlipWords = ({
             opacity: 1,
             y: 0,
           }}
-          exit={{
-            opacity: 0,
-            y: -10,
-            filter: "blur(2px)",
-          }}
           transition={{
             type: "spring",
             stiffness: 100,
             damping: 10,
           }}
+          exit={{
+            opacity: 0,
+            y: -40,
+            x: 40,
+            filter: "blur(8px)",
+            scale: 2,
+            position: "absolute",
+          }}
           className={cn("absolute left-0 right-0 whitespace-nowrap", className)}
-          style={{ color: currentColor, willChange: 'transform, opacity' }}
+          style={{ color: currentColor }}
         >
           {currentWord.split("").map((letter, letterIndex) => (
-             <motion.span
-                key={currentWord + letterIndex}
-                initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{
-                  delay: letterIndex * 0.05,
-                  duration: 0.2,
-                }}
-                className="inline-block"
-              >
-                {letter}
-              </motion.span>
+            <motion.span
+              key={currentWord + letterIndex}
+              initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{
+                delay: letterIndex * 0.08,
+                duration: 0.4,
+              }}
+              className="inline-block"
+            >
+              {letter}
+            </motion.span>
           ))}
         </motion.div>
       </AnimatePresence>
