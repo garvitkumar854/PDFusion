@@ -105,8 +105,8 @@ const futureFeatures = [
       points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
     },
     {
-      icon: <ShieldCheck className="w-5 h-5 text-teal-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      icon: <ShieldCheck className="w-5 h-5 text-green-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Secure & Private',
       description: 'Your files are processed locally and never stored on our servers',
       points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
@@ -273,7 +273,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         animation="animate-in fade-in-0 zoom-in-95"
                         className="duration-700"
                     >
-                    <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20">
+                    <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                             <div className="w-full">

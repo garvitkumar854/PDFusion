@@ -13,7 +13,11 @@ export default function Footer() {
     <footer className="py-6 border-t bg-background">
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm text-muted-foreground">
-          © {currentYear} PDFusion. All rights reserved. Built with ❤️.
+          © {currentYear}{' '}
+          <span className="font-semibold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            PDFusion
+          </span>
+          . All rights reserved. Built with ❤️.
         </p>
       </div>
     </footer>
