@@ -56,6 +56,7 @@ export function PdfViewer() {
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
+  const pagesContainerRef = useRef<HTMLDivElement>(null);
 
   const loadPdf = useCallback(async (fileToLoad: File, providedPassword = "") => {
     const currentOperationId = ++operationId.current;
@@ -119,16 +120,20 @@ export function PdfViewer() {
         try {
             const page = await file.pdfjsDoc.getPage(pageInfo.pageNumber);
             if (operationId.current !== currentOperationId) return;
-
-            const viewport = page.getViewport({ scale: 1.5 });
+            
             const canvas = pageInfo.canvasRef.current;
             if (canvas) {
+                const containerWidth = canvas.parentElement?.clientWidth || 600;
+                const viewport = page.getViewport({ scale: 1 });
+                const scale = containerWidth / viewport.width;
+                const scaledViewport = page.getViewport({ scale: scale });
+
                 const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
 
                 if (context) {
-                    await page.render({ canvasContext: context, viewport }).promise;
+                    await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
                 }
             }
         } catch (e) {
@@ -179,6 +184,25 @@ export function PdfViewer() {
       const pageElement = document.getElementById(`page-${targetPage}`);
       pageElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+  
+  const handleScroll = () => {
+      const container = pagesContainerRef.current;
+      if (!container || pages.length === 0) return;
+      
+      const containerTop = container.getBoundingClientRect().top;
+      let closestPage = 1;
+
+      for (const pageInfo of pages) {
+          const pageElement = document.getElementById(`page-${pageInfo.pageNumber}`);
+          if (pageElement) {
+              const rect = pageElement.getBoundingClientRect();
+              if (rect.top <= containerTop + rect.height / 2) {
+                  closestPage = pageInfo.pageNumber;
+              }
+          }
+      }
+      setCurrentPage(closestPage);
+  }
 
   if (!file && !isLoading) {
     return (
@@ -251,7 +275,7 @@ export function PdfViewer() {
                 </div>
                 <Button variant="outline" size="icon" onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
             </div>
-            <div className="space-y-4 rounded-lg bg-muted/40 p-4">
+            <div className="space-y-4 rounded-lg bg-muted/40 p-4 h-[70vh] overflow-y-auto" ref={pagesContainerRef} onScroll={handleScroll}>
               {pages.map((pageInfo, index) => (
                   <div key={index} id={`page-${pageInfo.pageNumber}`} className="bg-white dark:bg-card shadow-lg rounded-md overflow-hidden border">
                       <canvas ref={pageInfo.canvasRef} />
