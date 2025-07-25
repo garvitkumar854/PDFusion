@@ -244,7 +244,7 @@ export function PdfCompressor() {
                 <div className="p-4 border rounded-lg bg-primary/5 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="text-sm font-medium text-primary">Compressing PDF, please wait...</p>
+                    <p className="text-sm font-medium text-primary">Compressing PDF... This may take a moment.</p>
                   </div>
                    <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4"><Ban className="mr-2 h-4 w-4" />Cancel</Button>
                 </div>

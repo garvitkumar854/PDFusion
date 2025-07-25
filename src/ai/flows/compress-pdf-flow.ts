@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { PDFDocument } from 'pdf-lib';
+import { createCanvas, loadImage } from 'canvas';
 
 const CompressPdfInputSchema = z.object({
   pdfDataUri: z.string().describe("The PDF file to compress, as a data URI."),
@@ -46,29 +47,56 @@ const compressPdfFlow = ai.defineFlow(
         const originalSize = pdfBytes.length;
 
         const pdfDoc = await PDFDocument.load(pdfBytes, {
-            // This is important for preserving complex PDFs
             updateMetadata: false
         });
 
-        const imageObjects = pdfDoc.context.enumerateIndirectObjects()
-          .map(([, obj]) => obj)
-          .filter((obj) => obj.get('Subtype')?.toString() === '/Image');
+        const imageRefs = new Set();
+        pdfDoc.getPages().forEach(page => {
+            const imageNames = page.node.Resources()?.lookup(undefined, 'XObject')?.keys() ?? [];
+            imageNames.forEach(name => {
+                const stream = page.node.lookup(name);
+                if(stream?.get('Subtype')?.toString() === '/Image') {
+                    imageRefs.add(stream.ref);
+                }
+            });
+        });
 
         let imagesCompressed = 0;
+        const processedRefs = new Set();
 
-        for (const imageObject of imageObjects) {
-            const stream = imageObject.get('DecodeParms') === undefined ? imageObject : imageObject.get('SMask') === undefined ? imageObject : null;
-            if (!stream) continue;
+        for (const ref of imageRefs) {
+            if (processedRefs.has(ref)) continue;
+            processedRefs.add(ref);
 
-            const image = await pdfDoc.embedJpg(await (pdfDoc.embedPng(await pdfDoc.embedPdf(pdfDataUri))));
-            
-            // This is a placeholder for actual image compression
-            // In a real scenario, you'd use a library like sharp or canvas to re-encode the image
-            // For now, we are just re-embedding it which might not compress much.
-            // True compression requires a more powerful image processing library which is not available in this environment.
-            // We will simulate a compression effect by just re-embedding.
-            
-            imagesCompressed++;
+            const image = pdfDoc.context.lookup(ref) as any;
+            const imageBytes = image.get('DecodeParms') === undefined ? image.contents : image.get('SMask') === undefined ? image.contents : null;
+
+            if(!imageBytes) continue;
+
+            try {
+                const loadedImage = await loadImage(Buffer.from(imageBytes));
+                const canvas = createCanvas(loadedImage.width, loadedImage.height);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(loadedImage, 0, 0);
+
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', quality / 100);
+                const jpegBytes = Buffer.from(jpegDataUrl.split(',')[1], 'base64');
+
+                const newImage = await pdfDoc.embedJpg(jpegBytes);
+
+                // Replace the image stream's contents
+                image.contents = newImage.stream.contents;
+                image.dict.delete('DecodeParms');
+                image.dict.delete('Filter');
+                image.dict.set('Width', newImage.width);
+                image.dict.set('Height', newImage.height);
+                image.dict.set('ColorSpace', newImage.colorSpace);
+                image.dict.set('BitsPerComponent', newImage.bitsPerComponent);
+
+                imagesCompressed++;
+            } catch (e) {
+                console.warn("Could not compress an image, skipping.", e);
+            }
         }
         
         const newPdfBytes = await pdfDoc.save();
@@ -78,7 +106,7 @@ const compressPdfFlow = ai.defineFlow(
             pdfDataUri: `data:application/pdf;base64,${Buffer.from(newPdfBytes).toString('base64')}`,
             stats: {
                 originalSize,
-                newSize: newSize > originalSize ? originalSize : newSize, // Don't allow size to increase
+                newSize,
                 pagesProcessed: pdfDoc.getPageCount(),
                 imagesCompressed
             },
