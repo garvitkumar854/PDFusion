@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import TypingAnimation from '@/components/TypingAnimation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 const services = [
     {
@@ -106,46 +107,47 @@ const futureFeatures = [
     },
 ];
 
+const rotatingWords = [
+    { text: "Effortless.", color: "#F61067" },
+    { text: "Secure.", color: "#00F0B5" },
+    { text: "Blazing Speed.", color: "#2563EB" },
+    { text: "Always Free.", color: "#5E239D" },
+    { text: "Privacy First.", color: "#F97316" },
+    { text: "User-Friendly.", color: "#14b8a6" },
+    { text: "Modern.", color: "#f59e0b" },
+];
+
+const WordRotator = () => {
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIndex((prevIndex) => (prevIndex + 1) % rotatingWords.length);
+        }, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <AnimatePresence mode="wait">
+            <motion.span
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                style={{ color: rotatingWords[index].color }}
+                className="whitespace-nowrap"
+            >
+                {rotatingWords[index].text}
+            </motion.span>
+        </AnimatePresence>
+    );
+};
+
+
 export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
     if (!showServices) {
-        return (
-            <TypingAnimation
-                words={[
-                  "Effortless.",
-                  "Secure.",
-                  "Blazing Speed.",
-                  "Always Free.",
-                  "Privacy First.",
-                  "User-Friendly.",
-                  "Modern.",
-                  "Reliable.",
-                  "Instant Magic.",
-                  "Total Control.",
-                  "Private & Safe.",
-                  "Zero Hassle.",
-                  "Save Time.",
-                  "No Signup.",
-                  "Trusted."
-                ]}
-                colors={[
-                  "#F61067", // Pink
-                  "#00F0B5", // Mint Green
-                  "#2563EB", // Blue
-                  "#5E239D", // Purple
-                  "#F97316", // Orange
-                  "#14b8a6", // Teal
-                  "#f59e0b", // Amber
-                  "#ef4444", // Red
-                  "#8b5cf6", // Violet
-                  "#3b82f6", // Blue 500
-                  "#22c55e", // Green 500
-                  "#ec4899", // Pink 500
-                  "#6366f1", // Indigo 500
-                  "#d946ef", // Fuchsia 500
-                  "#06b6d4"  // Cyan 500
-                ]}
-              />
-        );
+        return <WordRotator />;
     }
     
     return (
