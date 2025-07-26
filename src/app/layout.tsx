@@ -3,7 +3,6 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
-import { ThemeProvider } from '@/components/ThemeProvider';
 import FooterLoader from '@/components/FooterLoader';
 import UpdateNotifier from '@/components/UpdateNotifier';
 
@@ -59,12 +58,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#040B1D" media="(prefers-color-scheme: dark)" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-        >
             <Header />
             <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
             {children}
@@ -72,7 +65,6 @@ export default function RootLayout({
             <FooterLoader />
             <Toaster />
             <UpdateNotifier />
-        </ThemeProvider>
       </body>
     </html>
   );

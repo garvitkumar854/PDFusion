@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Edit, MessageSquare, FileArchive, Lock, Unlock, View } from 'lucide-react';
+import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, Lock, Unlock, FileArchive } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,27 +37,6 @@ const services = [
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
-    },
-    {
-      icon: <View className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-      title: 'PDF Viewer',
-      description: 'View any PDF directly in your browser, including encrypted files.',
-      href: '/pdf-viewer'
-    },
-     {
-      icon: <Edit className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
-      title: 'Edit PDF',
-      description: 'Add text, images, and shapes directly to your PDF files.',
-      href: '/edit-pdf'
-    },
-    {
-      icon: <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-fuchsia-500 transition-transform duration-300 group-hover:scale-110" />,
-      bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/20',
-      title: 'Ask PDF (AI)',
-      description: 'Chat with your PDF documents to get answers and summaries.',
-      href: '/ask-pdf'
     },
     {
       icon: <Image className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />,

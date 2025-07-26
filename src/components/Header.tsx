@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Edit, Lock, Unlock, MessageSquare, View } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Lock, Unlock } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { ThemeToggler } from './ThemeToggler';
 import InstallPWA from './InstallPWA';
 
 const navLinks = [
@@ -34,9 +33,6 @@ const services = [
     { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
     { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
     { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
-    { href: "/pdf-viewer", label: "PDF Viewer", icon: <View className="mr-2 h-4 w-4" /> },
-    { href: "/edit-pdf", label: "Edit PDF", icon: <Edit className="mr-2 h-4 w-4" /> },
-    { href: "/ask-pdf", label: "Ask PDF (AI)", icon: <MessageSquare className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
     { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
     { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
@@ -147,7 +143,6 @@ export default function Header() {
 
         <div className="flex-shrink-0 flex items-center gap-2">
             <InstallPWA />
-            <ThemeToggler />
             <div className="md:hidden">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                     <SheetTrigger asChild>
