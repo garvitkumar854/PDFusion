@@ -7,8 +7,8 @@ import { useTheme } from "next-themes"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
-const SunIcon = () => <Sun className="h-5 w-5 text-yellow-500" />;
-const MoonIcon = () => <Moon className="h-5 w-5 text-slate-300" />;
+const SunIcon = () => <Sun className="h-4 w-4 text-yellow-500" />;
+const MoonIcon = () => <Moon className="h-4 w-4 text-sky-400" />;
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -23,7 +23,7 @@ export function ThemeToggle() {
   }
 
   if (!isMounted) {
-    return <div className="w-16 h-8 rounded-full bg-muted" />; // Skeleton loader
+    return <div className="w-14 h-7 rounded-full bg-muted" />; // Skeleton loader
   }
 
   const isLight = theme === "light";
@@ -32,7 +32,7 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className={cn(
-        "relative flex items-center h-8 w-16 rounded-full cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "relative flex items-center h-7 w-14 rounded-full cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isLight ? "bg-blue-400 justify-start" : "bg-gray-800 justify-end"
       )}
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
@@ -40,7 +40,7 @@ export function ThemeToggle() {
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 700, damping: 30 }}
-        className="h-7 w-7 bg-white rounded-full shadow-md flex items-center justify-center mx-0.5"
+        className="h-6 w-6 bg-white rounded-full shadow-md flex items-center justify-center mx-0.5"
       >
         <AnimatePresence initial={false} mode="wait">
           {isLight ? (
