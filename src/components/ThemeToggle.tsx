@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -32,35 +33,27 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className={cn(
         "relative flex items-center h-8 w-16 rounded-full cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        isLight ? "bg-blue-400" : "bg-gray-800"
+        isLight ? "bg-blue-400 justify-start" : "bg-gray-800 justify-end"
       )}
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
     >
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 700, damping: 30 }}
-        className="absolute h-7 w-7 bg-white rounded-full shadow-md"
-        style={{
-          left: isLight ? '2px' : 'auto',
-          right: isLight ? 'auto' : '2px',
-        }}
-      />
-      <div className="relative w-full h-full flex justify-around items-center">
-         <AnimatePresence initial={false}>
-            {isLight ? (
-              <motion.div key="sun" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
-                <SunIcon />
-              </motion.div>
-            ) : <div />}
-        </AnimatePresence>
-        <AnimatePresence initial={false}>
-          {!isLight ? (
-            <motion.div key="moon" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ duration: 0.2 }}>
+        className="h-7 w-7 bg-white rounded-full shadow-md flex items-center justify-center mx-0.5"
+      >
+        <AnimatePresence initial={false} mode="wait">
+          {isLight ? (
+            <motion.div key="sun" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0, rotate: 90 }} transition={{ duration: 0.2 }}>
+              <SunIcon />
+            </motion.div>
+          ) : (
+            <motion.div key="moon" initial={{ scale: 0, rotate: 90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0, rotate: -90 }} transition={{ duration: 0.2 }}>
               <MoonIcon />
             </motion.div>
-          ) : <div />}
+          )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </button>
   )
 }
