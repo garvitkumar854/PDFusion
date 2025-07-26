@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrdered, Code, ShieldCheck, FileText, Zap, FileArchive } from 'lucide-react';
@@ -107,13 +108,12 @@ const futureFeatures = [
 ];
 
 const rotatingWords = [
-    { text: "Effortless.", color: "#F61067" },
-    { text: "Secure.", color: "#00F0B5" },
-    { text: "Blazing Speed.", color: "#2563EB" },
-    { text: "Always Free.", color: "#5E239D" },
-    { text: "Privacy First.", color: "#F97316" },
-    { text: "User-Friendly.", color: "#14b8a6" },
-    { text: "Modern.", color: "#f59e0b" },
+    { text: "Effortless.", color: "#8B5CF6" },
+    { text: "Secure.", color: "#10B981" },
+    { text: "Fast.", color: "#3B82F6" },
+    { text: "Free.", color: "#F59E0B" },
+    { text: "Private.", color: "#EF4444" },
+    { text: "Modern.", color: "#14b8a6" },
 ];
 
 const WordRotator = () => {
@@ -126,16 +126,32 @@ const WordRotator = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const variants = {
+        enter: {
+            opacity: 0,
+            y: 20,
+        },
+        center: {
+            opacity: 1,
+            y: 0,
+        },
+        exit: {
+            opacity: 0,
+            y: -20,
+        },
+    };
+
     return (
         <AnimatePresence mode="wait">
             <motion.span
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ color: rotatingWords[index].color }}
-                className="whitespace-nowrap"
+                className="absolute whitespace-nowrap"
             >
                 {rotatingWords[index].text}
             </motion.span>
@@ -289,3 +305,5 @@ export default function HomePageClientContent({ showServices }: { showServices?:
         </>
     )
 }
+
+    
