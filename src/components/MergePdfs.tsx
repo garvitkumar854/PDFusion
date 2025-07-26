@@ -359,7 +359,7 @@ export function MergePdfs() {
 
   if (mergedPdfUrl) {
     return (
-        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-card/50 dark:bg-card/20 backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-lg border">
+        <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-6 sm:p-8 rounded-xl shadow-lg border">
             <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Merged Successfully!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
@@ -378,7 +378,7 @@ export function MergePdfs() {
 
   return (
     <div className="space-y-6">
-        <Card className="bg-card/50 dark:bg-card/20 backdrop-blur-lg shadow-lg">
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
                 <CardDescription>
@@ -416,7 +416,7 @@ export function MergePdfs() {
         </Card>
 
         {files.length > 0 && (
-          <Card className={cn("bg-card/50 dark:bg-card/20 backdrop-blur-lg shadow-lg", isMerging && "opacity-70")}>
+          <Card className={cn("bg-white dark:bg-card shadow-lg", isMerging && "opacity-70")}>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between pb-2 p-4 sm:p-6">
               <div className="flex-grow">
                 <CardTitle className="text-xl sm:text-2xl">Uploaded Files ({files.length})</CardTitle>
@@ -451,7 +451,7 @@ export function MergePdfs() {
                         onDragOver={(e) => e.preventDefault()}
                         style={{ willChange: 'transform, opacity, height, padding, margin' }}
                         className={cn(
-                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-card transition-all duration-300 ease-in-out',
+                            'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-background transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                              isMerging ? 'cursor-not-allowed' : 'cursor-grab',
                              removingFileId === pdfFile.id && 'opacity-0 scale-95 -translate-x-full h-0 !p-0 !my-0'
@@ -498,7 +498,7 @@ export function MergePdfs() {
           </Card>
         )}
 
-        <Card className="bg-card/50 dark:bg-card/20 backdrop-blur-lg shadow-lg">
+        <Card className="bg-white dark:bg-card shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Merge Settings</CardTitle>
             </CardHeader>

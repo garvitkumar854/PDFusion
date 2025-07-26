@@ -165,8 +165,8 @@ const WordRotator = () => {
                 animate="center"
                 exit="exit"
                 transition={{
-                    y: { type: "spring", stiffness: 300, damping: 25 },
-                    opacity: { duration: 0.5 }
+                    y: { type: "spring", stiffness: 200, damping: 20 },
+                    opacity: { duration: 0.3 }
                 }}
                 style={{ color: rotatingWords[index].color }}
                 className="absolute inset-0 flex items-center justify-center whitespace-nowrap"
@@ -309,7 +309,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                                 className="duration-700 flex-shrink-0 w-full lg:w-auto"
                                 delay={200}
                             >
-                                <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
+                                <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
                                 <Link href="#services">
                                     Explore Services
                                     <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

@@ -169,7 +169,7 @@ export default function AboutPage() {
                   className="duration-700"
                   delay={index * 200}
                 >
-                  <div className="flex flex-col items-center text-center p-6 bg-transparent backdrop-blur-lg rounded-lg">
+                  <div className="flex flex-col items-center text-center p-6 bg-transparent">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20 mb-6">
                       {step.icon}
                     </div>
@@ -202,7 +202,7 @@ export default function AboutPage() {
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-700 delay-150"
           >
-            <Card className="max-w-2xl mx-auto p-8 border border-primary/20 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
+            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
               <Avatar className="w-24 h-24 border-4 border-primary/50">
                 <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
                 <AvatarFallback>GK</AvatarFallback>
@@ -240,7 +240,7 @@ export default function AboutPage() {
                         className="duration-700 flex-shrink-0 w-full lg:w-auto"
                         delay={200}
                     >
-                    <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg hover:scale-105 transition-all group w-full sm:w-auto">
+                    <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
                       <Link href="/#services">
                         Explore Services
                         <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
