@@ -93,7 +93,7 @@ export default function Header() {
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
   return (
-    <header className="py-4 border-b border-border/20 sticky top-0 z-50 backdrop-blur-lg">
+    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-transparent backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2">

@@ -169,7 +169,7 @@ export default function AboutPage() {
                   className="duration-700"
                   delay={index * 200}
                 >
-                  <div className="flex flex-col items-center text-center p-6 bg-background rounded-lg">
+                  <div className="flex flex-col items-center text-center p-6 bg-background/50 backdrop-blur-lg rounded-lg border border-primary/10">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20 mb-6">
                       {step.icon}
                     </div>
