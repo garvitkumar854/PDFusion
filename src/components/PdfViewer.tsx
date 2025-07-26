@@ -9,21 +9,22 @@ import {
   Loader2,
   FolderOpen,
   Lock,
-  Eye,
-  EyeOff,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
   ZoomOut,
   RefreshCw,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Unlock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
+import { Input } from "./ui/input";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -48,6 +49,21 @@ type PageInfo = {
 }
 
 const PageThumbnail = React.memo(({ page, onSelect, isActive }: { page: PageInfo, onSelect: () => void, isActive: boolean }) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (page.dataUrl || !ref.current) return;
+        
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                // This is a placeholder for a function that would be passed in to load the thumbnail
+                // For this component, we assume the dataUrl is loaded externally
+            }
+        });
+        observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [page.dataUrl]);
+
     return (
         <div
             onClick={onSelect}
@@ -55,6 +71,7 @@ const PageThumbnail = React.memo(({ page, onSelect, isActive }: { page: PageInfo
                 "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted group shadow-sm cursor-pointer mb-2",
                 isActive ? "border-primary" : "border-transparent hover:border-primary/50"
             )}
+            ref={ref}
         >
             <div className="w-full h-full flex items-center justify-center p-1 bg-white dark:bg-zinc-800">
                 {page.dataUrl ? (
@@ -110,12 +127,11 @@ export function PdfViewer() {
         const isAutoZoom = !forceZoom;
         
         const viewportDefault = page.getViewport({ scale: 1 });
-
+        
         if (isAutoZoom) {
-            scale = Math.min(
-                container.clientWidth / viewportDefault.width,
-                container.clientHeight / viewportDefault.height
-            ) * 0.98;
+            const scaleToFitWidth = container.clientWidth / viewportDefault.width;
+            const scaleToFitHeight = container.clientHeight / viewportDefault.height;
+            scale = Math.min(scaleToFitWidth, scaleToFitHeight, MAX_ZOOM) * 0.98;
             setZoom(scale);
         }
 
@@ -124,11 +140,6 @@ export function PdfViewer() {
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         
-        if (isAutoZoom) {
-            container.scrollLeft = (canvas.width - container.clientWidth) / 2;
-            container.scrollTop = (canvas.height - container.clientHeight) / 2;
-        }
-
         if (context) {
             const task = page.render({ canvasContext: context, viewport });
             renderTask.current = task;
@@ -175,17 +186,8 @@ export function PdfViewer() {
       const totalPages = pdfjsDoc.numPages;
       const newFile = { id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc };
       setFile(newFile);
-
-      const previews: PageInfo[] = Array.from({length: totalPages}, (_, i) => ({
-          pageNumber: i + 1,
-          dataUrl: null,
-      }));
-      setPagePreviews(previews);
+      setPagePreviews(Array.from({length: totalPages}, (_, i) => ({ pageNumber: i + 1, dataUrl: null })));
       setCurrentPage(1);
-
-      if (mainCanvasRef.current) {
-        renderPage(pdfjsDoc, 1, mainCanvasRef.current);
-      }
       
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
@@ -199,6 +201,10 @@ export function PdfViewer() {
               return canvas.toDataURL('image/jpeg', 0.7);
           }
           return null;
+      }
+      
+      if (mainCanvasRef.current) {
+        renderPage(pdfjsDoc, 1, mainCanvasRef.current);
       }
       
       for(let i=0; i < totalPages; i++) {
@@ -220,7 +226,7 @@ export function PdfViewer() {
 
       if (err.name === 'PasswordException') {
         setIsEncrypted(true);
-        setFile({ file: fileToLoad } as any); // Set a placeholder to show the password field
+        setFile({ file: fileToLoad } as any);
         setError("This PDF is password-protected. Please enter the password to view it.");
       } else {
         setError("Could not read the PDF file. It might be corrupted or in an unsupported format.");
@@ -280,15 +286,15 @@ export function PdfViewer() {
     } else {
         const num = parseInt(val, 10);
         if (!isNaN(num) && file) {
-            const newPage = Math.max(1, Math.min(num, file.totalPages));
-            handlePageSelect(newPage);
+            handlePageSelect(num);
         }
     }
   }
 
    const handlePageInputBlur = () => {
         if ((currentPage as any) === '' && file) {
-            setCurrentPage(1);
+            const newPage = Math.max(1, Math.min(1, file.totalPages));
+            handlePageSelect(newPage);
         }
     };
   
@@ -299,9 +305,13 @@ export function PdfViewer() {
   }
   
   const handlePageSelect = (pageNumber: number) => {
-    if (pageNumber !== currentPage && file?.pdfjsDoc && mainCanvasRef.current) {
-      setCurrentPage(pageNumber);
-      renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current, zoom);
+    if (pageNumber > 0 && file && pageNumber <= file.totalPages) {
+        if (pageNumber !== currentPage) {
+            setCurrentPage(pageNumber);
+            if (file.pdfjsDoc && mainCanvasRef.current) {
+                renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current, zoom);
+            }
+        }
     }
   }
 
@@ -398,7 +408,7 @@ export function PdfViewer() {
   }
 
   return file?.pdfjsDoc ? (
-    <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
+    <div className="flex flex-col h-[85vh] w-full gap-4">
         <Card>
             <div className="p-2 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
