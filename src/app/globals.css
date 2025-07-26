@@ -56,7 +56,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: linear-gradient(115deg, #ffffff, #d4dfed);
+  }
+  .dark body {
+    background: hsl(var(--background));
   }
 }
 
