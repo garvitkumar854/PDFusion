@@ -127,7 +127,7 @@ const MorphingText = () => {
     }, []);
 
     return (
-        <div className="relative h-full w-full flex items-center justify-center">
+        <div className="relative h-full w-full flex items-center justify-center" style={{ filter: 'url(#morph-filter)' }}>
             <svg id="morph-svg-filter" className="absolute w-0 h-0">
                 <defs>
                     <filter id="morph-filter">
@@ -137,7 +137,7 @@ const MorphingText = () => {
                     </filter>
                 </defs>
             </svg>
-            <div className="relative w-full h-full text-center" style={{ filter: 'url(#morph-filter)' }}>
+            <div className="relative w-full h-full text-center">
                 <AnimatePresence mode="wait">
                     <motion.span
                         key={index}
