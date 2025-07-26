@@ -124,7 +124,7 @@ ${values.message}
                   delay={150 * (index + 1)}
                 >
                   <Link href={method.href}>
-                    <Card className="group bg-card/50 dark:bg-card/20 hover:border-primary/50 transition-all duration-300 h-full p-4 sm:p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left hover:shadow-lg">
+                    <Card className="group bg-card/50 dark:bg-card/20 backdrop-blur-lg hover:border-primary/50 transition-all duration-300 h-full p-4 sm:p-6 border border-border/20 rounded-2xl flex flex-col items-start justify-center text-left hover:shadow-lg">
                       <CardContent className="p-0 flex items-start gap-4">
                         <div className={`p-2 sm:p-3 rounded-xl transition-colors duration-300 ${method.bgColor}`}>
                           {method.icon}
@@ -146,7 +146,7 @@ ${values.message}
             className="duration-700 lg:col-span-2"
             delay={300}
           >
-            <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card">
+            <Card className="p-8 sm:p-10 rounded-2xl shadow-lg border border-border/20 bg-card/50 dark:bg-card/20 backdrop-blur-lg">
               <CardHeader className="p-0 mb-6">
                 <CardTitle className="text-2xl sm:text-3xl font-bold text-foreground">Send a Message</CardTitle>
                 <CardDescription>We'll get back to you as soon as possible.</CardDescription>
