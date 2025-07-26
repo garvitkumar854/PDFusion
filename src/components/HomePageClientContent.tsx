@@ -212,7 +212,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                     >
                         <Link href={service.href} className="h-full block group relative">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-card/50 dark:bg-card/20 backdrop-blur-lg group-hover:bg-card h-full flex flex-col">
+                          <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col">
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                                   <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
                                   {service.icon}
@@ -259,7 +259,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                             >
                             <div className="group relative h-full">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                                <Card className="relative bg-card/50 dark:bg-card/20 backdrop-blur-lg group-hover:bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
+                                <Card className="relative shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
                                     <CardContent className="p-0 flex-grow">
                                     <div className="flex flex-col items-start gap-4 h-full">
                                         <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
