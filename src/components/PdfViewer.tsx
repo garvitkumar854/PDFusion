@@ -95,7 +95,7 @@ export function PdfViewer() {
     pdfDoc: pdfjsLib.PDFDocumentProxy,
     pageNum: number,
     canvas: HTMLCanvasElement,
-    currentZoom?: number
+    forceZoom?: number
   ) => {
     if (renderTask.current) {
         renderTask.current.cancel();
@@ -105,14 +105,16 @@ export function PdfViewer() {
         const container = mainCanvasContainerRef.current;
         if (!container) return;
 
-        let scale = currentZoom;
+        let scale = forceZoom ?? zoom;
 
-        if (!scale) { // Auto-fit logic
-            const viewportDefault = page.getViewport({ scale: 1 });
-            scale = Math.min(
-                container.clientWidth / viewportDefault.width,
-                container.clientHeight / viewportDefault.height
-            ) * 0.98;
+        const viewportDefault = page.getViewport({ scale: 1 });
+        const autoScale = Math.min(
+            container.clientWidth / viewportDefault.width,
+            container.clientHeight / viewportDefault.height
+        ) * 0.98;
+        
+        if (!forceZoom) {
+            scale = autoScale
             setZoom(scale);
         }
 
@@ -121,10 +123,9 @@ export function PdfViewer() {
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         
-        mainCanvasContainerRef.current.scrollLeft = (canvas.width - container.clientWidth) / 2;
-        mainCanvasContainerRef.current.scrollTop = (canvas.height - container.clientHeight) / 2;
-        
-        panState.current = { isPanning: false, startX: 0, startY: 0, lastX: (canvas.width - container.clientWidth) / 2, lastY: (canvas.height - container.clientHeight) / 2 };
+        container.scrollLeft = (canvas.width - container.clientWidth) / 2;
+        container.scrollTop = (canvas.height - container.clientHeight) / 2;
+        panState.current = { isPanning: false, startX: 0, startY: 0, lastX: container.scrollLeft, lastY: container.scrollTop };
 
         if (context) {
             const task = page.render({ canvasContext: context, viewport });
@@ -138,7 +139,13 @@ export function PdfViewer() {
           toast({ variant: "destructive", title: "Render Error", description: "Could not display the page." });
         }
     }
-  }, [toast]);
+  }, [toast, zoom]);
+
+  useEffect(() => {
+    if (file?.pdfjsDoc && mainCanvasRef.current && currentPage) {
+        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
+    }
+  }, [file, currentPage, zoom, renderPage]);
 
   const loadPdf = useCallback(async (fileToLoad: File, providedPassword = "") => {
     const currentOperationId = ++operationId.current;
@@ -169,12 +176,8 @@ export function PdfViewer() {
           dataUrl: null,
       }));
       setPagePreviews(previews);
-      setCurrentPage(1);
+      setCurrentPage(1); // Triggers the render useEffect
       
-      if (mainCanvasRef.current) {
-        renderPage(pdfjsDoc, 1, mainCanvasRef.current);
-      }
-
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
           const viewport = page.getViewport({ scale: 0.3 });
@@ -217,13 +220,7 @@ export function PdfViewer() {
     } finally {
       if (operationId.current === currentOperationId) setIsLoading(false);
     }
-  }, [file?.pdfjsDoc, toast, renderPage]);
-
-  useEffect(() => {
-    if (file?.pdfjsDoc && mainCanvasRef.current) {
-        renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
-    }
-  }, [file, currentPage, zoom, renderPage]);
+  }, [file?.pdfjsDoc, toast]);
   
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -291,39 +288,44 @@ export function PdfViewer() {
   const handlePageSelect = (pageNumber: number) => {
     if (pageNumber !== currentPage) {
       setCurrentPage(pageNumber);
-      resetZoom();
+      if (file?.pdfjsDoc && mainCanvasRef.current) {
+        renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current);
+      }
     }
   }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!mainCanvasContainerRef.current) return;
     e.preventDefault();
     panState.current.isPanning = true;
-    panState.current.startX = e.pageX - mainCanvasContainerRef.current!.offsetLeft;
-    panState.current.startY = e.pageY - mainCanvasContainerRef.current!.offsetTop;
-    panState.current.lastX = mainCanvasContainerRef.current!.scrollLeft;
-    panState.current.lastY = mainCanvasContainerRef.current!.scrollTop;
-    mainCanvasContainerRef.current!.style.cursor = 'grabbing';
+    panState.current.startX = e.pageX - mainCanvasContainerRef.current.offsetLeft;
+    panState.current.startY = e.pageY - mainCanvasContainerRef.current.offsetTop;
+    panState.current.lastX = mainCanvasContainerRef.current.scrollLeft;
+    panState.current.lastY = mainCanvasContainerRef.current.scrollTop;
+    mainCanvasContainerRef.current.style.cursor = 'grabbing';
   };
 
   const handleMouseUp = () => {
+    if (!mainCanvasContainerRef.current) return;
     panState.current.isPanning = false;
-    mainCanvasContainerRef.current!.style.cursor = 'grab';
+    mainCanvasContainerRef.current.style.cursor = 'grab';
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!panState.current.isPanning) return;
+    if (!panState.current.isPanning || !mainCanvasContainerRef.current) return;
     e.preventDefault();
-    const x = e.pageX - mainCanvasContainerRef.current!.offsetLeft;
-    const y = e.pageY - mainCanvasContainerRef.current!.offsetTop;
+    const x = e.pageX - mainCanvasContainerRef.current.offsetLeft;
+    const y = e.pageY - mainCanvasContainerRef.current.offsetTop;
     const walkX = (x - panState.current.startX);
     const walkY = (y - panState.current.startY);
-    mainCanvasContainerRef.current!.scrollLeft = panState.current.lastX - walkX;
-    mainCanvasContainerRef.current!.scrollTop = panState.current.lastY - walkY;
+    mainCanvasContainerRef.current.scrollLeft = panState.current.lastX - walkX;
+    mainCanvasContainerRef.current.scrollTop = panState.current.lastY - walkY;
   };
   
   const handleMouseLeave = () => {
+      if (!mainCanvasContainerRef.current) return;
       panState.current.isPanning = false;
-      mainCanvasContainerRef.current!.style.cursor = 'grab';
+      mainCanvasContainerRef.current.style.cursor = 'grab';
   }
 
   if (!file && !isLoading) {
@@ -410,7 +412,7 @@ export function PdfViewer() {
             </Card>
             <div 
                 ref={mainCanvasContainerRef} 
-                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center items-start p-4 cursor-grab"
+                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-start items-start p-4 cursor-grab"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}

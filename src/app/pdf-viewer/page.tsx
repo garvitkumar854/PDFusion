@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const PdfViewerLoader = dynamic(() => import('@/components/PdfViewerLoader'), {
   ssr: false,
   loading: () => (
-    <div className="flex flex-col flex-1 w-full h-[85vh] space-y-4">
+    <div className="flex flex-col flex-1 w-full h-full space-y-4">
         <div className="flex justify-between items-center p-2 border rounded-lg">
             <Skeleton className="h-8 w-24" />
             <Skeleton className="h-8 w-48" />
@@ -49,7 +49,7 @@ export default function PdfViewerPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full flex flex-col h-[85vh]">
+      <main className="flex-1 w-full flex flex-col h-full min-h-[70vh]">
         <div className="max-w-7xl mx-auto h-full w-full flex flex-col">
           <PdfViewerLoader />
         </div>
