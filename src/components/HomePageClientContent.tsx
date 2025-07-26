@@ -131,9 +131,9 @@ const WordRotator = () => {
         <AnimatePresence mode="wait">
             <motion.span
                 key={index}
-                initial={{ y: "100%", opacity: 0 }}
+                initial={{ y: "100%", opacity: 1 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: "-100%", opacity: 0 }}
+                exit={{ y: "-100%", opacity: 1 }}
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ color: rotatingWords[index].color }}
                 className="whitespace-nowrap"
