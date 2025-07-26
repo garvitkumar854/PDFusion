@@ -10,7 +10,7 @@ import {
   X,
   CheckCircle,
   GripVertical,
-  Layers,
+  Combine,
   FolderOpen,
   Loader2,
   Ban,
@@ -475,7 +475,7 @@ export function MergePdfs() {
                                      Locked
                                 </Badge>
                             ) : (
-                                <Badge variant="outline" className="hidden text-primary border-primary/20 sm:inline-flex bg-primary/10">
+                                <Badge variant="outline" className="hidden sm:inline-flex bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700">
                                 <Unlock className="w-3.5 h-3.5 mr-1" />
                                 Ready
                                 </Badge>
@@ -532,8 +532,8 @@ export function MergePdfs() {
                             </Button>
                         </div>
                     ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
-                            <Layers className="mr-2 h-5 w-5" />
+                        <Button size="lg" className="w-full text-base font-bold btn-animated-gradient" onClick={handleMerge} disabled={mergeButtonDisabled}>
+                            <Combine className="mr-2 h-5 w-5" />
                             Merge PDFs
                         </Button>
                     )}
