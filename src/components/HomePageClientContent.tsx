@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import RotatingWords from '@/components/RotatingWords';
+import TypingAnimation from '@/components/TypingAnimation';
 
 const services = [
     {
@@ -109,7 +109,7 @@ const futureFeatures = [
 export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
     if (!showServices) {
         return (
-            <RotatingWords 
+            <TypingAnimation
                 words={[
                   "Effortless.",
                   "Secure.",
