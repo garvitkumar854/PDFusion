@@ -171,7 +171,7 @@ export function PdfCompressor() {
     const reduction = stats.originalSize > 0 ? ((stats.originalSize - stats.newSize) / stats.originalSize) * 100 : 0;
 
     return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
+      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl shadow-lg border">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Compression Complete!</h2>
         <div className="my-4 text-center">
@@ -193,7 +193,7 @@ export function PdfCompressor() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white dark:bg-card shadow-lg">
+      <Card className="bg-transparent shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
           <CardDescription>Select a PDF file to compress.</CardDescription>
@@ -225,7 +225,7 @@ export function PdfCompressor() {
       </Card>
       
       {file && (
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className="bg-transparent shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Compression Settings</CardTitle>
           </CardHeader>

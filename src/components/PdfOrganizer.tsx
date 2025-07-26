@@ -295,7 +295,7 @@ export function PdfOrganizer() {
   return (
     <div className="space-y-6">
       {!file && !isLoading ? (
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className="bg-transparent shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Organize PDF</CardTitle>
                 <CardDescription>Upload a PDF to reorder, rotate, or delete its pages.</CardDescription>
@@ -325,7 +325,7 @@ export function PdfOrganizer() {
         </Card>
       ) : (
         <>
-            <Card className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm">
+            <Card className="sticky top-20 z-10 bg-transparent backdrop-blur-sm">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
                     <div className="flex-grow min-w-0">
                         <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
