@@ -98,6 +98,7 @@ export function PdfViewer() {
   ) => {
     if (renderTask.current) {
       renderTask.current.cancel();
+      renderTask.current = null;
     }
 
     try {
@@ -139,7 +140,9 @@ export function PdfViewer() {
           toast({ variant: "destructive", title: "Render Error", description: "Could not display the page." });
         }
     } finally {
-        renderTask.current = null;
+        if (renderTask.current?.internalRenderTask.id === renderTask.current?.id) {
+            renderTask.current = null;
+        }
     }
   }, [toast, zoom]);
 
@@ -298,7 +301,7 @@ export function PdfViewer() {
   const handlePageSelect = (pageNumber: number) => {
     if (pageNumber !== currentPage && file?.pdfjsDoc && mainCanvasRef.current) {
       setCurrentPage(pageNumber);
-      renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current);
+      renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current, zoom);
     }
   }
 
@@ -395,7 +398,7 @@ export function PdfViewer() {
   }
 
   return file?.pdfjsDoc ? (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
         <Card>
             <div className="p-2 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
@@ -415,7 +418,7 @@ export function PdfViewer() {
             </div>
         </Card>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-4 min-h-0">
-            <Card className="hidden md:block h-full">
+            <Card className="hidden md:block">
                 <div className="p-2 h-full overflow-y-auto">
                     {pagePreviews.map(p => (
                         <PageThumbnail key={p.pageNumber} page={p} onSelect={() => handlePageSelect(p.pageNumber)} isActive={currentPage === p.pageNumber} />
@@ -424,7 +427,7 @@ export function PdfViewer() {
             </Card>
             <div 
                 ref={mainCanvasContainerRef} 
-                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-start items-start p-4 cursor-grab"
+                className="flex-1 overflow-auto bg-muted/40 rounded-lg flex justify-center items-center p-4 cursor-grab"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}

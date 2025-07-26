@@ -3,32 +3,15 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const PdfViewerLoader = dynamic(() => import('@/components/PdfViewerLoader'), {
   ssr: false,
-  loading: () => (
-    <div className="flex flex-col flex-1 w-full h-full space-y-4">
-        <div className="flex justify-between items-center p-2 border rounded-lg">
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-8 w-24" />
-        </div>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-4 h-full">
-            <div className="h-full hidden md:block">
-                <Skeleton className="h-full w-full" />
-            </div>
-            <div className="h-full">
-                <Skeleton className="h-full w-full" />
-            </div>
-        </div>
-    </div>
-  )
+  loading: () => <div className="flex justify-center items-center h-96"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>
 });
 
 export default function PdfViewerPage() {
   return (
-    <div className="flex flex-col flex-1 py-8 sm:py-12 h-full">
+    <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-12">
         <AnimateOnScroll
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -49,8 +32,8 @@ export default function PdfViewerPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full flex flex-col h-full min-h-[85vh]">
-        <div className="max-w-full mx-auto h-full w-full flex flex-col">
+      <main className="flex-1 w-full flex flex-col">
+        <div className="max-w-full mx-auto w-full flex-1">
           <PdfViewerLoader />
         </div>
       </main>
