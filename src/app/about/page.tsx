@@ -120,7 +120,7 @@ export default function AboutPage() {
                     >
                       <div className="group relative h-full">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative bg-transparent text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -169,7 +169,7 @@ export default function AboutPage() {
                   className="duration-700"
                   delay={index * 200}
                 >
-                  <div className="flex flex-col items-center text-center p-6 bg-transparent backdrop-blur-lg rounded-lg border border-primary/10">
+                  <div className="flex flex-col items-center text-center p-6 bg-transparent backdrop-blur-lg rounded-lg">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20 mb-6">
                       {step.icon}
                     </div>
