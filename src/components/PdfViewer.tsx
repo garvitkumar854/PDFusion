@@ -71,7 +71,6 @@ const PageThumbnail = React.memo(({ page, onSelect, isActive }: { page: PageInfo
 });
 PageThumbnail.displayName = 'PageThumbnail';
 
-
 export function PdfViewer() {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,8 +97,9 @@ export function PdfViewer() {
     forceZoom?: number
   ) => {
     if (renderTask.current) {
-        renderTask.current.cancel();
+      renderTask.current.cancel();
     }
+
     try {
         const page = await pdfDoc.getPage(pageNum);
         const container = mainCanvasContainerRef.current;
@@ -108,13 +108,13 @@ export function PdfViewer() {
         let scale = forceZoom ?? zoom;
 
         const viewportDefault = page.getViewport({ scale: 1 });
-        const autoScale = Math.min(
-            container.clientWidth / viewportDefault.width,
-            container.clientHeight / viewportDefault.height
-        ) * 0.98;
-        
-        if (!forceZoom) {
-            scale = autoScale
+        const isAutoZoom = !forceZoom;
+
+        if (isAutoZoom) {
+            scale = Math.min(
+                container.clientWidth / viewportDefault.width,
+                container.clientHeight / viewportDefault.height
+            ) * 0.98;
             setZoom(scale);
         }
 
@@ -123,21 +123,23 @@ export function PdfViewer() {
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         
-        container.scrollLeft = (canvas.width - container.clientWidth) / 2;
-        container.scrollTop = (canvas.height - container.clientHeight) / 2;
-        panState.current = { isPanning: false, startX: 0, startY: 0, lastX: container.scrollLeft, lastY: container.scrollTop };
+        if (isAutoZoom) {
+            container.scrollLeft = (canvas.width - container.clientWidth) / 2;
+            container.scrollTop = (canvas.height - container.clientHeight) / 2;
+        }
 
         if (context) {
             const task = page.render({ canvasContext: context, viewport });
             renderTask.current = task;
             await task.promise;
-            renderTask.current = null;
         }
     } catch(e: any) {
         if (e.name !== 'RenderingCancelledException') {
           console.error("Failed to render page:", e);
           toast({ variant: "destructive", title: "Render Error", description: "Could not display the page." });
         }
+    } finally {
+        renderTask.current = null;
     }
   }, [toast, zoom]);
 
@@ -145,7 +147,8 @@ export function PdfViewer() {
     if (file?.pdfjsDoc && mainCanvasRef.current && currentPage) {
         renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
     }
-  }, [file, currentPage, zoom, renderPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file, currentPage, zoom]);
 
   const loadPdf = useCallback(async (fileToLoad: File, providedPassword = "") => {
     const currentOperationId = ++operationId.current;
@@ -176,7 +179,7 @@ export function PdfViewer() {
           dataUrl: null,
       }));
       setPagePreviews(previews);
-      setCurrentPage(1); // Triggers the render useEffect
+      setCurrentPage(1);
       
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
@@ -272,12 +275,16 @@ export function PdfViewer() {
         const num = parseInt(val, 10);
         if (!isNaN(num) && file) {
             const newPage = Math.max(1, Math.min(num, file.totalPages));
-            if (newPage !== currentPage) {
-                setCurrentPage(newPage);
-            }
+            setCurrentPage(newPage);
         }
     }
   }
+
+   const handlePageInputBlur = () => {
+        if (!currentPage && file) {
+            setCurrentPage(1);
+        }
+    };
   
   const resetZoom = () => {
     if (file?.pdfjsDoc && mainCanvasRef.current) {
@@ -349,7 +356,7 @@ export function PdfViewer() {
   
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -357,7 +364,7 @@ export function PdfViewer() {
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 h-full">
         <Card className="max-w-sm w-full">
           <CardContent className="p-6 text-center space-y-4">
             <AlertTriangle className="w-10 h-10 text-destructive mx-auto"/>
@@ -389,7 +396,7 @@ export function PdfViewer() {
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage - 1)} disabled={currentPage <= 1}><ChevronLeft className="h-4 w-4"/></Button>
                     <div className="flex items-center gap-1.5 text-sm font-medium">
-                        <Input type="number" value={currentPage} onChange={handlePageInputChange} onBlur={(e) => !e.target.value && setCurrentPage(1)} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
+                        <Input type="number" value={currentPage} onChange={handlePageInputChange} onBlur={handlePageInputBlur} className="w-16 h-8 text-center" min="1" max={file.totalPages} />
                         <span>/ {file.totalPages}</span>
                     </div>
                     <Button variant="outline" size="icon" onClick={() => handlePageSelect(currentPage + 1)} disabled={currentPage >= file.totalPages}><ChevronRight className="h-4 w-4"/></Button>
