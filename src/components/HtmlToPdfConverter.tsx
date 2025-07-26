@@ -120,7 +120,7 @@ export function HtmlToPdfConverter() {
 
   if (status === "done" && resultUrl) {
     return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
+      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Complete!</h2>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your PDF is ready for download.</p>
@@ -139,7 +139,7 @@ export function HtmlToPdfConverter() {
   }
 
   return (
-    <Card className="bg-white dark:bg-card shadow-lg">
+    <Card className="bg-transparent shadow-lg">
       <CardHeader>
         <CardTitle className="text-xl sm:text-2xl">Enter Website URL</CardTitle>
         <CardDescription>

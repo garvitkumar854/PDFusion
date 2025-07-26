@@ -384,7 +384,7 @@ export function PageNumberAdder() {
   
   if (result) {
     return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
+      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Updated Successfully!</h2>
         
@@ -407,7 +407,7 @@ export function PageNumberAdder() {
   return (
     <div className="space-y-6">
       {!file && (
-        <Card className="bg-white dark:bg-card shadow-lg">
+        <Card className="bg-transparent shadow-lg">
             <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
             <CardDescription>Select a PDF file to add page numbers to.</CardDescription>
@@ -438,7 +438,7 @@ export function PageNumberAdder() {
       {file && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <div className="space-y-6">
-                <Card className="bg-white dark:bg-card shadow-lg">
+                <Card className="bg-transparent shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle className="text-xl">Uploaded File</CardTitle>
@@ -457,7 +457,7 @@ export function PageNumberAdder() {
                         </CardContent>
                     )}
                 </Card>
-                <Card className="bg-white dark:bg-card shadow-lg">
+                <Card className="bg-transparent shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                        <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
@@ -535,7 +535,7 @@ export function PageNumberAdder() {
                 </Card>
             </div>
             <div className="space-y-6 sticky top-24">
-                 <Card className="bg-white dark:bg-card shadow-lg">
+                 <Card className="bg-transparent shadow-lg">
                     <CardHeader><CardTitle className="text-xl">Live Preview</CardTitle></CardHeader>
                     <CardContent className="flex items-center justify-center p-4 bg-muted/50 rounded-b-lg">
                         {isProcessing ? (
@@ -560,7 +560,7 @@ export function PageNumberAdder() {
                         )}
                     </CardContent>
                 </Card>
-                 <Card className="bg-white dark:bg-card shadow-lg">
+                 <Card className="bg-transparent shadow-lg">
                     <CardContent className="p-6">
                         {isProcessing ? (
                             <div className="p-4 border rounded-lg bg-primary/5">

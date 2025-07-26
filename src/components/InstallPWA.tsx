@@ -20,35 +20,32 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-        const standalone = window.matchMedia('(display-mode: standalone)').matches;
-        if (standalone) {
-            setIsInstalled(true);
-            return;
-        }
+    const handler = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+      setCanInstall(true);
+    };
 
-        if (localStorage.getItem('pwa_installed') === 'true') {
-            setIsInstalled(true);
-        }
+    window.addEventListener('beforeinstallprompt', handler);
 
-        const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-        setIsIOS(isIosDevice);
+    // Check if the app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      setCanInstall(false);
+    }
+    
+    // Check for iOS
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIosDevice);
+    if(isIosDevice) {
+        setCanInstall(true); // Always allow manual install on iOS
     }
 
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setIsInstalled(false);
-      localStorage.removeItem('pwa_installed');
-      setInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = useCallback(async () => {
@@ -68,7 +65,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     
     if (outcome === 'accepted') {
       setIsInstalled(true);
-      localStorage.setItem('pwa_installed', 'true');
+      setCanInstall(false);
     }
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
@@ -86,23 +83,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
 
   if (isInstalled) {
-      if (window.matchMedia('(display-mode: standalone)').matches) return null;
-      if (isIOS) return null;
-      
-      return (
-          <Button
-              onClick={handleOpenApp}
-              variant="outline"
-              size="sm"
-              className="inline-flex items-center gap-2 rounded-full font-semibold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-          >
-              <ExternalLink className="w-4 h-4" />
-              Open App
-          </Button>
-      );
+      return null; // Don't show anything if already running standalone
   }
   
-  if (installPrompt || (isIOS && !isInstalled)) {
+  if (canInstall) {
     return (
       <Button
         onClick={handleInstallClick}

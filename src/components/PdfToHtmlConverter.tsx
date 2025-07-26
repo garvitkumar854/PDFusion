@@ -220,7 +220,7 @@ export function PdfToHtmlConverter() {
 
   if (result) {
     return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-white dark:bg-card p-4 sm:p-8 rounded-xl shadow-lg border">
+      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl">
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Successful!</h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
@@ -237,7 +237,7 @@ export function PdfToHtmlConverter() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white dark:bg-card shadow-lg">
+      <Card className="bg-transparent shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
             <CardDescription>Select a PDF file to convert to HTML.</CardDescription>
@@ -276,7 +276,7 @@ export function PdfToHtmlConverter() {
           </CardContent>
         </Card>
         {file && (
-             <Card className="bg-white dark:bg-card shadow-lg">
+             <Card className="bg-transparent shadow-lg">
                 <CardContent className="p-6">
                     {file.isEncrypted && (
                          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">

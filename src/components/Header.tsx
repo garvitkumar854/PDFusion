@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -140,8 +141,8 @@ export default function Header() {
         </nav>
 
         <div className="flex-shrink-0 flex items-center gap-2">
-            <ThemeToggle />
             <InstallPWA />
+            <ThemeToggle />
             <div className="md:hidden">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                     <SheetTrigger asChild>
