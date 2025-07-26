@@ -108,13 +108,28 @@ const futureFeatures = [
 ];
 
 const rotatingWords = [
-    { text: "Effortless.", color: "#8B5CF6" },
-    { text: "Secure.", color: "#10B981" },
-    { text: "Fast.", color: "#3B82F6" },
-    { text: "Free.", color: "#F59E0B" },
-    { text: "Private.", color: "#EF4444" },
-    { text: "Modern.", color: "#14b8a6" },
+    { text: "Effortless", color: "#8B5CF6" },
+    { text: "Modern", color: "#EC4899" },
+    { text: "Secure", color: "#10B981" },
+    { text: "Encrypted", color: "#F59E0B" },
+    { text: "Trusted", color: "#3B82F6" },
+    { text: "User-Friendly", color: "#EF4444" },
+    { text: "Zero Hassle", color: "#14B8A6" },
+    { text: "Minimalist", color: "#6366F1" },
+    { text: "Lightning Fast", color: "#F97316" },
+    { text: "Reliable", color: "#06B6D4" },
+    { text: "Private", color: "#22C55E" },
+    { text: "No Sign-Up", color: "#D946EF" },
+    { text: "Instant Results", color: "#A855F7" },
+    { text: "Serverless", color: "#EAB308" },
+    { text: "Progressive", color: "#818CF8" },
+    { text: "Seamless", color: "#FB923C" },
+    { text: "Privacy-First", color: "#4ADE80" },
+    { text: "Optimized", color: "#60A5FA" },
+    { text: "Efficient", color: "#F472B6" },
+    { text: "Instant Access", color: "#34D399" },
 ];
+
 
 const WordRotator = () => {
     const [index, setIndex] = useState(0);
@@ -151,7 +166,7 @@ const WordRotator = () => {
                 exit="exit"
                 transition={{ duration: 0.5, ease: 'easeInOut' }}
                 style={{ color: rotatingWords[index].color }}
-                className="absolute whitespace-nowrap"
+                className="absolute inset-0 flex items-center justify-center whitespace-nowrap"
             >
                 {rotatingWords[index].text}
             </motion.span>

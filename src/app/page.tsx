@@ -19,7 +19,7 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
               Powerful PDF Tools,
               <br />
-               <span className="relative inline-block h-12 sm:h-16 md:h-20 align-bottom">
+               <span className="relative block h-12 sm:h-16 md:h-20 align-bottom mx-auto">
                   <HomePageLoader />
                </span>
             </h1>
