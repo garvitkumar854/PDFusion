@@ -28,9 +28,9 @@
   .dark {
     --background: 224 70% 7%; /* #040B1D */
     --foreground: 0 0% 98%;
-    --card: 221 59% 8%; /* #070E1E */
+    --card: 222 47% 11%; /* #111827 */
     --card-foreground: 0 0% 98%;
-    --popover: 221 59% 8%;
+    --popover: 222 47% 11%;
     --popover-foreground: 0 0% 98%;
     --primary: 246 100% 65%; /* Lighter #5e4dff */
     --primary-foreground: 0 0% 98%;
@@ -56,7 +56,6 @@
     @apply border-border;
   }
   body {
-    @apply text-foreground;
     background: linear-gradient(115deg, #ffffff, #d4dfed);
   }
   .dark body {
