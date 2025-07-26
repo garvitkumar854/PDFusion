@@ -120,7 +120,7 @@ export default function AboutPage() {
                     >
                       <div className="group relative h-full">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative bg-card text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
+                          <Card className="relative bg-transparent text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -169,7 +169,7 @@ export default function AboutPage() {
                   className="duration-700"
                   delay={index * 200}
                 >
-                  <div className="flex flex-col items-center text-center p-6 bg-background/50 backdrop-blur-lg rounded-lg border border-primary/10">
+                  <div className="flex flex-col items-center text-center p-6 bg-transparent backdrop-blur-lg rounded-lg border border-primary/10">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20 mb-6">
                       {step.icon}
                     </div>
@@ -202,7 +202,7 @@ export default function AboutPage() {
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-700 delay-150"
           >
-            <Card className="max-w-2xl mx-auto bg-card/50 dark:bg-card/20 p-8 border border-primary/20 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
+            <Card className="max-w-2xl mx-auto bg-transparent p-8 border border-primary/20 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
               <Avatar className="w-24 h-24 border-4 border-primary/50">
                 <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
                 <AvatarFallback>GK</AvatarFallback>
