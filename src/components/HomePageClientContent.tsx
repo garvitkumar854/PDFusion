@@ -107,47 +107,59 @@ const futureFeatures = [
     },
 ];
 
-const rotatingWords = [
-    { text: "Effortless.", color: "#F61067" },
-    { text: "Secure.", color: "#00F0B5" },
-    { text: "Blazing Speed.", color: "#2563EB" },
-    { text: "Always Free.", color: "#5E239D" },
-    { text: "Privacy First.", color: "#F97316" },
-    { text: "User-Friendly.", color: "#14b8a6" },
-    { text: "Modern.", color: "#f59e0b" },
+const morphingWords = [
+    { text: "Effortless.", color: "#8B5CF6" }, // purple-500
+    { text: "Secure.", color: "#10B981" },     // green-500
+    { text: "Fast.", color: "#3B82F6" },       // blue-500
+    { text: "Free.", color: "#F59E0B" },       // yellow-500
+    { text: "Private.", color: "#EF4444" },    // red-500
+    { text: "Modern.", color: "#14b8a6" },     // teal-500
 ];
 
-const WordRotator = () => {
+const MorphingText = () => {
     const [index, setIndex] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setIndex((prevIndex) => (prevIndex + 1) % rotatingWords.length);
-        }, 2000);
+            setIndex((prevIndex) => (prevIndex + 1) % morphingWords.length);
+        }, 2500);
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <AnimatePresence mode="wait">
-            <motion.span
-                key={index}
-                initial={{ y: "100%", opacity: 1 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: "-100%", opacity: 1 }}
-                transition={{ duration: 0.5, ease: 'easeInOut' }}
-                style={{ color: rotatingWords[index].color }}
-                className="whitespace-nowrap"
-            >
-                {rotatingWords[index].text}
-            </motion.span>
-        </AnimatePresence>
+        <div className="relative h-full w-full flex items-center justify-center">
+            <svg id="morph-svg-filter" className="absolute w-0 h-0">
+                <defs>
+                    <filter id="morph-filter">
+                        <feGaussianBlur stdDeviation="10" result="blur" in="SourceGraphic" />
+                        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+                        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                    </filter>
+                </defs>
+            </svg>
+            <div className="relative w-full h-full text-center" style={{ filter: 'url(#morph-filter)' }}>
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={index}
+                        initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -50, scale: 1.2 }}
+                        transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ color: morphingWords[index].color }}
+                    >
+                        {morphingWords[index].text}
+                    </motion.span>
+                </AnimatePresence>
+            </div>
+        </div>
     );
 };
 
 
 export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
     if (!showServices) {
-        return <WordRotator />;
+        return <MorphingText />;
     }
     
     return (
