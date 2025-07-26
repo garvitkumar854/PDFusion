@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Lock, Unlock } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,8 +40,6 @@ const services = [
     { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
     { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
     { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
-    { href: "/lock-pdf", label: "Lock PDF", icon: <Lock className="mr-2 h-4 w-4" /> },
-    { href: "/unlock-pdf", label: "Unlock PDF", icon: <Unlock className="mr-2 h-4 w-4" /> },
 ]
 
 const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {

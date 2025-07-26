@@ -14,9 +14,9 @@ const poppins = Poppins({
 })
 
 const APP_NAME = "PDFusion";
-const APP_DEFAULT_TITLE = "PDFusion";
-const APP_TITLE_TEMPLATE = "%s - PDFusion";
-const APP_DESCRIPTION = "Merge and manage your PDF files with ease.";
+const APP_DEFAULT_TITLE = "PDFusion: Your All-in-One PDF Toolkit";
+const APP_TITLE_TEMPLATE = "%s | PDFusion";
+const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.";
 
 
 export const metadata: Metadata = {
@@ -37,7 +37,34 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/favicon.svg',
-    apple: '/maskable_icon_x512.png',
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: APP_NAME,
+    title: {
+        default: APP_DEFAULT_TITLE,
+        template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+    url: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pdfusion.vercel.app'),
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'PDFusion - All-in-one PDF toolkit banner',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: {
+        default: APP_DEFAULT_TITLE,
+        template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+     images: ['/og-image.png'],
   },
 };
 
