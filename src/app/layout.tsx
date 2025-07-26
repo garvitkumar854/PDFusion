@@ -5,6 +5,7 @@ import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import UpdateNotifier from '@/components/UpdateNotifier';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: '/public/favicon.svg',
+    icon: '/favicon.svg',
     apple: '/maskable_icon_x512.png',
   },
 };
@@ -58,6 +59,12 @@ export default function RootLayout({
         <meta name="theme-color" content="#040B1D" media="(prefers-color-scheme: dark)" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <Header />
             <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
             {children}
@@ -65,6 +72,7 @@ export default function RootLayout({
             <FooterLoader />
             <Toaster />
             <UpdateNotifier />
+          </ThemeProvider>
       </body>
     </html>
   );
