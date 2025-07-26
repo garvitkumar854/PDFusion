@@ -10,7 +10,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="py-6 border-t bg-background">
+    <footer className="py-6 border-t border-border/20 bg-transparent">
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm text-muted-foreground">
           © {currentYear}{' '}
