@@ -60,7 +60,7 @@
     background: linear-gradient(115deg, #ffffff, #d4dfed);
   }
   .dark body {
-    background: hsl(var(--background));
+    background: linear-gradient(115deg, #050C1E, #0A1A35);
   }
 }
 

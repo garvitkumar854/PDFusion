@@ -33,7 +33,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className={cn(
         "relative flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        isLight ? "bg-blue-400 justify-start" : "bg-gray-800 justify-end"
+        isLight ? "bg-primary justify-start" : "bg-gray-800 justify-end"
       )}
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
     >

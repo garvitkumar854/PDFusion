@@ -137,14 +137,14 @@ const WordRotator = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             setIndex((prevIndex) => (prevIndex + 1) % rotatingWords.length);
-        }, 2200); // Slightly increased duration for a smoother feel
+        }, 2000); // 2 seconds per word
         return () => clearInterval(interval);
     }, []);
 
     const variants = {
         enter: {
             opacity: 0,
-            y: 25,
+            y: 20,
         },
         center: {
             opacity: 1,
@@ -152,7 +152,7 @@ const WordRotator = () => {
         },
         exit: {
             opacity: 0,
-            y: -25,
+            y: -20,
         },
     };
 
@@ -165,7 +165,7 @@ const WordRotator = () => {
                 animate="center"
                 exit="exit"
                 transition={{
-                    y: { type: "spring", stiffness: 300, damping: 30 },
+                    y: { type: "spring", stiffness: 200, damping: 20 },
                     opacity: { duration: 0.5 }
                 }}
                 style={{ color: rotatingWords[index].color }}
