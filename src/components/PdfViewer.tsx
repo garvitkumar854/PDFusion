@@ -106,9 +106,9 @@ export function PdfViewer() {
         if (!container) return;
 
         let scale = forceZoom ?? zoom;
-
-        const viewportDefault = page.getViewport({ scale: 1 });
         const isAutoZoom = !forceZoom;
+        
+        const viewportDefault = page.getViewport({ scale: 1 });
 
         if (isAutoZoom) {
             scale = Math.min(
@@ -147,8 +147,7 @@ export function PdfViewer() {
     if (file?.pdfjsDoc && mainCanvasRef.current && currentPage) {
         renderPage(file.pdfjsDoc, currentPage, mainCanvasRef.current, zoom);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file, currentPage, zoom]);
+  }, [zoom]); // Rerender only on zoom change, page change is handled separately.
 
   const loadPdf = useCallback(async (fileToLoad: File, providedPassword = "") => {
     const currentOperationId = ++operationId.current;
@@ -180,6 +179,10 @@ export function PdfViewer() {
       }));
       setPagePreviews(previews);
       setCurrentPage(1);
+
+      if (mainCanvasRef.current) {
+        renderPage(pdfjsDoc, 1, mainCanvasRef.current);
+      }
       
       const renderThumbnail = async (pageNum: number) => {
           const page = await pdfjsDoc.getPage(pageNum);
@@ -223,7 +226,7 @@ export function PdfViewer() {
     } finally {
       if (operationId.current === currentOperationId) setIsLoading(false);
     }
-  }, [file?.pdfjsDoc, toast]);
+  }, [file?.pdfjsDoc, toast, renderPage]);
   
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -275,13 +278,13 @@ export function PdfViewer() {
         const num = parseInt(val, 10);
         if (!isNaN(num) && file) {
             const newPage = Math.max(1, Math.min(num, file.totalPages));
-            setCurrentPage(newPage);
+            handlePageSelect(newPage);
         }
     }
   }
 
    const handlePageInputBlur = () => {
-        if (!currentPage && file) {
+        if ((currentPage as any) === '' && file) {
             setCurrentPage(1);
         }
     };
@@ -293,11 +296,9 @@ export function PdfViewer() {
   }
   
   const handlePageSelect = (pageNumber: number) => {
-    if (pageNumber !== currentPage) {
+    if (pageNumber !== currentPage && file?.pdfjsDoc && mainCanvasRef.current) {
       setCurrentPage(pageNumber);
-      if (file?.pdfjsDoc && mainCanvasRef.current) {
-        renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current);
-      }
+      renderPage(file.pdfjsDoc, pageNumber, mainCanvasRef.current);
     }
   }
 
@@ -330,9 +331,10 @@ export function PdfViewer() {
   };
   
   const handleMouseLeave = () => {
-      if (!mainCanvasContainerRef.current) return;
-      panState.current.isPanning = false;
-      mainCanvasContainerRef.current.style.cursor = 'grab';
+      if (mainCanvasContainerRef.current && panState.current.isPanning) {
+          panState.current.isPanning = false;
+          mainCanvasContainerRef.current.style.cursor = 'grab';
+      }
   }
 
   if (!file && !isLoading) {
@@ -357,7 +359,10 @@ export function PdfViewer() {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Processing PDF...</p>
+        </div>
       </div>
     );
   }
@@ -410,7 +415,7 @@ export function PdfViewer() {
             </div>
         </Card>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-[250px_1fr] gap-4 min-h-0">
-            <Card className="hidden md:block">
+            <Card className="hidden md:block h-full">
                 <div className="p-2 h-full overflow-y-auto">
                     {pagePreviews.map(p => (
                         <PageThumbnail key={p.pageNumber} page={p} onSelect={() => handlePageSelect(p.pageNumber)} isActive={currentPage === p.pageNumber} />

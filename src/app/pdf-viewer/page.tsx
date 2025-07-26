@@ -49,8 +49,8 @@ export default function PdfViewerPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full flex flex-col h-full min-h-[70vh]">
-        <div className="max-w-7xl mx-auto h-full w-full flex flex-col">
+      <main className="flex-1 w-full flex flex-col h-full min-h-[85vh]">
+        <div className="max-w-full mx-auto h-full w-full flex flex-col">
           <PdfViewerLoader />
         </div>
       </main>
