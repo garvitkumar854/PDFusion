@@ -18,7 +18,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
   const { toast } = useToast();
@@ -27,14 +27,16 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const handler = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      setCanInstall(true);
+      if (!isStandalone) {
+        setCanInstall(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Check if the app is already installed
+    // Check if the app is running in standalone mode (installed PWA)
     if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
+      setIsStandalone(true);
       setCanInstall(false);
     }
     
@@ -42,11 +44,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
     if(isIosDevice) {
-        setCanInstall(true); // Always allow manual install on iOS
+        setCanInstall(true); // Always show manual install button on iOS
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  }, [isStandalone]);
 
   const handleInstallClick = useCallback(async () => {
     if (isIOS) {
@@ -64,8 +66,8 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setIsInstalled(true);
       setCanInstall(false);
+      // The app will likely relaunch in standalone mode, but we hide the button just in case.
     }
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
@@ -82,7 +84,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonSize = inSheet ? "default" : "sm";
 
 
-  if (isInstalled) {
+  if (isStandalone) {
       return null; // Don't show anything if already running standalone
   }
   
