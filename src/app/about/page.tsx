@@ -120,7 +120,7 @@ export default function AboutPage() {
                     >
                       <div className="group relative h-full">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card/50 dark:bg-card/20 backdrop-blur-lg">
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card/50 dark:bg-card/20 backdrop-blur-lg group-hover:bg-card">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
