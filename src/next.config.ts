@@ -33,11 +33,6 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Exclude canvas from being processed by Next.js on the server
-    if (isServer) {
-        config.externals.push('canvas');
-    }
-    
     // Fix for pdfjs-dist and other packages with require.extensions
     config.module.rules.push({
       test: /pdf\.mjs$/,
