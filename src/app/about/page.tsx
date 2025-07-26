@@ -120,7 +120,7 @@ export default function AboutPage() {
                     >
                       <div className="group relative h-full">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card/50 dark:bg-card/20 backdrop-blur-lg group-hover:bg-card">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -202,7 +202,7 @@ export default function AboutPage() {
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-700 delay-150"
           >
-            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
+            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8 bg-card/50 dark:bg-card/20 backdrop-blur-lg">
               <Avatar className="w-24 h-24 border-4 border-primary/50">
                 <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
                 <AvatarFallback>GK</AvatarFallback>
@@ -240,7 +240,7 @@ export default function AboutPage() {
                         className="duration-700 flex-shrink-0 w-full lg:w-auto"
                         delay={200}
                     >
-                    <Button asChild size="lg" className="font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
+                    <Button asChild size="lg" className="btn-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
                       <Link href="/#services">
                         Explore Services
                         <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

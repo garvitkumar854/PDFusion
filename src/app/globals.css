@@ -28,7 +28,7 @@
   .dark {
     --background: 224 70% 7%; /* #040B1D */
     --foreground: 0 0% 98%;
-    --card: 222 47% 11%; /* #111827 */
+    --card: 215 69% 11%; /* #09172E */
     --card-foreground: 0 0% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 0 0% 98%;
@@ -78,7 +78,7 @@
         height: 100%;
         background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.3) 50%, transparent 80%);
         transition: left 0.6s ease;
-        animation: btn-shine 3s infinite linear;
+        animation: btn-shine 1.5s infinite linear;
     }
 
     @keyframes btn-shine {
