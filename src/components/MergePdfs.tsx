@@ -525,7 +525,7 @@ export function MergePdfs() {
                                 </div>
                                 <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
-                            <Progress value={mergeProgress} className="h-2 transition-all duration-500" />
+                            <Progress value={mergeProgress} className="h-2" />
                             <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
                                 <Ban className="mr-2 h-4 w-4" />
                                 Cancel
