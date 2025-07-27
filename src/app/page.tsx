@@ -5,6 +5,8 @@ import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, Rotat
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import HomePageLoader from '@/components/HomePageLoader';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -66,6 +68,21 @@ export default function Home() {
               <br />
               Secure, reliable, and completely free to use.
             </motion.p>
+             <motion.div
+              className="flex justify-center items-center gap-4"
+              variants={itemVariants}
+            >
+              <Button asChild size="lg" className="btn-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group">
+                  <Link href="/#services">
+                    Get Started
+                  </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="font-bold text-base">
+                  <Link href="/about">
+                    Learn More
+                  </Link>
+              </Button>
+            </motion.div>
         </motion.div>
       </section>
 
