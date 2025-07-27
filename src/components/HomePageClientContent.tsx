@@ -177,6 +177,24 @@ const WordRotator = () => {
     );
 };
 
+const serviceListVariants = {
+  visible: {
+    opacity: 1,
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.1,
+    },
+  },
+  hidden: {
+    opacity: 0,
+  },
+}
+
+const serviceItemVariants = {
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
+  hidden: { opacity: 0, y: 20 },
+}
+
 
 export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
     if (!showServices) {
@@ -202,13 +220,18 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         Choose from our growing list of tools to handle your PDF tasks.
                     </p>
                 </AnimateOnScroll>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <motion.div 
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.2 }}
+                  variants={serviceListVariants}
+                >
                     {services.map((service, index) => (
-                    <AnimateOnScroll
+                    <motion.div
                         key={index}
-                        animation="animate-in fade-in-0"
-                        className="duration-700 h-full"
-                        delay={index * 100}
+                        variants={serviceItemVariants}
+                        className="h-full"
                     >
                         <Link href={service.href} className="h-full block group relative">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
@@ -226,9 +249,9 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                               </CardContent>
                           </Card>
                         </Link>
-                    </AnimateOnScroll>
+                    </motion.div>
                     ))}
-                </div>
+                </motion.div>
                 </div>
             </section>
 

@@ -2,34 +2,69 @@
 import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, Unlock, ShieldCheck, FileText, Zap } from 'lucide-react';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import HomePageLoader from '@/components/HomePageLoader';
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12,
+    },
+  },
+};
+
 
 export default function Home() {
 
   return (
     <>
       <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4 text-center">
-          <AnimateOnScroll
-              animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-500"
-          >
-            <div className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+        <motion.div 
+          className="container mx-auto px-4 text-center"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+            <motion.div 
+              className="inline-block bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6"
+              variants={itemVariants}
+            >
               ✨ Your All-in-One PDF Toolkit
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
+            </motion.div>
+            <motion.h1 
+              className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4"
+              variants={itemVariants}
+            >
               Powerful PDF Tools,
               <br />
                <span className="relative block h-12 sm:h-16 md:h-20 align-bottom mx-auto">
                   <HomePageLoader />
                </span>
-            </h1>
-            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8 mt-4">
+            </motion.h1>
+            <motion.p 
+              className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg mb-8 mt-4"
+              variants={itemVariants}
+            >
               Easily merge, convert, and manage your PDF files in one place.
               <br />
               Secure, reliable, and completely free to use.
-            </p>
-          </AnimateOnScroll>
-        </div>
+            </motion.p>
+        </motion.div>
       </section>
 
       <HomePageLoader showServices={true} />
