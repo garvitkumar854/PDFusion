@@ -1,4 +1,5 @@
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import BorderBeam from "@/components/BorderBeam";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,17 +48,17 @@ const whyChooseUsFeatures = [
 const howItWorksSteps = [
     {
         icon: <UploadCloud className="w-10 h-10 text-primary" />,
-        title: 'Upload Your Files',
+        title: '1. Upload Your Files',
         description: 'Select your PDFs from your computer. All files are loaded directly into your browser.',
     },
     {
         icon: <Settings className="w-10 h-10 text-primary" />,
-        title: 'Configure Options',
+        title: '2. Configure Options',
         description: 'Reorder files, select pages, or choose your compression level. Your settings are applied instantly.',
     },
     {
         icon: <Download className="w-10 h-10 text-primary" />,
-        title: 'Download Securely',
+        title: '3. Download Securely',
         description: 'Your new PDF is generated in your browser and downloaded directly to your device. No uploads needed.',
     }
 ]
@@ -120,7 +121,7 @@ export default function AboutPage() {
                     >
                       <div className="group relative h-full">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full">
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -157,29 +158,47 @@ export default function AboutPage() {
               Your privacy is our priority. All processing happens securely in your browser.
             </p>
           </AnimateOnScroll>
-          <div className="relative max-w-4xl mx-auto">
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block" aria-hidden="true"></div>
-            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0 animate-pulse" aria-hidden="true"></div>
-            
-            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12">
-              {howItWorksSteps.map((step, index) => (
-                <AnimateOnScroll
-                  key={index}
-                  animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                  className="duration-700"
-                  delay={index * 200}
-                >
-                  <div className="flex flex-col items-center text-center p-6 bg-transparent">
-                    <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-                      {step.icon}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {howItWorksSteps.map((step, index) => (
+                <div key={index} className="flex flex-col items-center">
+                    <AnimateOnScroll
+                        animation="animate-in fade-in-0 zoom-in-95"
+                        className="duration-500 w-full"
+                        delay={index * 200}
+                    >
+                        <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                                {step.icon}
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                                <p className="text-muted-foreground">{step.description}</p>
+                            </div>
+                            <BorderBeam size={150} duration={12} delay={index * 2} />
+                        </div>
+                    </AnimateOnScroll>
+                    {index < howItWorksSteps.length - 1 && (
+                    <div className="mt-8 lg:hidden">
+                        <AnimateOnScroll
+                            animation="animate-in fade-in-0"
+                            className="duration-500"
+                            delay={index * 200 + 100}
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary/50">
+                                <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M19 12L12 19L5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </AnimateOnScroll>
                     </div>
-                    <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                    <p className="text-muted-foreground">{step.description}</p>
-                  </div>
-                </AnimateOnScroll>
-              ))}
+                    )}
+                </div>
+            ))}
             </div>
-          </div>
+            <div className="hidden lg:flex items-center justify-center -mt-16">
+                 <svg width="66%" height="24" viewBox="0 0 800 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary/30">
+                    <path d="M1 12.5C1 12.5 130.5 12.5 200 12.5C321 12.5 380 12.5 400 12.5C420 12.5 479 12.5 600 12.5C669.5 12.5 799 12.5 799 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="8 8"/>
+                </svg>
+            </div>
         </div>
       </section>
 
@@ -202,7 +221,7 @@ export default function AboutPage() {
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-700 delay-150"
           >
-            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8">
+            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8 bg-card">
               <Avatar className="w-24 h-24 border-4 border-primary/50">
                 <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
                 <AvatarFallback>GK</AvatarFallback>
@@ -221,7 +240,7 @@ export default function AboutPage() {
 
       <section className="pb-20 md:pb-24">
         <div className="container mx-auto px-4">
-              <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
+              <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
                 <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                     <AnimateOnScroll
