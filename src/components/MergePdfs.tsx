@@ -403,7 +403,7 @@ export function MergePdfs() {
                         Drop PDF files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                    <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
                       <Button type="button" onClick={open} className="mt-4" disabled={isMerging}>
                           <FolderOpen className="mr-2 h-4 w-4" />
                           Choose Files
@@ -519,7 +519,7 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="space-y-4 h-20 flex flex-col justify-center">
+                <div className="h-10">
                    <AnimatePresence mode="wait">
                     {isMerging ? (
                         <motion.div
@@ -528,21 +528,20 @@ export function MergePdfs() {
                            animate={{ opacity: 1, y: 0 }}
                            exit={{ opacity: 0, y: 20 }}
                            transition={{ duration: 0.3 }}
+                           className="space-y-4"
                         >
-                            <div className="p-4 border rounded-lg bg-primary/5">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
-                                    </div>
-                                    <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                    <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
                                 </div>
-                                <Progress value={mergeProgress} className="h-2" />
-                                <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
-                                    <Ban className="mr-2 h-4 w-4" />
-                                    Cancel
-                                </Button>
+                                <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                             </div>
+                            <Progress value={mergeProgress} className="h-2" />
+                            <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
+                                <Ban className="mr-2 h-4 w-4" />
+                                Cancel
+                            </Button>
                         </motion.div>
                     ) : (
                         <motion.div

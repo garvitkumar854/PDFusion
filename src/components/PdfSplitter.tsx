@@ -31,6 +31,8 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -573,10 +575,12 @@ export function PdfSplitter() {
                 Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isSplitting}>
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Choose File
-              </Button>
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isSplitting}>
+                    <FolderOpen className="mr-2 h-4 w-4" />
+                    Choose File
+                </Button>
+              </motion.div>
               <p className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                 Max file size: {MAX_FILE_SIZE_MB}MB
               </p>
@@ -804,24 +808,41 @@ export function PdfSplitter() {
                     <AlertTriangle className="w-4 h-4" /> {splitError}
                 </p>
             )}
-            <div className="mt-8 space-y-4">
-              {isSplitting ? (
-                 <div className="p-4 border rounded-lg bg-primary/5 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                      <p className="text-sm font-medium text-primary">Splitting PDF...</p>
-                    </div>
-                    <Button size="sm" variant="destructive" onClick={handleCancelSplit} className="w-full mt-4">
-                        <Ban className="mr-2 h-4 h-4" />
-                        Cancel
-                    </Button>
-                </div>
-              ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file || file.isEncrypted}>
-                  <Scissors className="mr-2 h-5 w-5" />
-                  Split PDF
-                </Button>
-              )}
+            <div className="mt-8 h-10">
+                <AnimatePresence mode="wait">
+                  {isSplitting ? (
+                     <motion.div
+                        key="progress"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                            <p className="text-sm font-medium text-primary">Splitting PDF...</p>
+                        </div>
+                        <Button size="sm" variant="destructive" onClick={handleCancelSplit} className="w-full mt-4">
+                            <Ban className="mr-2 h-4 h-4" />
+                            Cancel
+                        </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                        key="button"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file || file.isEncrypted}>
+                        <Scissors className="mr-2 h-5 w-5" />
+                        Split PDF
+                        </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
             </div>
           </CardContent>
         </Card>
