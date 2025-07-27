@@ -353,7 +353,9 @@ export function MergePdfs() {
     link.download = finalFilename;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
   };
   
   const handleMergeMore = () => {
@@ -512,8 +514,8 @@ export function MergePdfs() {
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Merge Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className={cn(isMerging && "opacity-70 pointer-events-none")}>
+            <CardContent>
+                <div className={cn("space-y-4", isMerging && "opacity-70 pointer-events-none")}>
                     <label htmlFor="output-filename" className="text-sm font-medium text-foreground">Output Filename</label>
                     <Input 
                         id="output-filename" 
@@ -525,7 +527,7 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="pt-6 border-t">
+                <div className="pt-6 mt-6 border-t h-[104px] flex flex-col justify-center">
                     <AnimatePresence mode="wait">
                         {isMerging ? (
                             <motion.div

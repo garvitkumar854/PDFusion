@@ -384,7 +384,9 @@ export function PdfToJpgConverter() {
     link.download = result.filename;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
   };
 
   const toggleSelectPage = (pageNumber: number) => {

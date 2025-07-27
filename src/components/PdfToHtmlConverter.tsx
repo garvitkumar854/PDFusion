@@ -218,6 +218,18 @@ export function PdfToHtmlConverter() {
     setResult(null);
   };
 
+  const handleDownload = () => {
+    if (!result) return;
+    const link = document.createElement("a");
+    link.href = result.url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
+  };
+
 
   if (result) {
     return (
@@ -225,11 +237,9 @@ export function PdfToHtmlConverter() {
         <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Successful!</h2>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <a href={result.url} download={result.filename}>
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-              <Download className="mr-2 h-5 w-5" /> Download HTML
-            </Button>
-          </a>
+          <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
+            <Download className="mr-2 h-5 w-5" /> Download HTML
+          </Button>
           <Button size="lg" variant="outline" onClick={handleProcessAgain}>Convert Another PDF</Button>
         </div>
       </div>

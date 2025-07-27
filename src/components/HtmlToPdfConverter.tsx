@@ -34,6 +34,20 @@ export function HtmlToPdfConverter() {
     }
   };
 
+  const handleDownload = () => {
+    if (!resultUrl) return;
+    const link = document.createElement("a");
+    link.href = resultUrl;
+    link.download = resultFilename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(resultUrl);
+        setResultUrl(null);
+    }, 100);
+  }
+
   const handleConvert = async () => {
     if (!url) {
       setError("Please enter a valid URL.");
@@ -126,11 +140,9 @@ export function HtmlToPdfConverter() {
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Complete!</h2>
         <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your PDF is ready for download.</p>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <a href={resultUrl} download={resultFilename}>
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
+            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
               <Download className="mr-2 h-5 w-5" /> Download PDF
             </Button>
-          </a>
           <Button size="lg" variant="outline" onClick={handleConvertAgain} className="w-full sm:w-auto text-base">
             Convert Another URL
           </Button>

@@ -107,7 +107,7 @@ export function JpgToPdfConverter() {
   const [totalSize, setTotalSize] = useState(0);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
-  const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
+  const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[]>([]);
   
   const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
@@ -242,7 +242,7 @@ export function JpgToPdfConverter() {
     
     setIsConverting(true);
     setConversionProgress(0);
-    setConversionResults(null);
+    setConversionResults([]);
     
     try {
       const getPageDimensions = (img: ImageFile) => {
@@ -352,23 +352,34 @@ export function JpgToPdfConverter() {
     if (conversionResults) {
       conversionResults.forEach(r => URL.revokeObjectURL(r.url));
     }
-    setConversionResults(null);
+    setConversionResults([]);
     handleClearAll();
   };
 
-  if (conversionResults) {
+  const handleDownload = () => {
+      if (conversionResults.length === 0) return;
+      const result = conversionResults[0];
+      const link = document.createElement("a");
+      link.href = result.url;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+          document.body.removeChild(link);
+      }, 100);
+  };
+
+  if (conversionResults.length > 0) {
     return (
         <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-6 sm:p-8 rounded-xl">
             <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
             <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Successful!</h2>
             <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your new document is ready for download.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <a href={conversionResults[0].url} download={conversionResults[0].filename}>
-                    <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-                        {conversionResults[0].filename.endsWith('.zip') ? <FileArchive className="mr-2 h-5 w-5" /> : <Download className="mr-2 h-5 w-5" />}
-                        Download {conversionResults[0].filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
-                    </Button>
-                </a>
+                <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
+                    {conversionResults[0].filename.endsWith('.zip') ? <FileArchive className="mr-2 h-5 w-5" /> : <Download className="mr-2 h-5 w-5" />}
+                    Download {conversionResults[0].filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
+                </Button>
                 <Button size="lg" variant="outline" onClick={handleConvertMore} className="w-full sm:w-auto text-base">
                     Convert More
                 </Button>

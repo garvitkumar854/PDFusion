@@ -167,6 +167,18 @@ export function PdfCompressor() {
     removeFile();
   };
 
+  const handleDownload = () => {
+    if (!result) return;
+    const link = document.createElement("a");
+    link.href = result.url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
+  };
+
   if (result) {
     const { stats } = result;
     const reduction = stats.originalSize > 0 ? ((stats.originalSize - stats.newSize) / stats.originalSize) * 100 : 0;
@@ -181,11 +193,9 @@ export function PdfCompressor() {
             <p className="text-2xl font-bold text-green-600 mt-2">Saved {reduction.toFixed(2)}%</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <a href={result.url} download={result.filename}>
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
+            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
               <Download className="mr-2 h-5 w-5" /> Download PDF
             </Button>
-          </a>
           <Button size="lg" variant="outline" onClick={handleProcessAgain}>Compress Another PDF</Button>
         </div>
       </div>

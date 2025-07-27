@@ -467,7 +467,6 @@ export function PdfSplitter() {
      link.click();
      setTimeout(() => {
         document.body.removeChild(link);
-        URL.revokeObjectURL(resultToDownload.url);
      }, 100);
   };
 

@@ -233,6 +233,18 @@ export function PdfRotator() {
     removeFile();
   };
 
+  const handleDownload = () => {
+    if (!result) return;
+    const link = document.createElement("a");
+    link.href = result.url;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
+  };
+
   if (result) {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl shadow-lg border">
@@ -240,11 +252,9 @@ export function PdfRotator() {
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Rotated Successfully!</h2>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-          <a href={result.url} download={result.filename}>
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white">
-              <Download className="mr-2 h-5 w-5" /> Download PDF
-            </Button>
-          </a>
+          <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
+            <Download className="mr-2 h-5 w-5" /> Download PDF
+          </Button>
           <Button size="lg" variant="outline" onClick={handleProcessAgain} className="w-full sm:w-auto text-base">
             Rotate Another PDF
           </Button>
@@ -345,7 +355,7 @@ export function PdfRotator() {
                                     <Progress value={progress} className="h-2" />
                                 </div>
                                 <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
-                                    <Ban className="mr-2 h-4 w-4" />Cancel
+                                    <Ban className="mr-2 h-4 h-4" />Cancel
                                 </Button>
                             </motion.div>
                           ) : (
