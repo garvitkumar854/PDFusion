@@ -1,4 +1,6 @@
 
+'use client';
+
 import { ArrowUpRight, Wand2, Combine, Scissors, FileArchive, Image, Hash, RotateCw, ListOrdered, Code, Unlock, ShieldCheck, FileText, Zap } from 'lucide-react';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import HomePageLoader from '@/components/HomePageLoader';
