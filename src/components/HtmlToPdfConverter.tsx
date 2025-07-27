@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Download, CheckCircle, AlertTriangle, Globe } from "lucide-react";
 import html2pdf from 'html2pdf.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type Status = "idle" | "fetching" | "converting" | "done" | "error";
 
@@ -171,19 +172,37 @@ export function HtmlToPdfConverter() {
               </p>
             )}
           </div>
-          <div>
-            {isBusy ? (
-              <div className="p-4 border rounded-lg bg-primary/5 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                  <p className="text-sm font-medium text-primary">{getStatusLabel()}</p>
-                </div>
-              </div>
-            ) : (
-              <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={!url}>
-                Convert to PDF
-              </Button>
-            )}
+          <div className="h-10">
+            <AnimatePresence mode="wait">
+              {isBusy ? (
+                <motion.div
+                  key="progress"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                    <div className="p-4 border rounded-lg bg-primary/5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                        <p className="text-sm font-medium text-primary">{getStatusLabel()}</p>
+                      </div>
+                    </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="button"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                    <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={!url}>
+                      Convert to PDF
+                    </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </CardContent>
