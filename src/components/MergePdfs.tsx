@@ -172,22 +172,25 @@ export function MergePdfs() {
       }
       
       let currentSize = totalSize;
-      const validFiles = acceptedFiles.filter(file => {
+      const validFiles: File[] = [];
+      for(const file of acceptedFiles) {
         if (file.size > MAX_FILE_SIZE_BYTES) {
           toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
-          return false;
+          continue;
         }
         if (currentSize + file.size > MAX_TOTAL_SIZE_BYTES) {
           toast({ variant: "destructive", title: "Total size limit exceeded", description: `Adding "${file.name}" would exceed the ${MAX_TOTAL_SIZE_MB}MB total size limit.` });
-          return false;
+          continue;
         }
         if (!file.type.includes('pdf')) {
           toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.` });
-          return false;
+          continue;
         }
         currentSize += file.size;
-        return true;
-      });
+        validFiles.push(file);
+      }
+
+      if (validFiles.length === 0) return;
 
       const filesToAddPromises = validFiles.map(async file => {
           const pdfBytes = await file.arrayBuffer();
@@ -519,7 +522,7 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="pt-4 border-t flex flex-col justify-center h-24">
+                <div className="pt-4 border-t h-24 flex flex-col justify-center">
                    <AnimatePresence mode="wait">
                     {isMerging ? (
                         <motion.div
@@ -566,3 +569,4 @@ export function MergePdfs() {
     </div>
   );
 }
+
