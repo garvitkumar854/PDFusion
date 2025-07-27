@@ -412,7 +412,7 @@ export function MergePdfs() {
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
-                            <p>Remaining space: {formatBytes(totalSize)}</p>
+                            <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
                         </div>
                     </div>
                 </div>
@@ -519,7 +519,7 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="h-10">
+                <div className="h-20">
                    <AnimatePresence mode="wait">
                     {isMerging ? (
                         <motion.div
@@ -530,15 +530,17 @@ export function MergePdfs() {
                            transition={{ duration: 0.3 }}
                            className="space-y-4"
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
+                            <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                        <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
+                                    </div>
+                                    <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                                 </div>
-                                <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
+                                <Progress value={mergeProgress} className="h-2" />
                             </div>
-                            <Progress value={mergeProgress} className="h-2" />
-                            <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full mt-4">
+                            <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full">
                                 <Ban className="mr-2 h-4 w-4" />
                                 Cancel
                             </Button>
