@@ -313,7 +313,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
 
             <section className="pb-20 md:pb-24">
                 <div className="container mx-auto px-4">
-                    <div className="relative bg-white dark:bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
+                    <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                             <AnimateOnScroll
@@ -332,7 +332,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                                 className="duration-700 flex-shrink-0 w-full lg:w-auto"
                                 delay={200}
                             >
-                                <Button asChild size="lg" className="btn-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
+                                <Button asChild size="lg" className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
                                 <Link href="#services">
                                     Explore Services
                                     <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

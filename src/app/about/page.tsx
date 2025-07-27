@@ -259,7 +259,7 @@ export default function AboutPage() {
                         className="duration-700 flex-shrink-0 w-full lg:w-auto"
                         delay={200}
                     >
-                    <Button asChild size="lg" className="btn-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
+                    <Button asChild size="lg" className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
                       <Link href="/#services">
                         Explore Services
                         <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

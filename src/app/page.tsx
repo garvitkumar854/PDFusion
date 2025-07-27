@@ -72,7 +72,7 @@ export default function Home() {
               className="flex justify-center items-center gap-4"
               variants={itemVariants}
             >
-              <Button asChild size="lg" className="btn-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group">
+              <Button asChild size="lg" className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group">
                   <Link href="/#services">
                     Get Started
                   </Link>
