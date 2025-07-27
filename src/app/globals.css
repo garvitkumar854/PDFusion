@@ -58,9 +58,6 @@
   body {
     background: hsl(var(--background));
   }
-  .dark body {
-    background: linear-gradient(115deg, #050C1E, #0A1A35);
-  }
 }
 
 @layer utilities {
