@@ -231,8 +231,9 @@ export function PdfSplitter() {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
+      if (rejectedFiles.length > 0 || acceptedFiles.length > 1) {
+        toast({ variant: "destructive", title: "One file at a time", description: "This tool only supports processing one PDF at a time. Please upload a single file." });
+        return;
       }
       if (acceptedFiles.length === 0) return;
       
@@ -276,7 +277,6 @@ export function PdfSplitter() {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { "application/pdf": [".pdf"] },
-    maxFiles: 1,
     maxSize: MAX_FILE_SIZE_BYTES,
     noClick: true,
     noKeyboard: true,
@@ -465,7 +465,10 @@ export function PdfSplitter() {
      link.download = resultToDownload.filename;
      document.body.appendChild(link);
      link.click();
-     document.body.removeChild(link);
+     setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(resultToDownload.url);
+     }, 100);
   };
 
   const toggleSelectPage = (pageNumber: number) => {

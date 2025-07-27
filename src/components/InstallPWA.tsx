@@ -34,13 +34,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Check if the app is running in standalone mode (installed PWA)
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsStandalone(true);
       setCanInstall(false);
     }
     
-    // Check for iOS
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
     if(isIosDevice) {
@@ -51,11 +49,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, [isStandalone]);
 
   const handleInstallClick = useCallback(async () => {
-    if (isIOS) {
+    if (isIOS && !isStandalone) {
         toast({
             title: "Installation Guide",
             description: "To install, tap the Share button and then 'Add to Home Screen'.",
-            duration: 5000,
+            duration: 8000,
         });
         return;
     }
@@ -67,10 +65,9 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     
     if (outcome === 'accepted') {
       setCanInstall(false);
-      // The app will likely relaunch in standalone mode, but we hide the button just in case.
     }
     setInstallPrompt(null);
-  }, [installPrompt, isIOS, toast]);
+  }, [installPrompt, isIOS, isStandalone, toast]);
 
   const handleOpenApp = () => {
     window.open(window.location.origin, '_blank');
@@ -85,7 +82,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
 
   if (isStandalone) {
-      return null; // Don't show anything if already running standalone
+      return null;
   }
   
   if (canInstall) {
