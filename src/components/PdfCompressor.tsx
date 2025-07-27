@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
 import { compressPdf, CompressPdfInput, CompressionStats } from "@/ai/flows/compress-pdf-flow";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -207,7 +208,9 @@ export function PdfCompressor() {
               <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
               <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}><FolderOpen className="mr-2 h-4 w-4" />Choose File</Button>
+              <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}><FolderOpen className="mr-2 h-4 w-4" />Choose File</Button>
+              </motion.div>
             </div>
           ) : (
             <div className={cn("p-2 sm:p-3 rounded-lg border bg-card/50 shadow-sm flex items-center justify-between", isProcessing && "opacity-70 pointer-events-none")}>
@@ -243,20 +246,38 @@ export function PdfCompressor() {
                 </div>
             )}
             
-            <div className="pt-6 border-t">
-              {isProcessing ? (
-                <div className="p-4 border rounded-lg bg-primary/5 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="text-sm font-medium text-primary">Compressing PDF... This may take a moment.</p>
-                  </div>
-                   <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4"><Ban className="mr-2 h-4 w-4" />Cancel</Button>
-                </div>
-              ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={isProcessing || !file || file.isEncrypted}>
-                  <FileArchive className="mr-2 h-5 w-5" />Compress PDF
-                </Button>
-              )}
+            <div className="pt-6 border-t h-20 flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                {isProcessing ? (
+                  <motion.div
+                    key="progress"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="p-4 border rounded-lg bg-primary/5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                        <p className="text-sm font-medium text-primary">Compressing PDF... This may take a moment.</p>
+                      </div>
+                      <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4"><Ban className="mr-2 h-4 w-4" />Cancel</Button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="button"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={isProcessing || !file || file.isEncrypted}>
+                      <FileArchive className="mr-2 h-5 w-5" />Compress PDF
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </CardContent>
         </Card>

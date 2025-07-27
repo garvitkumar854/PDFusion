@@ -57,9 +57,8 @@ const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: s
         <span>{label}</span>
         <span
             className={cn(
-            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300 transform origin-left",
-            isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
-            "group-focus:scale-x-100"
+            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
+            isActive ? "w-full" : "w-0 group-hover:w-full",
             )}
         />
     </Link>
@@ -81,8 +80,8 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         <span>{label}</span>
          <span
             className={cn(
-            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300 transform origin-left",
-            isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
+            isActive ? "w-full" : "w-0 group-hover:w-full"
             )}
         />
     </Link>
@@ -112,16 +111,16 @@ export default function Header() {
           <NavLink href="/" label="Home" currentPath={pathname} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <div className={cn(
+                 <div className={cn(
                     "group relative py-2 font-semibold transition-colors flex items-center cursor-pointer",
                     isServicesActive ? "text-primary" : "text-muted-foreground hover:text-primary"
                 )}>
                     <span>Services</span>
                     <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                    <span
+                     <span
                         className={cn(
-                        "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300 transform origin-left",
-                        isServicesActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                        "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400 transition-all duration-300",
+                        isServicesActive ? "w-full" : "w-0 group-hover:w-full"
                         )}
                     />
                 </div>
