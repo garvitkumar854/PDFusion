@@ -808,16 +808,15 @@ export function PdfSplitter() {
                     <AlertTriangle className="w-4 h-4" /> {splitError}
                 </p>
             )}
-            <div className="mt-8 h-10">
+            <div className="mt-8 h-20 flex flex-col justify-center">
                 <AnimatePresence mode="wait">
                   {isSplitting ? (
                      <motion.div
                         key="progress"
-                        initial={{ opacity: 0, y: -20 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-4"
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
                       >
                         <div className="flex items-center justify-center gap-2">
                             <Loader2 className="w-5 h-5 text-primary animate-spin" />
@@ -831,10 +830,10 @@ export function PdfSplitter() {
                   ) : (
                     <motion.div
                         key="button"
-                        initial={{ opacity: 0, y: -20 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{ duration: 0.3 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
                     >
                         <Button size="lg" className="w-full text-base font-bold" onClick={handleSplit} disabled={isSplitting || isProcessing || !file || file.isEncrypted}>
                         <Scissors className="mr-2 h-5 w-5" />

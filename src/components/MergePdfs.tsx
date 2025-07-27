@@ -519,15 +519,15 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="h-20">
+                <div className="h-20 flex flex-col justify-center">
                    <AnimatePresence mode="wait">
                     {isMerging ? (
                         <motion.div
                            key="progress"
-                           initial={{ opacity: 0, y: -20 }}
+                           initial={{ opacity: 0, y: -10 }}
                            animate={{ opacity: 1, y: 0 }}
-                           exit={{ opacity: 0, y: 20 }}
-                           transition={{ duration: 0.3 }}
+                           exit={{ opacity: 0, y: 10 }}
+                           transition={{ duration: 0.2 }}
                            className="space-y-4"
                         >
                             <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
@@ -548,10 +548,10 @@ export function MergePdfs() {
                     ) : (
                         <motion.div
                            key="button"
-                           initial={{ opacity: 0, y: -20 }}
+                           initial={{ opacity: 0, y: -10 }}
                            animate={{ opacity: 1, y: 0 }}
-                           exit={{ opacity: 0, y: 20 }}
-                           transition={{ duration: 0.3 }}
+                           exit={{ opacity: 0, y: 10 }}
+                           transition={{ duration: 0.2 }}
                         >
                             <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
                                 <Combine className="mr-2 h-5 w-5" />

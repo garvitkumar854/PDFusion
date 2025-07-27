@@ -25,6 +25,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import JSZip from "jszip";
 import { Label } from "./ui/label";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Set worker path for pdf.js
 if (typeof window !== 'undefined') {
@@ -457,10 +458,12 @@ export function PdfToJpgConverter() {
                 Drop a PDF file here
               </p>
               <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-              <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isConverting}>
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Choose File
-              </Button>
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                <Button type="button" onClick={open} className="mt-4" disabled={isProcessing || isConverting}>
+                    <FolderOpen className="mr-2 h-4 w-4" />
+                    Choose File
+                </Button>
+              </motion.div>
               <p className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                 Max file size: {MAX_FILE_SIZE_MB}MB
               </p>
@@ -551,28 +554,47 @@ export function PdfToJpgConverter() {
                     <ShieldAlert className="w-4 h-4" /> {error}
                 </p>
             )}
-            <div className="mt-8 space-y-4">
+            <div className="mt-8 h-20 flex flex-col justify-center">
+              <AnimatePresence mode="wait">
               {isConverting ? (
-                 <div className="p-4 border rounded-lg bg-primary/5">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                            <p className="text-sm font-medium text-primary">Converting to JPG...</p>
+                 <motion.div
+                    key="progress"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-4"
+                 >
+                    <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                <p className="text-sm font-medium text-primary">Converting to JPG...</p>
+                            </div>
+                            <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
                         </div>
-                        <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
+                        <Progress value={conversionProgress} className="h-2" />
                     </div>
-                    <Progress value={conversionProgress} className="h-2" />
-                    <Button size="sm" variant="destructive" onClick={handleCancelConvert} className="w-full mt-4">
+                    <Button size="sm" variant="destructive" onClick={handleCancelConvert} className="w-full">
                         <Ban className="mr-2 h-4 h-4" />
                         Cancel
                     </Button>
-                </div>
+                </motion.div>
               ) : (
-                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isProcessing || isConverting || !file || file.isEncrypted || selectedPages.size === 0}>
-                  <ImageIcon className="mr-2 h-5 w-5" />
-                  Convert to JPG
-                </Button>
+                <motion.div
+                    key="button"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={isProcessing || isConverting || !file || file.isEncrypted || selectedPages.size === 0}>
+                    <ImageIcon className="mr-2 h-5 w-5" />
+                    Convert to JPG
+                    </Button>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           </CardContent>
         </Card>

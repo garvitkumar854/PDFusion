@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
+import { motion, AnimatePresence } from "framer-motion";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -426,9 +427,11 @@ export function PageNumberAdder() {
                 <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
                 <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop a PDF file here</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
-                    <FolderOpen className="mr-2 h-4 w-4" />Choose File
-                </Button>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isProcessing}>
+                        <FolderOpen className="mr-2 h-4 w-4" />Choose File
+                    </Button>
+                </motion.div>
                 <p className="w-full px-2 text-center text-xs text-muted-foreground mt-6">Max file size: {MAX_FILE_SIZE_MB}MB</p>
             </div>
             </CardContent>
@@ -561,22 +564,43 @@ export function PageNumberAdder() {
                     </CardContent>
                 </Card>
                  <Card className="bg-transparent shadow-lg">
-                    <CardContent className="p-6">
-                        {isProcessing ? (
-                            <div className="p-4 border rounded-lg bg-primary/5">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    <p className="text-sm font-medium text-primary transition-all duration-300">Adding page numbers...</p>
+                    <CardContent className="p-6 h-[104px] flex flex-col justify-center">
+                         <AnimatePresence mode="wait">
+                            {isProcessing ? (
+                                <motion.div
+                                    key="progress"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="space-y-4"
+                                >
+                                    <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                                <p className="text-sm font-medium text-primary">Adding page numbers...</p>
+                                            </div>
+                                            <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
+                                        </div>
+                                        <Progress value={progress} className="h-2" />
                                     </div>
-                                    <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                                </div>
-                                <Progress value={progress} className="h-2" />
-                                <div className="mt-4"><Button size="sm" variant="destructive" onClick={handleCancel} className="w-full"><Ban className="mr-2 h-4 w-4" />Cancel</Button></div>
-                            </div>
-                        ) : (
-                            <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
-                        )}
+                                    <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
+                                        <Ban className="mr-2 h-4 w-4" />Cancel
+                                    </Button>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="button"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                <Button size="lg" className="w-full text-base font-bold" onClick={handleProcess} disabled={!file || isProcessing || file.isEncrypted}><Hash className="mr-2 h-5 w-5" />Add Page Numbers</Button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </CardContent>
                 </Card>
             </div>
