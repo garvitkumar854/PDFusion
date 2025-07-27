@@ -519,7 +519,7 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="h-20 flex flex-col justify-center">
+                <div className="h-24 pt-4 border-t flex flex-col justify-center">
                    <AnimatePresence mode="wait">
                     {isMerging ? (
                         <motion.div
