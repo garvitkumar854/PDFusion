@@ -196,6 +196,7 @@ export function MergePdfs() {
           const pdfBytes = await file.arrayBuffer();
           let isEncrypted = false;
           try {
+              // A more reliable check for encryption
               await pdfjsLib.getDocument(new Uint8Array(pdfBytes)).promise;
           } catch (pdfjsError: any) {
               if (pdfjsError.name === 'PasswordException') {
@@ -284,6 +285,8 @@ export function MergePdfs() {
         for (let i = 0; i < files.length; i++) {
             const pdfFile = files[i];
             if (pdfFile.isEncrypted) {
+                // This check is now redundant due to the button being disabled, but it's good practice.
+                toast({ variant: "destructive", title: "Cannot Merge Locked File", description: `Please remove "${pdfFile.file.name}" to proceed.` });
                 dispatch({ type: 'MERGE_CANCEL' });
                 return;
             }
@@ -522,51 +525,50 @@ export function MergePdfs() {
                     />
                 </div>
                 
-                <div className="pt-4 border-t h-24 flex flex-col justify-center">
-                   <AnimatePresence mode="wait">
-                    {isMerging ? (
-                        <motion.div
-                           key="progress"
-                           initial={{ opacity: 0, y: -10 }}
-                           animate={{ opacity: 1, y: 0 }}
-                           exit={{ opacity: 0, y: 10 }}
-                           transition={{ duration: 0.2 }}
-                           className="space-y-4"
-                        >
-                            <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                        <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
+                <div className="pt-6 border-t">
+                    <AnimatePresence mode="wait">
+                        {isMerging ? (
+                            <motion.div
+                               key="progress"
+                               initial={{ opacity: 0, y: -10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               exit={{ opacity: 0, y: 10 }}
+                               transition={{ duration: 0.2 }}
+                               className="space-y-4"
+                            >
+                                <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                            <p className="text-sm font-medium text-primary transition-all duration-300">Merging PDFs...</p>
+                                        </div>
+                                        <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
                                     </div>
-                                    <p className="text-sm font-medium text-primary">{Math.round(mergeProgress)}%</p>
+                                    <Progress value={mergeProgress} className="h-2" />
                                 </div>
-                                <Progress value={mergeProgress} className="h-2" />
-                            </div>
-                            <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full">
-                                <Ban className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                           key="button"
-                           initial={{ opacity: 0, y: -10 }}
-                           animate={{ opacity: 1, y: 0 }}
-                           exit={{ opacity: 0, y: 10 }}
-                           transition={{ duration: 0.2 }}
-                        >
-                            <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
-                                <Combine className="mr-2 h-5 w-5" />
-                                Merge PDFs
-                            </Button>
-                        </motion.div>
-                    )}
-                   </AnimatePresence>
+                                <Button size="sm" variant="destructive" onClick={handleCancelMerge} className="w-full">
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel
+                                </Button>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                               key="button"
+                               initial={{ opacity: 0, y: -10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               exit={{ opacity: 0, y: 10 }}
+                               transition={{ duration: 0.2 }}
+                            >
+                                <Button size="lg" className="w-full text-base font-bold" onClick={handleMerge} disabled={mergeButtonDisabled}>
+                                    <Combine className="mr-2 h-5 w-5" />
+                                    Merge PDFs
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </CardContent>
         </Card>
     </div>
   );
 }
-
