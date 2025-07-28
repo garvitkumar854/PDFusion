@@ -7,21 +7,22 @@ import { motion } from "framer-motion"
 
 const spring = {
   type: "spring",
-  stiffness: 500,
-  damping: 40,
+  stiffness: 700,
+  damping: 30,
 };
 
-const sunRays = [0, 45, 90, 135, 180, 225, 270, 315].map((rot) => ({
-  rot,
-  y1: 8,
-  y2: 10,
-}));
-
-const moonCraters = [
-  { cx: 16, cy: 8, r: 2 },
-  { cx: 8, cy: 15, r: 1.5 },
-  { cx: 9, cy: 7, r: 1 },
-];
+const sunAndMoonColors = {
+    light: {
+        background: "#bae6fd", // sky-200
+        circle: "#f0f9ff", // sky-50
+        mask: "#0ea5e9", // sky-500
+    },
+    dark: {
+        background: "#0c4a6e", // sky-900
+        circle: "#0369a1", // sky-700
+        mask: "#e0f2fe", // sky-100
+    },
+};
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -40,70 +41,55 @@ export function ThemeToggle() {
   }
 
   const isLight = theme === "light";
+  const colors = isLight ? sunAndMoonColors.light : sunAndMoonColors.dark;
 
   return (
     <button
-      onClick={toggleTheme}
-      aria-label="Toggle theme"
-      className={`relative flex items-center w-[70px] h-[34px] rounded-full p-1 transition-colors duration-500 ${
-        isLight ? 'bg-sky-400' : 'bg-indigo-900'
-      }`}
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+        className="relative w-[70px] h-[34px] rounded-full overflow-hidden"
     >
-      <motion.div
-        className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md"
-        layout
-        transition={spring}
-        style={{
-          left: isLight ? '4px' : '40px'
-        }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-full w-full"
+        <motion.div
+            className="w-full h-full"
+            animate={{ backgroundColor: colors.background }}
+            transition={spring}
         >
-          {/* Sun Rays */}
-          <motion.g
-            initial={false}
-            animate={{ scale: isLight ? 1 : 0, opacity: isLight ? 1 : 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            style={{ transformOrigin: 'center center' }}
-          >
-            {sunRays.map((ray, i) => (
-              <line
-                key={i}
-                x1="12"
-                y1={ray.y1}
-                x2="12"
-                y2={ray.y2}
-                stroke={isLight ? "orange" : "white"}
-                strokeWidth="2"
-                strokeLinecap="round"
-                transform={`rotate(${ray.rot} 12 12)`}
-              />
-            ))}
-          </motion.g>
-
-          {/* Moon Craters */}
-          <motion.g
-            initial={false}
-            animate={{ scale: isLight ? 0 : 1, opacity: isLight ? 0 : 1 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            style={{ transformOrigin: 'center center' }}
-          >
-            {moonCraters.map((crater, i) => (
-              <circle
-                key={i}
-                cx={crater.cx}
-                cy={crater.cy}
-                r={crater.r}
-                fill={isLight ? "white" : "#d1d5db"}
-              />
-            ))}
-          </motion.g>
-        </svg>
-      </motion.div>
+            <svg viewBox="0 0 70 34" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <mask id="mask-main">
+                    <rect x="0" y="0" width="70" height="34" fill="white" />
+                    <motion.circle
+                        cx={isLight ? 17 : 53}
+                        cy="17"
+                        r="12"
+                        fill="black"
+                        transition={spring}
+                    />
+                     <motion.circle
+                        cx={isLight ? 45 : 81}
+                        cy="11"
+                        r="4"
+                        fill="black"
+                        transition={spring}
+                    />
+                     <motion.circle
+                        cx={isLight ? 53 : 89}
+                        cy="21"
+                        r="2.5"
+                        fill="black"
+                        transition={spring}
+                    />
+                </mask>
+                <motion.rect
+                    x="0"
+                    y="0"
+                    width="70"
+                    height="34"
+                    mask="url(#mask-main)"
+                    animate={{ fill: colors.mask }}
+                    transition={spring}
+                />
+            </svg>
+        </motion.div>
     </button>
   );
 }
