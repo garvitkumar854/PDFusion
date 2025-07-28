@@ -3,11 +3,11 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 const spring = {
   type: "spring",
-  stiffness: 500,
+  stiffness: 700,
   damping: 30,
 };
 
@@ -30,68 +30,44 @@ export function ThemeToggle() {
   const isLight = theme === "light";
 
   return (
-    <button
+    <div 
+      className="relative flex items-center w-16 h-8 rounded-full p-1 cursor-pointer bg-blue-400/20 dark:bg-gray-800/50"
       onClick={toggleTheme}
-      aria-label={`Switch to ${isLight ? 'dark' : 'light'} mode`}
-      className={cn(
-        "relative w-16 h-8 rounded-full transition-colors duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isLight ? "bg-blue-400" : "bg-gray-800"
-      )}
+      aria-label="Toggle theme"
     >
       <motion.div
+        className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md"
         layout
         transition={spring}
-        className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md"
       >
-        <div className="relative w-full h-full flex items-center justify-center">
-            {/* Sun Rays */}
-            <AnimatePresence>
-            {isLight && (
-                <motion.div
-                    key="sun"
-                    initial={{ scale: 0, opacity: 0, rotate: -90 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0, rotate: 90 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="absolute inset-0"
-                >
-                    {[...Array(8)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute left-1/2 top-1/2 h-full w-[1.5px] origin-center"
-                            style={{ transform: `rotate(${i * 45}deg)` }}
-                        >
-                            <div className="absolute top-[-3px] h-[6px] w-full rounded-full bg-yellow-400"></div>
-                        </div>
-                    ))}
-                </motion.div>
-            )}
-            </AnimatePresence>
-
-            {/* Moon Craters */}
-             <AnimatePresence>
-            {!isLight && (
-                 <motion.div
-                    key="moon"
-                    initial={{ scale: 0, opacity: 0, rotate: 90 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0, rotate: -90 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="absolute inset-0"
-                >
-                    <div className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-slate-300 opacity-80" />
-                    <div className="absolute bottom-1 left-2 w-[5px] h-[5px] rounded-full bg-slate-300 opacity-90" />
-                    <div className="absolute bottom-2 right-1.5 w-0.5 h-0.5 rounded-full bg-slate-300" />
-                </motion.div>
-            )}
-            </AnimatePresence>
+        <div className="relative h-full w-full">
+          {/* Sun Rays */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ scale: isLight ? 1 : 0, opacity: isLight ? 1 : 0, rotate: isLight ? 0 : -90 }}
+            transition={spring}
+          >
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute left-1/2 top-1/2 h-full w-0.5 origin-center"
+                style={{ transform: `rotate(${i * 45}deg)` }}
+              >
+                <div className="absolute top-[-3px] h-2 w-full rounded-full bg-yellow-400"></div>
+              </div>
+            ))}
+          </motion.div>
+          {/* Moon Craters */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ scale: isLight ? 0 : 1, opacity: isLight ? 0 : 1, rotate: isLight ? 90 : 0 }}
+            transition={spring}
+          >
+            <div className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-slate-300 opacity-80" />
+            <div className="absolute bottom-1 left-2 w-[5px] h-[5px] rounded-full bg-slate-300 opacity-90" />
+          </motion.div>
         </div>
       </motion.div>
-    </button>
+    </div>
   );
-}
-
-// Helper function to get cn working
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
 }
