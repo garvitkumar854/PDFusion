@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTheme } from "next-themes";
@@ -23,6 +24,12 @@ export const ThemeToggle = () => {
     setTheme(isDark ? "light" : "dark");
   };
 
+  const spring = {
+    type: "spring",
+    stiffness: 700,
+    damping: 30,
+  };
+
   return (
     <button
       onClick={toggleTheme}
@@ -46,7 +53,7 @@ export const ThemeToggle = () => {
             r="6"
             fill="black"
             animate={{ cx: isDark ? 17 : 24 }}
-            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            transition={spring}
           />
         </mask>
         <motion.circle
@@ -57,7 +64,7 @@ export const ThemeToggle = () => {
           mask="url(#moon-mask)"
           fill="currentColor"
           animate={{ scale: isDark ? 1.75 : 1 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={spring}
         />
         <motion.g
           className="sun-beams"
@@ -66,7 +73,7 @@ export const ThemeToggle = () => {
             rotate: isDark ? -25 : 0,
             opacity: isDark ? 0 : 1,
           }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
+          transition={spring}
         >
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
