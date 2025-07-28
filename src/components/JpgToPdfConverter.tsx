@@ -258,69 +258,77 @@ export function JpgToPdfConverter() {
       }
       
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
-      const mergedPdf = await PDFDocument.create();
+      
+      if (mergeIntoOnePdf) {
+          const mergedPdf = await PDFDocument.create();
+          for (let i = 0; i < files.length; i++) {
+              if (operationId.current !== currentOperationId) return;
+              const imageFile = files[i];
+              const imageBytes = await imageFile.file.arrayBuffer();
+              const image = await (imageFile.file.type === 'image/png' 
+                  ? mergedPdf.embedPng(imageBytes) 
+                  : mergedPdf.embedJpg(imageBytes));
 
-      for (let i = 0; i < files.length; i++) {
-        const imageFile = files[i];
-        if (operationId.current !== currentOperationId) return;
+              const pageDims = getPageDimensions(imageFile);
+              const page = mergedPdf.addPage(pageDims);
+              const {width: pageWidth, height: pageHeight} = page.getSize();
+              const margin = getMargin(pageWidth, pageHeight);
+              const usableWidth = pageWidth - margin * 2;
+              const usableHeight = pageHeight - margin * 2;
+              const scaled = image.scaleToFit(usableWidth, usableHeight);
+              page.drawImage(image, {
+                  x: margin + (usableWidth - scaled.width) / 2,
+                  y: margin + (usableHeight - scaled.height) / 2,
+                  width: scaled.width,
+                  height: scaled.height,
+              });
+              setConversionProgress(Math.round(((i + 1) / files.length) * 100));
+          }
+          const mergedBytes = await mergedPdf.save();
+          pdfDocs.push({ bytes: mergedBytes, name: 'converted_document.pdf'});
 
-        const imageBytes = await imageFile.file.arrayBuffer();
-        const image = await (imageFile.file.type === 'image/png' 
-            ? mergedPdf.embedPng(imageBytes) 
-            : mergedPdf.embedJpg(imageBytes));
+      } else {
+          for (let i = 0; i < files.length; i++) {
+              if (operationId.current !== currentOperationId) return;
+              const imageFile = files[i];
+              const singlePdf = await PDFDocument.create();
+              const imageBytes = await imageFile.file.arrayBuffer();
+              const image = await (imageFile.file.type === 'image/png' 
+                  ? singlePdf.embedPng(imageBytes) 
+                  : singlePdf.embedJpg(imageBytes));
+              
+              const pageDims = getPageDimensions(imageFile);
+              const page = singlePdf.addPage(pageDims);
+              const {width: pageWidth, height: pageHeight} = page.getSize();
+              const margin = getMargin(pageWidth, pageHeight);
+              const usableWidth = pageWidth - margin * 2;
+              const usableHeight = pageHeight - margin * 2;
+              const scaled = image.scaleToFit(usableWidth, usableHeight);
+              page.drawImage(image, {
+                  x: margin + (usableWidth - scaled.width) / 2,
+                  y: margin + (usableHeight - scaled.height) / 2,
+                  width: scaled.width,
+                  height: scaled.height,
+              });
 
-        const pageDims = getPageDimensions(imageFile);
-        let page;
-        let docToSave: PDFDocument;
-
-        if (mergeIntoOnePdf) {
-            page = mergedPdf.addPage(pageDims);
-            docToSave = mergedPdf;
-        } else {
-            const singlePdf = await PDFDocument.create();
-            page = singlePdf.addPage(pageDims);
-            docToSave = singlePdf;
-        }
-        
-        const {width: pageWidth, height: pageHeight} = page.getSize();
-        const margin = getMargin(pageWidth, pageHeight);
-        const usableWidth = pageWidth - margin * 2;
-        const usableHeight = pageHeight - margin * 2;
-        
-        const scaled = image.scaleToFit(usableWidth, usableHeight);
-        
-        page.drawImage(image, {
-            x: margin + (usableWidth - scaled.width) / 2,
-            y: margin + (usableHeight - scaled.height) / 2,
-            width: scaled.width,
-            height: scaled.height,
-        });
-        
-        if (!mergeIntoOnePdf) {
-            const pdfBytes = await docToSave.save();
-            pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
-        }
-        
-        setConversionProgress(Math.round(((i + 1) / files.length) * 100));
+              const pdfBytes = await singlePdf.save();
+              pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
+              setConversionProgress(Math.round(((i + 1) / files.length) * 100));
+          }
       }
       
       if (operationId.current !== currentOperationId) return;
 
       const results: {url: string, filename: string}[] = [];
-      if(mergeIntoOnePdf) {
-        const mergedBytes = await mergedPdf.save();
-        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-        results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
+      if(pdfDocs.length === 1) {
+          const doc = pdfDocs[0];
+          const blob = new Blob([doc.bytes], { type: 'application/pdf' });
+          results.push({ url: URL.createObjectURL(blob), filename: doc.name });
       } else {
-        if(pdfDocs.length === 1) {
-            const blob = new Blob([pdfDocs[0].bytes], { type: 'application/pdf' });
-            results.push({ url: URL.createObjectURL(blob), filename: pdfDocs[0].name });
-        } else {
-            const zip = new JSZip();
-            pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
-            const zipBlob = await zip.generateAsync({type:"blob"});
-            results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
-        }
+          const zip = new JSZip();
+          pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
+          const zipBlob = await zip.generateAsync({type:"blob"});
+          results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
       }
       
       setConversionResults(results);

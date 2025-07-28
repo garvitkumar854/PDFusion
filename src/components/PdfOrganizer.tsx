@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Skeleton } from "./ui/skeleton";
+import { motion } from "framer-motion";
 
 
 if (typeof window !== 'undefined') {
@@ -316,10 +317,12 @@ export function PdfOrganizer() {
                     Drop a PDF file here
                 </p>
                 <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    Choose File
-                </Button>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isLoading || isSaving}>
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Choose File
+                    </Button>
+                </motion.div>
             </div>
             </CardContent>
         </Card>
