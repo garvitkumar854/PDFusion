@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useTheme } from "next-themes"
@@ -21,6 +20,7 @@ export const ThemeToggle = () => {
   }, [])
 
   if (!mounted) {
+    // Return a placeholder to prevent layout shifts
     return <div className="w-[70px] h-9 rounded-full bg-muted" />
   }
 
@@ -30,35 +30,16 @@ export const ThemeToggle = () => {
     setTheme(isDark ? "light" : "dark")
   }
 
-  const uniqueId = "moon-clip"
-
   return (
     <button
       onClick={toggleTheme}
       aria-label="Toggle theme"
       className={cn(
-        "relative flex items-center w-[70px] h-9 rounded-full cursor-pointer transition-colors duration-500 ease-in-out",
+        "relative flex items-center w-[70px] h-9 p-1 rounded-full cursor-pointer transition-colors duration-500 ease-in-out",
         isDark ? "bg-[#1E293B] justify-end" : "bg-[#8B5CF6] justify-start"
       )}
     >
-      <svg width="0" height="0" className="absolute">
-        <defs>
-          <clipPath id={uniqueId}>
-            {/* This is the base circle */}
-            <circle cx="14" cy="14" r="14" />
-            {/* This is the circle that cuts out the crescent shape.
-                We animate its position (`cx`) to create the effect. */}
-            <motion.circle
-              cx={isDark ? 20 : 40}
-              cy="14"
-              r="14"
-              transition={spring}
-            />
-          </clipPath>
-        </defs>
-      </svg>
-      
-      {/* Stars */}
+      {/* Stars - only visible in dark mode */}
       <motion.div
         className="absolute w-1 h-1 bg-white rounded-full"
         style={{ top: "25%", left: "20%" }}
@@ -72,15 +53,28 @@ export const ThemeToggle = () => {
         transition={{ duration: 0.3, delay: isDark ? 0.3 : 0 }}
       />
 
-      {/* Main sliding circle */}
+      {/* The main sliding circle/moon */}
       <motion.div
-        className="w-7 h-7 bg-white rounded-full shadow-md z-10"
+        className="relative w-7 h-7 bg-white rounded-full shadow-md z-10"
         layout
         transition={spring}
-        style={{
-          clipPath: isDark ? `url(#${uniqueId})` : "none"
-        }}
-      />
+      >
+        {/* Masking circle to create the crescent moon shape */}
+        <motion.div
+          className="absolute w-7 h-7 rounded-full"
+          style={{
+            top: '0px',
+            right: '-3px', // Positioned to cut out the crescent from the left
+            backgroundColor: isDark ? '#1E293B' : 'rgba(255, 255, 255, 0)', // Same as dark bg
+          }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{
+            scale: isDark ? 1 : 0,
+            opacity: isDark ? 1 : 0,
+          }}
+          transition={spring}
+        />
+      </motion.div>
     </button>
   )
 }
