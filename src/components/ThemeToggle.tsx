@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,8 +8,8 @@ import { cn } from "@/lib/utils"
 
 const spring = {
   type: "spring",
-  stiffness: 500,
-  damping: 40,
+  stiffness: 700,
+  damping: 30,
 }
 
 export function ThemeToggle() {
@@ -19,31 +20,30 @@ export function ThemeToggle() {
     setIsMounted(true)
   }, [])
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
-  }
-
   if (!isMounted) {
     return <div className="w-[70px] h-[38px] rounded-full bg-muted" />
   }
 
   const isLight = theme === "light"
 
+  const toggleTheme = () => {
+    setTheme(isLight ? "dark" : "light")
+  }
+
   return (
-    <motion.button
+    <button
       onClick={toggleTheme}
       aria-label="Toggle theme"
       className={cn(
-        "relative flex items-center w-[70px] h-[38px] rounded-full cursor-pointer p-1 transition-colors duration-500 ease-in-out",
-        "group"
+        "relative flex items-center w-[70px] h-[38px] rounded-full cursor-pointer transition-colors duration-300 ease-in-out",
+        isLight ? "bg-[#8B5CF6]" : "bg-[#1E293B]",
+        "justify-start"
       )}
-      initial={false}
-      animate={{ backgroundColor: isLight ? "#8B5CF6" : "#1E293B" }}
       style={{ justifyContent: isLight ? "flex-start" : "flex-end" }}
     >
-       <AnimatePresence>
+      <AnimatePresence>
         {!isLight && (
-          [...Array(3)].map((_, i) => (
+          [...Array(2)].map((_, i) => (
             <motion.div
               key={`star-${i}`}
               initial={{ opacity: 0, scale: 0 }}
@@ -54,8 +54,8 @@ export function ThemeToggle() {
               style={{
                 width: `${Math.random() * 2 + 1}px`,
                 height: `${Math.random() * 2 + 1}px`,
-                top: `${Math.random() * 60 + 20}%`,
-                left: `${Math.random() * 45 + 5}%`,
+                top: `${Math.random() * 40 + 20}%`,
+                left: `${Math.random() * 40 + 5}%`,
               }}
             />
           ))
@@ -63,28 +63,28 @@ export function ThemeToggle() {
       </AnimatePresence>
 
       <motion.div
-        className="h-[30px] w-[30px] rounded-full z-10"
+        className="h-[30px] w-[30px] rounded-full z-10 m-1 relative overflow-hidden"
         layout
         transition={spring}
-        style={{
-          backgroundColor: '#FFFFFF',
-          boxShadow: '0px 2px 4px rgba(0,0,0,0.2)'
-        }}
       >
         <motion.div
-          className="h-full w-full rounded-full"
+          className="absolute inset-0 bg-white rounded-full"
           initial={false}
-          animate={{
-            transform: isLight ? 'translateX(100%)' : 'translateX(0%)',
-            transition: { ...spring, delay: 0.05 },
-            backgroundColor: isLight ? '#FFFFFF' : '#1E293B' // Masking circle
+          animate={{ rotate: isLight ? 0 : 40 }}
+          transition={spring}
+        />
+        {/* This is the masking circle that creates the crescent moon */}
+        <motion.div
+          className="absolute -right-2 top-0 h-[28px] w-[28px] rounded-full"
+          style={{ backgroundColor: isLight ? "rgba(255,255,255,0)" : "#1E293B" }}
+          initial={false}
+          animate={{ 
+            translateX: isLight ? 40 : 0,
+            scale: isLight ? 0.5 : 1
           }}
-          style={{
-            transformOrigin: 'center center',
-            scale: 0.9,
-          }}
+          transition={spring}
         />
       </motion.div>
-    </motion.button>
+    </button>
   )
 }
