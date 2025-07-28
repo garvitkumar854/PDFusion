@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useTheme } from "next-themes"
@@ -35,8 +36,9 @@ export const ThemeToggle = () => {
       onClick={toggleTheme}
       aria-label="Toggle theme"
       className={cn(
-        "relative flex items-center w-[70px] h-9 p-1 rounded-full cursor-pointer transition-colors duration-500 ease-in-out",
-        isDark ? "bg-[#1E293B] justify-end" : "bg-[#8B5CF6] justify-start"
+        "relative flex items-center w-[70px] h-9 rounded-full cursor-pointer transition-colors duration-500 ease-in-out",
+        isDark ? "bg-[#1E293B] justify-end" : "bg-[#8B5CF6] justify-start",
+        "p-1" // Add padding to contain the inner circle
       )}
     >
       {/* Stars - only visible in dark mode */}
@@ -65,7 +67,7 @@ export const ThemeToggle = () => {
           style={{
             top: '0px',
             right: '-3px', // Positioned to cut out the crescent from the left
-            backgroundColor: isDark ? '#1E293B' : 'rgba(255, 255, 255, 0)', // Same as dark bg
+            backgroundColor: '#1E293B', // Must match the dark background color
           }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{
