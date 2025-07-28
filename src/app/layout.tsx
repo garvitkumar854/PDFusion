@@ -36,7 +36,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: '/96x96.png',
+    icon: '/icons/favicon-32x32.png',
+    apple: '/icons/apple-touch-icon.png',
   },
   openGraph: {
     type: 'website',

@@ -105,7 +105,7 @@ export default function Header() {
   return (
     <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
             <h1 className="text-xl font-bold tracking-tight">
