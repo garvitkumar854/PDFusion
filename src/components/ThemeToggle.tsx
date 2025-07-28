@@ -1,52 +1,9 @@
-
 "use client"
 
 import * as React from "react"
 import { useTheme } from "next-themes"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-
-const SunIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2" />
-    <path d="M12 20v2" />
-    <path d="m4.93 4.93 1.41 1.41" />
-    <path d="m17.66 17.66 1.41 1.41" />
-    <path d="M2 12h2" />
-    <path d="M20 12h2" />
-    <path d="m6.34 17.66-1.41 1.41" />
-    <path d="m19.07 4.93-1.41 1.41" />
-  </svg>
-)
-
-const MoonIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-  </svg>
-)
 
 const spring = {
   type: "spring",
@@ -78,12 +35,13 @@ export function ThemeToggle() {
       aria-label="Toggle theme"
       className={cn(
         "relative flex items-center w-[70px] h-[38px] rounded-full cursor-pointer p-1 transition-colors duration-500 ease-in-out",
+        "group"
       )}
       initial={false}
       animate={{ backgroundColor: isLight ? "#8B5CF6" : "#1E293B" }}
       style={{ justifyContent: isLight ? "flex-start" : "flex-end" }}
     >
-      <AnimatePresence>
+       <AnimatePresence>
         {!isLight && (
           [...Array(3)].map((_, i) => (
             <motion.div
@@ -91,38 +49,41 @@ export function ThemeToggle() {
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
+              transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: "easeInOut" }}
               className="absolute bg-white rounded-full"
               style={{
                 width: `${Math.random() * 2 + 1}px`,
                 height: `${Math.random() * 2 + 1}px`,
-                top: `${Math.random() * 60 + 15}%`,
-                left: `${Math.random() * 40 + 5}%`,
+                top: `${Math.random() * 60 + 20}%`,
+                left: `${Math.random() * 45 + 5}%`,
               }}
             />
           ))
         )}
       </AnimatePresence>
+
       <motion.div
-        className="h-[30px] w-[30px] bg-white rounded-full z-10 flex items-center justify-center"
+        className="h-[30px] w-[30px] rounded-full z-10"
         layout
         transition={spring}
+        style={{
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0px 2px 4px rgba(0,0,0,0.2)'
+        }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={isLight ? "sun" : "moon"}
-            initial={{ y: 20, opacity: 0, rotate: -90 }}
-            animate={{ y: 0, opacity: 1, rotate: 0 }}
-            exit={{ y: -20, opacity: 0, rotate: 90 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isLight ? (
-              <SunIcon className="w-5 h-5 text-yellow-500" />
-            ) : (
-              <MoonIcon className="w-5 h-5 text-slate-800" />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          className="h-full w-full rounded-full"
+          initial={false}
+          animate={{
+            transform: isLight ? 'translateX(100%)' : 'translateX(0%)',
+            transition: { ...spring, delay: 0.05 },
+            backgroundColor: isLight ? '#FFFFFF' : '#1E293B' // Masking circle
+          }}
+          style={{
+            transformOrigin: 'center center',
+            scale: 0.9,
+          }}
+        />
       </motion.div>
     </motion.button>
   )
