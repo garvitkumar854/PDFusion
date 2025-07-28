@@ -4,11 +4,14 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
-const SunIcon = () => <Sun className="h-4 w-4 text-yellow-500" />;
-const MoonIcon = () => <Moon className="h-4 w-4 text-sky-400" />;
+const spring = {
+  type: "spring",
+  stiffness: 700,
+  damping: 30,
+};
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -23,7 +26,7 @@ export function ThemeToggle() {
   }
 
   if (!isMounted) {
-    return <div className="w-12 h-6 rounded-full bg-muted" />; // Skeleton loader
+    return <div className="w-16 h-8 rounded-full bg-muted" />; // Skeleton loader
   }
 
   const isLight = theme === "light";
@@ -32,28 +35,39 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className={cn(
-        "relative flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        isLight ? "bg-primary justify-start" : "bg-gray-800 justify-end"
+        "relative flex h-8 w-16 items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        isLight ? "bg-primary" : "bg-gray-800"
       )}
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
     >
+        <motion.span
+          className="absolute left-1.5 z-10"
+          animate={{
+            color: isLight ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+            scale: isLight ? 1 : 0.8,
+            rotate: isLight ? 0 : -90
+          }}
+          transition={spring}
+        >
+            <Sun className="h-5 w-5" />
+        </motion.span>
+         <motion.span
+          className="absolute right-1.5 z-10"
+          animate={{
+            color: !isLight ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+            scale: !isLight ? 1 : 0.8,
+            rotate: !isLight ? 0 : 90
+          }}
+          transition={spring}
+        >
+            <Moon className="h-5 w-5" />
+        </motion.span>
       <motion.div
+        className="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md"
         layout
-        transition={{ type: "spring", stiffness: 700, damping: 30 }}
-        className="h-5 w-5 bg-white rounded-full shadow-md flex items-center justify-center mx-0.5"
-      >
-        <AnimatePresence initial={false} mode="wait">
-          {isLight ? (
-            <motion.div key="sun" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0, rotate: 90 }} transition={{ duration: 0.2 }}>
-              <SunIcon />
-            </motion.div>
-          ) : (
-            <motion.div key="moon" initial={{ scale: 0, rotate: 90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0, rotate: -90 }} transition={{ duration: 0.2 }}>
-              <MoonIcon />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        transition={spring}
+        style={{ right: isLight ? 'auto' : '0.25rem', left: isLight ? '0.25rem' : 'auto' }}
+      />
     </button>
   )
 }
