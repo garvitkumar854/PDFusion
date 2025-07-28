@@ -2,53 +2,76 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+
+const spring = {
+  type: "spring",
+  stiffness: 700,
+  damping: 30,
+};
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="w-24 h-12 rounded-full bg-muted" />;
 
-  const isDark = theme === "dark";
+  if (!mounted) {
+    return <div className="w-20 h-10 rounded-full bg-muted" />;
+  }
+
+  const isLight = theme === "light";
+
+  const toggleTheme = () => {
+    setTheme(isLight ? "dark" : "light");
+  };
 
   return (
-    <button
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={`w-24 h-12 rounded-full relative transition-all duration-500 ${
-        isDark ? "bg-[#1e294b]" : "bg-[#5d9bfa]"
-      } flex items-center justify-center px-2 overflow-hidden`}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {isDark ? (
+    <div className="flex items-center justify-center">
+      <motion.button
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+        className="relative flex items-center w-20 h-10 rounded-full cursor-pointer p-1"
+        animate={{
+          background: isLight ? "#8B5CF6" : "#1E293B", // Purple for light, Dark Blue for dark
+        }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Stars */}
+        <motion.div
+          className="absolute w-1 h-1 bg-white rounded-full"
+          style={{ top: "25%", left: "60%" }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        />
+        <motion.div
+          className="absolute w-1 h-1 bg-white rounded-full"
+          style={{ top: "55%", left: "75%" }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        />
+        
+        <div
+          className={`flex w-full justify-${isLight ? "start" : "end"}`}
+        >
           <motion.div
-            key="moon"
-            initial={{ x: -40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 40, opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-2"
+            className="relative w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden"
+            layout
+            transition={spring}
           >
-            <div className="relative w-7 h-7 rounded-full bg-white shadow-md shadow-white/20 before:absolute before:w-7 before:h-7 before:bg-[#1e294b] before:rounded-full before:left-[5px] before:-top-[1px]" />
-            <div className="w-[3px] h-[3px] bg-white/70 rounded-full" />
-            <div className="w-[5px] h-[5px] bg-white/90 rounded-full" />
+            {/* This is the masking div that creates the crescent shape */}
+            <motion.div
+              className="absolute w-8 h-8 rounded-full"
+              style={{ background: "#1E293B" }} // Must match dark background
+              initial={{ x: "100%" }}
+              animate={{ x: isLight ? "100%" : "50%" }}
+              transition={{ ...spring, stiffness: 500, damping: 35 }}
+            />
           </motion.div>
-        ) : (
-          <motion.div
-            key="sun"
-            initial={{ x: 40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -40, opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-2"
-          >
-            <div className="w-8 h-8 bg-white rounded-full shadow-lg shadow-yellow-200/50" />
-            <div className="w-2 h-2 bg-white/90 rounded-full shadow-md shadow-yellow-100/50" />
-            <div className="w-1.5 h-1.5 bg-white/80 rounded-full shadow-sm shadow-yellow-50/50" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </button>
+        </div>
+      </motion.button>
+    </div>
   );
 }
