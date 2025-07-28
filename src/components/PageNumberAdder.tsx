@@ -574,7 +574,7 @@ export function PageNumberAdder() {
                     </CardContent>
                 </Card>
                  <Card className="bg-transparent shadow-lg">
-                    <CardContent className="p-6 h-[104px] flex flex-col justify-center">
+                    <CardContent className="p-6 h-[124px] flex flex-col justify-center">
                          <AnimatePresence mode="wait">
                             {isProcessing ? (
                                 <motion.div
