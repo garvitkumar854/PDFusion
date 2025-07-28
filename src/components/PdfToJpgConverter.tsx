@@ -228,11 +228,15 @@ export function PdfToJpgConverter() {
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 1) {
+        toast({ variant: "destructive", title: "One file at a time", description: "This tool only supports processing one PDF at a time. Please upload a single file." });
+        return;
+      }
       if (acceptedFiles.length === 0) return;
       const singleFile = acceptedFiles[0];
       loadPdf(singleFile);
     },
-    [loadPdf]
+    [loadPdf, toast]
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
@@ -385,7 +389,8 @@ export function PdfToJpgConverter() {
     document.body.appendChild(link);
     link.click();
     setTimeout(() => {
-        document.body.removeChild(link);
+      document.body.removeChild(link);
+      URL.revokeObjectURL(result.url);
     }, 100);
   };
 
@@ -556,7 +561,7 @@ export function PdfToJpgConverter() {
                     <ShieldAlert className="w-4 h-4" /> {error}
                 </p>
             )}
-            <div className="mt-8 h-20 flex flex-col justify-center">
+            <div className="mt-8 pt-6 border-t">
               <AnimatePresence mode="wait">
               {isConverting ? (
                  <motion.div

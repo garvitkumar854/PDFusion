@@ -366,6 +366,7 @@ export function JpgToPdfConverter() {
       link.click();
       setTimeout(() => {
           document.body.removeChild(link);
+          URL.revokeObjectURL(result.url);
       }, 100);
   };
 
@@ -469,7 +470,7 @@ export function JpgToPdfConverter() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="space-y-4 pt-4 border-t h-20 flex flex-col justify-center">
+                        <div className="space-y-4 pt-4 border-t">
                              <AnimatePresence mode="wait">
                                 {isConverting ? (
                                     <motion.div

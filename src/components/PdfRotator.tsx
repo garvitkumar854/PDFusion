@@ -122,6 +122,10 @@ export function PdfRotator() {
   }, [preview?.url]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 1) {
+        toast({ variant: "destructive", title: "One file at a time", description: "This tool only supports processing one PDF at a time. Please upload a single file." });
+        return;
+      }
       if (acceptedFiles.length === 0) return;
       
       cleanup();
@@ -242,6 +246,7 @@ export function PdfRotator() {
     link.click();
     setTimeout(() => {
         document.body.removeChild(link);
+        URL.revokeObjectURL(result.url);
     }, 100);
   };
 
@@ -333,7 +338,7 @@ export function PdfRotator() {
                         </RadioGroup>
                     </div>
 
-                    <div className="mt-8 h-20 flex flex-col justify-center">
+                    <div className="mt-8 pt-6 border-t">
                        <AnimatePresence mode="wait">
                           {isProcessing ? (
                             <motion.div
