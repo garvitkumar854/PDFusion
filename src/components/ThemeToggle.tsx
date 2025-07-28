@@ -1,17 +1,18 @@
+
 "use client"
 
 import * as React from "react"
 import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 const spring = {
   type: "spring",
-  stiffness: 700,
+  stiffness: 500,
   damping: 30,
 };
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -19,8 +20,8 @@ export function ThemeToggle() {
   }, []);
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
-  }
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   if (!isMounted) {
     return <div className="w-16 h-8 rounded-full bg-muted" />;
@@ -29,53 +30,68 @@ export function ThemeToggle() {
   const isLight = theme === "light";
 
   return (
-    <div
-      className="flex h-8 w-16 cursor-pointer items-center rounded-full bg-blue-500 p-1 data-[dark=true]:bg-gray-800"
-      data-dark={!isLight}
+    <button
       onClick={toggleTheme}
+      aria-label={`Switch to ${isLight ? 'dark' : 'light'} mode`}
+      className={cn(
+        "relative w-16 h-8 rounded-full transition-colors duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        isLight ? "bg-blue-400" : "bg-gray-800"
+      )}
     >
       <motion.div
-        className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 shadow-md"
         layout
         transition={spring}
+        className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md"
       >
-        <div className="relative h-full w-full">
-          {/* Sun Rays */}
-          <motion.div
-            className="absolute inset-0"
-            animate={{
-              transform: isLight ? 'rotate(90deg)' : 'rotate(0deg)',
-              opacity: isLight ? 1 : 0,
-            }}
-            transition={spring}
-          >
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute left-1/2 top-1/2 h-[5px] w-[1px] origin-center -translate-x-1/2 -translate-y-1/2 transform-gpu bg-yellow-500"
-                style={{ transform: `rotate(${i * 45}deg) translateY(-8px)` }}
-              />
-            ))}
-          </motion.div>
+        <div className="relative w-full h-full flex items-center justify-center">
+            {/* Sun Rays */}
+            <AnimatePresence>
+            {isLight && (
+                <motion.div
+                    key="sun"
+                    initial={{ scale: 0, opacity: 0, rotate: -90 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0, rotate: 90 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="absolute inset-0"
+                >
+                    {[...Array(8)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute left-1/2 top-1/2 h-full w-[1.5px] origin-center"
+                            style={{ transform: `rotate(${i * 45}deg)` }}
+                        >
+                            <div className="absolute top-[-3px] h-[6px] w-full rounded-full bg-yellow-400"></div>
+                        </div>
+                    ))}
+                </motion.div>
+            )}
+            </AnimatePresence>
 
-          {/* Moon Craters */}
-          <motion.div
-             className="absolute inset-0"
-            animate={{
-              transform: isLight ? 'rotate(0deg)' : 'rotate(90deg)',
-              opacity: isLight ? 0 : 1
-            }}
-            transition={spring}
-          >
-              <div
-                className="absolute right-[3px] top-[4px] h-[4px] w-[4px] rounded-full bg-slate-400"
-              />
-              <div
-                className="absolute bottom-[4px] right-[8px] h-[2px] w-[2px] rounded-full bg-slate-400"
-              />
-          </motion.div>
+            {/* Moon Craters */}
+             <AnimatePresence>
+            {!isLight && (
+                 <motion.div
+                    key="moon"
+                    initial={{ scale: 0, opacity: 0, rotate: 90 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0, rotate: -90 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="absolute inset-0"
+                >
+                    <div className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-slate-300 opacity-80" />
+                    <div className="absolute bottom-1 left-2 w-[5px] h-[5px] rounded-full bg-slate-300 opacity-90" />
+                    <div className="absolute bottom-2 right-1.5 w-0.5 h-0.5 rounded-full bg-slate-300" />
+                </motion.div>
+            )}
+            </AnimatePresence>
         </div>
       </motion.div>
-    </div>
+    </button>
   );
+}
+
+// Helper function to get cn working
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(' ');
 }
