@@ -1,9 +1,9 @@
-
 "use client";
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
