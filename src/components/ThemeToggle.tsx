@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const spring = {
   type: "spring",
@@ -17,7 +18,8 @@ export function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <div className="w-20 h-10 rounded-full bg-muted" />;
+    // Render a skeleton or an empty div to prevent layout shift
+    return <div className="w-[70px] h-[34px] rounded-full bg-muted" />;
   }
 
   const isLight = theme === "light";
@@ -27,51 +29,59 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <motion.button
-        onClick={toggleTheme}
-        aria-label="Toggle theme"
-        className="relative flex items-center w-20 h-10 rounded-full cursor-pointer p-1"
-        animate={{
-          background: isLight ? "#8B5CF6" : "#1E293B", // Purple for light, Dark Blue for dark
-        }}
-        transition={{ duration: 0.5 }}
+    <button
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+      className={cn(
+        "relative flex items-center w-[70px] h-[34px] rounded-full cursor-pointer transition-colors duration-500 ease-in-out p-1",
+        isLight ? "bg-primary/20 justify-start" : "bg-slate-800 justify-end"
+      )}
+    >
+      {/* Stars in the background, only visible in dark mode */}
+      <motion.div
+        className="absolute w-1 h-1 bg-white rounded-full"
+        style={{ top: "25%", left: "25%" }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      />
+      <motion.div
+        className="absolute w-0.5 h-0.5 bg-white rounded-full"
+        style={{ top: "60%", left: "15%" }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
+      />
+      <motion.div
+        className="absolute w-0.5 h-0.5 bg-white rounded-full"
+        style={{ top: "40%", left: "40%" }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
+        transition={{ duration: 0.3, delay: 0.4 }}
+      />
+      
+      {/* Sliding Thumb */}
+      <motion.div
+        className="relative w-6 h-6 bg-white rounded-full shadow-md"
+        layout
+        transition={spring}
       >
-        {/* Stars */}
+        {/* Moon Mask */}
         <motion.div
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{ top: "25%", left: "60%" }}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          className="absolute w-5 h-5 rounded-full"
+          style={{
+            background: isLight ? "transparent" : "#1E293B", // Use dark mode bg for mask
+            top: "1px",
+            right: "-3px", // Positioned to carve out the crescent from the right
+          }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{
+            scale: isLight ? 0 : 1,
+            opacity: isLight ? 0 : 1,
+          }}
+          transition={{ duration: 0.35, delay: 0.05 }}
         />
-        <motion.div
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{ top: "55%", left: "75%" }}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: isLight ? 0 : 1, scale: isLight ? 0 : 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        />
-        
-        <div
-          className={`flex w-full justify-${isLight ? "start" : "end"}`}
-        >
-          <motion.div
-            className="relative w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden"
-            layout
-            transition={spring}
-          >
-            {/* This is the masking div that creates the crescent shape */}
-            <motion.div
-              className="absolute w-8 h-8 rounded-full"
-              style={{ background: "#1E293B" }} // Must match dark background
-              initial={{ x: "100%" }}
-              animate={{ x: isLight ? "100%" : "50%" }}
-              transition={{ ...spring, stiffness: 500, damping: 35 }}
-            />
-          </motion.div>
-        </div>
-      </motion.button>
-    </div>
+      </motion.div>
+    </button>
   );
 }
