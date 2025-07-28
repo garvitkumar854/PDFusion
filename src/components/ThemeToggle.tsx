@@ -4,6 +4,7 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Sun, Moon } from 'lucide-react';
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
@@ -26,65 +27,30 @@ export const ThemeToggle = () => {
 
   const spring = {
     type: "spring",
-    stiffness: 300,
-    damping: 25,
+    stiffness: 700,
+    damping: 30,
   };
 
   return (
-    <button
+    <div
       onClick={toggleTheme}
-      className="theme-toggle relative inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className={cn(
+        "relative flex h-8 w-14 cursor-pointer items-center rounded-full p-1",
+        "bg-secondary transition-colors"
+      )}
       title="Toggle theme"
       aria-label="Toggle theme"
     >
-      <svg
-        className="sun-and-moon"
-        aria-hidden="true"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-      >
-        <mask className="moon" id="moon-mask">
-          <rect x="0" y="0" width="100%" height="100%" fill="white" />
-          <motion.circle
-            cx={isDark ? 17 : 24}
-            cy="10"
-            r="6"
-            fill="black"
-            animate={{ cx: isDark ? 17 : 24 }}
-            transition={spring}
-          />
-        </mask>
-        <motion.circle
-          className="sun"
-          cx="12"
-          cy="12"
-          r="6"
-          mask="url(#moon-mask)"
-          fill="currentColor"
-          animate={{ scale: isDark ? 1.75 : 1 }}
-          transition={spring}
-        />
-        <motion.g
-          className="sun-beams"
-          stroke="currentColor"
-          animate={{
-            rotate: isDark ? -25 : 0,
-            opacity: isDark ? 0 : 1,
-          }}
-          transition={spring}
-        >
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </motion.g>
-      </svg>
-    </button>
+      <Sun className="h-5 w-5 text-yellow-500" />
+      <Moon className="h-5 w-5 text-slate-400" />
+      <motion.div
+        className="absolute h-6 w-6 rounded-full bg-white shadow-md"
+        layout
+        transition={spring}
+        style={{
+          left: isDark ? 'calc(100% - 28px)' : '4px',
+        }}
+      />
+    </div>
   );
 };

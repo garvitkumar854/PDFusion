@@ -24,28 +24,34 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if running as a standalone PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsStandalone(true);
       return;
     }
 
-    const handler = (event: Event) => {
+    const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
+      // Ensure we are not in standalone mode before showing install button
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setCanInstall(true);
       }
     };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
+    
+    // Check for iOS
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
-    if(isIosDevice) {
-        setCanInstall(true); // Always show manual install button on iOS if not standalone
+    if (isIosDevice) {
+      // On iOS, we always show the "install" button which gives manual instructions
+      setCanInstall(true);
     }
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const handleInstallClick = useCallback(async () => {
@@ -64,12 +70,14 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setCanInstall(false);
+      setCanInstall(false); // Hide the button after successful installation
     }
     setInstallPrompt(null);
   }, [installPrompt, isIOS, toast]);
 
   const handleOpenApp = () => {
+    // This logic is for when the user is on the website and the app is installed.
+    // It opens the PWA. A simple window.open is usually sufficient.
     window.open(window.location.origin, '_blank');
   };
   
@@ -80,6 +88,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonVariant = inSheet ? "ghost" : "default";
   const buttonSize = inSheet ? "default" : "sm";
 
+  // The "Open App" button should only show if the PWA is installed BUT we are currently in a browser tab.
+  // It should NOT show inside the PWA itself.
+  if (isStandalone && inSheet) {
+    return null; // Don't show anything in the sheet menu inside the PWA
+  }
   if (isStandalone && !inSheet) {
       return (
           <Button
@@ -94,7 +107,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       );
   }
   
-  if (canInstall) {
+  if (canInstall && !isStandalone) {
     return (
       <Button
         onClick={handleInstallClick}
