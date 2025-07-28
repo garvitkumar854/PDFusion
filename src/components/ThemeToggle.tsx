@@ -24,16 +24,10 @@ export const ThemeToggle = () => {
     setTheme(isDark ? "light" : "dark");
   };
 
-  const sunVariants = {
-    initial: { x: -20, opacity: 0, scale: 0.8 },
-    animate: { x: 0, opacity: 1, scale: 1, transition: { type: "spring", stiffness: 400, damping: 25 } },
-    exit: { x: 20, opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
-  };
-
-  const moonVariants = {
-    initial: { x: 20, opacity: 0, scale: 0.8 },
-    animate: { x: 0, opacity: 1, scale: 1, transition: { type: "spring", stiffness: 400, damping: 25 } },
-    exit: { x: -20, opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
+  const spring = {
+    type: "spring",
+    stiffness: 500,
+    damping: 40,
   };
 
   return (
@@ -41,38 +35,47 @@ export const ThemeToggle = () => {
       onClick={toggleTheme}
       aria-label="Toggle theme"
       className={cn(
-        "relative flex w-20 h-10 items-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isDark ? "bg-black justify-start" : "bg-primary justify-end"
+        "relative flex h-10 w-20 items-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        isDark ? "bg-[#1E293B] justify-end" : "bg-primary justify-start"
       )}
     >
-      <AnimatePresence initial={false} mode="wait">
         <motion.div
-          key={isDark ? "moon" : "sun"}
-          className="h-full w-1/2 flex items-center justify-center"
-          variants={isDark ? moonVariants : sunVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
+            layout
+            transition={spring}
+            className="relative h-8 w-8 rounded-full bg-white shadow-md"
         >
-          {isDark ? (
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="white"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ transform: "rotate(-30deg)" }}
-            >
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-            </svg>
-          ) : (
-            <div className="w-6 h-6 bg-white rounded-full" />
-          )}
+            {/* Moon mask */}
+            <motion.div
+                className="absolute right-0 top-0 h-full w-full rounded-full bg-[#1E293B]"
+                initial={{ scale: 0, x: 0 }}
+                animate={{
+                    scale: isDark ? 1 : 0,
+                    x: isDark ? -2 : 0,
+                }}
+                transition={{...spring, delay: 0.05}}
+             />
+
+             {/* Stars for dark mode */}
+             <AnimatePresence>
+                {isDark && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, transition: { delay: 0.2, ...spring } }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    className="absolute left-1 top-2 h-1 w-1 rounded-full bg-slate-400"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, transition: { delay: 0.3, ...spring } }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    className="absolute right-2 top-4 h-[3px] w-[3px] rounded-full bg-slate-400"
+                  />
+                </>
+                )}
+             </AnimatePresence>
+
         </motion.div>
-      </AnimatePresence>
     </button>
   );
 };
