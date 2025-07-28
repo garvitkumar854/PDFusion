@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Sun, Moon } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
@@ -27,8 +28,8 @@ export const ThemeToggle = () => {
 
   const spring = {
     type: "spring",
-    stiffness: 700,
-    damping: 30,
+    stiffness: 300,
+    damping: 25,
   };
 
   return (
