@@ -248,7 +248,7 @@ export function JpgToPdfConverter() {
       const getPageDimensions = (img: ImageFile) => {
         if(pageSize === 'Fit') return {width: img.width, height: img.height};
         let size = PAGE_SIZE_MAP[pageSize];
-        return orientation === 'landscape' ? [size[1], size[0]] : size;
+        return orientation === 'landscape' ? [size[1], size[0]] as [number, number] : size as [number, number];
       }
 
       const getMargin = (pageWidth: number, pageHeight: number) => {
@@ -258,9 +258,8 @@ export function JpgToPdfConverter() {
       }
       
       const results: {url: string, filename: string}[] = [];
-      const zip = new JSZip();
       
-      if (mergeIntoOnePdf) {
+      if (mergeIntoOnePdf || files.length === 1) {
           const mergedPdf = await PDFDocument.create();
           for (let i = 0; i < files.length; i++) {
               if (operationId.current !== currentOperationId) return;
@@ -289,7 +288,8 @@ export function JpgToPdfConverter() {
           const blob = new Blob([mergedBytes], { type: 'application/pdf' });
           results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
 
-      } else {
+      } else { // Multiple files, separate PDFs in a zip
+          const zip = new JSZip();
           for (let i = 0; i < files.length; i++) {
               if (operationId.current !== currentOperationId) return;
               const imageFile = files[i];
@@ -316,20 +316,12 @@ export function JpgToPdfConverter() {
               const pdfBytes = await singlePdf.save();
               const filename = `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`;
               
-              if (files.length === 1) {
-                  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                  results.push({ url: URL.createObjectURL(blob), filename });
-              } else {
-                  zip.file(filename, pdfBytes);
-              }
-
+              zip.file(filename, pdfBytes);
               setConversionProgress(Math.round(((i + 1) / files.length) * 100));
           }
 
-          if (files.length > 1) {
-              const zipBlob = await zip.generateAsync({type:"blob"});
-              results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
-          }
+          const zipBlob = await zip.generateAsync({type:"blob"});
+          results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
       }
       
       if (operationId.current !== currentOperationId) {
