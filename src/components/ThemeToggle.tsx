@@ -42,7 +42,8 @@ export const ThemeToggle = () => {
       aria-label="Toggle theme"
     >
       <motion.div
-        className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md"
+        key={theme}
+        className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-background shadow-md"
         layout
         transition={spring}
         style={{

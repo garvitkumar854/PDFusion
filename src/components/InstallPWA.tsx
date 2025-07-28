@@ -19,33 +19,34 @@ interface BeforeInstallPromptEvent extends Event {
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
-
+  
   useEffect(() => {
-    // Check if running as a standalone PWA
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsStandalone(true);
-      return;
-    }
+    setMounted(true);
+
+    // Determine if the app is running as a standalone PWA
+    const checkStandalone = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        setIsStandalone(true);
+      }
+    };
+    checkStandalone();
+    
+    // Check for iOS
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIos(isIosDevice);
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      // Ensure we are not in standalone mode before showing install button
+      // Show install button only if not in standalone mode
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setCanInstall(true);
       }
     };
-    
-    // Check for iOS
-    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(isIosDevice);
-    if (isIosDevice) {
-      // On iOS, we always show the "install" button which gives manual instructions
-      setCanInstall(true);
-    }
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
@@ -55,7 +56,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, []);
 
   const handleInstallClick = useCallback(async () => {
-    if (isIOS) {
+    if (isIos) {
         toast({
             title: "Installation Guide",
             description: "To install, tap the Share button and then 'Add to Home Screen'.",
@@ -70,14 +71,12 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setCanInstall(false); // Hide the button after successful installation
+      setCanInstall(false);
     }
     setInstallPrompt(null);
-  }, [installPrompt, isIOS, toast]);
+  }, [installPrompt, toast, isIos]);
 
   const handleOpenApp = () => {
-    // This logic is for when the user is on the website and the app is installed.
-    // It opens the PWA. A simple window.open is usually sufficient.
     window.open(window.location.origin, '_blank');
   };
   
@@ -88,26 +87,35 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonVariant = inSheet ? "ghost" : "default";
   const buttonSize = inSheet ? "default" : "sm";
 
-  // The "Open App" button should only show if the PWA is installed BUT we are currently in a browser tab.
-  // It should NOT show inside the PWA itself.
-  if (isStandalone && inSheet) {
-    return null; // Don't show anything in the sheet menu inside the PWA
+  if (!mounted) {
+    return null; // Don't render on the server or before hydration
   }
-  if (isStandalone && !inSheet) {
-      return (
-          <Button
-            onClick={handleOpenApp}
-            variant="default"
-            size="sm"
-            className={cn(buttonClassName, "bg-green-600 hover:bg-green-700")}
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Open App
-          </Button>
-      );
+
+  // App is installed and running in the browser tab, show "Open App"
+  if (isStandalone === false && navigator.standalone === false) { 
+     // A simple heuristic for checking if the app is installed is to see if we can still prompt for installation
+     if (installPrompt === null && !isIos) {
+         // This is not a foolproof check, but it's a good heuristic.
+         // If `beforeinstallprompt` was never fired or was already used, `installPrompt` will be null.
+         // A better check would be to see if `getInstalledRelatedApps` has a result.
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            return (
+              <Button
+                onClick={handleOpenApp}
+                variant="default"
+                size="sm"
+                className={cn(buttonClassName, "bg-green-600 hover:bg-green-700")}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open App
+              </Button>
+            );
+        }
+     }
   }
-  
-  if (canInstall && !isStandalone) {
+
+  // App is not installed, show "Install" button
+  if ((canInstall || isIos) && !isStandalone) {
     return (
       <Button
         onClick={handleInstallClick}
@@ -121,7 +129,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     );
   }
 
-  return null;
+  return null; // Don't show any button if installed and running standalone, or if conditions aren't met.
 };
 
 export default InstallPWA;
