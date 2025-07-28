@@ -257,7 +257,8 @@ export function JpgToPdfConverter() {
         return marginSize === 'small' ? shortestSide * 0.05 : shortestSide * 0.1; // 5% or 10% margin
       }
       
-      const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
+      const results: {url: string, filename: string}[] = [];
+      const zip = new JSZip();
       
       if (mergeIntoOnePdf) {
           const mergedPdf = await PDFDocument.create();
@@ -285,7 +286,8 @@ export function JpgToPdfConverter() {
               setConversionProgress(Math.round(((i + 1) / files.length) * 100));
           }
           const mergedBytes = await mergedPdf.save();
-          pdfDocs.push({ bytes: mergedBytes, name: 'converted_document.pdf'});
+          const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+          results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
 
       } else {
           for (let i = 0; i < files.length; i++) {
@@ -312,23 +314,27 @@ export function JpgToPdfConverter() {
               });
 
               const pdfBytes = await singlePdf.save();
-              pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
+              const filename = `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`;
+              
+              if (files.length === 1) {
+                  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                  results.push({ url: URL.createObjectURL(blob), filename });
+              } else {
+                  zip.file(filename, pdfBytes);
+              }
+
               setConversionProgress(Math.round(((i + 1) / files.length) * 100));
+          }
+
+          if (files.length > 1) {
+              const zipBlob = await zip.generateAsync({type:"blob"});
+              results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
           }
       }
       
-      if (operationId.current !== currentOperationId) return;
-
-      const results: {url: string, filename: string}[] = [];
-      if(pdfDocs.length === 1) {
-          const doc = pdfDocs[0];
-          const blob = new Blob([doc.bytes], { type: 'application/pdf' });
-          results.push({ url: URL.createObjectURL(blob), filename: doc.name });
-      } else {
-          const zip = new JSZip();
-          pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
-          const zipBlob = await zip.generateAsync({type:"blob"});
-          results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
+      if (operationId.current !== currentOperationId) {
+        results.forEach(r => URL.revokeObjectURL(r.url));
+        return;
       }
       
       setConversionResults(results);
@@ -374,7 +380,6 @@ export function JpgToPdfConverter() {
       link.click();
       setTimeout(() => {
           document.body.removeChild(link);
-          URL.revokeObjectURL(result.url);
       }, 100);
   };
 
