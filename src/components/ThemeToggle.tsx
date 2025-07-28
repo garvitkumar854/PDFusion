@@ -26,8 +26,8 @@ export const ThemeToggle = () => {
 
   const spring = {
     type: "spring",
-    stiffness: 700,
-    damping: 30,
+    stiffness: 300,
+    damping: 25,
   };
 
   return (
