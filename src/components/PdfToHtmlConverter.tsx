@@ -290,49 +290,51 @@ export function PdfToHtmlConverter() {
         </Card>
         {file && (
              <Card className="bg-transparent shadow-lg">
-                <CardContent className="p-6 h-[124px] flex flex-col justify-center">
+                <CardContent className="p-6">
                     {file.isEncrypted ? (
                          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
                             <p>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</p>
                         </div>
                     ) : (
-                        <AnimatePresence mode="wait">
-                          {isProcessing ? (
-                              <motion.div
-                                key="progress"
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-4"
-                              >
-                                  <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
-                                      <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-2">
-                                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                          <p className="text-sm font-medium text-primary">{progressText}</p>
-                                          </div>
-                                          <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
-                                      </div>
-                                      <Progress value={progress} className="h-2" />
-                                  </div>
-                                  <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
-                                    <Ban className="mr-2 h-4 w-4" />Cancel
-                                </Button>
-                              </motion.div>
-                          ) : (
-                             <motion.div
-                                key="button"
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                transition={{ duration: 0.2 }}
-                             >
-                                <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing || file.isEncrypted}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <div className="h-[104px] flex flex-col justify-center">
+                            <AnimatePresence mode="wait">
+                            {isProcessing ? (
+                                <motion.div
+                                    key="progress"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="space-y-4"
+                                >
+                                    <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                            <p className="text-sm font-medium text-primary">{progressText}</p>
+                                            </div>
+                                            <p className="text-sm font-medium text-primary">{Math.round(progress)}%</p>
+                                        </div>
+                                        <Progress value={progress} className="h-2" />
+                                    </div>
+                                    <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
+                                        <Ban className="mr-2 h-4 w-4" />Cancel
+                                    </Button>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="button"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <Button size="lg" className="w-full text-base font-bold" onClick={processConversion} disabled={!file || isProcessing || file.isEncrypted}><Code className="mr-2 h-5 w-5" />Convert to HTML</Button>
+                                </motion.div>
+                            )}
+                            </AnimatePresence>
+                        </div>
                     )}
                 </CardContent>
             </Card>
