@@ -41,8 +41,8 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
-    if(isIosDevice) {
-        setCanInstall(true); // Always show manual install button on iOS
+    if(isIosDevice && !window.matchMedia('(display-mode: standalone)').matches) {
+        setCanInstall(true); // Always show manual install button on iOS if not standalone
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -82,7 +82,17 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
 
   if (isStandalone) {
-      return null;
+      return (
+          <Button
+            onClick={handleOpenApp}
+            variant="default"
+            size="sm"
+            className={cn(buttonClassName, "bg-green-600 hover:bg-green-700")}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Open App
+          </Button>
+      );
   }
   
   if (canInstall) {
