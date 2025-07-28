@@ -14,7 +14,7 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    // Return a placeholder to prevent layout shift, matching button size
+    // Return a placeholder to prevent layout shift and server-side rendering issues
     return <div className="h-10 w-10" />;
   }
 
@@ -48,7 +48,7 @@ export const ThemeToggle = () => {
         <mask className="moon" id="moon-mask">
           <rect x="0" y="0" width="100%" height="100%" fill="white" />
           <motion.circle
-            cx="24"
+            cx={isDark ? 17 : 24}
             cy="10"
             r="6"
             fill="black"

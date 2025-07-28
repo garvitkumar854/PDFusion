@@ -24,32 +24,32 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+      return;
+    }
+
     const handler = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      if (!isStandalone) {
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
         setCanInstall(true);
       }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsStandalone(true);
-      setCanInstall(false);
-    }
-    
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
-    if(isIosDevice && !window.matchMedia('(display-mode: standalone)').matches) {
+    if(isIosDevice) {
         setCanInstall(true); // Always show manual install button on iOS if not standalone
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, [isStandalone]);
+  }, []);
 
   const handleInstallClick = useCallback(async () => {
-    if (isIOS && !isStandalone) {
+    if (isIOS) {
         toast({
             title: "Installation Guide",
             description: "To install, tap the Share button and then 'Add to Home Screen'.",
@@ -67,7 +67,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       setCanInstall(false);
     }
     setInstallPrompt(null);
-  }, [installPrompt, isIOS, isStandalone, toast]);
+  }, [installPrompt, isIOS, toast]);
 
   const handleOpenApp = () => {
     window.open(window.location.origin, '_blank');
@@ -80,8 +80,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonVariant = inSheet ? "ghost" : "default";
   const buttonSize = inSheet ? "default" : "sm";
 
-
-  if (isStandalone) {
+  if (isStandalone && !inSheet) {
       return (
           <Button
             onClick={handleOpenApp}
