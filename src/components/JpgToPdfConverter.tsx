@@ -68,6 +68,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
     }, [marginSize]);
 
     useEffect(() => {
+        let isCancelled = false;
         const drawPreview = async () => {
             const canvas = canvasRef.current;
             const ctx = canvas?.getContext('2d');
@@ -76,7 +77,9 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
             setIsLoading(true);
             const image = new Image();
             image.src = fileInfo.previewUrl;
+            
             image.onload = () => {
+                if (isCancelled) return;
                 const pageDims = getPageDimensions();
                 const margin = getMargin();
 
@@ -118,11 +121,12 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                 setIsLoading(false);
             };
             image.onerror = () => {
-                setIsLoading(false);
+                if (!isCancelled) setIsLoading(false);
             }
         };
 
         drawPreview();
+        return () => { isCancelled = true; };
     }, [fileInfo, orientation, pageSize, marginSize, getPageDimensions, getMargin]);
 
     return (
