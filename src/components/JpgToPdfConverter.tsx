@@ -194,13 +194,13 @@ export function JpgToPdfConverter() {
     setConversionResults([]);
     
     try {
-      const getPageDimensions = (img: ImageFile) => {
-        if(pageSize === 'Fit') return {width: img.width, height: img.height};
+      const getPageDimensions = (img: ImageFile): [number, number] => {
+        if(pageSize === 'Fit') return [img.width, img.height];
         let size = PAGE_SIZE_MAP[pageSize];
-        return orientation === 'landscape' ? [size[1], size[0]] as [number, number] : size as [number, number];
+        return orientation === 'landscape' ? [size[1], size[0]] : size;
       }
 
-      const getMargin = (pageWidth: number, pageHeight: number) => {
+      const getMargin = (pageWidth: number, pageHeight: number): number => {
         if (pageSize === 'Fit' || marginSize === 'none') return 0;
         const shortestSide = Math.min(pageWidth, pageHeight);
         return marginSize === 'small' ? shortestSide * 0.05 : shortestSide * 0.1;
@@ -223,9 +223,12 @@ export function JpgToPdfConverter() {
               const page = mergedPdf.addPage(pageDims);
               const {width: pageWidth, height: pageHeight} = page.getSize();
               const margin = getMargin(pageWidth, pageHeight);
+              
               const usableWidth = pageWidth - margin * 2;
               const usableHeight = pageHeight - margin * 2;
+
               const scaled = image.scaleToFit(usableWidth, usableHeight);
+              
               page.drawImage(image, {
                   x: margin + (usableWidth - scaled.width) / 2,
                   y: margin + (usableHeight - scaled.height) / 2,
@@ -255,7 +258,9 @@ export function JpgToPdfConverter() {
               const margin = getMargin(pageWidth, pageHeight);
               const usableWidth = pageWidth - margin * 2;
               const usableHeight = pageHeight - margin * 2;
+
               const scaled = image.scaleToFit(usableWidth, usableHeight);
+              
               page.drawImage(image, {
                   x: margin + (usableWidth - scaled.width) / 2,
                   y: margin + (usableHeight - scaled.height) / 2,
