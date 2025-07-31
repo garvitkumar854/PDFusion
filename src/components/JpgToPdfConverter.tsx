@@ -9,7 +9,6 @@ import {
   Download,
   X,
   CheckCircle,
-  GripVertical,
   FileText,
   FolderOpen,
   Loader2,
@@ -22,15 +21,11 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument, PageSizes } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
 import JSZip from 'jszip';
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
+import { motion, AnimatePresence } from "framer-motion";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 25;
@@ -42,8 +37,6 @@ type ImageFile = {
   id: string;
   file: File;
   previewUrl: string;
-  pdfPagePreviewUrl?: string;
-  isPreviewLoading: boolean;
 };
 
 type Orientation = "portrait" | "landscape";
@@ -59,6 +52,87 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const getPageDimensions = useCallback(() => {
+        if (pageSize === "Fit") return null;
+        const dims = PageSizes[pageSize];
+        return orientation === 'landscape' ? [dims[1], dims[0]] : dims;
+    }, [pageSize, orientation]);
+
+    const getMargin = useCallback(() => {
+        if (marginSize === 'none') return 0;
+        return marginSize === 'small' ? 36 : 72; // 0.5 or 1 inch in points
+    }, [marginSize]);
+
+    useEffect(() => {
+        const drawPreview = async () => {
+            const canvas = canvasRef.current;
+            const ctx = canvas?.getContext('2d');
+            if (!canvas || !ctx) return;
+
+            setIsLoading(true);
+            const image = new Image();
+            image.src = fileInfo.previewUrl;
+            image.onload = () => {
+                const pageDims = getPageDimensions();
+                const margin = getMargin();
+
+                let pageWidth, pageHeight;
+                if (pageSize === 'Fit') {
+                    pageWidth = image.width + margin * 2;
+                    pageHeight = image.height + margin * 2;
+                } else {
+                    pageWidth = pageDims![0];
+                    pageHeight = pageDims![1];
+                }
+
+                const aspectRatio = pageWidth / pageHeight;
+                canvas.width = 300;
+                canvas.height = 300 / aspectRatio;
+                
+                const scale = canvas.width / pageWidth;
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const usableWidth = pageWidth - margin * 2;
+                const usableHeight = pageHeight - margin * 2;
+
+                const imgAspectRatio = image.width / image.height;
+                let scaledWidth, scaledHeight;
+                if (imgAspectRatio > usableWidth / usableHeight) {
+                    scaledWidth = usableWidth;
+                    scaledHeight = scaledWidth / imgAspectRatio;
+                } else {
+                    scaledHeight = usableHeight;
+                    scaledWidth = scaledHeight * imgAspectRatio;
+                }
+
+                const x = (margin + (usableWidth - scaledWidth) / 2) * scale;
+                const y = (margin + (usableHeight - scaledHeight) / 2) * scale;
+
+                ctx.drawImage(image, x, y, scaledWidth * scale, scaledHeight * scale);
+                setIsLoading(false);
+            };
+            image.onerror = () => {
+                setIsLoading(false);
+            }
+        };
+
+        drawPreview();
+    }, [fileInfo, orientation, pageSize, marginSize, getPageDimensions, getMargin]);
+
+    return (
+        <div className="w-full h-full flex items-center justify-center">
+            {isLoading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
+            <canvas ref={canvasRef} className={cn("w-full h-full object-contain rounded-lg shadow-inner", isLoading && "hidden")} />
+        </div>
+    );
+};
+
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
@@ -66,7 +140,6 @@ export function JpgToPdfConverter() {
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
   
-  // Conversion Options
   const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
@@ -81,90 +154,10 @@ export function JpgToPdfConverter() {
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
-  const getPageSize = useCallback(() => {
-    let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
-    return orientation === 'landscape' ? [size[1], size[0]] : size;
-  }, [pageSize, orientation]);
-
-  const getMargin = useCallback(() => {
-    if (marginSize === 'none') return 0;
-    if (marginSize === 'small') return 36; // 0.5 inch
-    return 72; // 1 inch
-  }, [marginSize]);
-
-  const generatePreview = useCallback(async (fileInfo: ImageFile, currentOperationId: number) => {
-    try {
-      const pdfDoc = await PDFDocument.create();
-      const imageBytes = await fileInfo.file.arrayBuffer();
-      const image = await (fileInfo.file.type === 'image/png' 
-        ? pdfDoc.embedPng(imageBytes) 
-        : pdfDoc.embedJpg(imageBytes));
-
-      const pageDims = getPageSize();
-      const margin = getMargin();
-      const page = pdfDoc.addPage(pageSize === 'Fit' ? undefined : pageDims);
-
-      let pageWidth, pageHeight;
-      if (pageSize === 'Fit') {
-          pageWidth = image.width + margin * 2;
-          pageHeight = image.height + margin * 2;
-          page.setSize(pageWidth, pageHeight);
-      } else {
-          pageWidth = page.getWidth();
-          pageHeight = page.getHeight();
-      }
-
-      const usableWidth = pageWidth - margin * 2;
-      const usableHeight = pageHeight - margin * 2;
-      const scaled = image.scaleToFit(usableWidth, usableHeight);
-      
-      page.drawImage(image, {
-          x: margin + (usableWidth - scaled.width) / 2,
-          y: margin + (usableHeight - scaled.height) / 2,
-          width: scaled.width,
-          height: scaled.height,
-      });
-
-      const pdfBytes = await pdfDoc.save();
-      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-      const pdf = await loadingTask.promise;
-      if (operationId.current !== currentOperationId) return;
-
-      const pdfPage = await pdf.getPage(1);
-      const viewport = pdfPage.getViewport({ scale: 1 });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const context = canvas.getContext('2d')!;
-      await pdfPage.render({ canvasContext: context, viewport }).promise;
-
-      if (operationId.current !== currentOperationId) return;
-      const dataUrl = canvas.toDataURL();
-      setFiles(prevFiles => prevFiles.map(f => f.id === fileInfo.id ? { ...f, pdfPagePreviewUrl: dataUrl, isPreviewLoading: false } : f));
-    } catch (e) {
-      console.error("Preview generation failed", e);
-      setFiles(prevFiles => prevFiles.map(f => f.id === fileInfo.id ? { ...f, isPreviewLoading: false } : f));
-    }
-  }, [getPageSize, getMargin, pageSize]);
-
   useEffect(() => {
-    const currentOperationId = ++operationId.current;
-    files.forEach(file => {
-      if (!file.isPreviewLoading) {
-        setFiles(prev => prev.map(f => f.id === file.id ? {...f, isPreviewLoading: true} : f));
-        generatePreview(file, currentOperationId);
-      }
-    });
-  }, [orientation, pageSize, marginSize, generatePreview]);
-
-  useEffect(() => {
-    // Cleanup function to run when the component unmounts
     return () => {
-      operationId.current = 0; // Invalidate any running operations
-      files.forEach(f => {
-        URL.revokeObjectURL(f.previewUrl);
-        if (f.pdfPagePreviewUrl) URL.revokeObjectURL(f.pdfPagePreviewUrl);
-      });
+      operationId.current = 0;
+      files.forEach(f => URL.revokeObjectURL(f.previewUrl));
       if (conversionResults) {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       }
@@ -192,23 +185,20 @@ export function JpgToPdfConverter() {
         return true;
       });
 
-      const currentOperationId = ++operationId.current;
-      const filesToAdd: ImageFile[] = newFiles.map(file => ({ 
+      const filesToAdd = newFiles.map(file => ({ 
         id: `${file.name}-${Date.now()}`, 
         file,
         previewUrl: URL.createObjectURL(file),
-        isPreviewLoading: true,
       }));
       
       setFiles(prev => [...prev, ...filesToAdd]);
       setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
-      filesToAdd.forEach(file => generatePreview(file, currentOperationId));
 
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not valid image types or exceeded size limits." });
       }
     },
-    [files.length, totalSize, toast, generatePreview]
+    [files.length, totalSize, toast]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -225,7 +215,6 @@ export function JpgToPdfConverter() {
       const fileToRemove = files.find(f => f.id === fileId);
       if (fileToRemove) {
         URL.revokeObjectURL(fileToRemove.previewUrl);
-        if (fileToRemove.pdfPagePreviewUrl) URL.revokeObjectURL(fileToRemove.pdfPagePreviewUrl);
         setTotalSize(prev => prev - fileToRemove.file.size);
         setFiles(prev => prev.filter(f => f.id !== fileId));
       }
@@ -234,10 +223,7 @@ export function JpgToPdfConverter() {
   };
   
   const handleClearAll = () => {
-    files.forEach(f => {
-      URL.revokeObjectURL(f.previewUrl);
-      if (f.pdfPagePreviewUrl) URL.revokeObjectURL(f.pdfPagePreviewUrl);
-    });
+    files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFiles([]);
     setTotalSize(0);
   };
@@ -280,6 +266,17 @@ export function JpgToPdfConverter() {
     setConversionResults(null);
     
     try {
+      const getPageSize = () => {
+        let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
+        return orientation === 'landscape' ? [size[1], size[0]] : size;
+      }
+
+      const getMargin = () => {
+        if (marginSize === 'none') return 0;
+        if (marginSize === 'small') return 36;
+        return 72;
+      }
+      
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
       const mergedPdf = await PDFDocument.create();
 
@@ -438,7 +435,7 @@ export function JpgToPdfConverter() {
                         Drop image files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
+                    <Button type="button" onClick={open} className="mt-4 btn-animated-gradient font-bold text-base" disabled={isConverting}>
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Choose Files
                     </Button>
@@ -488,18 +485,7 @@ export function JpgToPdfConverter() {
                              removingFileId === imgFile.id && 'opacity-0 scale-95'
                         )}
                         >
-                          <div className="w-full h-full flex items-center justify-center">
-                            {imgFile.isPreviewLoading ? (
-                                <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                    <span className="text-xs">Generating preview...</span>
-                                </div>
-                            ) : imgFile.pdfPagePreviewUrl ? (
-                                <img src={imgFile.pdfPagePreviewUrl} alt={`Preview of ${imgFile.file.name}`} className="w-full h-full object-contain rounded-lg bg-white shadow-inner" />
-                            ) : (
-                                <img src={imgFile.previewUrl} alt={imgFile.file.name} className="w-full h-full object-cover rounded-lg" />
-                            )}
-                          </div>
+                          <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white rounded-lg">
                             <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
                             <p className="text-xs text-white/80">{formatBytes(imgFile.file.size)}</p>
@@ -562,28 +548,47 @@ export function JpgToPdfConverter() {
                     <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
                 </div>
                 
-                <div className="space-y-4 pt-4 border-t">
-                    {isConverting ? (
-                        <div className="p-4 border rounded-lg bg-primary/5">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                    <p className="text-sm font-medium text-primary transition-all duration-300">Converting to PDF...</p>
+                <div className="pt-4 border-t h-[104px] flex flex-col justify-center">
+                    <AnimatePresence mode="wait">
+                        {isConverting ? (
+                            <motion.div
+                                key="progress"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-4"
+                            >
+                                <div className="p-4 border rounded-lg bg-primary/5">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                                            <p className="text-sm font-medium text-primary transition-all duration-300">Converting to PDF...</p>
+                                        </div>
+                                        <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
+                                    </div>
+                                    <Progress value={conversionProgress} className="h-2 transition-all duration-500" />
                                 </div>
-                                <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
-                            </div>
-                            <Progress value={conversionProgress} className="h-2 transition-all duration-500" />
-                            <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-4">
-                                <Ban className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
-                        </div>
-                    ) : (
-                        <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={files.length === 0 || isConverting}>
-                            <FileText className="mr-2 h-5 w-5" />
-                            Convert to PDF
-                        </Button>
-                    )}
+                                <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-2">
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel
+                                </Button>
+                            </motion.div>
+                        ) : (
+                             <motion.div
+                                key="button"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                transition={{ duration: 0.2 }}
+                             >
+                                <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={files.length === 0 || isConverting}>
+                                    <FileText className="mr-2 h-5 w-5" />
+                                    Convert to PDF
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
             </CardContent>
