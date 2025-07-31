@@ -13,6 +13,8 @@ import {
   Loader2,
   Ban,
   FileArchive,
+  Settings,
+  GripVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +27,6 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
 import JSZip from 'jszip';
 import { motion, AnimatePresence } from "framer-motion";
-
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 25;
@@ -59,49 +60,6 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreview = ({ image, orientation, pageSize, marginSize }: { image: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    const getPageDimensions = () => {
-        if (pageSize === "Fit") {
-            return { width: image.width, height: image.height, aspectRatio: image.width / image.height };
-        }
-        let dims = PAGE_SIZE_MAP[pageSize];
-        if (orientation === 'landscape') {
-            dims = [dims[1], dims[0]];
-        }
-        return { width: dims[0], height: dims[1], aspectRatio: dims[0] / dims[1] };
-    };
-
-    const getMargin = () => {
-        if (pageSize === "Fit") return 0;
-        if (marginSize === "none") return 0;
-        return marginSize === "small" ? 0.05 : 0.1; // Margin as a percentage of the shortest side
-    };
-
-    const { aspectRatio } = getPageDimensions();
-    const marginPercent = getMargin();
-
-    return (
-        <div className="flex flex-col items-center">
-            <div 
-                className="bg-white dark:bg-zinc-800 shadow-md border"
-                style={{
-                    aspectRatio: `${aspectRatio}`,
-                    width: '100%',
-                    padding: `${marginPercent * 100}%`,
-                }}
-            >
-                <img
-                    src={image.previewUrl}
-                    alt="preview"
-                    className="w-full h-full object-contain"
-                />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Page {image.id.split('-')[0]}</p>
-        </div>
-    );
-}
-
-
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
@@ -118,22 +76,15 @@ export function JpgToPdfConverter() {
   
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
-    // This is the cleanup function that runs when the component unmounts.
     return () => {
-      // Invalidate any ongoing operations to prevent state updates on an unmounted component.
       operationId.current++; 
-      
-      // Revoke object URLs to avoid memory leaks.
       files.forEach(f => URL.revokeObjectURL(f.previewUrl));
-      if (conversionResults) {
-        conversionResults.forEach(r => URL.revokeObjectURL(r.url));
-      }
+      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
     };
   }, [files, conversionResults]);
   
@@ -153,13 +104,13 @@ export function JpgToPdfConverter() {
         return true;
       });
 
-      const filesToAdd: Promise<ImageFile>[] = validFiles.map(file => 
+      const filesToAdd: Promise<ImageFile>[] = validFiles.map((file, index) => 
         new Promise((resolve) => {
           const previewUrl = URL.createObjectURL(file);
           const img = new window.Image();
           img.onload = () => {
             resolve({
-              id: `${files.length + validFiles.indexOf(file) + 1}-${file.name}`,
+              id: `${files.length + index + 1}-${file.name}`,
               file,
               previewUrl,
               width: img.width,
@@ -210,7 +161,6 @@ export function JpgToPdfConverter() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => setIsDragging(true), 0);
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -225,7 +175,6 @@ export function JpgToPdfConverter() {
   };
 
   const handleDragEnd = () => {
-    setIsDragging(false);
     dragItem.current = null;
     dragOverItem.current = null;
   };
@@ -254,12 +203,13 @@ export function JpgToPdfConverter() {
       const getMargin = (pageWidth: number, pageHeight: number) => {
         if (pageSize === 'Fit' || marginSize === 'none') return 0;
         const shortestSide = Math.min(pageWidth, pageHeight);
-        return marginSize === 'small' ? shortestSide * 0.05 : shortestSide * 0.1; // 5% or 10% margin
+        return marginSize === 'small' ? shortestSide * 0.05 : shortestSide * 0.1;
       }
       
       const results: {url: string, filename: string}[] = [];
-      
-      if (mergeIntoOnePdf || files.length === 1) {
+      const createSinglePdf = mergeIntoOnePdf || files.length === 1;
+
+      if (createSinglePdf) {
           const mergedPdf = await PDFDocument.create();
           for (let i = 0; i < files.length; i++) {
               if (operationId.current !== currentOperationId) return;
@@ -288,7 +238,7 @@ export function JpgToPdfConverter() {
           const blob = new Blob([mergedBytes], { type: 'application/pdf' });
           results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
 
-      } else { // Multiple files, separate PDFs in a zip
+      } else {
           const zip = new JSZip();
           for (let i = 0; i < files.length; i++) {
               if (operationId.current !== currentOperationId) return;
@@ -355,11 +305,8 @@ export function JpgToPdfConverter() {
   };
   
   const handleConvertMore = () => {
-    if (conversionResults) {
-      conversionResults.forEach(r => URL.revokeObjectURL(r.url));
-    }
-    setConversionResults([]);
     handleClearAll();
+    setConversionResults([]);
   };
 
   const handleDownload = () => {
@@ -399,9 +346,7 @@ export function JpgToPdfConverter() {
         <Card className="bg-transparent shadow-lg">
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload Images</CardTitle>
-                <CardDescription>
-                  Drag &amp; drop your JPG or PNG files below.
-                </CardDescription>
+                <CardDescription>Drag & drop your JPG or PNG files below.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div
@@ -415,21 +360,16 @@ export function JpgToPdfConverter() {
                 >
                     <input {...getInputProps()} />
                     <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
-                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
-                        Drop image files here
-                    </p>
+                    <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">Drop image files here</p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
                      <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
                         <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Choose Files
+                            <FolderOpen className="mr-2 h-4 w-4" />Choose Files
                         </Button>
                     </motion.div>
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
-                        <div className="flex flex-col items-center">
-                            <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
-                            <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
-                        </div>
+                        <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
+                        <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
                     </div>
                 </div>
             </CardContent>
@@ -438,44 +378,84 @@ export function JpgToPdfConverter() {
        {files.length > 0 && (
             <Card className="bg-transparent shadow-lg">
                 <CardHeader>
-                    <CardTitle className="text-xl sm:text-2xl">Arrange and Configure</CardTitle>
-                    <CardDescription>Drag images to reorder them and set your PDF options.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle className="text-xl sm:text-2xl">Arrange and Configure</CardTitle>
+                            <CardDescription>Drag to reorder images and set PDF options.</CardDescription>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" disabled={isConverting}>
+                            <X className="w-4 h-4 mr-1" />Clear All
+                        </Button>
+                    </div>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-1 space-y-6">
-                        {/* Options */}
-                        <div className={cn("space-y-6", isConverting && "opacity-70 pointer-events-none")}>
+                <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Previews */}
+                    <div className="lg:col-span-2">
+                        <div onDragOver={handleDragOver} className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 rounded-lg bg-muted/30 p-4 max-h-[600px] overflow-y-auto", isConverting && "opacity-70 pointer-events-none")}>
+                           {files.map((imgFile, index) => (
+                                <div
+                                    key={imgFile.id}
+                                    draggable={!isConverting}
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragEnter={(e) => handleDragEnter(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    className={cn(
+                                        'relative transition-all duration-300 group aspect-[3/4]',
+                                        dragItem.current === index ? 'shadow-2xl scale-105 opacity-50' : 'shadow-sm',
+                                        isConverting ? 'cursor-not-allowed' : 'cursor-grab',
+                                        removingFileId === imgFile.id && 'opacity-0 scale-95'
+                                    )}
+                                >
+                                    <div className="absolute inset-0 bg-background rounded-lg flex items-center justify-center">
+                                        <img src={imgFile.previewUrl} alt={`Preview of ${imgFile.file.name}`} className="max-w-full max-h-full object-contain rounded"/>
+                                    </div>
+                                    <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{index + 1}</div>
+                                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeFile(imgFile.id)} disabled={isConverting}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                    <div className="absolute bottom-1 right-1 left-1 bg-black/50 text-white text-xs p-1 rounded-b-md truncate">{imgFile.file.name}</div>
+                                    <GripVertical className="absolute top-1/2 right-1 -translate-y-1/2 w-5 h-5 text-white/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    {/* Options */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className={cn("space-y-6 p-4 border rounded-lg", isConverting && "opacity-70 pointer-events-none")}>
+                             <div>
+                                <Label className="font-semibold flex items-center gap-2"><Settings className="w-4 h-4"/>PDF Options</Label>
+                             </div>
                             <div>
-                                <Label className="font-semibold">Page Orientation</Label>
-                                <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="portrait" id="o-p" /><Label htmlFor="o-p">Portrait</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="landscape" id="o-l" /><Label htmlFor="o-l">Landscape</Label></div>
+                                <Label className="font-semibold text-sm">Page Orientation</Label>
+                                <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2 grid grid-cols-2 gap-2" disabled={isConverting}>
+                                    <div><RadioGroupItem value="portrait" id="o-p" className="sr-only peer" /><Label htmlFor="o-p" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Portrait</Label></div>
+                                    <div><RadioGroupItem value="landscape" id="o-l" className="sr-only peer" /><Label htmlFor="o-l" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Landscape</Label></div>
                                 </RadioGroup>
                             </div>
                             <div>
-                                <Label className="font-semibold">Page Size</Label>
-                                <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="A4" id="ps-a4" /><Label htmlFor="ps-a4">A4</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Letter" id="ps-letter" /><Label htmlFor="ps-letter">Letter</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="Fit" id="ps-fit" /><Label htmlFor="ps-fit">Fit Image</Label></div>
+                                <Label className="font-semibold text-sm">Page Size</Label>
+                                <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2 grid grid-cols-3 gap-2" disabled={isConverting}>
+                                    <div><RadioGroupItem value="A4" id="ps-a4" className="sr-only peer" /><Label htmlFor="ps-a4" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">A4</Label></div>
+                                    <div><RadioGroupItem value="Letter" id="ps-letter" className="sr-only peer" /><Label htmlFor="ps-letter" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Letter</Label></div>
+                                    <div><RadioGroupItem value="Fit" id="ps-fit" className="sr-only peer" /><Label htmlFor="ps-fit" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">Fit</Label></div>
                                 </RadioGroup>
                             </div>
                             <div>
-                                <Label className="font-semibold">Margin</Label>
-                                <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>No Margin</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
+                                <Label className="font-semibold text-sm">Margin</Label>
+                                <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2 grid grid-cols-3 gap-2" disabled={isConverting || pageSize === 'Fit'}>
+                                    <div><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} className="sr-only peer" /><Label htmlFor="m-none" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary", pageSize==='Fit' && "opacity-50 cursor-not-allowed")}>None</Label></div>
+                                    <div><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} className="sr-only peer" /><Label htmlFor="m-small" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary", pageSize==='Fit' && "opacity-50 cursor-not-allowed")}>Small</Label></div>
+                                    <div><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} className="sr-only peer" /><Label htmlFor="m-big" className={cn("flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary", pageSize==='Fit' && "opacity-50 cursor-not-allowed")}>Big</Label></div>
                                 </RadioGroup>
                             </div>
                             <div className="flex items-center space-x-2 pt-4 border-t">
                                 <Checkbox id="merge" checked={mergeIntoOnePdf} onCheckedChange={(c) => setMergeIntoOnePdf(Boolean(c))} disabled={isConverting} />
-                                <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
+                                <Label htmlFor="merge" className="font-semibold text-sm">Merge all images into one PDF file</Label>
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="space-y-4 pt-4 border-t">
+                        <div className="space-y-4 pt-4 border-t h-[124px] flex flex-col justify-center">
                              <AnimatePresence mode="wait">
                                 {isConverting ? (
                                     <motion.div
@@ -514,36 +494,6 @@ export function JpgToPdfConverter() {
                                     </motion.div>
                                 )}
                             </AnimatePresence>
-                        </div>
-                    </div>
-                    
-                    {/* Previews */}
-                    <div className="md:col-span-2">
-                        <div className="flex justify-between items-center mb-4">
-                             <h3 className="font-semibold">Preview</h3>
-                             <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive" disabled={isConverting}><X className="w-4 h-4 mr-1" />Clear All</Button>
-                        </div>
-                        <div onDragOver={handleDragOver} className={cn("grid grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg bg-muted/30 p-4 max-h-[600px] overflow-y-auto", isConverting && "opacity-70 pointer-events-none")}>
-                           {files.map((imgFile, index) => (
-                                <div
-                                    key={imgFile.id}
-                                    draggable={!isConverting}
-                                    onDragStart={(e) => handleDragStart(e, index)}
-                                    onDragEnter={(e) => handleDragEnter(e, index)}
-                                    onDragEnd={handleDragEnd}
-                                    className={cn(
-                                        'relative transition-all duration-300',
-                                        isDragging && dragItem.current === index ? 'shadow-2xl scale-105 opacity-50' : 'shadow-sm',
-                                        isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                                        removingFileId === imgFile.id && 'opacity-0 scale-95'
-                                    )}
-                                >
-                                    <PagePreview image={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-7 h-7" onClick={() => removeFile(imgFile.id)} disabled={isConverting}>
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </CardContent>
