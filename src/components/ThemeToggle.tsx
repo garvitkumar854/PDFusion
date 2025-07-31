@@ -16,7 +16,8 @@ export const ThemeToggle = () => {
   }, []);
 
   if (!mounted) {
-    return <div className="h-8 w-14" />;
+    // Render a placeholder to prevent layout shift
+    return <div className="h-7 w-12" />;
   }
 
   const isDark = theme === "dark";
@@ -27,43 +28,42 @@ export const ThemeToggle = () => {
 
   const spring = {
     type: "spring",
-    stiffness: 300,
-    damping: 25,
+    stiffness: 500,
+    damping: 30,
   };
 
   return (
     <div
       onClick={toggleTheme}
       className={cn(
-        "relative flex h-8 w-14 cursor-pointer items-center rounded-full p-1",
+        "relative flex h-7 w-12 cursor-pointer items-center rounded-full p-1",
         "bg-secondary transition-colors"
       )}
       title="Toggle theme"
       aria-label="Toggle theme"
     >
       <motion.div
-        key={theme}
-        className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-background shadow-md"
+        className="absolute flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-md"
         layout
         transition={spring}
         style={{
-          left: isDark ? 'calc(100% - 28px)' : '4px',
+          left: isDark ? 'calc(100% - 24px)' : '4px',
         }}
       >
-        <AnimatePresence mode="wait">
-            <motion.div
-                key={isDark ? "moon" : "sun"}
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 20, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-            >
-                {isDark ? (
-                    <Moon className="h-4 w-4 text-slate-500" />
-                ) : (
-                    <Sun className="h-4 w-4 text-yellow-500" />
-                )}
-            </motion.div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={isDark ? "moon" : "sun"}
+            initial={{ y: -20, opacity: 0, rotate: -90 }}
+            animate={{ y: 0, opacity: 1, rotate: 0 }}
+            exit={{ y: 20, opacity: 0, rotate: 90 }}
+            transition={{ duration: 0.2 }}
+          >
+            {isDark ? (
+              <Moon className="h-3 w-3 text-slate-500" />
+            ) : (
+              <Sun className="h-3 w-3 text-yellow-500" />
+            )}
+          </motion.div>
         </AnimatePresence>
       </motion.div>
     </div>
