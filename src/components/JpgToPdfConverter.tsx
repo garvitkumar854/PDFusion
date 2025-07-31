@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -21,11 +22,15 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument, PageSizes } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
 import JSZip from 'jszip';
 
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 25;
@@ -37,6 +42,8 @@ type ImageFile = {
   id: string;
   file: File;
   previewUrl: string;
+  pdfPagePreviewUrl?: string;
+  isPreviewLoading: boolean;
 };
 
 type Orientation = "portrait" | "landscape";
@@ -74,11 +81,90 @@ export function JpgToPdfConverter() {
   const operationId = useRef<number>(0);
   const { toast } = useToast();
 
+  const getPageSize = useCallback(() => {
+    let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
+    return orientation === 'landscape' ? [size[1], size[0]] : size;
+  }, [pageSize, orientation]);
+
+  const getMargin = useCallback(() => {
+    if (marginSize === 'none') return 0;
+    if (marginSize === 'small') return 36; // 0.5 inch
+    return 72; // 1 inch
+  }, [marginSize]);
+
+  const generatePreview = useCallback(async (fileInfo: ImageFile, currentOperationId: number) => {
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const imageBytes = await fileInfo.file.arrayBuffer();
+      const image = await (fileInfo.file.type === 'image/png' 
+        ? pdfDoc.embedPng(imageBytes) 
+        : pdfDoc.embedJpg(imageBytes));
+
+      const pageDims = getPageSize();
+      const margin = getMargin();
+      const page = pdfDoc.addPage(pageSize === 'Fit' ? undefined : pageDims);
+
+      let pageWidth, pageHeight;
+      if (pageSize === 'Fit') {
+          pageWidth = image.width + margin * 2;
+          pageHeight = image.height + margin * 2;
+          page.setSize(pageWidth, pageHeight);
+      } else {
+          pageWidth = page.getWidth();
+          pageHeight = page.getHeight();
+      }
+
+      const usableWidth = pageWidth - margin * 2;
+      const usableHeight = pageHeight - margin * 2;
+      const scaled = image.scaleToFit(usableWidth, usableHeight);
+      
+      page.drawImage(image, {
+          x: margin + (usableWidth - scaled.width) / 2,
+          y: margin + (usableHeight - scaled.height) / 2,
+          width: scaled.width,
+          height: scaled.height,
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+      const pdf = await loadingTask.promise;
+      if (operationId.current !== currentOperationId) return;
+
+      const pdfPage = await pdf.getPage(1);
+      const viewport = pdfPage.getViewport({ scale: 1 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const context = canvas.getContext('2d')!;
+      await pdfPage.render({ canvasContext: context, viewport }).promise;
+
+      if (operationId.current !== currentOperationId) return;
+      const dataUrl = canvas.toDataURL();
+      setFiles(prevFiles => prevFiles.map(f => f.id === fileInfo.id ? { ...f, pdfPagePreviewUrl: dataUrl, isPreviewLoading: false } : f));
+    } catch (e) {
+      console.error("Preview generation failed", e);
+      setFiles(prevFiles => prevFiles.map(f => f.id === fileInfo.id ? { ...f, isPreviewLoading: false } : f));
+    }
+  }, [getPageSize, getMargin, pageSize]);
+
+  useEffect(() => {
+    const currentOperationId = ++operationId.current;
+    files.forEach(file => {
+      if (!file.isPreviewLoading) {
+        setFiles(prev => prev.map(f => f.id === file.id ? {...f, isPreviewLoading: true} : f));
+        generatePreview(file, currentOperationId);
+      }
+    });
+  }, [orientation, pageSize, marginSize, generatePreview]);
+
   useEffect(() => {
     // Cleanup function to run when the component unmounts
     return () => {
       operationId.current = 0; // Invalidate any running operations
-      files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+      files.forEach(f => {
+        URL.revokeObjectURL(f.previewUrl);
+        if (f.pdfPagePreviewUrl) URL.revokeObjectURL(f.pdfPagePreviewUrl);
+      });
       if (conversionResults) {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       }
@@ -106,20 +192,23 @@ export function JpgToPdfConverter() {
         return true;
       });
 
-      const filesToAdd = newFiles.map(file => ({ 
+      const currentOperationId = ++operationId.current;
+      const filesToAdd: ImageFile[] = newFiles.map(file => ({ 
         id: `${file.name}-${Date.now()}`, 
         file,
         previewUrl: URL.createObjectURL(file),
+        isPreviewLoading: true,
       }));
       
       setFiles(prev => [...prev, ...filesToAdd]);
       setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
+      filesToAdd.forEach(file => generatePreview(file, currentOperationId));
 
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not valid image types or exceeded size limits." });
       }
     },
-    [files.length, totalSize, toast]
+    [files.length, totalSize, toast, generatePreview]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -136,6 +225,7 @@ export function JpgToPdfConverter() {
       const fileToRemove = files.find(f => f.id === fileId);
       if (fileToRemove) {
         URL.revokeObjectURL(fileToRemove.previewUrl);
+        if (fileToRemove.pdfPagePreviewUrl) URL.revokeObjectURL(fileToRemove.pdfPagePreviewUrl);
         setTotalSize(prev => prev - fileToRemove.file.size);
         setFiles(prev => prev.filter(f => f.id !== fileId));
       }
@@ -144,7 +234,10 @@ export function JpgToPdfConverter() {
   };
   
   const handleClearAll = () => {
-    files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    files.forEach(f => {
+      URL.revokeObjectURL(f.previewUrl);
+      if (f.pdfPagePreviewUrl) URL.revokeObjectURL(f.pdfPagePreviewUrl);
+    });
     setFiles([]);
     setTotalSize(0);
   };
@@ -187,17 +280,6 @@ export function JpgToPdfConverter() {
     setConversionResults(null);
     
     try {
-      const getPageSize = () => {
-        let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
-        return orientation === 'landscape' ? [size[1], size[0]] : size;
-      }
-
-      const getMargin = () => {
-        if (marginSize === 'none') return 0;
-        if (marginSize === 'small') return 36; // 0.5 inch
-        return 72; // 1 inch
-      }
-      
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
       const mergedPdf = await PDFDocument.create();
 
@@ -220,13 +302,11 @@ export function JpgToPdfConverter() {
             const singlePdf = await PDFDocument.create();
             page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
         }
-
-        const dims = image.scale(1);
         
         let pageWidth, pageHeight;
         if (pageSize === 'Fit') {
-            pageWidth = dims.width + margin * 2;
-            pageHeight = dims.height + margin * 2;
+            pageWidth = image.width + margin * 2;
+            pageHeight = image.height + margin * 2;
             page.setSize(pageWidth, pageHeight);
         } else {
             pageWidth = page.getWidth();
@@ -340,7 +420,7 @@ export function JpgToPdfConverter() {
             <CardHeader>
                 <CardTitle className="text-xl sm:text-2xl">Upload Images</CardTitle>
                 <CardDescription>
-                  Drag &amp; drop your JPG or PNG files below.
+                  Drag & drop your JPG or PNG files below.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -402,13 +482,24 @@ export function JpgToPdfConverter() {
                         onDragOver={(e) => e.preventDefault()}
                         style={{ willChange: 'transform, opacity, height, padding, margin' }}
                         className={cn(
-                            'group relative rounded-lg border bg-card transition-all duration-300 ease-in-out aspect-square',
+                            'group relative rounded-lg border bg-card transition-all duration-300 ease-in-out aspect-[7/10]',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                              isConverting ? 'cursor-not-allowed' : 'cursor-grab',
                              removingFileId === imgFile.id && 'opacity-0 scale-95'
                         )}
                         >
-                          <img src={imgFile.previewUrl} alt={imgFile.file.name} className="w-full h-full object-cover rounded-lg" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            {imgFile.isPreviewLoading ? (
+                                <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                    <span className="text-xs">Generating preview...</span>
+                                </div>
+                            ) : imgFile.pdfPagePreviewUrl ? (
+                                <img src={imgFile.pdfPagePreviewUrl} alt={`Preview of ${imgFile.file.name}`} className="w-full h-full object-contain rounded-lg bg-white shadow-inner" />
+                            ) : (
+                                <img src={imgFile.previewUrl} alt={imgFile.file.name} className="w-full h-full object-cover rounded-lg" />
+                            )}
+                          </div>
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white rounded-lg">
                             <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
                             <p className="text-xs text-white/80">{formatBytes(imgFile.file.size)}</p>
