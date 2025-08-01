@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const contactMethods = [
   {
@@ -63,28 +64,6 @@ const formSchema = z.object({
   topic: z.string().min(1, "Please select a topic."),
   message: z.string().min(20, "Message must be at least 20 characters."),
 });
-
-const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-        viewBox="0 0 512 512"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-    >
-        <defs>
-        <radialGradient id="grad-instagram" cx="0.3" cy="1" r="1">
-            <stop offset="0" stopColor="#FEDA77" />
-            <stop offset="0.1" stopColor="#F58529" />
-            <stop offset="0.25" stopColor="#DD2A7B" />
-            <stop offset="0.5" stopColor="#8134AF" />
-            <stop offset="1" stopColor="#515BD4" />
-        </radialGradient>
-        </defs>
-        <path
-            fill="url(#grad-instagram)"
-            d="M256,0C114.615,0,0,114.615,0,256s114.615,256,256,256s256-114.615,256-256S397.385,0,256,0z M372,176   c0,11.046-8.954,20-20,20h-12c-11.046,0-20-8.954-20-20v-12c0-11.046,8.954-20,20-20h12c11.046,0,20,8.954,20,20V176z    M256,180c-75.094,0-136,60.906-136,136s60.906,136,136,136s136-60.906,136-136S331.094,180,256,180z M256,388   c-46.398,0-84-37.602-84-84s37.602-84,84-84s84,37.602,84,84S302.398,388,256,388z"
-        />
-    </svg>
-);
 
 
 export default function ContactPage() {
@@ -173,12 +152,12 @@ ${values.message}
                 <div className="flex gap-4 items-center justify-center sm:justify-start">
                     <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                        <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                           <InstagramIcon className="w-12 h-12" />
+                           <Image src="/instagram.svg" alt="Instagram" width={48} height={48} />
                        </div>
                     </Link>
                     <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                       <div className="group w-12 h-12 rounded-full bg-muted hover:bg-primary/10 flex items-center justify-center transition-all duration-300 hover:scale-110">
-                           <Github className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                       <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+                           <Image src="/github.svg" alt="GitHub" width={48} height={48} />
                        </div>
                     </Link>
                 </div>
