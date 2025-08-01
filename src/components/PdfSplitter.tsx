@@ -211,7 +211,11 @@ export function PdfSplitter() {
         
         const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
         setPagePreviews(previews);
-
+        toast({
+          variant: 'success',
+          title: "File Uploaded",
+          description: `"${fileToLoad.name}" is ready for splitting.`
+        });
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
@@ -427,9 +431,9 @@ export function PdfSplitter() {
 
       setSplitResults(results);
       toast({
+        variant: "success",
         title: "Split Successful!",
         description: `Your PDF has been split.`,
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
     } catch (error: any) {
@@ -448,7 +452,7 @@ export function PdfSplitter() {
     operationId.current++; // Invalidate current operation
     setIsSplitting(false);
     setSplitError(null);
-    toast({ title: "Split cancelled." });
+    toast({ variant: "info", title: "Split cancelled." });
   };
   
   const handleSplitAgain = () => {
@@ -851,3 +855,5 @@ export function PdfSplitter() {
     </div>
   );
 }
+
+    
