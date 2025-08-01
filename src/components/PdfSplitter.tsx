@@ -235,8 +235,8 @@ export function PdfSplitter() {
 
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
-      if (rejectedFiles.length > 0 || acceptedFiles.length > 1) {
-        toast({ variant: "destructive", title: "One file at a time", description: "This tool only supports processing one PDF at a time. Please upload a single file." });
+      if (rejectedFiles.length > 0) {
+        toast({ variant: "destructive", title: "Invalid file", description: "The file was not a PDF or exceeded size limits." });
         return;
       }
       if (acceptedFiles.length === 0) return;
@@ -282,6 +282,7 @@ export function PdfSplitter() {
     onDrop,
     accept: { "application/pdf": [".pdf"] },
     maxSize: MAX_FILE_SIZE_BYTES,
+    multiple: false,
     noClick: true,
     noKeyboard: true,
     disabled: isProcessing || isSplitting,
@@ -289,6 +290,7 @@ export function PdfSplitter() {
 
   const removeFile = () => {
     operationId.current++; // Invalidate any running operations
+    const fileName = file?.file.name;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setIsProcessing(false);
@@ -296,6 +298,9 @@ export function PdfSplitter() {
     setSplitResults([]);
     setPagePreviews([]);
     setSplitError(null);
+    if (fileName) {
+      toast({ variant: 'info', title: `Removed "${fileName}"` });
+    }
   };
   
   const parseCustomRanges = (ranges: string, max: number): number[][] | null => {
