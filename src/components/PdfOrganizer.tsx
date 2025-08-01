@@ -273,7 +273,6 @@ export function PdfOrganizer() {
         variant: "success",
         title: "Successfully saved!", 
         description: "Your organized PDF has been downloaded.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div> 
       });
 
     } catch (e: any) {

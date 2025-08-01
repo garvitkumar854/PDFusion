@@ -217,7 +217,6 @@ export function MergePdfs() {
           variant: "success",
           title: `${filesToAdd.length} file(s) added`,
           description: "You can now reorder them or merge.",
-          duration: 3000,
         });
       } catch (e: any) {
          toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted.", duration: 5000 });
@@ -239,13 +238,13 @@ export function MergePdfs() {
     dispatch({ type: 'SET_REMOVING_FILE_ID', fileId });
     setTimeout(() => {
       dispatch({ type: 'REMOVE_FILE', fileId });
-       toast({ variant: "info", title: "File removed", description: `"${fileToRemove?.file.name}" has been removed.`, duration: 2000 });
+       toast({ variant: "info", title: "File removed", description: `"${fileToRemove?.file.name}" has been removed.` });
     }, 300);
   };
   
   const handleClearAll = () => {
     dispatch({ type: 'CLEAR_ALL' });
-    toast({ variant: "warning", title: "All files cleared", description: "The file list has been reset.", duration: 3000 });
+    toast({ variant: "warning", title: "All files cleared", description: "The file list has been reset." });
   };
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -430,7 +429,7 @@ export function MergePdfs() {
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
-                            <p>Remaining space: {formatBytes(MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
+                            <p>Remaining space: {formatBytes(totalSize > MAX_TOTAL_SIZE_BYTES ? 0 : MAX_TOTAL_SIZE_BYTES - totalSize)}</p>
                         </div>
                     </div>
                 </div>
