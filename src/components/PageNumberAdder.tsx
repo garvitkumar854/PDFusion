@@ -142,6 +142,8 @@ export function PageNumberAdder() {
 
       setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc: pdfjsDoc!, isEncrypted });
       setResult(null);
+
+      toast({ variant: 'success', title: 'File Uploaded', description: `"${fileToLoad.name}" is ready.` });
       
       if (isEncrypted) {
         return;
@@ -197,11 +199,15 @@ export function PageNumberAdder() {
   });
 
   const removeFile = () => {
+    const fileName = file?.file.name;
     if (file?.pdfjsDoc) {
       file.pdfjsDoc.destroy();
     }
     setFile(null);
     setFirstPagePreviewUrl(null);
+    if(fileName) {
+      toast({ variant: 'info', title: `Removed "${fileName}"` });
+    }
   };
 
   const getPageNumberText = (page: number, total: number) => {
@@ -352,9 +358,9 @@ export function PageNumberAdder() {
       setResult({ url, filename: `${originalName}_numbered.pdf` });
       
       toast({
+        variant: "success",
         title: "Processing Complete!",
         description: "Page numbers have been added to your PDF.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
     } catch (error: any) {
@@ -373,7 +379,7 @@ export function PageNumberAdder() {
     operationId.current++;
     setIsProcessing(false);
     setProgress(0);
-    toast({ title: "Processing cancelled." });
+    toast({ variant: "info", title: "Processing cancelled." });
   };
   
   const handleProcessAgain = () => {

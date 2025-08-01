@@ -154,6 +154,9 @@ export function PdfRotator() {
       }
 
       setFile({ id: `${singleFile.name}-${Date.now()}`, file: singleFile, isEncrypted });
+      
+      toast({ variant: "success", title: "File Uploaded", description: `"${singleFile.name}" is ready.` });
+
       if (!isEncrypted) {
           generatePreview(singleFile);
       }
@@ -170,9 +173,13 @@ export function PdfRotator() {
   });
 
   const removeFile = () => {
+    const fileName = file?.file.name;
     cleanup();
     setFile(null);
     setResult(null);
+     if (fileName) {
+        toast({ variant: "info", title: `Removed "${fileName}"` });
+    }
   };
   
   const handleProcess = async () => {
@@ -212,7 +219,7 @@ export function PdfRotator() {
 
         const originalName = file.file.name.replace(/\.pdf$/i, '');
         setResult({ url, filename: `${originalName}_rotated.pdf` });
-        toast({ title: "Processing Complete!", description: "Your PDF has been rotated." });
+        toast({ variant: "success", title: "Processing Complete!", description: "Your PDF has been rotated." });
 
     } catch (error: any) {
         if (operationId.current === currentOperationId) {
@@ -230,7 +237,7 @@ export function PdfRotator() {
     operationId.current++;
     setIsProcessing(false);
     setProgress(0);
-    toast({ title: "Processing cancelled." });
+    toast({ variant: "info", title: "Processing cancelled." });
   };
   
   const handleProcessAgain = () => {
