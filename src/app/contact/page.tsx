@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send } from "lucide-react";
+import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send, Github } from "lucide-react";
 import Link from 'next/link';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,6 +63,25 @@ const formSchema = z.object({
   topic: z.string().min(1, "Please select a topic."),
   message: z.string().min(20, "Message must be at least 20 characters."),
 });
+
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+);
 
 export default function ContactPage() {
   const form = useForm<z.infer<typeof formSchema>>({
@@ -140,6 +159,26 @@ ${values.message}
                 </AnimateOnScroll>
               ))}
             </div>
+
+            <AnimateOnScroll
+              animation="animate-in fade-in-0 slide-in-from-bottom-12"
+              className="duration-700 mt-12 text-left"
+              delay={150 * (contactMethods.length + 1)}
+            >
+                <h3 className="font-bold text-lg mb-4 text-center sm:text-left">Follow us on</h3>
+                <div className="flex gap-4 items-center justify-center sm:justify-start">
+                    <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                       <div className="group w-12 h-12 rounded-full bg-muted hover:bg-primary/10 flex items-center justify-center transition-all duration-300 hover:scale-110">
+                           <InstagramIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                       </div>
+                    </Link>
+                    <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                       <div className="group w-12 h-12 rounded-full bg-muted hover:bg-primary/10 flex items-center justify-center transition-all duration-300 hover:scale-110">
+                           <Github className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                       </div>
+                    </Link>
+                </div>
+            </AnimateOnScroll>
           </div>
           
           <motion.div
