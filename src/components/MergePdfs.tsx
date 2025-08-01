@@ -322,9 +322,9 @@ export function MergePdfs() {
         dispatch({ type: 'MERGE_SUCCESS', url });
       
       toast({
+        variant: "success",
         title: "Merge Successful!",
         description: `Your PDF is ready to be downloaded.${skippedFiles > 0 ? ` (${skippedFiles} file(s) were skipped).` : ''}`,
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
@@ -342,7 +342,7 @@ export function MergePdfs() {
   const handleCancelMerge = () => {
     operationId.current++;
     dispatch({ type: 'MERGE_CANCEL' });
-    toast({ title: "Merge cancelled." });
+    toast({ variant: "info", title: "Merge cancelled." });
   };
 
   const handleDownload = () => {

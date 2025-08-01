@@ -257,7 +257,7 @@ export function JpgToPdfConverter() {
   
   const handleConvert = async () => {
     if (files.length === 0) {
-      toast({ variant: "destructive", title: "No files", description: "Please upload at least one image file." });
+      toast({ variant: "destructive", title: "No files uploaded", description: "Please upload at least one image file to convert." });
       return;
     }
     
@@ -275,8 +275,7 @@ export function JpgToPdfConverter() {
 
       const getMargin = () => {
         if (marginSize === 'none') return 0;
-        if (marginSize === 'small') return 36;
-        return 72;
+        return marginSize === 'small' ? 36 : 72;
       }
       
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
@@ -352,9 +351,9 @@ export function JpgToPdfConverter() {
       
       setConversionResults(results);
       toast({
+        variant: "success",
         title: "Conversion Successful!",
         description: "Your PDF is ready to be downloaded.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
@@ -372,7 +371,7 @@ export function JpgToPdfConverter() {
     operationId.current++;
     setIsConverting(false);
     setConversionProgress(0);
-    toast({ title: "Conversion cancelled." });
+    toast({ variant: "info", title: "Conversion cancelled." });
   };
 
   const handleDownload = () => {
@@ -437,12 +436,10 @@ export function JpgToPdfConverter() {
                         Drop image files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                     <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
-                        <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
-                            <FolderOpen className="mr-2 h-4 w-4" />
-                            Choose Files
-                        </Button>
-                    </motion.div>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Choose Files
+                    </Button>
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
@@ -600,4 +597,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-

@@ -27,22 +27,23 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   useEffect(() => {
     setMounted(true);
 
-    // Determine if the app is running as a standalone PWA
     const checkStandalone = () => {
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        setIsStandalone(true);
+      if (typeof window !== 'undefined') {
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
+          setIsStandalone(true);
+        }
       }
     };
     checkStandalone();
     
-    // Check for iOS
-    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIos(isIosDevice);
-
+    if (typeof navigator !== 'undefined') {
+      const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      setIsIos(isIosDevice);
+    }
+    
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      // Show install button only if not in standalone mode
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setCanInstall(true);
       }
@@ -58,6 +59,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const handleInstallClick = useCallback(async () => {
     if (isIos) {
         toast({
+            variant: "info",
             title: "Installation Guide",
             description: "To install, tap the Share button and then 'Add to Home Screen'.",
             duration: 8000,
@@ -71,6 +73,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
+      toast({
+        variant: "success",
+        title: "App Installed!",
+        description: "PDFusion has been added to your home screen.",
+      });
       setCanInstall(false);
     }
     setInstallPrompt(null);
@@ -92,12 +99,8 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }
 
   // App is installed and running in the browser tab, show "Open App"
-  if (isStandalone === false && navigator.standalone === false) { 
-     // A simple heuristic for checking if the app is installed is to see if we can still prompt for installation
+  if (isStandalone === false && (navigator as any).standalone === false) { 
      if (installPrompt === null && !isIos) {
-         // This is not a foolproof check, but it's a good heuristic.
-         // If `beforeinstallprompt` was never fired or was already used, `installPrompt` will be null.
-         // A better check would be to see if `getInstalledRelatedApps` has a result.
         if (!window.matchMedia('(display-mode: standalone)').matches) {
             return (
               <Button
@@ -129,7 +132,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     );
   }
 
-  return null; // Don't show any button if installed and running standalone, or if conditions aren't met.
+  return null;
 };
 
 export default InstallPWA;

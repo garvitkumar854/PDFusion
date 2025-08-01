@@ -136,9 +136,9 @@ export function PdfCompressor() {
             });
 
             toast({
+                variant: "success",
                 title: "Compression Complete!",
                 description: "Your PDF has been successfully compressed.",
-                action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
             });
         } catch (error: any) {
             if (operationId.current === currentOperationId) {
@@ -160,7 +160,7 @@ export function PdfCompressor() {
   const handleCancel = () => {
     operationId.current++;
     setIsProcessing(false);
-    toast({ title: "Processing cancelled." });
+    toast({ variant: "info", title: "Processing cancelled." });
   };
   
   const handleProcessAgain = () => {
