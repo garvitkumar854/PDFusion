@@ -88,8 +88,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                     pageWidth = image.width + margin * 2;
                     pageHeight = image.height + margin * 2;
                 } else {
-                    pageWidth = pageDims![0];
-                    pageHeight = pageDims![1];
+                    [pageWidth, pageHeight] = pageDims!;
                 }
 
                 const aspectRatio = pageWidth / pageHeight;
@@ -439,7 +438,7 @@ export function JpgToPdfConverter() {
                         Drop image files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4 btn-animated-gradient font-bold text-base" disabled={isConverting}>
+                    <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Choose Files
                     </Button>
