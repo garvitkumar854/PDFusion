@@ -196,6 +196,13 @@ export function JpgToPdfConverter() {
       setFiles(prev => [...prev, ...filesToAdd]);
       setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
 
+      if (filesToAdd.length > 0) {
+        toast({
+            variant: "success",
+            title: `${filesToAdd.length} image(s) added successfully!`,
+        });
+      }
+
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not valid image types or exceeded size limits." });
       }
@@ -212,13 +219,14 @@ export function JpgToPdfConverter() {
   });
 
   const removeFile = (fileId: string) => {
+    const fileToRemove = files.find(f => f.id === fileId);
     setRemovingFileId(fileId);
     setTimeout(() => {
-      const fileToRemove = files.find(f => f.id === fileId);
       if (fileToRemove) {
         URL.revokeObjectURL(fileToRemove.previewUrl);
         setTotalSize(prev => prev - fileToRemove.file.size);
         setFiles(prev => prev.filter(f => f.id !== fileId));
+        toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
       }
       setRemovingFileId(null);
     }, 300);
@@ -228,6 +236,7 @@ export function JpgToPdfConverter() {
     files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFiles([]);
     setTotalSize(0);
+    toast({ variant: "info", title: "All files cleared." });
   };
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {

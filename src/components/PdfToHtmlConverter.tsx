@@ -70,6 +70,7 @@ export function PdfToHtmlConverter() {
         try {
             const pdfBytes = await singleFile.arrayBuffer();
             await pdfjsLib.getDocument({data: pdfBytes}).promise;
+            toast({ variant: "success", title: "File Uploaded", description: `"${singleFile.name}" is ready.` });
         } catch (e: any) {
             if (e.name === 'PasswordException') {
                 isEncrypted = true;
@@ -93,7 +94,11 @@ export function PdfToHtmlConverter() {
   });
 
   const removeFile = () => {
+    const fileName = file?.file.name;
     setFile(null);
+    if (fileName) {
+      toast({ variant: 'info', title: `Removed "${fileName}"` });
+    }
   };
   
   const processConversion = async () => {

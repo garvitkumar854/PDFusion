@@ -208,6 +208,12 @@ export function PdfToJpgConverter() {
         const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
         setPagePreviews(previews);
 
+        toast({
+            variant: "success",
+            title: "File Uploaded",
+            description: `"${fileToLoad.name}" is ready for conversion.`
+        });
+
     } catch (error: any) {
         if (operationId.current !== currentOperationId) return;
 
@@ -281,6 +287,7 @@ export function PdfToJpgConverter() {
   });
 
   const removeFile = () => {
+    const fileName = file?.file.name;
     operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
@@ -288,6 +295,9 @@ export function PdfToJpgConverter() {
     setConversionResults([]);
     setPagePreviews([]);
     setError(null);
+    if (fileName) {
+        toast({ variant: "info", title: `Removed "${fileName}"` });
+    }
   };
   
   const handleConvert = async () => {

@@ -64,6 +64,7 @@ export function HtmlToPdfConverter() {
     setError(null);
     const currentOperationId = ++operationId.current;
     setStatus("fetching");
+    toast({ variant: "info", title: "Fetching Website", description: "Attempting to load content from the URL." });
 
     try {
       const response = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`);
@@ -131,6 +132,7 @@ export function HtmlToPdfConverter() {
     setUrl("");
     setStatus("idle");
     setError(null);
+    toast({ variant: "info", title: "Ready for new URL" });
   };
 
   if (status === "done" && resultUrl) {
