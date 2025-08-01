@@ -17,7 +17,6 @@ import {
   Lock,
   Unlock,
   ShieldAlert,
-  FileUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -415,7 +414,7 @@ export function MergePdfs() {
                     )}
                 >
                     <input {...getInputProps()} />
-                    <FileUp className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
                     <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
                         Drop PDF files here
                     </p>

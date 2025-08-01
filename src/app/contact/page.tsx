@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send, Github } from "lucide-react";
+import { Sparkles, Mail, MessageSquare, Phone, MapPin, Send, Github, Users } from "lucide-react";
 import Link from 'next/link';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,25 +98,27 @@ ${values.message}
     <section className="py-20 md:py-32">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
-          <div className="text-center lg:text-left lg:col-span-3">
-            <AnimateOnScroll
-              animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-500"
-            >
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-                <Sparkles className="w-4 h-4" />
-                Get In Touch
-              </div>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
-                Contact{' '}
-                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                  Us
-                </span>
-              </h1>
-              <p className="max-w-2xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg">
-                Have a question or need help? We're here to assist you with any inquiries about our PDF merger tool.
-              </p>
-            </AnimateOnScroll>
+          <div className="lg:col-span-3">
+            <div className="text-center lg:text-left">
+              <AnimateOnScroll
+                animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                className="duration-500"
+              >
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                  <Sparkles className="w-4 h-4" />
+                  Get In Touch
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
+                  Contact{' '}
+                  <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                    Us
+                  </span>
+                </h1>
+                <p className="max-w-2xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg">
+                  Have a question or need help? We're here to assist you with any inquiries about our PDF merger tool.
+                </p>
+              </AnimateOnScroll>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-12 text-left">
               {contactMethods.map((method, index) => (
@@ -143,25 +145,33 @@ ${values.message}
               ))}
             </div>
 
-            <AnimateOnScroll
-              animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-700 mt-12 text-left"
-              delay={150 * (contactMethods.length + 1)}
-            >
-                <h3 className="font-bold text-lg mb-4 text-center sm:text-left">Follow us on</h3>
-                <div className="flex gap-4 items-center justify-center sm:justify-start">
-                    <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                       <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                           <Image src="/instagram.svg" alt="Instagram" width={48} height={48} />
-                       </div>
-                    </Link>
-                    <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                       <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                           <Image src="/github.svg" alt="GitHub" width={48} height={48} />
-                       </div>
-                    </Link>
-                </div>
-            </AnimateOnScroll>
+            <div className="mt-16 text-center lg:text-left">
+                <AnimateOnScroll
+                    animation="animate-in fade-in-0 slide-in-from-bottom-12"
+                    className="duration-700"
+                    delay={150 * (contactMethods.length + 1)}
+                >
+                    <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+                        <Users className="w-4 h-4" />
+                        Connect With Us
+                    </div>
+                    <h2 className="text-3xl font-extrabold tracking-tight text-foreground mb-6">
+                        Follow us on Social Media
+                    </h2>
+                    <div className="flex gap-4 items-center justify-center lg:justify-start">
+                        <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+                            <Image src="/instagram.svg" alt="Instagram" width={48} height={48} />
+                        </div>
+                        </Link>
+                        <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                        <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+                            <Image src="/github.svg" alt="GitHub" width={48} height={48} />
+                        </div>
+                        </Link>
+                    </div>
+                </AnimateOnScroll>
+            </div>
           </div>
           
           <motion.div

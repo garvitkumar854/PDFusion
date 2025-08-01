@@ -1,42 +1,32 @@
 
 "use client";
 
+import React from "react";
 import { usePWAUpdater } from "@/hooks/use-pwa-updater";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "./ui/button";
 import { ArrowDownToLine } from "lucide-react";
 
 export default function UpdateNotifier() {
   const { isUpdateAvailable, updateApp } = usePWAUpdater();
+  const { toast } = useToast();
 
-  return (
-    <AlertDialog open={isUpdateAvailable}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <ArrowDownToLine className="w-5 h-5" />
-            Update Available
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            A new version of PDFusion is available. Refresh to get the latest features and improvements.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction asChild>
-            <Button onClick={updateApp}>
-              Refresh Now
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  React.useEffect(() => {
+    if (isUpdateAvailable) {
+      toast({
+        variant: "info",
+        title: "Update Available",
+        description: "A new version of PDFusion is ready. Click to update.",
+        duration: Infinity, // Keep the toast until user interaction
+        action: (
+          <Button onClick={updateApp} size="sm">
+            <ArrowDownToLine className="mr-2 h-4 w-4" />
+            Update
+          </Button>
+        ),
+      });
+    }
+  }, [isUpdateAvailable, updateApp, toast]);
+
+  return null; // The component itself doesn't render anything
 }
