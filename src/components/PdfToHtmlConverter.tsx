@@ -192,7 +192,7 @@ export function PdfToHtmlConverter() {
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       setResult({ url, filename: `${originalName}.html` });
       
-      toast({ title: "Conversion Complete!" });
+      toast({ variant: "success", title: "Conversion Complete!" });
 
     } catch (error: any) {
       if (operationId.current === currentOperationId) {
@@ -209,7 +209,7 @@ export function PdfToHtmlConverter() {
     setIsProcessing(false);
     setProgress(0);
     setProgressText("Converting...");
-    toast({ title: "Processing cancelled." });
+    toast({ variant: "info", title: "Processing cancelled." });
   };
   
   const handleProcessAgain = () => {

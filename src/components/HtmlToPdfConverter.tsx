@@ -104,9 +104,9 @@ export function HtmlToPdfConverter() {
       setStatus("done");
 
       toast({
+        variant: "success",
         title: "Conversion Successful!",
         description: "Your PDF is ready for download.",
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
 
     } catch (err: any) {

@@ -350,9 +350,9 @@ export function PdfToJpgConverter() {
         
         setConversionResults(results);
         toast({
+            variant: "success",
             title: "Conversion Successful!",
             description: `Converted ${totalToConvert} page(s) to JPG.`,
-            action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
         });
     } catch (err: any) {
         if (operationId.current === currentOperationId) {
@@ -371,7 +371,7 @@ export function PdfToJpgConverter() {
     setIsConverting(false);
     setConversionProgress(0);
     setError(null);
-    toast({ title: "Conversion cancelled." });
+    toast({ variant: "info", title: "Conversion cancelled." });
   };
   
   const handleConvertAgain = () => {
