@@ -156,7 +156,7 @@ ${values.message}
                         Connect With Us
                     </div>
                     <h2 className="text-3xl font-extrabold tracking-tight text-foreground mb-6">
-                        Follow us on Social Media
+                        Follow us on <span className="text-primary">Social Media</span>
                     </h2>
                     <div className="flex gap-4 items-center justify-center lg:justify-start">
                         <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
