@@ -5,7 +5,6 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
-  Image as ImageIcon,
   Download,
   X,
   CheckCircle,
@@ -129,9 +128,9 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
     }, [fileInfo, orientation, pageSize, marginSize, getPageDimensions, getMargin]);
 
     return (
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center p-1 bg-white">
             {isLoading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-            <canvas ref={canvasRef} className={cn("w-full h-full object-contain rounded-lg shadow-inner", isLoading && "hidden")} />
+            <canvas ref={canvasRef} className={cn("w-full h-full object-contain rounded-md", isLoading && "hidden")} />
         </div>
     );
 };
@@ -438,10 +437,12 @@ export function JpgToPdfConverter() {
                         Drop image files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
-                        <FolderOpen className="mr-2 h-4 w-4" />
-                        Choose Files
-                    </Button>
+                     <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                        <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Choose Files
+                        </Button>
+                    </motion.div>
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
@@ -480,12 +481,12 @@ export function JpgToPdfConverter() {
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
-                        style={{ willChange: 'transform, opacity, height, padding, margin' }}
                         className={cn(
-                            'group relative rounded-lg border bg-card transition-all duration-300 ease-in-out aspect-[7/10]',
+                            'group relative rounded-lg border bg-muted transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                              isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                             removingFileId === imgFile.id && 'opacity-0 scale-95'
+                             removingFileId === imgFile.id && 'opacity-0 scale-95',
+                             orientation === 'portrait' ? 'aspect-[7/10]' : 'aspect-[10/7]'
                         )}
                         >
                           <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
@@ -599,3 +600,4 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
