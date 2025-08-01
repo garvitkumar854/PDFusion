@@ -91,4 +91,13 @@
             offset-distance: 100%;
         }
     }
+
+    @keyframes toast-progress {
+      from {
+        width: 100%;
+      }
+      to {
+        width: 0%;
+      }
+    }
 }

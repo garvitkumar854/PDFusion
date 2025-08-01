@@ -17,6 +17,7 @@ import {
   Lock,
   Unlock,
   ShieldAlert,
+  FileUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -164,10 +165,10 @@ export function MergePdfs() {
   const onDrop = useCallback(
     async (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (rejectedFiles.length > 0) {
-        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits." });
+        toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not PDFs or exceeded size limits.", duration: 3000 });
       }
       if (files.length + acceptedFiles.length > MAX_FILES) {
-        toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.` });
+        toast({ variant: "destructive", title: "File limit reached", description: `You can only upload a maximum of ${MAX_FILES} files.`, duration: 3000 });
         return;
       }
       
@@ -175,15 +176,15 @@ export function MergePdfs() {
       const validFiles: File[] = [];
       for(const file of acceptedFiles) {
         if (file.size > MAX_FILE_SIZE_BYTES) {
-          toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.` });
+          toast({ variant: "destructive", title: "File too large", description: `"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB file size limit.`, duration: 3000 });
           continue;
         }
         if (currentSize + file.size > MAX_TOTAL_SIZE_BYTES) {
-          toast({ variant: "destructive", title: "Total size limit exceeded", description: `Adding "${file.name}" would exceed the ${MAX_TOTAL_SIZE_MB}MB total size limit.` });
+          toast({ variant: "destructive", title: "Total size limit exceeded", description: `Adding "${file.name}" would exceed the ${MAX_TOTAL_SIZE_MB}MB total size limit.`, duration: 3000 });
           continue;
         }
         if (!file.type.includes('pdf')) {
-          toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.` });
+          toast({ variant: "destructive", title: "Invalid file type", description: `"${file.name}" is not a PDF.`, duration: 3000 });
           continue;
         }
         currentSize += file.size;
@@ -212,8 +213,14 @@ export function MergePdfs() {
       try {
         const filesToAdd = await Promise.all(filesToAddPromises);
         dispatch({ type: 'ADD_FILES', files: filesToAdd });
+        toast({
+          variant: "success",
+          title: `${filesToAdd.length} file(s) added`,
+          description: "You can now reorder them or merge.",
+          duration: 3000,
+        });
       } catch (e: any) {
-         toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted." });
+         toast({ variant: "destructive", title: "Error reading file", description: e.message || "One of the PDFs might be corrupted.", duration: 5000 });
       }
     },
     [files.length, totalSize, toast]
@@ -228,14 +235,17 @@ export function MergePdfs() {
   });
 
   const removeFile = (fileId: string) => {
+    const fileToRemove = files.find(f => f.id === fileId);
     dispatch({ type: 'SET_REMOVING_FILE_ID', fileId });
     setTimeout(() => {
       dispatch({ type: 'REMOVE_FILE', fileId });
+       toast({ variant: "info", title: "File removed", description: `"${fileToRemove?.file.name}" has been removed.`, duration: 2000 });
     }, 300);
   };
   
   const handleClearAll = () => {
     dispatch({ type: 'CLEAR_ALL' });
+    toast({ variant: "warning", title: "All files cleared", description: "The file list has been reset.", duration: 3000 });
   };
   
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -325,7 +335,6 @@ export function MergePdfs() {
         variant: "success",
         title: "Merge Successful!",
         description: `Your PDF is ready to be downloaded.${skippedFiles > 0 ? ` (${skippedFiles} file(s) were skipped).` : ''}`,
-        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div>
       });
     } catch (error: any) {
       console.error("Merge failed:", error);
@@ -407,7 +416,7 @@ export function MergePdfs() {
                     )}
                 >
                     <input {...getInputProps()} />
-                    <UploadCloud className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
+                    <FileUp className="w-10 h-10 text-muted-foreground sm:w-12 sm:h-12" />
                     <p className="mt-2 text-base font-semibold text-foreground sm:text-lg">
                         Drop PDF files here
                     </p>

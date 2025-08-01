@@ -10,6 +10,7 @@ import {
   ToastTitle,
   ToastViewport,
   ToastIcon,
+  ToastProgressBar,
 } from "@/components/ui/toast"
 
 export function Toaster() {
@@ -17,7 +18,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, duration, ...props }) {
         return (
           <Toast key={id} variant={variant} {...props}>
             <ToastIcon variant={variant} />
@@ -29,6 +30,7 @@ export function Toaster() {
             </div>
             {action}
             <ToastClose />
+            <ToastProgressBar variant={variant} duration={duration || 5000} />
           </Toast>
         )
       })}

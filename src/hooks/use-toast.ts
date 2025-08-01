@@ -1,7 +1,6 @@
 
 "use client"
 
-// Inspired by react-hot-toast library
 import * as React from "react"
 import type { VariantProps } from "class-variance-authority";
 
@@ -10,14 +9,15 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 3;
-const TOAST_REMOVE_DELAY = 10000;
+const TOAST_LIMIT = 4;
+const TOAST_REMOVE_DELAY = 5000;
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number
 }
 
 const actionTypes = {
@@ -60,7 +60,7 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, duration?: number) => {
   if (toastTimeouts.has(toastId)) {
     return
   }
@@ -71,7 +71,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, duration || TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -95,13 +95,13 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      const toastToRemove = state.toasts.find(t => t.id === toastId)
+
       if (toastId) {
-        addToRemoveQueue(toastId)
+        addToRemoveQueue(toastId, toastToRemove?.duration)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          addToRemoveQueue(toast.id, toast.duration)
         })
       }
 
@@ -165,6 +165,11 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+  
+  setTimeout(() => {
+    dismiss();
+  }, props.duration || TOAST_REMOVE_DELAY);
+
 
   return {
     id: id,
