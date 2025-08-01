@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Lock,
   ShieldAlert,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -268,7 +269,12 @@ export function PdfOrganizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast({ title: "Successfully saved!", description: "Your organized PDF has been downloaded." });
+      toast({ 
+        variant: "success",
+        title: "Successfully saved!", 
+        description: "Your organized PDF has been downloaded.",
+        action: <div className="p-1 rounded-full bg-green-500"><CheckCircle className="w-5 h-5 text-white" /></div> 
+      });
 
     } catch (e: any) {
         console.error("Failed to save PDF", e);
