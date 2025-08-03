@@ -52,108 +52,54 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const getPageDimensions = useCallback(() => {
-        if (pageSize === "Fit") return null;
-        const dims = PageSizes[pageSize];
-        return orientation === 'landscape' ? [dims[1], dims[0]] : dims;
-    }, [pageSize, orientation]);
-
-    const getMargin = useCallback(() => {
-        if (marginSize === 'none') return 0;
-        return marginSize === 'small' ? 36 : 72;
-    }, [marginSize]);
+    const [imgAspectRatio, setImgAspectRatio] = useState(1);
 
     useEffect(() => {
-        let isCancelled = false;
-        const drawPreview = async () => {
-            const canvas = canvasRef.current;
-            const ctx = canvas?.getContext('2d');
-            if (!canvas || !ctx) return;
-
-            setIsLoading(true);
-            const image = new Image();
-            image.src = fileInfo.previewUrl;
-            
-            image.onload = () => {
-                if (isCancelled) return;
-                
-                const pageDims = getPageDimensions();
-                const margin = getMargin();
-
-                let pageWidth, pageHeight;
-                if (pageSize === 'Fit') {
-                    pageWidth = image.width + margin * 2;
-                    pageHeight = image.height + margin * 2;
-                } else {
-                    [pageWidth, pageHeight] = pageDims!;
-                }
-                
-                const pageAspectRatio = pageWidth / pageHeight;
-                canvas.width = 300;
-                canvas.height = 300 / pageAspectRatio;
-                
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const imgAspectRatio = image.width / image.height;
-                let drawWidth, drawHeight, x, y;
-
-                if (marginSize === 'none' && pageSize !== 'Fit') {
-                    // Cover logic: scale image to fill canvas, cropping if necessary
-                    if (pageAspectRatio > imgAspectRatio) {
-                        drawWidth = canvas.width;
-                        drawHeight = canvas.width / imgAspectRatio;
-                        x = 0;
-                        y = (canvas.height - drawHeight) / 2;
-                    } else {
-                        drawHeight = canvas.height;
-                        drawWidth = canvas.height * imgAspectRatio;
-                        y = 0;
-                        x = (canvas.width - drawWidth) / 2;
-                    }
-                } else {
-                    // Contain logic: fit image within margins
-                    const scale = canvas.width / pageWidth;
-                    const usableWidth = pageWidth - margin * 2;
-                    const usableHeight = pageHeight - margin * 2;
-                    
-                    let scaledImgWidth, scaledImgHeight;
-                    if (imgAspectRatio > usableWidth / usableHeight) {
-                        scaledImgWidth = usableWidth;
-                        scaledImgHeight = scaledImgWidth / imgAspectRatio;
-                    } else {
-                        scaledImgHeight = usableHeight;
-                        scaledImgWidth = scaledImgHeight * imgAspectRatio;
-                    }
-
-                    drawWidth = scaledImgWidth * scale;
-                    drawHeight = scaledImgHeight * scale;
-                    x = (margin + (usableWidth - scaledImgWidth) / 2) * scale;
-                    y = (margin + (usableHeight - scaledImgHeight) / 2) * scale;
-                }
-
-                ctx.drawImage(image, x, y, drawWidth, drawHeight);
-                setIsLoading(false);
-            };
-            image.onerror = () => {
-                if (!isCancelled) setIsLoading(false);
-            }
+        const image = new Image();
+        image.src = fileInfo.previewUrl;
+        image.onload = () => {
+            setImgAspectRatio(image.width / image.height);
         };
+    }, [fileInfo.previewUrl]);
 
-        drawPreview();
-        return () => { isCancelled = true; };
-    }, [fileInfo, orientation, pageSize, marginSize, getPageDimensions, getMargin]);
+    const getPageAspectRatio = useCallback(() => {
+        if (pageSize === "Fit") {
+            return imgAspectRatio;
+        }
+        const dims = PageSizes[pageSize]; // [width, height]
+        return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
+    }, [pageSize, orientation, imgAspectRatio]);
 
+    const getMarginPercentage = useCallback(() => {
+        if (marginSize === 'none') return 0;
+        if (marginSize === 'small') return 5; // 5% margin
+        return 10; // 10% margin
+    }, [marginSize]);
+
+    const pageAspectRatio = getPageAspectRatio();
+    const margin = getMarginPercentage();
+    
     return (
-        <div className="w-full h-full flex items-center justify-center p-1 bg-white">
-            {isLoading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-            <canvas ref={canvasRef} className={cn("w-full h-full object-contain rounded-md", isLoading && "hidden")} />
+        <div className="w-full h-full flex items-center justify-center p-4 bg-muted/30">
+            <div
+                className="relative bg-white shadow-md w-full h-full"
+                style={{ aspectRatio: `${pageAspectRatio}` }}
+            >
+                <div className="absolute inset-0 p-px">
+                     <img
+                        src={fileInfo.previewUrl}
+                        alt="Preview"
+                        className="object-contain w-full h-full"
+                        style={{
+                            padding: `${margin}%`,
+                        }}
+                    />
+                </div>
+            </div>
         </div>
     );
 };
+
 
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
@@ -530,16 +476,15 @@ export function JpgToPdfConverter() {
                                 onDragEnd={handleDragEnd}
                                 onDragOver={(e) => e.preventDefault()}
                                 className={cn(
-                                    'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out',
+                                    'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
                                     isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                                     isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                                    orientation === 'portrait' ? 'aspect-[7/10]' : 'aspect-[10/7]',
                                     isSelected ? 'border-primary' : 'border-transparent'
                                 )}
                             >
                               <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
-                                 !isTouchDevice && "opacity-0 group-hover:opacity-100"
+                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg opacity-0 group-hover:opacity-100",
+                                 isTouchDevice && isSelected && "opacity-100"
                               )}>
                                 <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
                                 <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
@@ -551,7 +496,7 @@ export function JpgToPdfConverter() {
                                     animate={{ opacity: 1}}
                                     exit={{ opacity: 0}}
                                     transition={{ duration: 0.2 }}
-                                    className={cn("absolute top-1 right-1", !isTouchDevice && "opacity-0 group-hover:opacity-100")}
+                                    className={cn("absolute top-1 right-1")}
                                 >
                                     <Button 
                                         variant="ghost" 
@@ -666,4 +611,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
