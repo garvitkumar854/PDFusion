@@ -13,14 +13,13 @@ import {
   Loader2,
   Ban,
   FileArchive,
-  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument, PageSizes, degrees } from 'pdf-lib';
+import { PDFDocument, PageSizes } from 'pdf-lib';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
@@ -37,7 +36,6 @@ type ImageFile = {
   id: string;
   file: File;
   previewUrl: string;
-  rotation: number;
 };
 
 type Orientation = "portrait" | "landscape";
@@ -59,7 +57,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 
     const getPageAspectRatio = () => {
         if (!showPageContainer) return 'auto';
-        const dims = pageSize === 'A4' ? PageSizes.A4 : PageSizes.Letter;
+        const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4];
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
 
@@ -67,7 +65,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         position: 'relative' as const,
         backgroundColor: 'white',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transition: 'all 0.3s ease-in-out',
+        transition: 'padding-bottom 0.3s ease-in-out, width 0.3s ease-in-out',
         width: '100%',
         paddingBottom: `${100 / getPageAspectRatio()}%` // This creates the aspect ratio
     }), [pageSize, orientation]);
@@ -94,9 +92,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         maxWidth: '100%',
         maxHeight: '100%',
         objectFit: 'contain' as const,
-        transition: 'transform 0.3s ease-in-out',
-        transform: `rotate(${fileInfo.rotation}deg)`,
-    }), [fileInfo.rotation]);
+    }), []);
 
     if (!showPageContainer) {
         return (
@@ -186,7 +182,6 @@ export function JpgToPdfConverter() {
         id: `${file.name}-${Date.now()}`, 
         file,
         previewUrl: URL.createObjectURL(file),
-        rotation: 0,
       }));
       
       setFiles(prev => [...prev, ...filesToAdd]);
@@ -222,14 +217,6 @@ export function JpgToPdfConverter() {
       setFiles(prev => prev.filter(f => f.id !== fileId));
       toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
     }
-  };
-
-  const rotateImage = (fileId: string) => {
-    setFiles(prevFiles =>
-      prevFiles.map(f =>
-        f.id === fileId ? { ...f, rotation: (f.rotation + 90) % 360 } : f
-      )
-    );
   };
   
   const handleClearAll = () => {
@@ -276,7 +263,8 @@ export function JpgToPdfConverter() {
     
     try {
       const getPageSize = () => {
-        let size = PageSizes[pageSize === "Fit" ? "A4" : pageSize];
+        if (pageSize === "Fit") return PageSizes.A4; // Placeholder, will be resized
+        let size = pageSize === "A4" ? PageSizes.A4 : PageSizes.Letter;
         return orientation === 'landscape' ? [size[1], size[0]] : size;
       }
 
@@ -308,33 +296,16 @@ export function JpgToPdfConverter() {
             page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
         }
         
-        const effectiveRotation = imageFile.rotation;
-        if (effectiveRotation !== 0) {
-            page.setRotation(degrees(effectiveRotation));
-        }
-        
-        let imgWidth = image.width;
-        let imgHeight = image.height;
-        if (effectiveRotation === 90 || effectiveRotation === 270) {
-            [imgWidth, imgHeight] = [imgHeight, imgWidth];
-        }
-
+        const imgWidth = image.width;
+        const imgHeight = image.height;
+       
         let pageWidth = page.getWidth();
         let pageHeight = page.getHeight();
-        if (effectiveRotation === 90 || effectiveRotation === 270) {
-            [pageWidth, pageHeight] = [pageHeight, pageWidth];
-        }
         
         if (pageSize === 'Fit') {
             pageWidth = imgWidth + margin * 2;
             pageHeight = imgHeight + margin * 2;
             page.setSize(pageWidth, pageHeight);
-             if (effectiveRotation !== 0) {
-                // When rotating, the page's own coordinate system rotates. We need to reset it back
-                page.setRotation(degrees(0));
-                page.setSize(pageWidth, pageHeight);
-                page.setRotation(degrees(effectiveRotation));
-            }
         }
 
         const usableWidth = pageWidth - margin * 2;
@@ -525,21 +496,8 @@ export function JpgToPdfConverter() {
                             >
                                 <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
                                 <div
-                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-1")}
+                                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
                                 >
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        title="Rotate"
-                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-black/70 hover:text-white"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            rotateImage(imgFile.id)
-                                        }}
-                                        disabled={isConverting}
-                                    >
-                                        <RotateCw className="w-3.5 h-3.5" />
-                                    </Button>
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
