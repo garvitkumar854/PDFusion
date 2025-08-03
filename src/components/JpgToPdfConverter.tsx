@@ -52,24 +52,28 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    
     const showPageContainer = pageSize !== 'Fit';
 
-    const getPageAspectRatio = () => {
-        if (!showPageContainer) return 'auto';
-        const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4];
+    const getAspectRatio = () => {
+        if (pageSize === 'Fit') return null;
+        const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4]; // A4, Letter
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
 
-    const pageContainerStyle = useMemo(() => ({
-        position: 'relative' as const,
-        backgroundColor: 'white',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transition: 'padding-bottom 0.3s ease-in-out, width 0.3s ease-in-out',
-        width: '100%',
-        paddingBottom: `${100 / getPageAspectRatio()}%` // This creates the aspect ratio
-    }), [pageSize, orientation]);
-    
+    const aspectRatio = getAspectRatio();
+
+    const pageContainerStyle = useMemo(() => {
+        if (!aspectRatio) return {};
+        return {
+            position: 'relative' as const,
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            transition: 'padding-bottom 0.3s ease-in-out, width 0.3s ease-in-out',
+            width: '100%',
+            paddingBottom: `${(1 / aspectRatio) * 100}%`
+        };
+    }, [aspectRatio]);
+
     const imageContainerStyle: React.CSSProperties = {
         position: 'absolute',
         top: '0',
@@ -604,3 +608,5 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
+    
