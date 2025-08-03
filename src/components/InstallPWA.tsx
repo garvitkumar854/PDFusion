@@ -19,6 +19,7 @@ interface BeforeInstallPromptEvent extends Event {
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -29,8 +30,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
 
     const checkStandalone = () => {
       if (typeof window !== 'undefined') {
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
-          setIsStandalone(true);
+        const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+        setIsStandalone(isStandaloneMode);
+        if(isStandaloneMode) {
+          setIsInstalled(true);
         }
       }
     };
@@ -48,11 +51,19 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
         setCanInstall(true);
       }
     };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setCanInstall(false);
+      setInstallPrompt(null);
+    };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -78,9 +89,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
         title: "App Installed!",
         description: "PDFusion has been added to your home screen.",
       });
-      setCanInstall(false);
     }
-    setInstallPrompt(null);
   }, [installPrompt, toast, isIos]);
 
   const handleOpenApp = () => {
@@ -97,27 +106,23 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     return null; // Don't render on the server or before hydration
   }
 
-  // App is installed and running in the browser tab, show "Open App"
-  if (isStandalone === false && (navigator as any).standalone === false) { 
-     if (installPrompt === null && !isIos) {
-        if (!window.matchMedia('(display-mode: standalone)').matches) {
-            return (
-              <Button
-                onClick={handleOpenApp}
-                variant="default"
-                size="sm"
-                className={cn(buttonClassName, "bg-green-600 hover:bg-green-700 h-8 px-3")}
-              >
-                <ExternalLink className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline-block">Open App</span>
-              </Button>
-            );
-        }
-     }
+  // App is installed, but viewed in browser -> show Open App button
+  if (isInstalled && !isStandalone) {
+    return (
+      <Button
+        onClick={handleOpenApp}
+        variant="default"
+        size="sm"
+        className={cn(buttonClassName, "bg-green-600 hover:bg-green-700 h-8 px-3")}
+      >
+        <ExternalLink className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline-block">Open App</span>
+      </Button>
+    );
   }
 
   // App is not installed, show "Install" button
-  if ((canInstall || isIos) && !isStandalone) {
+  if (canInstall || (isIos && !isInstalled)) {
     return (
       <Button
         onClick={handleInstallClick}
