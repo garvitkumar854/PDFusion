@@ -28,9 +28,7 @@ export function Toaster() {
           <Toast 
             key={id} 
             variant={variant} 
-            className={cn(
-              "w-full sm:w-auto"
-            )}
+            className={cn("w-full sm:w-auto")}
             {...props}
           >
             <div className="flex items-start gap-3 w-full">
