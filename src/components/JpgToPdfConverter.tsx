@@ -138,7 +138,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
-  const [isConverting, setIsConverting] = useState(isConverting);
+  const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
   
