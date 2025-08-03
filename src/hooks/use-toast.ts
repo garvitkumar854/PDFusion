@@ -9,7 +9,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 4;
-const TOAST_REMOVE_DELAY_DESKTOP = 5000;
+const TOAST_REMOVE_DELAY_DESKTOP = 4000;
 const TOAST_REMOVE_DELAY_MOBILE = 3000;
 
 
