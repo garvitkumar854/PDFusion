@@ -112,8 +112,6 @@ export function JpgToPdfConverter() {
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -238,12 +236,6 @@ export function JpgToPdfConverter() {
     dragOverItem.current = null;
   };
   
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
-  
-  const handleCardClick = useCallback((id: string) => {
-    setSelectedCardId(prevId => prevId === id ? null : id);
-  }, []);
-
   const handleConvert = async () => {
     if (files.length === 0) {
       toast({ variant: "destructive", title: "No files uploaded", description: "Please upload at least one image file to convert." });
@@ -479,69 +471,65 @@ export function JpgToPdfConverter() {
                 Clear All
               </Button>
             </CardHeader>
-            <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4" onClick={() => setSelectedCardId(null)}>
+            <CardContent className="p-2 sm:p-4">
                 <div 
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                 >
                     <AnimatePresence>
-                        {files.map((imgFile, index) => {
-                            const isSelected = selectedCardId === imgFile.id;
-                            
-                            return (
-                                <motion.div
-                                    key={imgFile.id}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                    draggable={!isConverting}
-                                    onDragStart={(e) => handleDragStart(e, index)}
-                                    onDragEnter={(e) => handleDragEnter(e, index)}
-                                    onDragEnd={handleDragEnd}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    className={cn(
-                                        'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
-                                        isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
-                                        isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                                        isSelected ? 'border-primary' : 'border-transparent'
-                                    )}
-                                    tabIndex={0}
+                        {files.map((imgFile, index) => (
+                            <motion.div
+                                key={imgFile.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                draggable={!isConverting}
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragEnter={(e) => handleDragEnter(e, index)}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => e.preventDefault()}
+                                className={cn(
+                                    'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
+                                    'focus-within:border-primary',
+                                    isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                                    isConverting ? 'cursor-not-allowed' : 'cursor-grab'
+                                )}
+                                tabIndex={0}
+                            >
+                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                <div
+                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-1")}
                                 >
-                                    <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                    <div
-                                        className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-1")}
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        title="Rotate"
+                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-black/70 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            rotateImage(imgFile.id)
+                                        }}
+                                        disabled={isConverting}
                                     >
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            title="Rotate"
-                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-black/70 hover:text-white"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                rotateImage(imgFile.id)
-                                            }}
-                                            disabled={isConverting}
-                                        >
-                                            <RotateCw className="w-3.5 h-3.5" />
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            title="Remove"
-                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeFile(imgFile.id)
-                                            }}
-                                            disabled={isConverting}
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                </motion.div>
-                            )
-                        })}
+                                        <RotateCw className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        title="Remove"
+                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFile(imgFile.id)
+                                        }}
+                                        disabled={isConverting}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        ))}
                     </AnimatePresence>
                 </div>
             </CardContent>
