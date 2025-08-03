@@ -2,7 +2,6 @@
 "use client"
 
 import * as React from "react"
-import type { VariantProps } from "class-variance-authority";
 
 import type {
   ToastActionElement,
@@ -81,7 +80,7 @@ export const reducer = (state: State, action: Action): State => {
     case "ADD_TOAST":
       return {
         ...state,
-        toasts: [...state.toasts, action.toast].slice(-TOAST_LIMIT),
+        toasts: [action.toast], // On mobile, only ever show one at a time
       }
 
     case "UPDATE_TOAST":
