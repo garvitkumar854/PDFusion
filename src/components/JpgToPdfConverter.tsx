@@ -104,6 +104,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 
                 const imgAspectRatio = image.width / image.height;
                 let scaledWidth, scaledHeight;
+
                 if (imgAspectRatio > usableWidth / usableHeight) {
                     scaledWidth = usableWidth;
                     scaledHeight = scaledWidth / imgAspectRatio;
@@ -531,7 +532,7 @@ export function JpgToPdfConverter() {
                                     animate={{ opacity: 1}}
                                     exit={{ opacity: 0}}
                                     transition={{ duration: 0.2 }}
-                                    className="absolute top-1 right-1"
+                                    className={cn("absolute top-1 right-1", !isTouchDevice && "opacity-0 group-hover:opacity-100")}
                                 >
                                     <Button 
                                         variant="ghost" 
