@@ -59,40 +59,54 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 
     const getPageAspectRatio = () => {
         if (!showPageContainer) return 'auto';
-        const dims = PageSizes[pageSize];
+        const dims = pageSize === 'A4' ? PageSizes.A4 : PageSizes.Letter;
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
     
-    const pageContainerAspectRatio = getPageAspectRatio();
+    const pageContainerStyle: React.CSSProperties = {
+        position: 'relative',
+        backgroundColor: 'white',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        transition: 'all 0.3s ease-in-out',
+        width: '100%',
+        paddingBottom: `${100 / getPageAspectRatio()}%` // This creates the aspect ratio
+    };
     
+    const imageStyle: React.CSSProperties = {
+        objectFit: 'contain',
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        transition: 'transform 0.3s ease-in-out',
+        transform: `rotate(${fileInfo.rotation}deg)`,
+        padding: '0'
+    };
+
+    if (showPageContainer) {
+        if (marginSize === 'small') imageStyle.padding = '5%';
+        if (marginSize === 'big') imageStyle.padding = '10%';
+    } else {
+        imageStyle.position = 'relative';
+        imageStyle.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    }
+
     return (
-        <div 
-            className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg transition-all duration-300"
-        >
+        <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
             {showPageContainer ? (
-                <div
-                    className="relative bg-white shadow-md transition-all duration-300 ease-in-out w-full h-auto"
-                    style={{
-                        aspectRatio: `${pageContainerAspectRatio}`,
-                    }}
-                >
+                <div style={pageContainerStyle}>
                     <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
-                        className={cn(
-                            "object-contain w-full h-full transition-transform duration-300",
-                            marginSize === 'small' && 'p-[5%]',
-                            marginSize === 'big' && 'p-[10%]'
-                        )}
-                        style={{ transform: `rotate(${fileInfo.rotation}deg)` }}
+                        style={imageStyle}
                     />
                 </div>
             ) : (
                 <img
                     src={fileInfo.previewUrl}
                     alt="Preview"
-                    className="object-contain w-full h-full shadow-md transition-transform duration-300"
-                    style={{ transform: `rotate(${fileInfo.rotation}deg)` }}
+                    style={imageStyle}
                 />
             )}
         </div>
