@@ -138,7 +138,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 export function JpgToPdfConverter() {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [totalSize, setTotalSize] = useState(0);
-  const [isConverting, setIsConverting] = useState(false);
+  const [isConverting, setIsConverting] = useState(isConverting);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
   
@@ -474,7 +474,7 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto pr-2">
                     {files.map((imgFile, index) => (
                         <div
                         key={imgFile.id}
@@ -601,3 +601,5 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
+    
