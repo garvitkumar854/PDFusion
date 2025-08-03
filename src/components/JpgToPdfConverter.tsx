@@ -646,5 +646,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
-    
