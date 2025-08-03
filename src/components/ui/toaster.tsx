@@ -12,6 +12,7 @@ import {
   ToastIcon,
   ToastProgressBar,
 } from "@/components/ui/toast"
+import { cn } from "@/lib/utils"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -20,12 +21,12 @@ export function Toaster() {
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, duration, ...props }) {
         return (
-          <Toast key={id} variant={variant} {...props}>
+          <Toast key={id} variant={variant} className="p-3 sm:p-4" {...props}>
             <ToastIcon variant={variant} />
             <div className="grid gap-1 flex-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
+              {title && <ToastTitle className="text-xs sm:text-sm">{title}</ToastTitle>}
               {description && (
-                <ToastDescription>{description}</ToastDescription>
+                <ToastDescription className="text-xs sm:text-sm">{description}</ToastDescription>
               )}
             </div>
             {action}
