@@ -13,13 +13,14 @@ import {
   Loader2,
   Ban,
   FileArchive,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { PDFDocument, PageSizes } from 'pdf-lib';
+import { PDFDocument, PageSizes, degrees } from 'pdf-lib';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
@@ -36,6 +37,7 @@ type ImageFile = {
   id: string;
   file: File;
   previewUrl: string;
+  rotation: number;
 };
 
 type Orientation = "portrait" | "landscape";
@@ -56,12 +58,13 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
     const showPageContainer = pageSize !== 'Fit';
 
     const getPageAspectRatio = () => {
-        const dims = PageSizes[pageSize === 'Fit' ? 'A4' : pageSize]; // Default to A4 for Fit's container aspect
+        if (!showPageContainer) return 'auto';
+        const dims = PageSizes[pageSize];
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
-
+    
     const pageContainerAspectRatio = getPageAspectRatio();
-
+    
     return (
         <div 
             className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg transition-all duration-300"
@@ -77,17 +80,19 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                         src={fileInfo.previewUrl}
                         alt="Preview"
                         className={cn(
-                            "object-contain w-full h-full",
+                            "object-contain w-full h-full transition-transform duration-300",
                             marginSize === 'small' && 'p-[5%]',
                             marginSize === 'big' && 'p-[10%]'
                         )}
+                        style={{ transform: `rotate(${fileInfo.rotation}deg)` }}
                     />
                 </div>
             ) : (
                 <img
                     src={fileInfo.previewUrl}
                     alt="Preview"
-                    className="object-contain w-full h-full shadow-md"
+                    className="object-contain w-full h-full shadow-md transition-transform duration-300"
+                    style={{ transform: `rotate(${fileInfo.rotation}deg)` }}
                 />
             )}
         </div>
@@ -157,6 +162,7 @@ export function JpgToPdfConverter() {
         id: `${file.name}-${Date.now()}`, 
         file,
         previewUrl: URL.createObjectURL(file),
+        rotation: 0,
       }));
       
       setFiles(prev => [...prev, ...filesToAdd]);
@@ -192,6 +198,14 @@ export function JpgToPdfConverter() {
       setFiles(prev => prev.filter(f => f.id !== fileId));
       toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
     }
+  };
+
+  const rotateImage = (fileId: string) => {
+    setFiles(prevFiles =>
+      prevFiles.map(f =>
+        f.id === fileId ? { ...f, rotation: (f.rotation + 90) % 360 } : f
+      )
+    );
   };
   
   const handleClearAll = () => {
@@ -276,18 +290,38 @@ export function JpgToPdfConverter() {
             page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
         }
         
-        let pageWidth, pageHeight;
+        const effectiveRotation = imageFile.rotation;
+        if (effectiveRotation !== 0) {
+            page.setRotation(degrees(effectiveRotation));
+        }
+        
+        let imgWidth = image.width;
+        let imgHeight = image.height;
+        if (effectiveRotation === 90 || effectiveRotation === 270) {
+            [imgWidth, imgHeight] = [imgHeight, imgWidth];
+        }
+
+        let pageWidth = page.getWidth();
+        let pageHeight = page.getHeight();
+        if (effectiveRotation === 90 || effectiveRotation === 270) {
+            [pageWidth, pageHeight] = [pageHeight, pageWidth];
+        }
+        
         if (pageSize === 'Fit') {
-            pageWidth = image.width + margin * 2;
-            pageHeight = image.height + margin * 2;
+            pageWidth = imgWidth + margin * 2;
+            pageHeight = imgHeight + margin * 2;
             page.setSize(pageWidth, pageHeight);
-        } else {
-            pageWidth = page.getWidth();
-            pageHeight = page.getHeight();
+             if (effectiveRotation !== 0) {
+                // When rotating, the page's own coordinate system rotates. We need to reset it back
+                page.setRotation(degrees(0));
+                page.setSize(pageWidth, pageHeight);
+                page.setRotation(degrees(effectiveRotation));
+            }
         }
 
         const usableWidth = pageWidth - margin * 2;
         const usableHeight = pageHeight - margin * 2;
+        
         const scaled = image.scaleToFit(usableWidth, usableHeight);
         
         page.drawImage(image, {
@@ -462,10 +496,6 @@ export function JpgToPdfConverter() {
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                     draggable={!isConverting}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCardClick(imgFile.id);
-                                    }}
                                     onDragStart={(e) => handleDragStart(e, index)}
                                     onDragEnter={(e) => handleDragEnter(e, index)}
                                     onDragEnd={handleDragEnd}
@@ -478,23 +508,37 @@ export function JpgToPdfConverter() {
                                     )}
                                     tabIndex={0}
                                 >
-                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                <div
-                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity")}
-                                >
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeFile(imgFile.id)
-                                        }}
-                                        disabled={isConverting}
+                                    <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                    <div
+                                        className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex gap-1")}
                                     >
-                                        <X className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            title="Rotate"
+                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-black/70 hover:text-white"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                rotateImage(imgFile.id)
+                                            }}
+                                            disabled={isConverting}
+                                        >
+                                            <RotateCw className="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            title="Remove"
+                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeFile(imgFile.id)
+                                            }}
+                                            disabled={isConverting}
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
                                 </motion.div>
                             )
                         })}
