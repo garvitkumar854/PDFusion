@@ -75,29 +75,30 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         if (marginSize === 'small') return 5;
         return 10;
     }, [marginSize, pageSize]);
-    
+
     const showPageContainer = pageSize !== 'Fit';
     const pageAspectRatio = getPageAspectRatio();
     const margin = getMarginPercentage();
 
     return (
-        <div className="w-full h-full flex items-center justify-center p-2 bg-muted/30">
+        <div className="w-full h-full flex items-center justify-center p-2 bg-muted/30 rounded-lg">
             {showPageContainer ? (
-                 <div
-                    className="relative bg-white shadow-md w-full h-full"
-                    style={{ aspectRatio: `${pageAspectRatio}` }}
-                 >
+                <div
+                    className="relative bg-white shadow-md transition-all duration-300 ease-in-out"
+                    style={{
+                        width: '100%',
+                        aspectRatio: `${pageAspectRatio}`,
+                    }}
+                >
                     <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
                         className="object-contain w-full h-full"
-                        style={{
-                            padding: `${margin}%`,
-                        }}
+                        style={{ padding: `${margin}%` }}
                     />
                 </div>
             ) : (
-                 <img
+                <img
                     src={fileInfo.previewUrl}
                     alt="Preview"
                     className="object-contain w-full h-full shadow-md"
@@ -466,66 +467,73 @@ export function JpgToPdfConverter() {
                     if (isTouchDevice) setSelectedCardId(null);
                   }}
                 >
-                    {files.map((imgFile, index) => {
-                        const isSelected = selectedCardId === imgFile.id;
-                        const showOverlay = !isTouchDevice || isSelected;
+                    <AnimatePresence>
+                        {files.map((imgFile, index) => {
+                            const isSelected = selectedCardId === imgFile.id;
+                            const showOverlay = !isTouchDevice || isSelected;
 
-                        return (
-                            <div
-                                key={imgFile.id}
-                                draggable={!isConverting}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCardClick(imgFile.id);
-                                }}
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragEnter={(e) => handleDragEnter(e, index)}
-                                onDragEnd={handleDragEnd}
-                                onDragOver={(e) => e.preventDefault()}
-                                className={cn(
-                                    'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
-                                    isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
-                                    isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                                    isSelected ? 'border-primary' : 'border-transparent'
-                                )}
-                            >
-                              <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
-                                 (isTouchDevice && isSelected) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                              )}>
-                                <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
-                                <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
-                              </div>
-                              <AnimatePresence>
-                              {showOverlay && (
+                            return (
                                 <motion.div
-                                    initial={{ opacity: 0}}
-                                    animate={{ opacity: 1}}
-                                    exit={{ opacity: 0}}
-                                    transition={{ duration: 0.2 }}
-                                    className={cn("absolute top-1 right-1")}
+                                    key={imgFile.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                    draggable={!isConverting}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCardClick(imgFile.id);
+                                    }}
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragEnter={(e) => handleDragEnter(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    className={cn(
+                                        'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
+                                        isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                                        isConverting ? 'cursor-not-allowed' : 'cursor-grab',
+                                        isSelected ? 'border-primary' : 'border-transparent'
+                                    )}
                                 >
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            removeFile(imgFile.id)
-                                        }}
-                                        disabled={isConverting}
+                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
+                                    (isTouchDevice && isSelected) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                )}>
+                                    <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
+                                    <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
+                                </div>
+                                <AnimatePresence>
+                                {showOverlay && (
+                                    <motion.div
+                                        initial={{ opacity: 0}}
+                                        animate={{ opacity: 1}}
+                                        exit={{ opacity: 0}}
+                                        transition={{ duration: 0.2 }}
+                                        className={cn("absolute top-1 right-1")}
                                     >
-                                        <X className="w-3.5 h-3.5" />
-                                    </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeFile(imgFile.id)
+                                            }}
+                                            disabled={isConverting}
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
+                                <div className="absolute top-1 left-1 w-6 h-6 flex items-center justify-center text-white font-bold bg-black/40 rounded-full text-xs">
+                                    {index + 1}
+                                </div>
                                 </motion.div>
-                              )}
-                              </AnimatePresence>
-                              <div className="absolute top-1 left-1 w-6 h-6 flex items-center justify-center text-white font-bold bg-black/40 rounded-full text-xs">
-                                {index + 1}
-                              </div>
-                            </div>
-                        )
-                    })}
+                            )
+                        })}
+                    </AnimatePresence>
                 </div>
             </CardContent>
           </Card>
@@ -537,7 +545,6 @@ export function JpgToPdfConverter() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
-                    {/* Orientation */}
                     <div>
                         <Label className="font-semibold">Page Orientation</Label>
                         <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
@@ -545,7 +552,6 @@ export function JpgToPdfConverter() {
                             <div className="flex items-center space-x-2"><RadioGroupItem value="landscape" id="o-l" /><Label htmlFor="o-l">Landscape</Label></div>
                         </RadioGroup>
                     </div>
-                    {/* Page Size */}
                     <div>
                         <Label className="font-semibold">Page Size</Label>
                         <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
@@ -554,7 +560,6 @@ export function JpgToPdfConverter() {
                             <div className="flex items-center space-x-2"><RadioGroupItem value="Fit" id="ps-fit" /><Label htmlFor="ps-fit">Fit Image</Label></div>
                         </RadioGroup>
                     </div>
-                    {/* Margin */}
                     <div>
                         <Label className="font-semibold">Margin</Label>
                         <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
@@ -618,3 +623,4 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
