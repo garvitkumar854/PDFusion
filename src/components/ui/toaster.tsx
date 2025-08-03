@@ -31,12 +31,12 @@ export function Toaster() {
             className={cn("w-full sm:w-auto")}
             {...props}
           >
-            <div className="flex items-start gap-3 w-full">
+            <div className="flex items-start gap-2 sm:gap-3 w-full">
               <ToastIcon variant={variant} />
               <div className="grid gap-1 flex-1">
-                {title && <ToastTitle className="text-sm">{title}</ToastTitle>}
+                {title && <ToastTitle className="text-xs sm:text-sm">{title}</ToastTitle>}
                 {description && (
-                  <ToastDescription className="text-xs sm:text-sm">{description}</ToastDescription>
+                  <ToastDescription className="text-xs">{description}</ToastDescription>
                 )}
               </div>
               {action}
