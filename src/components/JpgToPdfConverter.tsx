@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -62,53 +62,65 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         const dims = pageSize === 'A4' ? PageSizes.A4 : PageSizes.Letter;
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
-    
-    const pageContainerStyle: React.CSSProperties = {
-        position: 'relative',
+
+    const pageContainerStyle = useMemo(() => ({
+        position: 'relative' as const,
         backgroundColor: 'white',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.3s ease-in-out',
         width: '100%',
         paddingBottom: `${100 / getPageAspectRatio()}%` // This creates the aspect ratio
-    };
+    }), [pageSize, orientation]);
     
-    const imageStyle: React.CSSProperties = {
-        objectFit: 'contain',
+    const imageContainerStyle: React.CSSProperties = {
         position: 'absolute',
         top: '0',
         left: '0',
         width: '100%',
         height: '100%',
-        transition: 'transform 0.3s ease-in-out',
-        transform: `rotate(${fileInfo.rotation}deg)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'padding 0.3s ease-in-out',
         padding: '0'
     };
 
     if (showPageContainer) {
-        if (marginSize === 'small') imageStyle.padding = '5%';
-        if (marginSize === 'big') imageStyle.padding = '10%';
-    } else {
-        imageStyle.position = 'relative';
-        imageStyle.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        if (marginSize === 'small') imageContainerStyle.padding = '5%';
+        if (marginSize === 'big') imageContainerStyle.padding = '10%';
+    }
+    
+    const imageStyle = useMemo(() => ({
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain' as const,
+        transition: 'transform 0.3s ease-in-out',
+        transform: `rotate(${fileInfo.rotation}deg)`,
+    }), [fileInfo.rotation]);
+
+    if (!showPageContainer) {
+        return (
+             <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
+                <img
+                    src={fileInfo.previewUrl}
+                    alt="Preview"
+                    style={{ ...imageStyle, boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}}
+                />
+            </div>
+        )
     }
 
     return (
         <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
-            {showPageContainer ? (
-                <div style={pageContainerStyle}>
+            <div style={pageContainerStyle}>
+                <div style={imageContainerStyle}>
                     <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
                         style={imageStyle}
                     />
                 </div>
-            ) : (
-                <img
-                    src={fileInfo.previewUrl}
-                    alt="Preview"
-                    style={imageStyle}
-                />
-            )}
+            </div>
         </div>
     );
 };
