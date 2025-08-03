@@ -63,7 +63,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
 
     const getMargin = useCallback(() => {
         if (marginSize === 'none') return 0;
-        return marginSize === 'small' ? 36 : 72; // 0.5 or 1 inch in points
+        return marginSize === 'small' ? 36 : 72;
     }, [marginSize]);
 
     useEffect(() => {
@@ -79,6 +79,7 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
             
             image.onload = () => {
                 if (isCancelled) return;
+                
                 const pageDims = getPageDimensions();
                 const margin = getMargin();
 
@@ -89,34 +90,52 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                 } else {
                     [pageWidth, pageHeight] = pageDims!;
                 }
-
-                const aspectRatio = pageWidth / pageHeight;
-                canvas.width = 300;
-                canvas.height = 300 / aspectRatio;
                 
-                const scale = canvas.width / pageWidth;
-
+                const pageAspectRatio = pageWidth / pageHeight;
+                canvas.width = 300;
+                canvas.height = 300 / pageAspectRatio;
+                
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                const usableWidth = pageWidth - margin * 2;
-                const usableHeight = pageHeight - margin * 2;
-
+                
                 const imgAspectRatio = image.width / image.height;
-                let scaledWidth, scaledHeight;
+                let drawWidth, drawHeight, x, y;
 
-                if (imgAspectRatio > usableWidth / usableHeight) {
-                    scaledWidth = usableWidth;
-                    scaledHeight = scaledWidth / imgAspectRatio;
+                if (marginSize === 'none' && pageSize !== 'Fit') {
+                    // Cover logic: scale image to fill canvas, cropping if necessary
+                    if (pageAspectRatio > imgAspectRatio) {
+                        drawWidth = canvas.width;
+                        drawHeight = canvas.width / imgAspectRatio;
+                        x = 0;
+                        y = (canvas.height - drawHeight) / 2;
+                    } else {
+                        drawHeight = canvas.height;
+                        drawWidth = canvas.height * imgAspectRatio;
+                        y = 0;
+                        x = (canvas.width - drawWidth) / 2;
+                    }
                 } else {
-                    scaledHeight = usableHeight;
-                    scaledWidth = scaledHeight * imgAspectRatio;
+                    // Contain logic: fit image within margins
+                    const scale = canvas.width / pageWidth;
+                    const usableWidth = pageWidth - margin * 2;
+                    const usableHeight = pageHeight - margin * 2;
+                    
+                    let scaledImgWidth, scaledImgHeight;
+                    if (imgAspectRatio > usableWidth / usableHeight) {
+                        scaledImgWidth = usableWidth;
+                        scaledImgHeight = scaledImgWidth / imgAspectRatio;
+                    } else {
+                        scaledImgHeight = usableHeight;
+                        scaledImgWidth = scaledImgHeight * imgAspectRatio;
+                    }
+
+                    drawWidth = scaledImgWidth * scale;
+                    drawHeight = scaledImgHeight * scale;
+                    x = (margin + (usableWidth - scaledImgWidth) / 2) * scale;
+                    y = (margin + (usableHeight - scaledImgHeight) / 2) * scale;
                 }
 
-                const x = (margin + (usableWidth - scaledWidth) / 2) * scale;
-                const y = (margin + (usableHeight - scaledHeight) / 2) * scale;
-
-                ctx.drawImage(image, x, y, scaledWidth * scale, scaledHeight * scale);
+                ctx.drawImage(image, x, y, drawWidth, drawHeight);
                 setIsLoading(false);
             };
             image.onerror = () => {
@@ -647,3 +666,4 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
