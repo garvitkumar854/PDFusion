@@ -52,49 +52,37 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    const [imgAspectRatio, setImgAspectRatio] = useState(1);
-
-    useEffect(() => {
-        const image = new Image();
-        image.src = fileInfo.previewUrl;
-        image.onload = () => {
-            setImgAspectRatio(image.width / image.height);
-        };
-    }, [fileInfo.previewUrl]);
-
-    const getPageAspectRatio = useCallback(() => {
-        if (pageSize === "Fit") {
-            return imgAspectRatio;
-        }
-        const dims = PageSizes[pageSize];
-        return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
-    }, [pageSize, orientation, imgAspectRatio]);
-
-    const getMarginPercentage = useCallback(() => {
-        if (pageSize === 'Fit' || marginSize === 'none') return 0;
-        if (marginSize === 'small') return 5;
-        return 10;
-    }, [marginSize, pageSize]);
-
+    
     const showPageContainer = pageSize !== 'Fit';
-    const pageAspectRatio = getPageAspectRatio();
-    const margin = getMarginPercentage();
+
+    const getPageAspectRatio = () => {
+        const dims = PageSizes[pageSize === 'Fit' ? 'A4' : pageSize]; // Default to A4 for Fit's container aspect
+        return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
+    };
+
+    const pageContainerAspectRatio = getPageAspectRatio();
 
     return (
-        <div className="w-full h-full flex items-center justify-center p-2 bg-muted/30 rounded-lg">
+        <div 
+            className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg transition-all duration-300"
+        >
             {showPageContainer ? (
                 <div
                     className="relative bg-white shadow-md transition-all duration-300 ease-in-out"
                     style={{
                         width: '100%',
-                        aspectRatio: `${pageAspectRatio}`,
+                        height: 'auto',
+                        aspectRatio: `${pageContainerAspectRatio}`,
                     }}
                 >
                     <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
-                        className="object-contain w-full h-full"
-                        style={{ padding: `${margin}%` }}
+                        className={cn(
+                            "object-contain w-full h-full",
+                            marginSize === 'small' && 'p-[5%]',
+                            marginSize === 'big' && 'p-[10%]'
+                        )}
                     />
                 </div>
             ) : (
@@ -144,6 +132,12 @@ export function JpgToPdfConverter() {
       }
     };
   }, [files, conversionResults]);
+
+  useEffect(() => {
+    if (pageSize === 'Fit') {
+      setMarginSize('none');
+    }
+  }, [pageSize]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -497,38 +491,29 @@ export function JpgToPdfConverter() {
                                     )}
                                 >
                                 <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
-                                    (isTouchDevice && isSelected) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg opacity-0",
+                                     showOverlay ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
                                 )}>
                                     <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
                                     <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
                                 </div>
-                                <AnimatePresence>
-                                {showOverlay && (
-                                    <motion.div
-                                        initial={{ opacity: 0}}
-                                        animate={{ opacity: 1}}
-                                        exit={{ opacity: 0}}
-                                        transition={{ duration: 0.2 }}
-                                        className={cn("absolute top-1 right-1")}
+                                <div
+                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                                        showOverlay && 'opacity-100'
+                                    )}
+                                >
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFile(imgFile.id)
+                                        }}
+                                        disabled={isConverting}
                                     >
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeFile(imgFile.id)
-                                            }}
-                                            disabled={isConverting}
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </motion.div>
-                                )}
-                                </AnimatePresence>
-                                <div className="absolute top-1 left-1 w-6 h-6 flex items-center justify-center text-white font-bold bg-black/40 rounded-full text-xs">
-                                    {index + 1}
+                                        <X className="w-3.5 h-3.5" />
+                                    </Button>
                                 </div>
                                 </motion.div>
                             )
@@ -623,4 +608,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
