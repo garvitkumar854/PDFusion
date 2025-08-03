@@ -491,12 +491,6 @@ export function JpgToPdfConverter() {
                                     )}
                                 >
                                 <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg opacity-0",
-                                     showOverlay ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'
-                                )}>
-                                    <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
-                                    <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
-                                </div>
                                 <div
                                     className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity",
                                         showOverlay && 'opacity-100'
