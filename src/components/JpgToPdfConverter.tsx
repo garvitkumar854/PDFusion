@@ -147,12 +147,19 @@ export function JpgToPdfConverter() {
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
 
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -258,6 +265,12 @@ export function JpgToPdfConverter() {
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   
+  const handleCardClick = useCallback((id: string) => {
+    if(isTouchDevice) {
+        setSelectedCardId(prevId => prevId === id ? null : id);
+    }
+  }, [isTouchDevice]);
+
   const handleConvert = async () => {
     if (files.length === 0) {
       toast({ variant: "destructive", title: "No files uploaded", description: "Please upload at least one image file to convert." });
@@ -474,41 +487,73 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto pr-2">
-                    {files.map((imgFile, index) => (
-                        <div
-                        key={imgFile.id}
-                        draggable={!isConverting}
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragEnter={(e) => handleDragEnter(e, index)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => e.preventDefault()}
-                        className={cn(
-                            'group relative rounded-lg border bg-muted transition-all duration-300 ease-in-out',
-                             isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
-                             isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                             orientation === 'portrait' ? 'aspect-[7/10]' : 'aspect-[10/7]'
-                        )}
-                        >
-                          <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white rounded-lg">
-                            <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
-                            <p className="text-xs text-white/80">{formatBytes(imgFile.file.size)}</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="absolute top-1 right-1 w-7 h-7 text-white/80 bg-black/30 hover:bg-destructive/80 hover:text-white"
-                            onClick={() => removeFile(imgFile.id)}
-                            disabled={isConverting}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <div className="absolute top-1 left-1 w-7 h-7 flex items-center justify-center text-white font-bold bg-black/30 rounded-full text-sm">
-                            {index + 1}
-                          </div>
-                        </div>
-                    ))}
+                <div 
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto pr-2"
+                  onClick={() => {
+                    if (isTouchDevice) setSelectedCardId(null);
+                  }}
+                >
+                    {files.map((imgFile, index) => {
+                        const isSelected = selectedCardId === imgFile.id;
+                        const showOverlay = !isTouchDevice || isSelected;
+
+                        return (
+                            <div
+                                key={imgFile.id}
+                                draggable={!isConverting}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCardClick(imgFile.id);
+                                }}
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragEnter={(e) => handleDragEnter(e, index)}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => e.preventDefault()}
+                                className={cn(
+                                    'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out',
+                                    isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
+                                    isConverting ? 'cursor-not-allowed' : 'cursor-grab',
+                                    orientation === 'portrait' ? 'aspect-[7/10]' : 'aspect-[10/7]',
+                                    isSelected ? 'border-primary' : 'border-transparent'
+                                )}
+                            >
+                              <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
+                                 !isTouchDevice && "opacity-0 group-hover:opacity-100"
+                              )}>
+                                <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
+                                <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
+                              </div>
+                              <AnimatePresence>
+                              {showOverlay && (
+                                <motion.div
+                                    initial={{ opacity: 0}}
+                                    animate={{ opacity: 1}}
+                                    exit={{ opacity: 0}}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute top-1 right-1"
+                                >
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="w-6 h-6 text-white/80 bg-black/40 hover:bg-destructive/80 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeFile(imgFile.id)
+                                        }}
+                                        disabled={isConverting}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </Button>
+                                </motion.div>
+                              )}
+                              </AnimatePresence>
+                              <div className="absolute top-1 left-1 w-6 h-6 flex items-center justify-center text-white font-bold bg-black/40 rounded-full text-xs">
+                                {index + 1}
+                              </div>
+                            </div>
+                        )
+                    })}
                 </div>
             </CardContent>
           </Card>
