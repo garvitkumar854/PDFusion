@@ -147,8 +147,6 @@ export function JpgToPdfConverter() {
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
 
-  const [removingFileId, setRemovingFileId] = useState<string | null>(null);
-  
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -220,16 +218,12 @@ export function JpgToPdfConverter() {
 
   const removeFile = (fileId: string) => {
     const fileToRemove = files.find(f => f.id === fileId);
-    setRemovingFileId(fileId);
-    setTimeout(() => {
-      if (fileToRemove) {
-        URL.revokeObjectURL(fileToRemove.previewUrl);
-        setTotalSize(prev => prev - fileToRemove.file.size);
-        setFiles(prev => prev.filter(f => f.id !== fileId));
-        toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
-      }
-      setRemovingFileId(null);
-    }, 300);
+    if (fileToRemove) {
+      URL.revokeObjectURL(fileToRemove.previewUrl);
+      setTotalSize(prev => prev - fileToRemove.file.size);
+      setFiles(prev => prev.filter(f => f.id !== fileId));
+      toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
+    }
   };
   
   const handleClearAll = () => {
@@ -445,10 +439,12 @@ export function JpgToPdfConverter() {
                         Drop image files here
                     </p>
                     <p className="text-xs text-muted-foreground sm:text-sm">or click the button below</p>
-                    <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
-                        <FolderOpen className="mr-2 h-4 w-4" />
-                        Choose Files
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                        <Button type="button" onClick={open} className="mt-4" disabled={isConverting}>
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Choose Files
+                        </Button>
+                    </motion.div>
                     <div className="w-full px-2 text-center text-xs text-muted-foreground mt-6">
                         <div className="flex flex-col items-center">
                             <p>Max: {MAX_FILE_SIZE_MB}MB/file • {MAX_TOTAL_SIZE_MB}MB total • {MAX_FILES} files</p>
@@ -478,7 +474,7 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-y-auto pr-2">
                     {files.map((imgFile, index) => (
                         <div
                         key={imgFile.id}
@@ -491,7 +487,6 @@ export function JpgToPdfConverter() {
                             'group relative rounded-lg border bg-muted transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
                              isConverting ? 'cursor-not-allowed' : 'cursor-grab',
-                             removingFileId === imgFile.id && 'opacity-0 scale-95',
                              orientation === 'portrait' ? 'aspect-[7/10]' : 'aspect-[10/7]'
                         )}
                         >
