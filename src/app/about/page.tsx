@@ -158,21 +158,21 @@ export default function AboutPage() {
               Your privacy is our priority. All processing happens securely in your browser.
             </p>
           </AnimateOnScroll>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {howItWorksSteps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center">
+                <div key={index} className="flex flex-col items-center h-full">
                     <AnimateOnScroll
                         animation="animate-in fade-in-0 zoom-in-95"
-                        className="duration-500 w-full"
+                        className="duration-500 w-full h-full"
                         delay={index * 200}
                     >
-                        <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                        <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col">
+                            <div className="flex flex-col items-center text-center flex-grow">
+                                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6 shrink-0">
                                 {step.icon}
                                 </div>
                                 <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                                <p className="text-muted-foreground">{step.description}</p>
+                                <p className="text-muted-foreground flex-grow">{step.description}</p>
                             </div>
                             <BorderBeam size={150} duration={12} delay={index * 2} />
                         </div>
