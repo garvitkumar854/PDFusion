@@ -92,7 +92,6 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     : "inline-flex items-center gap-2 rounded-full font-semibold";
   
   const buttonVariant = inSheet ? "ghost" : "default";
-  const buttonSize = inSheet ? "default" : "sm";
 
   if (!mounted) {
     return null; // Don't render on the server or before hydration
@@ -107,10 +106,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
                 onClick={handleOpenApp}
                 variant="default"
                 size="sm"
-                className={cn(buttonClassName, "bg-green-600 hover:bg-green-700")}
+                className={cn(buttonClassName, "bg-green-600 hover:bg-green-700 h-8 px-3")}
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open App
+                <ExternalLink className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline-block">Open App</span>
               </Button>
             );
         }
@@ -123,11 +122,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       <Button
         onClick={handleInstallClick}
         variant={buttonVariant}
-        size={buttonSize}
-        className={cn(buttonClassName)}
+        size="sm"
+        className={cn(buttonClassName, !inSheet && "h-8 px-3")}
       >
-        <ArrowDownToLine className="w-4 h-4 mr-2" />
-        Install App
+        <ArrowDownToLine className={cn("w-4 h-4", !inSheet && "sm:mr-2")} />
+        <span className={cn(inSheet ? "inline-block" : "hidden sm:inline-block")}>Install App</span>
       </Button>
     );
   }
