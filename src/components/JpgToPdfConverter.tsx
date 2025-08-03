@@ -68,10 +68,8 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         >
             {showPageContainer ? (
                 <div
-                    className="relative bg-white shadow-md transition-all duration-300 ease-in-out"
+                    className="relative bg-white shadow-md transition-all duration-300 ease-in-out w-full h-auto"
                     style={{
-                        width: '100%',
-                        height: 'auto',
                         aspectRatio: `${pageContainerAspectRatio}`,
                     }}
                 >
@@ -110,7 +108,6 @@ export function JpgToPdfConverter() {
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -118,10 +115,6 @@ export function JpgToPdfConverter() {
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -234,10 +227,8 @@ export function JpgToPdfConverter() {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   
   const handleCardClick = useCallback((id: string) => {
-    if(isTouchDevice) {
-        setSelectedCardId(prevId => prevId === id ? null : id);
-    }
-  }, [isTouchDevice]);
+    setSelectedCardId(prevId => prevId === id ? null : id);
+  }, []);
 
   const handleConvert = async () => {
     if (files.length === 0) {
@@ -454,18 +445,14 @@ export function JpgToPdfConverter() {
                 Clear All
               </Button>
             </CardHeader>
-            <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
+            <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4" onClick={() => setSelectedCardId(null)}>
                 <div 
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-                  onClick={() => {
-                    if (isTouchDevice) setSelectedCardId(null);
-                  }}
                 >
                     <AnimatePresence>
                         {files.map((imgFile, index) => {
                             const isSelected = selectedCardId === imgFile.id;
-                            const showOverlay = !isTouchDevice || isSelected;
-
+                            
                             return (
                                 <motion.div
                                     key={imgFile.id}
@@ -489,12 +476,11 @@ export function JpgToPdfConverter() {
                                         isConverting ? 'cursor-not-allowed' : 'cursor-grab',
                                         isSelected ? 'border-primary' : 'border-transparent'
                                     )}
+                                    tabIndex={0}
                                 >
                                 <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
                                 <div
-                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity",
-                                        showOverlay && 'opacity-100'
-                                    )}
+                                    className={cn("absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity")}
                                 >
                                     <Button 
                                         variant="ghost" 
