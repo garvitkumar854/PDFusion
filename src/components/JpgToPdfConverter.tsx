@@ -51,60 +51,50 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    const showPageContainer = pageSize !== 'Fit';
-
-    const getAspectRatio = () => {
+const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
+    
+    const getPageAspectRatio = () => {
         if (pageSize === 'Fit') return null;
         const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4]; // A4, Letter
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     };
 
-    const aspectRatio = getAspectRatio();
-
-    const pageContainerStyle = useMemo(() => {
-        if (!aspectRatio) return {};
-        return {
-            position: 'relative' as const,
-            backgroundColor: 'white',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            transition: 'padding-bottom 0.3s ease-in-out, width 0.3s ease-in-out',
-            width: '100%',
-            paddingBottom: `${(1 / aspectRatio) * 100}%`
-        };
-    }, [aspectRatio]);
-
-    const imageContainerStyle: React.CSSProperties = {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'padding 0.3s ease-in-out',
-        padding: '0'
-    };
-
-    if (showPageContainer) {
-        if (marginSize === 'small') imageContainerStyle.padding = '5%';
-        if (marginSize === 'big') imageContainerStyle.padding = '10%';
-    }
+    const aspectRatio = getPageAspectRatio();
     
-    const imageStyle = useMemo(() => ({
-        maxWidth: '100%',
-        maxHeight: '100%',
-        objectFit: 'contain' as const,
-    }), []);
+    const pageContainerStyle = useMemo(() => ({
+        position: 'relative',
+        width: '100%',
+        paddingBottom: aspectRatio ? `${(1 / aspectRatio) * 100}%` : undefined,
+        aspectRatio: aspectRatio ? undefined : 'auto',
+        backgroundColor: pageSize !== 'Fit' ? 'white' : 'transparent',
+        boxShadow: pageSize !== 'Fit' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+        transition: 'padding-bottom 0.3s ease, width 0.3s ease',
+    }), [aspectRatio, pageSize]);
 
-    if (!showPageContainer) {
+    const imageContainerStyle = useMemo(() => {
+        let padding = '0';
+        if (pageSize !== 'Fit') {
+            if (marginSize === 'small') padding = '5%';
+            if (marginSize === 'big') padding = '10%';
+        }
+        return {
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding,
+            transition: 'padding 0.3s ease-in-out',
+        } as React.CSSProperties;
+    }, [pageSize, marginSize]);
+
+    if (pageSize === 'Fit') {
         return (
              <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
                 <img
                     src={fileInfo.previewUrl}
                     alt="Preview"
-                    style={{ ...imageStyle, boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}}
+                    className="max-w-full max-h-full object-contain shadow-md"
                 />
             </div>
         )
@@ -117,13 +107,14 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                     <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
-                        style={imageStyle}
+                        className="max-w-full max-h-full object-contain"
                     />
                 </div>
             </div>
         </div>
     );
-};
+});
+PagePreview.displayName = 'PagePreview';
 
 
 export function JpgToPdfConverter() {
@@ -154,12 +145,6 @@ export function JpgToPdfConverter() {
       }
     };
   }, [files, conversionResults]);
-
-  useEffect(() => {
-    if (pageSize === 'Fit') {
-      setMarginSize('none');
-    }
-  }, [pageSize]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -272,9 +257,10 @@ export function JpgToPdfConverter() {
         return orientation === 'landscape' ? [size[1], size[0]] : size;
       }
 
+      const effectiveMarginSize = pageSize === 'Fit' ? 'none' : marginSize;
       const getMargin = () => {
-        if (pageSize === 'Fit' || marginSize === 'none') return 0;
-        return marginSize === 'small' ? 36 : 72;
+        if (effectiveMarginSize === 'none') return 0;
+        return effectiveMarginSize === 'small' ? 36 : 72;
       }
       
       const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
@@ -547,7 +533,7 @@ export function JpgToPdfConverter() {
                     </div>
                     <div>
                         <Label className="font-semibold">Margin</Label>
-                        <RadioGroup value={marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
+                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>No Margin</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
@@ -608,5 +594,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
-    
