@@ -44,7 +44,6 @@ export const ThemeToggle = () => {
     >
       <motion.div
         className="absolute flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-md"
-        layout
         transition={spring}
         style={{
           left: isDark ? 'calc(100% - 24px)' : '4px',
@@ -52,6 +51,7 @@ export const ThemeToggle = () => {
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
+            layoutId="theme-icon"
             key={isDark ? "moon" : "sun"}
             initial={{ y: 0, opacity: 0, rotate: -90 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
