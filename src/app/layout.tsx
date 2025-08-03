@@ -1,3 +1,4 @@
+
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -20,6 +21,7 @@ const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF fi
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pdfusion.vercel.app'),
   applicationName: APP_NAME,
   title: {
     default: APP_DEFAULT_TITLE,
