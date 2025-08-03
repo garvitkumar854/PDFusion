@@ -7,7 +7,6 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
-import { useIsMobile } from "./use-mobile"
 
 const TOAST_LIMIT = 4;
 const TOAST_REMOVE_DELAY_DESKTOP = 5000;
@@ -81,27 +80,28 @@ const addToRemoveQueue = (toastId: string, duration?: number) => {
 
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case "ADD_TOAST":
+    case "ADD_TOAST": {
       const { isMobile, toast } = action;
+      
+      let toasts = [...state.toasts];
+
       if (isMobile) {
-        // On mobile, replace all existing toasts with the new one
-        state.toasts.forEach(t => {
-            if (toastTimeouts.has(t.id)) {
-                clearTimeout(toastTimeouts.get(t.id));
-                toastTimeouts.delete(t.id);
-            }
-        });
-        return {
-            ...state,
-            toasts: [toast],
+        // On mobile, there's only one toast at a time.
+        // Dismiss the current toast if there is one.
+        if (toasts.length > 0) {
+            const currentToast = toasts[0];
+            dispatch({ type: 'DISMISS_TOAST', toastId: currentToast.id });
         }
+        toasts = [toast]; // The new toast is the only one
+      } else {
+        toasts = [toast, ...state.toasts].slice(0, TOAST_LIMIT);
       }
-      // On desktop, add to the list and limit
-      const toasts = [toast, ...state.toasts].slice(0, TOAST_LIMIT);
+      
       return {
         ...state,
         toasts,
       }
+    }
 
     case "UPDATE_TOAST":
       return {
@@ -113,16 +113,16 @@ export const reducer = (state: State, action: Action): State => {
 
     case "DISMISS_TOAST": {
       const { toastId } = action
-
-      const toastToRemove = state.toasts.find(t => t.id === toastId)
       
-      const removeDelay = typeof window !== 'undefined' && window.innerWidth < 640 ? TOAST_REMOVE_DELAY_MOBILE : TOAST_REMOVE_DELAY_DESKTOP;
-
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+      const defaultDuration = isMobile ? TOAST_REMOVE_DELAY_MOBILE : TOAST_REMOVE_DELAY_DESKTOP;
+      
       if (toastId) {
-        addToRemoveQueue(toastId, toastToRemove?.duration || removeDelay)
+        const toastToRemove = state.toasts.find(t => t.id === toastId)
+        addToRemoveQueue(toastId, toastToRemove?.duration || defaultDuration)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id, toast.duration || removeDelay)
+          addToRemoveQueue(toast.id, toast.duration || defaultDuration)
         })
       }
 
