@@ -21,16 +21,18 @@ export function Toaster() {
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, duration, ...props }) {
         return (
-          <Toast key={id} variant={variant} className="p-3 sm:p-4" {...props}>
-            <ToastIcon variant={variant} />
-            <div className="grid gap-1 flex-1">
-              {title && <ToastTitle className="text-sm font-semibold">{title}</ToastTitle>}
-              {description && (
-                <ToastDescription className="text-xs sm:text-sm">{description}</ToastDescription>
-              )}
+          <Toast key={id} variant={variant} className="p-3 sm:p-4 w-full sm:w-auto" {...props}>
+            <div className="flex items-start gap-3 w-full">
+              <ToastIcon variant={variant} />
+              <div className="grid gap-1 flex-1">
+                {title && <ToastTitle className="text-sm font-semibold">{title}</ToastTitle>}
+                {description && (
+                  <ToastDescription className="text-xs sm:text-sm">{description}</ToastDescription>
+                )}
+              </div>
+              {action}
+              <ToastClose />
             </div>
-            {action}
-            <ToastClose />
             <ToastProgressBar variant={variant} duration={duration || 5000} />
           </Toast>
         )
