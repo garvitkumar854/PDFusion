@@ -398,9 +398,9 @@ export function MergePdfs() {
     <div className="space-y-6">
         <Card className="bg-transparent shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Upload &amp; Merge</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Upload & Merge</CardTitle>
                 <CardDescription>
-                  Drag &amp; drop files, reorder them, and click merge.
+                  Drag & drop files, reorder them, and click merge.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -446,7 +446,7 @@ export function MergePdfs() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md self-end sm:self-center"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive self-end sm:self-center"
                 disabled={isMerging}
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
@@ -584,3 +584,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    

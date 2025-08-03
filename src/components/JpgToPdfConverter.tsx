@@ -52,7 +52,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-    
+
     const getPageAspectRatio = () => {
         if (pageSize === 'Fit') return null;
         const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4]; // A4, Letter
@@ -61,15 +61,19 @@ const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }:
 
     const aspectRatio = getPageAspectRatio();
     
-    const pageContainerStyle = useMemo(() => ({
-        position: 'relative',
-        width: '100%',
-        paddingBottom: aspectRatio ? `${(1 / aspectRatio) * 100}%` : undefined,
-        aspectRatio: aspectRatio ? undefined : 'auto',
-        backgroundColor: pageSize !== 'Fit' ? 'white' : 'transparent',
-        boxShadow: pageSize !== 'Fit' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
-        transition: 'padding-bottom 0.3s ease, width 0.3s ease',
-    }), [aspectRatio, pageSize]);
+    const pageContainerStyle = useMemo(() => {
+        const ar = getPageAspectRatio();
+        return {
+            position: 'relative',
+            width: '100%',
+            paddingBottom: ar ? `${(1 / ar) * 100}%` : undefined,
+            aspectRatio: ar ? undefined : 'auto',
+            backgroundColor: pageSize !== 'Fit' ? 'white' : 'transparent',
+            boxShadow: pageSize !== 'Fit' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+            transition: 'padding-bottom 0.3s ease, width 0.3s ease, aspect-ratio 0.3s ease',
+        };
+    }, [pageSize, orientation]);
+    
 
     const imageContainerStyle = useMemo(() => {
         let padding = '0';
@@ -451,7 +455,7 @@ export function JpgToPdfConverter() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleClearAll} 
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:shadow-sm active:bg-destructive/20 active:shadow-md -ml-2 sm:ml-0"
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive -ml-2 sm:ml-0"
                 disabled={isConverting}
               >
                 <X className="w-4 h-4 mr-1 sm:mr-2" />
@@ -485,9 +489,7 @@ export function JpgToPdfConverter() {
                                 tabIndex={0}
                             >
                                 <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                                <div
-                                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-                                >
+                                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
@@ -594,3 +596,5 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
+
+    
