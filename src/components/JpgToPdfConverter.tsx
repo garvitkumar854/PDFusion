@@ -66,27 +66,28 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
         if (pageSize === "Fit") {
             return imgAspectRatio;
         }
-        const dims = PageSizes[pageSize]; // [width, height]
+        const dims = PageSizes[pageSize];
         return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
     }, [pageSize, orientation, imgAspectRatio]);
 
     const getMarginPercentage = useCallback(() => {
-        if (marginSize === 'none') return 0;
-        if (marginSize === 'small') return 5; // 5% margin
-        return 10; // 10% margin
-    }, [marginSize]);
-
+        if (pageSize === 'Fit' || marginSize === 'none') return 0;
+        if (marginSize === 'small') return 5;
+        return 10;
+    }, [marginSize, pageSize]);
+    
+    const showPageContainer = pageSize !== 'Fit';
     const pageAspectRatio = getPageAspectRatio();
     const margin = getMarginPercentage();
-    
+
     return (
-        <div className="w-full h-full flex items-center justify-center p-4 bg-muted/30">
-            <div
-                className="relative bg-white shadow-md w-full h-full"
-                style={{ aspectRatio: `${pageAspectRatio}` }}
-            >
-                <div className="absolute inset-0 p-px">
-                     <img
+        <div className="w-full h-full flex items-center justify-center p-2 bg-muted/30">
+            {showPageContainer ? (
+                 <div
+                    className="relative bg-white shadow-md w-full h-full"
+                    style={{ aspectRatio: `${pageAspectRatio}` }}
+                 >
+                    <img
                         src={fileInfo.previewUrl}
                         alt="Preview"
                         className="object-contain w-full h-full"
@@ -95,7 +96,13 @@ const PagePreview = ({ fileInfo, orientation, pageSize, marginSize }: { fileInfo
                         }}
                     />
                 </div>
-            </div>
+            ) : (
+                 <img
+                    src={fileInfo.previewUrl}
+                    alt="Preview"
+                    className="object-contain w-full h-full shadow-md"
+                />
+            )}
         </div>
     );
 };
@@ -256,7 +263,7 @@ export function JpgToPdfConverter() {
       }
 
       const getMargin = () => {
-        if (marginSize === 'none') return 0;
+        if (pageSize === 'Fit' || marginSize === 'none') return 0;
         return marginSize === 'small' ? 36 : 72;
       }
       
@@ -454,7 +461,7 @@ export function JpgToPdfConverter() {
             </CardHeader>
             <CardContent onDragOver={handleDragOver} className="p-2 sm:p-4">
                 <div 
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto pr-2"
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                   onClick={() => {
                     if (isTouchDevice) setSelectedCardId(null);
                   }}
@@ -483,8 +490,8 @@ export function JpgToPdfConverter() {
                                 )}
                             >
                               <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
-                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg opacity-0 group-hover:opacity-100",
-                                 isTouchDevice && isSelected && "opacity-100"
+                              <div className={cn("absolute inset-0 bg-black/50 transition-opacity flex flex-col justify-end p-1.5 text-white rounded-lg",
+                                 (isTouchDevice && isSelected) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                               )}>
                                 <p className="text-xs font-medium truncate">{imgFile.file.name}</p>
                                 <p className="text-[10px] text-white/80">{formatBytes(imgFile.file.size)}</p>
