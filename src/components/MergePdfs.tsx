@@ -584,5 +584,3 @@ export function MergePdfs() {
     </div>
   );
 }
-
-    
