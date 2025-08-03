@@ -29,11 +29,10 @@ export function Toaster() {
             key={id} 
             variant={variant} 
             className={cn(
-              "p-3 sm:p-4 w-full sm:w-auto",
+              "w-full sm:w-auto",
               "data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80",
-               // Mobile animations
-              "data-[state=open]:slide-in-from-left-full sm:data-[state=open]:slide-in-from-bottom-full",
-              "data-[state=closed]:slide-out-to-right-full sm:data-[state=closed]:slide-out-to-right-full"
+              "data-[state=open]:slide-in-from-top-full data-[state=closed]:slide-out-to-right-full",
+              "sm:data-[state=open]:slide-in-from-bottom-full"
             )}
             {...props}
           >
@@ -48,7 +47,7 @@ export function Toaster() {
               {action}
               <ToastClose />
             </div>
-            <ToastProgressBar variant={variant} duration={duration || 5000} />
+            <ToastProgressBar variant={variant} duration={duration || (isMobile ? 3000 : 5000)} />
           </Toast>
         )
       })}

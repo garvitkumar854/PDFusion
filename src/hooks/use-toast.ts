@@ -7,9 +7,12 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+import { useIsMobile } from "./use-mobile"
 
 const TOAST_LIMIT = 4;
-const TOAST_REMOVE_DELAY = 5000;
+const TOAST_REMOVE_DELAY_DESKTOP = 5000;
+const TOAST_REMOVE_DELAY_MOBILE = 3000;
+
 
 type ToasterToast = ToastProps & {
   id: string
@@ -39,6 +42,7 @@ type Action =
   | {
       type: ActionType["ADD_TOAST"]
       toast: ToasterToast
+      isMobile: boolean
     }
   | {
       type: ActionType["UPDATE_TOAST"]
@@ -70,7 +74,7 @@ const addToRemoveQueue = (toastId: string, duration?: number) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, duration || TOAST_REMOVE_DELAY)
+  }, duration)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -78,9 +82,25 @@ const addToRemoveQueue = (toastId: string, duration?: number) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      const { isMobile, toast } = action;
+      if (isMobile) {
+        // On mobile, replace all existing toasts with the new one
+        state.toasts.forEach(t => {
+            if (toastTimeouts.has(t.id)) {
+                clearTimeout(toastTimeouts.get(t.id));
+                toastTimeouts.delete(t.id);
+            }
+        });
+        return {
+            ...state,
+            toasts: [toast],
+        }
+      }
+      // On desktop, add to the list and limit
+      const toasts = [toast, ...state.toasts].slice(0, TOAST_LIMIT);
       return {
         ...state,
-        toasts: [action.toast], // On mobile, only ever show one at a time
+        toasts,
       }
 
     case "UPDATE_TOAST":
@@ -95,12 +115,14 @@ export const reducer = (state: State, action: Action): State => {
       const { toastId } = action
 
       const toastToRemove = state.toasts.find(t => t.id === toastId)
+      
+      const removeDelay = typeof window !== 'undefined' && window.innerWidth < 640 ? TOAST_REMOVE_DELAY_MOBILE : TOAST_REMOVE_DELAY_DESKTOP;
 
       if (toastId) {
-        addToRemoveQueue(toastId, toastToRemove?.duration)
+        addToRemoveQueue(toastId, toastToRemove?.duration || removeDelay)
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id, toast.duration)
+          addToRemoveQueue(toast.id, toast.duration || removeDelay)
         })
       }
 
@@ -145,6 +167,9 @@ type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
   const id = genId()
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const removeDelay = props.duration || (isMobile ? TOAST_REMOVE_DELAY_MOBILE : TOAST_REMOVE_DELAY_DESKTOP);
+
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -162,12 +187,14 @@ function toast({ ...props }: Toast) {
       onOpenChange: (open) => {
         if (!open) dismiss()
       },
+      duration: removeDelay
     },
+    isMobile,
   })
   
   setTimeout(() => {
     dismiss();
-  }, props.duration || TOAST_REMOVE_DELAY);
+  }, removeDelay);
 
 
   return {
