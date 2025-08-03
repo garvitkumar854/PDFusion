@@ -19,7 +19,7 @@ export function Toaster() {
   const { toasts } = useToast()
   const isMobile = useIsMobile();
 
-  const renderedToasts = isMobile ? (toasts.length > 0 ? [toasts[0]] : []) : toasts;
+  const renderedToasts = isMobile ? (toasts.length > 0 ? [toasts[toasts.length - 1]] : []) : toasts;
 
   return (
     <ToastProvider>
@@ -29,7 +29,7 @@ export function Toaster() {
             key={id} 
             variant={variant} 
             className={cn(
-              "w-full sm:max-w-md"
+              "w-full sm:w-auto"
             )}
             {...props}
           >
@@ -44,7 +44,7 @@ export function Toaster() {
               {action}
               <ToastClose />
             </div>
-            <ToastProgressBar variant={variant} duration={duration || (isMobile ? 3000 : 5000)} />
+            <ToastProgressBar variant={variant} duration={duration || (isMobile ? 2000 : 4000)} />
           </Toast>
         )
       })}

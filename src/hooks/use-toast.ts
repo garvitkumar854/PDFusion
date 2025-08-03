@@ -10,7 +10,7 @@ import type {
 
 const TOAST_LIMIT = 4;
 const TOAST_REMOVE_DELAY_DESKTOP = 4000;
-const TOAST_REMOVE_DELAY_MOBILE = 3000;
+const TOAST_REMOVE_DELAY_MOBILE = 2000;
 
 
 type ToasterToast = ToastProps & {
@@ -89,10 +89,10 @@ export const reducer = (state: State, action: Action): State => {
         // On mobile, there's only one toast at a time.
         // Dismiss the current toast if there is one.
         if (toasts.length > 0) {
-            const currentToast = toasts[0];
+            const currentToast = toasts[toasts.length - 1];
             dispatch({ type: 'DISMISS_TOAST', toastId: currentToast.id });
         }
-        toasts = [toast]; // The new toast is the only one
+        toasts = [...toasts, toast];
       } else {
         toasts = [toast, ...state.toasts].slice(0, TOAST_LIMIT);
       }
