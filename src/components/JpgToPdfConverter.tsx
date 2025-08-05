@@ -50,7 +50,8 @@ interface PagePreviewProps {
     marginSize: MarginSize;
 }
 
-const PagePreview = (props: PagePreviewProps) => {
+const PagePreview = React.memo(
+  function PagePreview(props: PagePreviewProps) {
     const { fileInfo, orientation, pageSize, marginSize } = props;
 
     if (pageSize === 'Fit') {
@@ -108,18 +109,16 @@ const PagePreview = (props: PagePreviewProps) => {
             </div>
         </div>
     );
-};
-
-const MemoizedPagePreview = React.memo(PagePreview, (prevProps, nextProps) => {
-    // Custom comparison function
+  },
+  (prevProps, nextProps) => {
     return (
         prevProps.fileInfo.id === nextProps.fileInfo.id &&
         prevProps.orientation === nextProps.orientation &&
         prevProps.pageSize === nextProps.pageSize &&
         prevProps.marginSize === nextProps.marginSize
     );
-});
-MemoizedPagePreview.displayName = 'MemoizedPagePreview';
+  }
+);
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -161,7 +160,7 @@ export function JpgToPdfConverter() {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       }
     };
-  }, [files, conversionResults]);
+  }, []);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -219,11 +218,9 @@ export function JpgToPdfConverter() {
     const fileToRemove = files.find(f => f.id === fileId);
     if(fileToRemove){
         setRemovingFileId(fileId);
-        // Reset drag refs to prevent stale data issues
         dragItem.current = null;
         dragOverItem.current = null;
         setTimeout(() => {
-            URL.revokeObjectURL(fileToRemove.previewUrl);
             setTotalSize(prev => prev - fileToRemove.file.size);
             setFiles(prev => prev.filter(f => f.id !== fileId));
             toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
@@ -521,7 +518,7 @@ export function JpgToPdfConverter() {
                                 layout
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
+                                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                 draggable={!isConverting}
                                 onDragStart={(e) => handleDragStart(e, index)}
@@ -536,7 +533,7 @@ export function JpgToPdfConverter() {
                                 )}
                                 tabIndex={0}
                             >
-                                <MemoizedPagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
                                 <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                                     <Button 
                                         variant="ghost" 
