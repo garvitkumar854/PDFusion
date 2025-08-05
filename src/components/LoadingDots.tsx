@@ -1,46 +1,58 @@
+
 "use client";
 
 import { motion } from "framer-motion";
+
+const containerVariants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+};
 
 const dotVariants = {
   initial: {
     y: "0%",
   },
   animate: {
-    y: ["0%", "100%", "0%"],
-    transition: {
-      duration: 0.8,
-      ease: "easeInOut",
-      repeat: Infinity,
-    },
+    y: "100%",
   },
 };
 
+const dotTransition = {
+  duration: 0.5,
+  repeat: Infinity,
+  repeatType: "reverse" as const,
+  ease: "easeInOut",
+};
+
+
 const LoadingDots = () => {
   return (
-    <div className="flex items-center justify-center space-x-2">
-      <motion.div
-        className="h-3 w-3 rounded-full bg-primary"
-        variants={dotVariants}
+    <motion.div
+        className="flex h-5 w-20 items-end justify-center gap-1"
+        variants={containerVariants}
         initial="initial"
         animate="animate"
-        style={{ animationDelay: "0s" }}
-      />
-      <motion.div
-        className="h-3 w-3 rounded-full bg-primary"
+    >
+      <motion.span
+        className="block h-3 w-3 rounded-full bg-primary"
         variants={dotVariants}
-        initial="initial"
-        animate="animate"
-        style={{ animationDelay: "0.2s" }}
+        transition={dotTransition}
       />
-      <motion.div
-        className="h-3 w-3 rounded-full bg-primary"
+      <motion.span
+        className="block h-3 w-3 rounded-full bg-primary"
         variants={dotVariants}
-        initial="initial"
-        animate="animate"
-        style={{ animationDelay: "0.4s" }}
+        transition={dotTransition}
       />
-    </div>
+      <motion.span
+        className="block h-3 w-3 rounded-full bg-primary"
+        variants={dotVariants}
+        transition={dotTransition}
+      />
+    </motion.div>
   );
 };
 
