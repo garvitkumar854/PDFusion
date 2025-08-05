@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
 
 const footerServices = [
   { href: '/merger', label: 'Merge PDF' },
@@ -19,6 +20,8 @@ const footerLinks = [
 ];
 
 export default function Footer() {
+  const { theme } = useTheme();
+
   return (
     <footer className="bg-background/95 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_-5px_rgba(255,255,255,0.05)] border-t border-border/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -72,7 +75,7 @@ export default function Footer() {
              <div className="flex gap-2 items-center">
                 <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                     <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
-                        <Image src="/github.svg" alt="GitHub" width={40} height={40} />
+                        <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={40} height={40} />
                     </div>
                 </Link>
                 <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
