@@ -163,7 +163,7 @@ export function JpgToPdfConverter() {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       }
     };
-  }, []);
+  }, [files, conversionResults]);
   
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
@@ -221,19 +221,12 @@ export function JpgToPdfConverter() {
     const fileToRemove = files.find(f => f.id === fileId);
     if(fileToRemove){
         setRemovingFileId(fileId);
-        // Reset drag refs to prevent stale data issues
         dragItem.current = null;
         dragOverItem.current = null;
         setTimeout(() => {
-            setTotalSize(prev => prev - fileToRemove.file.size);
-            setFiles(prev => {
-                const newFiles = prev.filter(f => f.id !== fileId);
-                // Important: Revoke URL only after the animation is likely complete
-                if (fileToRemove) {
-                    URL.revokeObjectURL(fileToRemove.previewUrl);
-                }
-                return newFiles;
-            });
+            const fileToRevoke = files.find(f => f.id === fileId);
+            setFiles(prev => prev.filter(f => f.id !== fileId));
+            setTotalSize(prev => prev - (fileToRevoke?.file.size || 0));
             toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
             setRemovingFileId(null);
         }, 300);
@@ -519,10 +512,8 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
-              <ScrollArea className="h-full max-h-80 w-full pr-4">
-                <div 
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-                >
+              <ScrollArea className="w-full pr-4">
+                 <div className="grid h-80 grid-flow-row-dense grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <AnimatePresence>
                         {files.map((imgFile, index) => (
                             <motion.div
@@ -565,6 +556,7 @@ export function JpgToPdfConverter() {
                         ))}
                     </AnimatePresence>
                 </div>
+                 <ScrollBar orientation="vertical" />
               </ScrollArea>
             </CardContent>
           </Card>
