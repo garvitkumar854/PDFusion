@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -70,12 +71,12 @@ export default function Footer() {
             <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Connect</h3>
              <div className="flex gap-2 items-center">
                 <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                    <div className="group w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                    <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
                         <Image src="/github.svg" alt="GitHub" width={40} height={40} />
                     </div>
                 </Link>
                 <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                    <div className="group w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                    <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
                         <Image src="/instagram.svg" alt="Instagram" width={40} height={40} />
                     </div>
                 </Link>
