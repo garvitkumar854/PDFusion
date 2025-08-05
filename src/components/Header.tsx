@@ -116,7 +116,7 @@ export default function Header() {
             </Link>
         </div>
         
-        <nav className="hidden md:flex flex-1 items-center gap-6 justify-center">
+        <nav className="hidden md:flex flex-1 items-center gap-6 justify-center relative">
           <NavLink href="/" label="Home" currentPath={pathname} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
