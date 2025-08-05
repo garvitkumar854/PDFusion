@@ -53,9 +53,9 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     };
 
     const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setCanInstall(false);
       setInstallPrompt(null);
+      setCanInstall(false);
+      setIsInstalled(true);
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -68,7 +68,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   }, []);
 
   const handleInstallClick = useCallback(async () => {
-    if (isIos) {
+    if (isIos && !isInstalled) {
         toast({
             variant: "info",
             title: "Installation Guide",
@@ -90,7 +90,11 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
         description: "PDFusion has been added to your home screen.",
       });
     }
-  }, [installPrompt, toast, isIos]);
+    // After the prompt is shown, it can't be used again.
+    setInstallPrompt(null);
+    setCanInstall(false);
+
+  }, [installPrompt, toast, isIos, isInstalled]);
 
   const handleOpenApp = () => {
     window.open(window.location.origin, '_blank');
