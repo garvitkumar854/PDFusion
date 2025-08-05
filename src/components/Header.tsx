@@ -126,11 +126,17 @@ export default function Header() {
                 )}>
                     <span>Services</span>
                     <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                     {isServicesActive && (
+                        <motion.div
+                            layoutId="underline"
+                            className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-primary to-blue-400"
+                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        />
+                     )}
                      <span
                         className={cn(
                         "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400",
-                        "transition-all duration-300 w-0 group-hover:w-full",
-                         isServicesActive && 'w-full'
+                        "transition-all duration-300 w-0 group-hover:w-full"
                         )}
                     />
                 </div>
