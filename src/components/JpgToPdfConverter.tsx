@@ -583,19 +583,19 @@ export function JpgToPdfConverter() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
                                 transition={{ duration: 0.2 }}
-                                className="space-y-4"
+                                className="space-y-2"
                             >
-                                <div className="p-4 border rounded-lg bg-primary/5">
-                                    <div className="flex items-center justify-between mb-2">
+                                <div className="p-2 border rounded-lg bg-primary/5">
+                                    <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="w-5 h-5 text-primary animate-spin" />
                                             <p className="text-sm font-medium text-primary transition-all duration-300">Converting to PDF...</p>
                                         </div>
                                         <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
                                     </div>
-                                    <Progress value={conversionProgress} className="h-2 transition-all duration-500" />
+                                    <Progress value={conversionProgress} className="h-2 mt-2 transition-all duration-500" />
                                 </div>
-                                <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full mt-2">
+                                <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
                                     <Ban className="mr-2 h-4 w-4" />
                                     Cancel
                                 </Button>
