@@ -24,51 +24,25 @@ import InstallPWA from './InstallPWA';
 import { ThemeToggle } from './ThemeToggle';
 import { motion } from 'framer-motion';
 
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
-
-const services = [
-    { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
-    { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
-    { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
-    { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
-    { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
-    { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
-    { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
-    { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
-    { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
-    { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
-]
-
-const NavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
-  const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
+const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+  const pathname = usePathname();
+  const isActive = href === "/" ? pathname === href : pathname.startsWith(href);
 
   return (
     <Link
-        href={href}
-        onClick={onClick}
-        className={cn(
-            "group relative py-2 font-semibold transition-colors",
-            isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-        )}
-        >
-        <span className="relative z-10">{label}</span>
-        {isActive && (
-           <motion.div
-             layoutId="underline"
-             className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-primary to-blue-400"
-             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-           />
-        )}
-        <span
-            className={cn(
-            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400",
-            "transition-all duration-300 w-0 group-hover:w-full"
-            )}
-        />
+      href={href}
+      className={cn(
+        "group relative py-2 font-semibold transition-colors",
+        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+      )}
+    >
+      {children}
+      <motion.div
+        className="absolute bottom-0 left-0 h-0.5 bg-primary"
+        style={{ width: isActive ? '100%' : '0%' }}
+        whileHover={{ width: '100%' }}
+        transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+      />
     </Link>
   );
 };
@@ -99,7 +73,20 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const pathname = usePathname();
+  const services = [
+      { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
+      { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
+      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
+      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
+      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
+      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
+      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
+      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
+      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
+  ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
   return (
@@ -116,44 +103,43 @@ export default function Header() {
             </Link>
         </div>
         
-        <nav className="hidden md:flex flex-1 items-center gap-6 justify-center relative">
-          <NavLink href="/" label="Home" currentPath={pathname} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                 <div className={cn(
-                    "group relative py-2 font-semibold transition-colors flex items-center cursor-pointer",
-                    isServicesActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-                )}>
-                    <span>Services</span>
-                    <ChevronDown className="ml-1 h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                     {isServicesActive && (
-                        <motion.div
-                            layoutId="underline"
-                            className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-primary to-blue-400"
-                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                        />
-                     )}
-                     <span
-                        className={cn(
-                        "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-primary to-blue-400",
-                        "transition-all duration-300 w-0 group-hover:w-full"
-                        )}
-                    />
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                {services.map((service) => (
-                    <DropdownMenuItem key={service.href} asChild>
-                        <Link href={service.href}>
-                            {service.icon}
-                            {service.label}
-                        </Link>
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <NavLink href="/about" label="About" currentPath={pathname} />
-          <NavLink href="/contact" label="Contact" currentPath={pathname} />
+        <nav className="hidden md:flex items-center gap-6 justify-center">
+            <NavLink href="/">Home</NavLink>
+            <div className="relative" onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
+                <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            className={cn(
+                                "group relative py-2 font-semibold transition-colors flex items-center",
+                                isServicesActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+                            )}
+                        >
+                            <span>Services</span>
+                            <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}>
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </motion.div>
+                             <motion.div
+                                className="absolute bottom-0 left-0 h-0.5 bg-primary"
+                                initial={{ width: isServicesActive ? '100%' : '0%' }}
+                                animate={{ width: isServicesMenuOpen || isServicesActive ? '100%' : '0%' }}
+                                transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+                              />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {services.map((service) => (
+                            <DropdownMenuItem key={service.href} asChild>
+                                <Link href={service.href} className="flex items-center">
+                                    {service.icon}
+                                    {service.label}
+                                </Link>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            <NavLink href="/about">About</NavLink>
+            <NavLink href="/contact">Contact</NavLink>
         </nav>
 
         <div className="flex-shrink-0 flex items-center gap-2">
@@ -181,15 +167,9 @@ export default function Header() {
                                 </Link>
                             </div>
                             <nav className="flex flex-col gap-1 items-start px-2 mb-6">
-                                {navLinks.map((link) => (
-                                    <MobileNavLink 
-                                    key={link.href + link.label} 
-                                    href={link.href} 
-                                    label={link.label} 
-                                    currentPath={pathname} 
-                                    onClick={() => setIsOpen(false)} 
-                                    />
-                                ))}
+                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsOpen(false)} />
+                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsOpen(false)} />
+                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsOpen(false)} />
                                 <div className="text-lg font-semibold text-foreground pt-3">Services</div>
                                 {services.map((service) => (
                                     <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
