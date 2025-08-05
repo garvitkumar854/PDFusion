@@ -52,7 +52,15 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
+interface PagePreviewProps {
+    fileInfo: ImageFile;
+    orientation: Orientation;
+    pageSize: PageSize;
+    marginSize: MarginSize;
+}
+
+const PagePreview = (props: PagePreviewProps) => {
+    const { fileInfo, orientation, pageSize, marginSize } = props;
 
     if (pageSize === 'Fit') {
         return (
@@ -110,8 +118,17 @@ const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }:
             </div>
         </div>
     );
+};
+
+const MemoizedPagePreview = React.memo(PagePreview, (prevProps, nextProps) => {
+    return (
+        prevProps.fileInfo.id === nextProps.fileInfo.id &&
+        prevProps.orientation === nextProps.orientation &&
+        prevProps.pageSize === nextProps.pageSize &&
+        prevProps.marginSize === nextProps.marginSize
+    );
 });
-PagePreview.displayName = 'PagePreview';
+MemoizedPagePreview.displayName = 'MemoizedPagePreview';
 
 
 export function JpgToPdfConverter() {
@@ -516,7 +533,7 @@ export function JpgToPdfConverter() {
                                 )}
                                 tabIndex={0}
                             >
-                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                <MemoizedPagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
                                 <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                                     <Button 
                                         variant="ghost" 
