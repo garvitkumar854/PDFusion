@@ -512,8 +512,8 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
-              <ScrollArea className="w-full pr-4">
-                 <div className="grid h-80 grid-flow-row-dense grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+               <ScrollArea className="w-full pr-4 h-80 sm:h-auto">
+                 <div className="grid grid-flow-row-dense grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <AnimatePresence>
                         {files.map((imgFile, index) => (
                             <motion.div
@@ -585,8 +585,8 @@ export function JpgToPdfConverter() {
                     </div>
                     <div>
                         <Label className="font-semibold">Margin</Label>
-                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>No Margin</Label></div>
+                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-3 flex space-x-4" disabled={isConverting || pageSize === 'Fit'}>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>None</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
                         </RadioGroup>
