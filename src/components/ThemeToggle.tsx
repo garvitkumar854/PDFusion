@@ -8,7 +8,7 @@ import { Sun, Moon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export const ThemeToggle = () => {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export const ThemeToggle = () => {
     return <div className="h-7 w-12" />;
   }
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
 
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
@@ -51,7 +51,6 @@ export const ThemeToggle = () => {
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            layoutId="theme-icon"
             key={isDark ? "moon" : "sun"}
             initial={{ y: 0, opacity: 0, rotate: -90 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
