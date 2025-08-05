@@ -127,8 +127,10 @@ export function JpgToPdfConverter() {
   const [totalSize, setTotalSize] = useState(0);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
+  const [progressText, setProgressText] = useState("");
   const [conversionResults, setConversionResults] = useState<{url: string, filename: string}[] | null>(null);
-  
+  const [removingFileId, setRemovingFileId] = useState<string | null>(null);
+
   const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
@@ -206,11 +208,15 @@ export function JpgToPdfConverter() {
 
   const removeFile = (fileId: string) => {
     const fileToRemove = files.find(f => f.id === fileId);
-    if (fileToRemove) {
-      URL.revokeObjectURL(fileToRemove.previewUrl);
-      setTotalSize(prev => prev - fileToRemove.file.size);
-      setFiles(prev => prev.filter(f => f.id !== fileId));
-      toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
+    if(fileToRemove){
+        setRemovingFileId(fileId);
+        setTimeout(() => {
+            URL.revokeObjectURL(fileToRemove.previewUrl);
+            setTotalSize(prev => prev - fileToRemove.file.size);
+            setFiles(prev => prev.filter(f => f.id !== fileId));
+            toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
+            setRemovingFileId(null);
+        }, 300);
     }
   };
   
@@ -277,6 +283,7 @@ export function JpgToPdfConverter() {
     setIsConverting(true);
     setConversionProgress(0);
     setConversionResults(null);
+    setProgressText("Initializing...");
 
     const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
     const mergedPdf = await PDFDocument.create();
@@ -333,6 +340,7 @@ export function JpgToPdfConverter() {
         }
 
         const imageFile = files[i];
+        setProgressText(`Processing ${imageFile.file.name}...`);
         
         try {
             const { bytes: imageBytes, width: imgWidth, height: imgHeight } = await recompressImage(imageFile.file);
@@ -390,6 +398,7 @@ export function JpgToPdfConverter() {
     operationId.current++;
     setIsConverting(false);
     setConversionProgress(0);
+    setProgressText("");
     toast({ variant: "info", title: "Conversion cancelled." });
   };
 
@@ -590,17 +599,17 @@ export function JpgToPdfConverter() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
                                 transition={{ duration: 0.2 }}
-                                className="space-y-2"
+                                className="space-y-4"
                             >
-                                <div className="p-2 border rounded-lg bg-primary/5">
+                                <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                            <p className="text-sm font-medium text-primary transition-all duration-300">Converting to PDF...</p>
+                                            <p className="text-sm font-medium text-primary transition-all duration-300 truncate pr-2">{progressText}</p>
                                         </div>
-                                        <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
+                                        <p className="text-sm font-medium text-primary shrink-0">{Math.round(conversionProgress)}%</p>
                                     </div>
-                                    <Progress value={conversionProgress} className="h-2 mt-2 transition-all duration-500" />
+                                    <Progress value={conversionProgress} className="h-2 transition-all duration-500" />
                                 </div>
                                 <Button size="sm" variant="destructive" onClick={handleCancel} className="w-full">
                                     <Ban className="mr-2 h-4 w-4" />
