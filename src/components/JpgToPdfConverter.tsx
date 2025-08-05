@@ -43,55 +43,8 @@ type Orientation = "portrait" | "landscape";
 type PageSize = "A4" | "Letter" | "Fit";
 type MarginSize = "none" | "small" | "big";
 
-function formatBytes(bytes: number, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
 
 const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
-
-    const getPageAspectRatio = () => {
-        if (pageSize === 'Fit') return null;
-        const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4]; // A4, Letter
-        return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
-    };
-
-    const aspectRatio = getPageAspectRatio();
-    
-    const pageContainerStyle = useMemo(() => {
-        const ar = getPageAspectRatio();
-        return {
-            position: 'relative',
-            width: '100%',
-            paddingBottom: ar ? `${(1 / ar) * 100}%` : undefined,
-            aspectRatio: ar ? undefined : 'auto',
-            backgroundColor: pageSize !== 'Fit' ? 'white' : 'transparent',
-            boxShadow: pageSize !== 'Fit' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
-            transition: 'padding-bottom 0.3s ease, width 0.3s ease, aspect-ratio 0.3s ease',
-        };
-    }, [pageSize, orientation]);
-    
-
-    const imageContainerStyle = useMemo(() => {
-        let padding = '0';
-        if (pageSize !== 'Fit') {
-            if (marginSize === 'small') padding = '5%';
-            if (marginSize === 'big') padding = '10%';
-        }
-        return {
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding,
-            transition: 'padding 0.3s ease-in-out',
-        } as React.CSSProperties;
-    }, [pageSize, marginSize]);
 
     if (pageSize === 'Fit') {
         return (
@@ -104,6 +57,37 @@ const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }:
             </div>
         )
     }
+
+    const getPageAspectRatio = () => {
+        const dims = pageSize === 'A4' ? [210, 297] : [215.9, 279.4]; // A4, Letter
+        return orientation === 'landscape' ? dims[1] / dims[0] : dims[0] / dims[1];
+    };
+
+    const aspectRatio = getPageAspectRatio();
+    
+    const pageContainerStyle = {
+        position: 'relative',
+        width: '100%',
+        paddingBottom: aspectRatio ? `${(1 / aspectRatio) * 100}%` : undefined,
+        aspectRatio: aspectRatio ? undefined : 'auto',
+        backgroundColor: 'white',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        transition: 'padding-bottom 0.3s ease, width 0.3s ease, aspect-ratio 0.3s ease',
+    } as React.CSSProperties;
+
+    let padding = '0';
+    if (marginSize === 'small') padding = '5%';
+    if (marginSize === 'big') padding = '10%';
+    
+    const imageContainerStyle = {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding,
+        transition: 'padding 0.3s ease-in-out',
+    } as React.CSSProperties;
 
     return (
         <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
@@ -590,7 +574,7 @@ export function JpgToPdfConverter() {
                     <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
                 </div>
                 
-                <div className="pt-4 border-t h-[104px] flex flex-col justify-center">
+                <div className="pt-6 border-t h-[104px] flex flex-col justify-center">
                     <AnimatePresence mode="wait">
                         {isConverting ? (
                             <motion.div
@@ -599,7 +583,7 @@ export function JpgToPdfConverter() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
                                 transition={{ duration: 0.2 }}
-                                className="space-y-4"
+                                className="space-y-2"
                             >
                                 <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
                                     <div className="flex items-center justify-between">
