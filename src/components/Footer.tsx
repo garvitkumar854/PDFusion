@@ -70,13 +70,13 @@ export default function Footer() {
             <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Connect</h3>
              <div className="flex gap-2 items-center">
                 <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                    <div className="group w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
-                        <Image src="/github.svg" alt="GitHub" width={32} height={32} />
+                    <div className="group w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                        <Image src="/github.svg" alt="GitHub" width={48} height={48} />
                     </div>
                 </Link>
                 <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                    <div className="group w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
-                        <Image src="/instagram.svg" alt="Instagram" width={32} height={32} />
+                    <div className="group w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                        <Image src="/instagram.svg" alt="Instagram" width={48} height={48} />
                     </div>
                 </Link>
             </div>
