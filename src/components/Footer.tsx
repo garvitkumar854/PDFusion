@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
-import { Github, Instagram } from 'lucide-react';
 
 const footerServices = [
   { href: '/merger', label: 'Merge PDF' },
@@ -21,11 +20,11 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-background/95 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_-5px_rgba(255,255,255,0.05)]">
+    <footer className="bg-background/95 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_-5px_rgba(255,255,255,0.05)] border-t border-border/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand Section */}
-          <div className="md:col-span-1">
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
               <h2 className="text-xl font-bold tracking-tight">
@@ -71,16 +70,16 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Connect</h3>
              <div className="flex gap-2 items-center">
-                <Button asChild variant="outline" size="icon">
-                    <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                        <Github className="h-4 w-4" />
-                    </Link>
-                </Button>
-                 <Button asChild variant="outline" size="icon">
-                    <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                        <Instagram className="h-4 w-4" />
-                    </Link>
-                </Button>
+                <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                    <div className="group w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                        <Image src="/github.svg" alt="GitHub" width={24} height={24} />
+                    </div>
+                </Link>
+                <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <div className="group w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
+                        <Image src="/instagram.svg" alt="Instagram" width={24} height={24} />
+                    </div>
+                </Link>
             </div>
           </div>
         </div>
@@ -88,7 +87,11 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border/20 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} PDFusion. All rights reserved.
+            © {new Date().getFullYear()}{' '}
+            <span className="font-semibold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+              PDFusion
+            </span>
+            . All rights reserved.
           </p>
         </div>
       </div>
