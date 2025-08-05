@@ -51,7 +51,6 @@ export const ThemeToggle = () => {
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            layoutId="theme-icon"
             key={isDark ? "moon" : "sun"}
             initial={{ y: 0, opacity: 0, rotate: -90 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
