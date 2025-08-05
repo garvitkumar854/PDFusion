@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: '/96x96.png',
-    apple: '/96x96.png',
+    icon: '/logo.svg',
+    apple: '/logo.svg',
   },
   openGraph: {
     type: 'website',
