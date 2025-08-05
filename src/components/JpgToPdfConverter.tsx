@@ -25,6 +25,7 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
 import JSZip from 'jszip';
 import { motion, AnimatePresence } from "framer-motion";
+import { Slider } from "./ui/slider";
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 25;
@@ -132,6 +133,7 @@ export function JpgToPdfConverter() {
   const [pageSize, setPageSize] = useState<PageSize>("A4");
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
+  const [imageQuality, setImageQuality] = useState(80);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -241,6 +243,29 @@ export function JpgToPdfConverter() {
     dragItem.current = null;
     dragOverItem.current = null;
   };
+
+  const recompressImage = (file: File): Promise<{ bytes: ArrayBuffer, width: number, height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Canvas to Blob conversion failed"));
+            blob.arrayBuffer().then(buffer => resolve({ bytes: buffer, width: img.width, height: img.height }));
+          },
+          'image/jpeg',
+          imageQuality / 100
+        );
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
   
   const handleConvert = async () => {
     if (files.length === 0) {
@@ -274,10 +299,8 @@ export function JpgToPdfConverter() {
         const imageFile = files[i];
         if (operationId.current !== currentOperationId) return;
 
-        const imageBytes = await imageFile.file.arrayBuffer();
-        const image = await (imageFile.file.type === 'image/png' 
-            ? mergedPdf.embedPng(imageBytes) 
-            : mergedPdf.embedJpg(imageBytes));
+        const { bytes: imageBytes, width: imgWidth, height: imgHeight } = await recompressImage(imageFile.file);
+        const image = await mergedPdf.embedJpg(imageBytes);
 
         const pageDims = getPageSize();
         const margin = getMargin();
@@ -289,9 +312,6 @@ export function JpgToPdfConverter() {
             const singlePdf = await PDFDocument.create();
             page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
         }
-        
-        const imgWidth = image.width;
-        const imgHeight = image.height;
        
         let pageWidth = page.getWidth();
         let pageHeight = page.getHeight();
@@ -543,6 +563,12 @@ export function JpgToPdfConverter() {
                     </div>
                 </div>
 
+                <div className={cn("pt-4 border-t", isConverting && "opacity-70 pointer-events-none")}>
+                    <Label className="font-semibold">Image Quality: <span className="font-bold text-primary">{imageQuality}%</span></Label>
+                    <p className="text-xs text-muted-foreground mb-2">Lower quality results in a smaller PDF file size.</p>
+                    <Slider value={[imageQuality]} onValueChange={([val]) => setImageQuality(val)} min={10} max={100} step={10} disabled={isConverting} />
+                </div>
+
                 <div className={cn("flex items-center space-x-2 pt-4 border-t", isConverting && "opacity-70 pointer-events-none")}>
                     <Checkbox id="merge" checked={mergeIntoOnePdf} onCheckedChange={(c) => setMergeIntoOnePdf(Boolean(c))} disabled={isConverting} />
                     <Label htmlFor="merge" className="font-semibold">Merge all images into one PDF file</Label>
@@ -596,5 +622,3 @@ export function JpgToPdfConverter() {
     </div>
   );
 }
-
-    
