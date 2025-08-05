@@ -567,7 +567,7 @@ export function JpgToPdfConverter() {
                 <CardTitle className="text-xl sm:text-2xl">Conversion Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
+                <div className={cn("grid grid-cols-2 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
                     <div>
                         <Label className="font-semibold">Page Orientation</Label>
                         <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
