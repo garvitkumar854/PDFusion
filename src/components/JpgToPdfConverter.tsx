@@ -28,8 +28,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
 
 const MAX_FILES = 50;
-const MAX_FILE_SIZE_MB = 25;
-const MAX_TOTAL_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 50;
+const MAX_TOTAL_SIZE_MB = 400;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
@@ -272,111 +272,118 @@ export function JpgToPdfConverter() {
       toast({ variant: "destructive", title: "No files uploaded", description: "Please upload at least one image file to convert." });
       return;
     }
-    
+
     const currentOperationId = ++operationId.current;
-    
     setIsConverting(true);
     setConversionProgress(0);
     setConversionResults(null);
-    
-    try {
-      const getPageSize = () => {
+
+    const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
+    const mergedPdf = await PDFDocument.create();
+
+    const getPageSize = () => {
         if (pageSize === "Fit") return PageSizes.A4; // Placeholder, will be resized
         let size = pageSize === "A4" ? PageSizes.A4 : PageSizes.Letter;
         return orientation === 'landscape' ? [size[1], size[0]] : size;
-      }
-
-      const effectiveMarginSize = pageSize === 'Fit' ? 'none' : marginSize;
-      const getMargin = () => {
+    }
+    const effectiveMarginSize = pageSize === 'Fit' ? 'none' : marginSize;
+    const getMargin = () => {
         if (effectiveMarginSize === 'none') return 0;
         return effectiveMarginSize === 'small' ? 36 : 72;
-      }
-      
-      const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
-      const mergedPdf = await PDFDocument.create();
-
-      for (let i = 0; i < files.length; i++) {
-        const imageFile = files[i];
-        if (operationId.current !== currentOperationId) return;
-
-        const { bytes: imageBytes, width: imgWidth, height: imgHeight } = await recompressImage(imageFile.file);
-        const image = await mergedPdf.embedJpg(imageBytes);
-
-        const pageDims = getPageSize();
-        const margin = getMargin();
-
-        let page;
-        if (mergeIntoOnePdf) {
-            page = mergedPdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
-        } else {
-            const singlePdf = await PDFDocument.create();
-            page = singlePdf.addPage(pageSize === 'Fit' ? undefined : pageDims);
-        }
-       
-        let pageWidth = page.getWidth();
-        let pageHeight = page.getHeight();
-        
-        if (pageSize === 'Fit') {
-            pageWidth = imgWidth + margin * 2;
-            pageHeight = imgHeight + margin * 2;
-            page.setSize(pageWidth, pageHeight);
-        }
-
-        const usableWidth = pageWidth - margin * 2;
-        const usableHeight = pageHeight - margin * 2;
-        
-        const scaled = image.scaleToFit(usableWidth, usableHeight);
-        
-        page.drawImage(image, {
-            x: margin + (usableWidth - scaled.width) / 2,
-            y: margin + (usableHeight - scaled.height) / 2,
-            width: scaled.width,
-            height: scaled.height,
-        });
-        
-        if (!mergeIntoOnePdf) {
-            const pdfBytes = await (page.doc as PDFDocument).save();
-            pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
-        }
-        
-        setConversionProgress(Math.round(((i + 1) / files.length) * 100));
-      }
-      
-      if (operationId.current !== currentOperationId) return;
-
-      const results: {url: string, filename: string}[] = [];
-      if(mergeIntoOnePdf) {
-        const mergedBytes = await mergedPdf.save();
-        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-        results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
-      } else {
-        if(pdfDocs.length === 1) {
-            const blob = new Blob([pdfDocs[0].bytes], { type: 'application/pdf' });
-            results.push({ url: URL.createObjectURL(blob), filename: pdfDocs[0].name });
-        } else {
-            const zip = new JSZip();
-            pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
-            const zipBlob = await zip.generateAsync({type:"blob"});
-            results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
-        }
-      }
-      
-      setConversionResults(results);
-      toast({
-        variant: "success",
-        title: "Conversion Successful!",
-        description: "Your PDF is ready to be downloaded.",
-      });
-    } catch (error: any) {
-      if (operationId.current === currentOperationId) {
-        console.error("Conversion failed:", error);
-        toast({ variant: "destructive", title: "Conversion Failed", description: error.message || "An unexpected error occurred." });
-      }
-    } finally {
-      if (operationId.current === currentOperationId) {
-        setIsConverting(false);
-      }
     }
+    const margin = getMargin();
+
+    let i = 0;
+    const processChunk = async () => {
+        if (i >= files.length || operationId.current !== currentOperationId) {
+            // Processing finished or cancelled
+            if (operationId.current === currentOperationId) {
+                try {
+                    const results: {url: string, filename: string}[] = [];
+                    if(mergeIntoOnePdf) {
+                        const mergedBytes = await mergedPdf.save();
+                        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+                        results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
+                    } else {
+                        if(pdfDocs.length === 1) {
+                            const blob = new Blob([pdfDocs[0].bytes], { type: 'application/pdf' });
+                            results.push({ url: URL.createObjectURL(blob), filename: pdfDocs[0].name });
+                        } else {
+                            const zip = new JSZip();
+                            pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
+                            const zipBlob = await zip.generateAsync({type:"blob"});
+                            results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
+                        }
+                    }
+                    
+                    setConversionResults(results);
+                    toast({
+                        variant: "success",
+                        title: "Conversion Successful!",
+                        description: "Your PDF is ready to be downloaded.",
+                    });
+                } catch (error: any) {
+                     console.error("Finalization failed:", error);
+                     toast({ variant: "destructive", title: "Finalization Failed", description: error.message || "An unexpected error occurred." });
+                } finally {
+                    setIsConverting(false);
+                }
+            }
+            return;
+        }
+
+        const imageFile = files[i];
+        
+        try {
+            const { bytes: imageBytes, width: imgWidth, height: imgHeight } = await recompressImage(imageFile.file);
+            const image = await mergedPdf.embedJpg(imageBytes);
+
+            const pageDims = getPageSize();
+            
+            let page;
+            let docForPage = mergeIntoOnePdf ? mergedPdf : await PDFDocument.create();
+
+            page = docForPage.addPage(pageSize === 'Fit' ? undefined : pageDims);
+           
+            let pageWidth = page.getWidth();
+            let pageHeight = page.getHeight();
+            
+            if (pageSize === 'Fit') {
+                pageWidth = imgWidth + margin * 2;
+                pageHeight = imgHeight + margin * 2;
+                page.setSize(pageWidth, pageHeight);
+            }
+
+            const usableWidth = pageWidth - margin * 2;
+            const usableHeight = pageHeight - margin * 2;
+            
+            const scaled = image.scaleToFit(usableWidth, usableHeight);
+            
+            page.drawImage(image, {
+                x: margin + (usableWidth - scaled.width) / 2,
+                y: margin + (usableHeight - scaled.height) / 2,
+                width: scaled.width,
+                height: scaled.height,
+            });
+            
+            if (!mergeIntoOnePdf) {
+                const pdfBytes = await docForPage.save();
+                pdfDocs.push({ bytes: pdfBytes, name: `${imageFile.file.name.replace(/\.[^/.]+$/, "")}.pdf`});
+            }
+        } catch (error: any) {
+            console.error(`Failed to process ${imageFile.file.name}:`, error);
+            toast({ variant: "destructive", title: `Skipping ${imageFile.file.name}`, description: "File might be corrupted." });
+        }
+        
+        i++;
+        setConversionProgress(Math.round((i / files.length) * 100));
+
+        // Yield to the event loop to keep the UI responsive
+        setTimeout(processChunk, 0);
+    };
+
+    // Start the process
+    processChunk();
   };
   
   const handleCancel = () => {
