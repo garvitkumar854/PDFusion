@@ -43,6 +43,14 @@ type Orientation = "portrait" | "landscape";
 type PageSize = "A4" | "Letter" | "Fit";
 type MarginSize = "none" | "small" | "big";
 
+function formatBytes(bytes: number, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 const PagePreview = React.memo(({ fileInfo, orientation, pageSize, marginSize }: { fileInfo: ImageFile, orientation: Orientation, pageSize: PageSize, marginSize: MarginSize }) => {
 
@@ -585,7 +593,7 @@ export function JpgToPdfConverter() {
                                 transition={{ duration: 0.2 }}
                                 className="space-y-2"
                             >
-                                <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
+                                <div className="p-2 border rounded-lg bg-primary/5 space-y-2">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="w-5 h-5 text-primary animate-spin" />
