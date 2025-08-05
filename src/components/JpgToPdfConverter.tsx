@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -43,15 +43,6 @@ type Orientation = "portrait" | "landscape";
 type PageSize = "A4" | "Letter" | "Fit";
 type MarginSize = "none" | "small" | "big";
 
-function formatBytes(bytes: number, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
 interface PagePreviewProps {
     fileInfo: ImageFile;
     orientation: Orientation;
@@ -82,28 +73,27 @@ const PagePreview = (props: PagePreviewProps) => {
     const aspectRatio = getPageAspectRatio();
     
     const pageContainerStyle = {
-        position: 'relative',
+        position: 'relative' as const,
         width: '100%',
-        paddingBottom: aspectRatio ? `${(1 / aspectRatio) * 100}%` : undefined,
-        aspectRatio: aspectRatio ? undefined : 'auto',
+        paddingBottom: `${(1 / aspectRatio) * 100}%`,
         backgroundColor: 'white',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transition: 'padding-bottom 0.3s ease, width 0.3s ease, aspect-ratio 0.3s ease',
-    } as React.CSSProperties;
+        transition: 'padding-bottom 0.3s ease',
+    };
 
     let padding = '0';
     if (marginSize === 'small') padding = '5%';
     if (marginSize === 'big') padding = '10%';
     
     const imageContainerStyle = {
-        position: 'absolute',
+        position: 'absolute' as const,
         top: 0, left: 0, right: 0, bottom: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding,
         transition: 'padding 0.3s ease-in-out',
-    } as React.CSSProperties;
+    };
 
     return (
         <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
@@ -121,6 +111,7 @@ const PagePreview = (props: PagePreviewProps) => {
 };
 
 const MemoizedPagePreview = React.memo(PagePreview, (prevProps, nextProps) => {
+    // Custom comparison function
     return (
         prevProps.fileInfo.id === nextProps.fileInfo.id &&
         prevProps.orientation === nextProps.orientation &&
@@ -129,6 +120,15 @@ const MemoizedPagePreview = React.memo(PagePreview, (prevProps, nextProps) => {
     );
 });
 MemoizedPagePreview.displayName = 'MemoizedPagePreview';
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 
 export function JpgToPdfConverter() {
@@ -219,6 +219,9 @@ export function JpgToPdfConverter() {
     const fileToRemove = files.find(f => f.id === fileId);
     if(fileToRemove){
         setRemovingFileId(fileId);
+        // Reset drag refs to prevent stale data issues
+        dragItem.current = null;
+        dragOverItem.current = null;
         setTimeout(() => {
             URL.revokeObjectURL(fileToRemove.previewUrl);
             setTotalSize(prev => prev - fileToRemove.file.size);
