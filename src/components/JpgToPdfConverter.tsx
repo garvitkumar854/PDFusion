@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -26,6 +26,8 @@ import { Checkbox } from "./ui/checkbox";
 import JSZip from 'jszip';
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 50;
@@ -119,6 +121,7 @@ const PagePreview = React.memo(
     );
   }
 );
+PagePreview.displayName = 'PagePreview';
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -218,11 +221,19 @@ export function JpgToPdfConverter() {
     const fileToRemove = files.find(f => f.id === fileId);
     if(fileToRemove){
         setRemovingFileId(fileId);
+        // Reset drag refs to prevent stale data issues
         dragItem.current = null;
         dragOverItem.current = null;
         setTimeout(() => {
             setTotalSize(prev => prev - fileToRemove.file.size);
-            setFiles(prev => prev.filter(f => f.id !== fileId));
+            setFiles(prev => {
+                const newFiles = prev.filter(f => f.id !== fileId);
+                // Important: Revoke URL only after the animation is likely complete
+                if (fileToRemove) {
+                    URL.revokeObjectURL(fileToRemove.previewUrl);
+                }
+                return newFiles;
+            });
             toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
             setRemovingFileId(null);
         }, 300);
@@ -508,6 +519,7 @@ export function JpgToPdfConverter() {
               </Button>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
+              <ScrollArea className="h-full max-h-80 w-full pr-4">
                 <div 
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
                 >
@@ -553,6 +565,7 @@ export function JpgToPdfConverter() {
                         ))}
                     </AnimatePresence>
                 </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         )}
