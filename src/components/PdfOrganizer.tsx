@@ -453,7 +453,7 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
         };
     }, [page.id, page.dataUrl, onVisible]);
 
-    const showOverlay = !isTouchDevice || (isTouchDevice && isSelected);
+    const showOverlay = !isTouchDevice || isSelected;
 
     return (
         <div 
@@ -480,7 +480,7 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
             
             <div className={cn(
                 "absolute inset-0 bg-black/60 transition-opacity flex items-center justify-center gap-2",
-                isTouchDevice ? (isSelected ? "opacity-100" : "opacity-0") : "opacity-0 group-hover:opacity-100"
+                isTouchDevice ? (isSelected ? "opacity-100" : "opacity-0 pointer-events-none") : "opacity-0 group-hover:opacity-100"
             )}>
                 <Button title="Rotate" size="icon" variant="secondary" onClick={(e) => { e.stopPropagation(); onRotate(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><RotateCw className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
                 <Button title="Delete" size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
