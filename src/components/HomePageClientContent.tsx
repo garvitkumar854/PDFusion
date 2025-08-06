@@ -5,7 +5,6 @@ import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrde
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -199,7 +198,7 @@ const FeatureAccordion = () => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 text-left">
       {whyChooseUsFeatures.map((feature, index) => {
         const isExpanded = index === expandedIndex;
         return (
@@ -208,10 +207,9 @@ const FeatureAccordion = () => {
             initial={false}
             animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
+            onClick={() => setExpandedIndex(isExpanded ? null : index)}
           >
-            <GlowingCard
-              onClick={() => setExpandedIndex(isExpanded ? null : index)}
-            >
+            <GlowingCard>
               <div className="flex items-center gap-4">
                 {feature.icon}
                 <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
