@@ -205,44 +205,39 @@ const FeatureAccordion = () => {
         return (
           <motion.div
             key={feature.title}
-            className="rounded-2xl"
             initial={false}
-            animate={{
-              opacity: isExpanded || expandedIndex === null ? 1 : 0.6,
-              scale: isExpanded ? 1.05 : 1
-            }}
+            animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            style={{ transformOrigin: 'center' }}
           >
-            <GlowingCard>
-              <motion.div
-                className="p-4 sm:p-6 cursor-pointer overflow-hidden"
-                onClick={() => setExpandedIndex(isExpanded ? null : index)}
-                whileHover={{ transform: "rotateX(5deg) scale(1.01)" }}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  perspective: '800px',
-                }}
-              >
-                <div className="flex items-center gap-4">
-                  {feature.icon}
-                  <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
-                    {feature.title}
-                  </h3>
-                </div>
-                <AnimatePresence initial={false}>
-                  {isExpanded && (
-                    <motion.div
-                      className="mt-4 pl-12"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto', transition: { duration: 0.3, ease: 'easeOut' } }}
-                      exit={{ opacity: 0, height: 0, transition: { duration: 0.2, ease: 'easeIn' } }}
-                    >
-                      <p className="text-muted-foreground text-sm sm:text-base">{feature.description}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+            <GlowingCard
+              onClick={() => setExpandedIndex(isExpanded ? null : index)}
+            >
+              <div className="flex items-center gap-4">
+                {feature.icon}
+                <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
+                  {feature.title}
+                </h3>
+              </div>
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    key="content"
+                    initial="collapsed"
+                    animate="open"
+                    exit="collapsed"
+                    variants={{
+                      open: { opacity: 1, height: 'auto' },
+                      collapsed: { opacity: 0, height: 0 }
+                    }}
+                    transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-muted-foreground text-sm sm:text-base mt-4 pl-12">
+                      {feature.description}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </GlowingCard>
           </motion.div>
         );
