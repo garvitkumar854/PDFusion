@@ -162,8 +162,8 @@ export default function AboutPage() {
             {howItWorksSteps.map((step, index) => (
                 <div key={index} className="flex flex-col items-center h-full">
                     <AnimateOnScroll
-                        animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                        className="duration-700 w-full h-full"
+                        animation="animate-in fade-in-0 zoom-in-95"
+                        className="duration-500 w-full h-full"
                         delay={index * 200}
                     >
                         <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col">
