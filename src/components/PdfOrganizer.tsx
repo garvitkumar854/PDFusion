@@ -61,6 +61,7 @@ export function PdfOrganizer() {
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
@@ -223,6 +224,20 @@ export function PdfOrganizer() {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (!scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const { top, bottom, height } = container.getBoundingClientRect();
+    const mouseY = e.clientY;
+    
+    const scrollThreshold = height * 0.15; // 15% of height
+    const scrollSpeed = 10;
+
+    if (mouseY < top + scrollThreshold) {
+      container.scrollTop -= scrollSpeed;
+    } else if (mouseY > bottom - scrollThreshold) {
+      container.scrollTop += scrollSpeed;
+    }
   }
   
   const rotatePage = useCallback((id: string) => {
@@ -333,7 +348,7 @@ export function PdfOrganizer() {
         </Card>
       ) : (
         <>
-            <Card className="sticky top-20 z-10 bg-transparent backdrop-blur-sm">
+            <Card className="sticky top-20 z-10 bg-background/95 border-b">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
                     <div className="flex-grow min-w-0">
                         <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
@@ -364,9 +379,10 @@ export function PdfOrganizer() {
                 )}
             </Card>
             <div 
+              ref={scrollContainerRef}
               {...getRootProps({
                   onDragOver: handleDragOver, 
-                  className: 'outline-none',
+                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)]',
                   onClick: (e) => {
                       if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
                           // Let page card handle its own click
@@ -493,3 +509,4 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
     );
 });
 PageCard.displayName = 'PageCard';
+
