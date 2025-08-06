@@ -6,14 +6,17 @@ import Image from 'next/image';
 import { Button } from './ui/button';
 import { useTheme } from 'next-themes';
 
-const footerLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
+const toolsLinks = [
   { href: '/merger', label: 'Merge PDF' },
   { href: '/split-pdf', label: 'Split PDF' },
   { href: '/compress-pdf', label: 'Compress PDF' },
   { href: '/pdf-to-jpg', label: 'PDF to JPG' },
+];
+
+const exploreLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export default function Footer() {
@@ -21,8 +24,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-background/95 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_-5px_rgba(255,255,255,0.05)] border-t border-border/20">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="sm:col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
@@ -38,11 +41,25 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Links Section */}
+          {/* Tools Section */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Quick Links</h3>
+            <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Tools</h3>
             <ul className="space-y-3">
-              {footerLinks.map(link => (
+              {toolsLinks.map(link => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors">
+                      {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* Explore Section */}
+          <div>
+            <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Explore</h3>
+            <ul className="space-y-3">
+              {exploreLinks.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors">
                       {link.label}
