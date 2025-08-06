@@ -230,13 +230,15 @@ export function PdfOrganizer() {
     const { top, bottom, height } = container.getBoundingClientRect();
     const mouseY = e.clientY;
     
-    const scrollThreshold = height * 0.15; // 15% of height
-    const scrollSpeed = 10;
+    const scrollThreshold = height * 0.25; // Increased sensitivity
+    const maxScrollSpeed = 20;
 
     if (mouseY < top + scrollThreshold) {
-      container.scrollTop -= scrollSpeed;
+      const intensity = 1 - (mouseY - top) / scrollThreshold;
+      container.scrollTop -= maxScrollSpeed * intensity;
     } else if (mouseY > bottom - scrollThreshold) {
-      container.scrollTop += scrollSpeed;
+      const intensity = 1 - (bottom - mouseY) / scrollThreshold;
+      container.scrollTop += maxScrollSpeed * intensity;
     }
   }
   
