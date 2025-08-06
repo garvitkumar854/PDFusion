@@ -41,7 +41,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 col-span-1 md:col-span-2 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 col-span-1 md:col-span-2 gap-8">
               {/* Tools Section */}
               <div>
                 <h3 className="font-semibold text-foreground mb-4 text-base md:text-lg">Tools</h3>
