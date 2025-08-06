@@ -29,7 +29,7 @@
   .dark {
     --background: 224 70% 7%; /* #040B1D */
     --foreground: 0 0% 98%;
-    --card: 224 70% 7%; /* #040B1D - Matched with background */
+    --card: 224 71% 8%;
     --card-foreground: 0 0% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 0 0% 98%;
@@ -43,7 +43,7 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 15%;
+    --border: 240 4% 20%;
     --input: 240 4% 15%;
     --ring: 246 100% 65%;
   }
