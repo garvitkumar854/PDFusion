@@ -5,10 +5,10 @@ import { ArrowUpRight, Wand2, Combine, Scissors, Image, Hash, RotateCw, ListOrde
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import CheckIcon from '@/components/CheckIcon';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { GlowingCard } from './GlowingCard';
 
 const services = [
     {
@@ -83,27 +83,26 @@ const services = [
     },
 ];
 
-const futureFeatures = [
+const whyChooseUsFeatures = [
     {
-      icon: <Zap className="w-5 h-5 text-yellow-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      icon: <Zap className="w-8 h-8 text-yellow-400" />,
       title: 'Lightning Fast',
-      description: 'Merge your PDFs in seconds with our optimized processing engine',
-      points: ['Client-side processing', 'Instant preview', 'Quick downloads'],
+      description: 'Our tools process your files in seconds, right in your browser. No waiting, no uploads, just instant results. We use cutting-edge technology to ensure the fastest performance possible.',
     },
     {
-      icon: <ShieldCheck className="w-5 h-5 text-green-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <ShieldCheck className="w-8 h-8 text-green-400" />,
       title: 'Secure & Private',
-      description: 'Your files are processed locally and never stored on our servers',
-      points: ['No file uploads', 'End-to-end encryption', 'GDPR compliant'],
+      description: 'Your privacy is our top priority. All processing happens on your device, meaning your files never leave your computer. We don’t store your data, and we never will.',
     },
     {
-      icon: <FileText className="w-5 h-5 text-green-500 transition-transform group-hover:scale-110 sm:w-6 sm:h-6" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <Wand2 className="w-8 h-8 text-purple-400" />,
       title: 'Advanced Features',
-      description: 'Powerful tools to handle your PDF needs',
-      points: ['Page reordering', 'Rotation support', 'Preview thumbnails'],
+      description: 'Go beyond basic conversion with features like page reordering, rotation support, and live previews. Our toolkit is designed to give you full control over your documents.',
+    },
+    {
+      icon: <FileText className="w-8 h-8 text-blue-400" />,
+      title: 'Intuitive Design',
+      description: 'We believe powerful tools don’t have to be complicated. Our user-friendly interface is designed to be simple and intuitive, making PDF management a breeze for everyone.',
     },
 ];
 
@@ -195,6 +194,56 @@ const serviceItemVariants = {
   hidden: { opacity: 0, y: 20 },
 }
 
+const FeatureAccordion = () => {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+
+  return (
+    <div className="flex flex-col gap-4 text-left">
+      {whyChooseUsFeatures.map((feature, index) => {
+        const isExpanded = index === expandedIndex;
+        return (
+          <motion.div
+            key={feature.title}
+            initial={false}
+            animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            onClick={() => setExpandedIndex(isExpanded ? null : index)}
+          >
+            <GlowingCard>
+              <div className="flex items-center gap-4">
+                {feature.icon}
+                <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
+                  {feature.title}
+                </h3>
+              </div>
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    key="content"
+                    initial="collapsed"
+                    animate="open"
+                    exit="collapsed"
+                    variants={{
+                      open: { opacity: 1, height: 'auto' },
+                      collapsed: { opacity: 0, height: 0 }
+                    }}
+                    transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-muted-foreground text-sm sm:text-base mt-4 pl-12">
+                      {feature.description}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </GlowingCard>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
 
 export default function HomePageClientContent({ showServices }: { showServices?: boolean }) {
     if (!showServices) {
@@ -272,40 +321,8 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         Discover the most intuitive and powerful PDF tools available online. Built with cutting-edge technology for the best user experience.
                         </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left grid-auto-rows-fr">
-                        {futureFeatures.map((feature, index) => (
-                            <AnimateOnScroll
-                            key={index}
-                            animation="animate-in fade-in-0"
-                            className="duration-700 h-full"
-                            delay={index * 250}
-                            >
-                            <div className="group relative h-full">
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                                <Card className="relative shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card">
-                                    <CardContent className="p-0 flex-grow">
-                                    <div className="flex flex-col items-start gap-4 h-full">
-                                        <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
-                                        {feature.icon}
-                                        </div>
-                                        <div className="space-y-2 flex-grow">
-                                        <h3 className="text-base font-bold text-foreground group-hover:text-primary">{feature.title}</h3>
-                                        <p className="text-muted-foreground text-sm">{feature.description}</p>
-                                        </div>
-                                        <ul className="space-y-3 mt-4">
-                                        {feature.points.map((point, pointIndex) => (
-                                            <li key={pointIndex} className="flex items-center gap-3">
-                                            <CheckIcon className="w-5 h-5 text-primary" />
-                                            <span className="text-muted-foreground text-sm">{point}</span>
-                                            </li>
-                                        ))}
-                                        </ul>
-                                    </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                            </AnimateOnScroll>
-                        ))}
+                        <div className="max-w-3xl mx-auto">
+                          <FeatureAccordion />
                         </div>
                     </div>
                 </AnimateOnScroll>

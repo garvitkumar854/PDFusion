@@ -61,6 +61,7 @@ export function PdfOrganizer() {
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
@@ -223,6 +224,22 @@ export function PdfOrganizer() {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (!scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const { top, bottom, height } = container.getBoundingClientRect();
+    const mouseY = e.clientY;
+    
+    const scrollThreshold = height * 0.25; // Increased sensitivity
+    const maxScrollSpeed = 20;
+
+    if (mouseY < top + scrollThreshold) {
+      const intensity = 1 - (mouseY - top) / scrollThreshold;
+      container.scrollTop -= maxScrollSpeed * intensity;
+    } else if (mouseY > bottom - scrollThreshold) {
+      const intensity = 1 - (bottom - mouseY) / scrollThreshold;
+      container.scrollTop += maxScrollSpeed * intensity;
+    }
   }
   
   const rotatePage = useCallback((id: string) => {
@@ -333,7 +350,7 @@ export function PdfOrganizer() {
         </Card>
       ) : (
         <>
-            <Card className="sticky top-20 z-10 bg-transparent backdrop-blur-sm">
+            <Card className="sticky top-20 z-10 bg-background/95 border-b">
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
                     <div className="flex-grow min-w-0">
                         <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
@@ -364,9 +381,10 @@ export function PdfOrganizer() {
                 )}
             </Card>
             <div 
+              ref={scrollContainerRef}
               {...getRootProps({
                   onDragOver: handleDragOver, 
-                  className: 'outline-none',
+                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)]',
                   onClick: (e) => {
                       if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
                           // Let page card handle its own click
@@ -453,7 +471,7 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
         };
     }, [page.id, page.dataUrl, onVisible]);
 
-    const showOverlay = !isTouchDevice || (isTouchDevice && isSelected);
+    const showOverlay = !isTouchDevice || isSelected;
 
     return (
         <div 
@@ -480,7 +498,7 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
             
             <div className={cn(
                 "absolute inset-0 bg-black/60 transition-opacity flex items-center justify-center gap-2",
-                isTouchDevice ? (isSelected ? "opacity-100" : "opacity-0") : "opacity-0 group-hover:opacity-100"
+                isTouchDevice ? (isSelected ? "opacity-100" : "opacity-0 pointer-events-none") : "opacity-0 group-hover:opacity-100"
             )}>
                 <Button title="Rotate" size="icon" variant="secondary" onClick={(e) => { e.stopPropagation(); onRotate(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><RotateCw className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
                 <Button title="Delete" size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={isSaving} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full"><Trash2 className="w-4 h-4 sm:w-5 sm:h-5" /></Button>
@@ -493,3 +511,4 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
     );
 });
 PageCard.displayName = 'PageCard';
+

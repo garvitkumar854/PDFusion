@@ -1,7 +1,7 @@
 
 {
-  "name": "nextn",
-  "version": "4.1.0",
+  "name": "pdfusion",
+  "version": "1.1.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
