@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "PDFusion: Your All-in-One PDF Toolkit",
+=======
+  "name": "PDFusion",
+>>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
   "short_name": "PDFusion",
   "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
   "start_url": "/",
@@ -24,6 +28,7 @@
     {
       "name": "Merge PDF",
       "short_name": "Merge",
+<<<<<<< HEAD
       "description": "Combine multiple PDF files into one document.",
       "url": "/merger",
       "icons": [
@@ -33,10 +38,16 @@
           "sizes": "any"
         }
       ]
+=======
+      "description": "Combine multiple PDF files into one document",
+      "url": "/merger",
+      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
+>>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
     },
     {
       "name": "Split PDF",
       "short_name": "Split",
+<<<<<<< HEAD
       "description": "Extract pages from a PDF file.",
       "url": "/split-pdf",
       "icons": [
@@ -46,10 +57,16 @@
           "sizes": "any"
         }
       ]
+=======
+      "description": "Extract pages from a PDF file",
+      "url": "/split-pdf",
+      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
+>>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
     },
     {
       "name": "Compress PDF",
       "short_name": "Compress",
+<<<<<<< HEAD
       "description": "Reduce the file size of your PDF.",
       "url": "/compress-pdf",
       "icons": [
@@ -72,6 +89,18 @@
           "sizes": "any"
         }
       ]
+=======
+      "description": "Reduce the file size of your PDF",
+      "url": "/compress-pdf",
+      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "PDF to JPG",
+      "short_name": "PDF to JPG",
+      "description": "Convert PDF pages to JPG images",
+      "url": "/pdf-to-jpg",
+      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
+>>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
     }
   ]
 }

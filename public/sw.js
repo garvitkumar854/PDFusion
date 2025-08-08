@@ -1,3 +1,7 @@
-// This file is intentionally blank.
-// It's a placeholder that will be replaced by the next-pwa plugin during the build process.
-// For more information, see: https://github.com/shadowwalker/next-pwa
+
+// This is the "Offline page" service worker
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});

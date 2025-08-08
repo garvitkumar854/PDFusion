@@ -92,7 +92,11 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-10 pt-6 border-t border-border/20 text-center space-y-2">
            <p className="text-sm text-muted-foreground">
+<<<<<<< HEAD
             Built with ❤️ &nbsp;&bull;&nbsp; Version 1.1.7
+=======
+            Built with ❤️ &nbsp;&bull;&nbsp; Version 1.1.5
+>>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
           </p>
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()}{' '}
