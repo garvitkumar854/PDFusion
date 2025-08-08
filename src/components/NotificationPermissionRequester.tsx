@@ -4,17 +4,67 @@
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
-import { Bell, BellRing } from 'lucide-react';
+import { BellRing, RefreshCw } from 'lucide-react';
 
 export default function NotificationPermissionRequester() {
   const [permission, setPermission] = useState<NotificationPermission | 'default'>('default');
   const { toast } = useToast();
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // PWA update logic
+      const handleServiceWorkerUpdate = (registration: ServiceWorkerRegistration) => {
+        registration.onupdatefound = () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // New update available
+                  toast({
+                    title: "New Update Available",
+                    description: "Click refresh to get the latest version.",
+                    variant: "info",
+                    duration: 20000, // Keep it open longer
+                    action: (
+                      <Button onClick={() => {
+                        installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                        // The controllerchange event will fire when the new service worker has taken control.
+                        // We can listen for that to safely reload the page.
+                        let refreshing = false;
+                        navigator.serviceWorker.addEventListener('controllerchange', () => {
+                          if (refreshing) return;
+                          window.location.reload();
+                          refreshing = true;
+                        });
+                      }} size="sm">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Refresh
+                      </Button>
+                    )
+                  });
+                }
+              }
+            };
+          }
+        };
+      };
+
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          // Check for updates immediately
+          setInterval(() => {
+             registration.update();
+          }, 1000 * 60 * 60) // Check for updates every hour
+          handleServiceWorkerUpdate(registration);
+        });
+    }
+
+    // Permission request logic
     if ('Notification' in window) {
       setPermission(Notification.permission);
     }
-  }, []);
+  }, [toast]);
 
   const requestPermission = async () => {
     if (!('Notification' in window)) {
@@ -35,9 +85,6 @@ export default function NotificationPermissionRequester() {
         title: 'Notifications Enabled!',
         description: 'You will now receive updates.',
       });
-      // Here you would typically send the subscription to your server
-      // const subscription = await navigator.serviceWorker.ready.then(reg => reg.pushManager.getSubscription());
-      // await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify(subscription), headers: { 'Content-Type': 'application/json' }});
     } else {
       toast({
         variant: 'warning',
