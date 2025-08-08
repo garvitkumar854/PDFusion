@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
-import { Bell, BellRing } from 'lucide-react';
+import { Bell, BellRing, RefreshCw } from 'lucide-react';
 
 export default function NotificationPermissionRequester() {
   const [permission, setPermission] = useState<NotificationPermission | 'default'>('default');
@@ -14,7 +14,33 @@ export default function NotificationPermissionRequester() {
     if ('Notification' in window) {
       setPermission(Notification.permission);
     }
-  }, []);
+
+    const handleControllerChange = () => {
+      // This event fires when the service worker controlling this page changes.
+      toast({
+        title: "New Update Available",
+        description: "Click to refresh and get the latest version.",
+        variant: "info",
+        duration: 10000,
+        action: (
+          <Button onClick={() => window.location.reload()} size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+        )
+      })
+    }
+    
+    if('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+    }
+
+    return () => {
+      if('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      }
+    }
+  }, [toast]);
 
   const requestPermission = async () => {
     if (!('Notification' in window)) {
