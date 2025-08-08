@@ -39,8 +39,10 @@ export function Toaster() {
                   <ToastDescription className="text-xs">{description}</ToastDescription>
                 )}
               </div>
-              {action}
-              <ToastClose />
+              <div className="flex items-center gap-2">
+                {action}
+                <ToastClose />
+              </div>
             </div>
             <ToastProgressBar variant={variant} duration={duration || (isMobile ? 2000 : 4000)} />
           </Toast>
