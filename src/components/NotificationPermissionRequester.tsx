@@ -12,16 +12,15 @@ export default function NotificationPermissionRequester() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // PWA update logic
       const handleServiceWorkerUpdate = (registration: ServiceWorkerRegistration) => {
-        // This logic is based on: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/onupdatefound
         registration.onupdatefound = () => {
           const installingWorker = registration.installing;
           if (installingWorker) {
             installingWorker.onstatechange = () => {
               if (installingWorker.state === 'installed') {
                 if (navigator.serviceWorker.controller) {
-                  // At this point, the old content is still being served and the new service worker is waiting to take control.
-                  // We can now prompt the user to refresh the page to see the new content.
+                  // New update available
                   toast({
                     title: "New Update Available",
                     description: "Click refresh to get the latest version.",
@@ -54,13 +53,14 @@ export default function NotificationPermissionRequester() {
       navigator.serviceWorker.register('/sw.js')
         .then(registration => {
           // Check for updates immediately
-          registration.update();
-          // And then listen for future updates
+          setInterval(() => {
+             registration.update();
+          }, 1000 * 60 * 60) // Check for updates every hour
           handleServiceWorkerUpdate(registration);
         });
     }
 
-    // Permission request logic remains the same
+    // Permission request logic
     if ('Notification' in window) {
       setPermission(Notification.permission);
     }
