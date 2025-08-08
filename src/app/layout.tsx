@@ -100,10 +100,7 @@ export default function RootLayout({
             </main>
             <FooterLoader />
             <Toaster />
-<<<<<<< HEAD
-=======
             <NotificationPermissionRequester />
->>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
           </ThemeProvider>
       </body>
     </html>
