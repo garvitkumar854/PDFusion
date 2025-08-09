@@ -1,52 +1,61 @@
 
-"use strict";
+'use strict';
 
-if (typeof self === "undefined") {
-    // Not in a service worker, do nothing
-} else {
-    // Precache and route handling
-    self.addEventListener("install", (event) => {
-        // console.log("Service Worker: Installing...");
-    });
+// This is a basic service worker that allows the app to be installed and work offline.
 
-    self.addEventListener("activate", (event) => {
-        // console.log("Service Worker: Activating...");
-        event.waitUntil(self.clients.claim());
-    });
+// The self.__WB_MANIFEST is a placeholder that will be replaced by the Workbox build process
+// with a list of assets to precache.
+const precacheManifest = self.__WB_MANIFEST || [];
 
-    self.addEventListener("fetch", (event) => {
-        if (event.request.mode === "navigate") {
-            event.respondWith(
-                (async () => {
-                    try {
-                        const preloadResponse = await event.preloadResponse;
-                        if (preloadResponse) {
-                            return preloadResponse;
-                        }
+const OFFLINE_URL = '/_offline';
 
-                        const networkResponse = await fetch(event.request);
-                        return networkResponse;
-                    } catch (error) {
-                        // console.log("Fetch failed; returning offline page instead.", error);
-                        const cache = await caches.open("offline-fallbacks");
-                        const cachedResponse = await cache.match("/_offline");
-                        return cachedResponse;
-                    }
-                })()
-            );
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('offline-cache').then((cache) => {
+      return cache.add(OFFLINE_URL);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      // Enable navigation preloading if it's supported.
+      if ('navigationPreload' in self.registration) {
+        await self.registration.navigationPreload.enable();
+      }
+    })()
+  );
+  // Tell the active service worker to take control of the page immediately.
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          // First, try to use the navigation preload response if it's supported.
+          const preloadResponse = await event.preloadResponse;
+          if (preloadResponse) {
+            return preloadResponse;
+          }
+
+          const networkResponse = await fetch(event.request);
+          return networkResponse;
+        } catch (error) {
+          // catch is only triggered if an exception is thrown, which is likely
+          // due to a network error.
+          // If fetch() returns a valid HTTP response with a 4xx or 5xx status,
+          // the catch() will NOT be called.
+          console.log('Fetch failed; returning offline page instead.', error);
+
+          const cache = await caches.open('offline-cache');
+          const cachedResponse = await cache.match(OFFLINE_URL);
+          return cachedResponse;
         }
-    });
-
-    // Handle skip waiting
-    self.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SKIP_WAITING') {
-            self.skipWaiting();
-            // After skipping waiting, notify clients to refresh
-            self.clients.matchAll({ type: 'window' }).then((clients) => {
-                clients.forEach((client) => {
-                    client.postMessage({ type: 'new-version-installed' });
-                });
-            });
-        }
-    });
-}
+      })()
+    );
+  }
+});
