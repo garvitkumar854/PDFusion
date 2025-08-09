@@ -1,105 +1,84 @@
 
 import { precacheAndRoute } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { NetworkFirst, CacheFirst } from 'workbox-strategies';
-import { ExpirationPlugin } from 'workbox-expiration';
 
-// This is a placeholder for the Workbox manifest.
-// The next-pwa library will inject the actual manifest here.
+// The self.__WB_MANIFEST is a placeholder that will be replaced by the Workbox build process
+// with a list of assets to cache.
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Cache pages using a Network First strategy
-registerRoute(
-  ({ request }) => request.mode === 'navigate',
-  new NetworkFirst({
-    cacheName: 'pages',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
-);
-
-// Cache assets (CSS, JS, etc.) using a Cache First strategy
-registerRoute(
-  ({ request }) =>
-    request.destination === 'style' ||
-    request.destination === 'script' ||
-    request.destination === 'worker',
-  new CacheFirst({
-    cacheName: 'assets',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
-);
-
-// Cache images using a Cache First strategy
-registerRoute(
-  ({ request }) => request.destination === 'image',
-  new CacheFirst({
-    cacheName: 'images',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
-);
-
-// Fallback to offline page
-import { setCatchHandler } from 'workbox-routing';
-
-setCatchHandler(({ event }) => {
-  switch (event.request.destination) {
-    case 'document':
-      return caches.match('/_offline');
-    default:
-      return Response.error();
-  }
+self.addEventListener('install', (event) => {
+  // Automatically activate the new service worker as soon as it's installed.
+  self.skipWaiting();
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  if (event.data && event.data.type === 'new-version-installed') {
-     self.clients.matchAll({type: 'window'}).then(clients => {
-       if(clients && clients.length) {
-         clients[0].postMessage({type: 'new-version-installed'});
-       }
-     })
-  }
-  if (event.data && event.data.type === 'SHOW_TEST_NOTIFICATION') {
-    const { title, options } = event.data;
-    event.waitUntil(self.registration.showNotification(title, options));
-  }
-});
-
-// Listen for push notifications
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: 'PDFusion', body: 'You have a new notification.' };
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon || '/icons/icon-192x192.png',
-      badge: data.badge || '/icons/icon-72x72.png',
-      data: {
-        path: data.path || '/'
-      }
+    (async () => {
+      // Claim all clients (open tabs/windows) to ensure they are controlled by this service worker.
+      await self.clients.claim();
+      // After activating, show a notification that the app has been updated.
+      self.registration.showNotification('PDFusion has been updated!', {
+        body: 'A new version is available. Restart the app to see the changes.',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        data: {
+            path: '/'
+        }
+      });
+    })()
+  );
+});
+
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    self.registration.showNotification('PDFusion', {
+      body: 'You have a new notification.',
+      icon: '/icons/icon-192x192.png',
     })
   );
 });
 
-// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-    event.notification.close(); 
-    const fullPath = self.location.origin + (event.notification.data?.path || '/');
-    event.waitUntil(clients.openWindow(fullPath));
+  event.notification.close();
+  var fullPath = self.location.origin + (event.notification.data?.path || '/');
+  event.waitUntil(
+      clients.matchAll({type: 'window'}).then(clientsArr => {
+          const hadWindowToFocus = clientsArr.some(windowClient => windowClient.url === fullPath ? (windowClient.focus(), true) : false);
+
+          if (!hadWindowToFocus) {
+              clients.openWindow(fullPath).then(windowClient => windowClient ? windowClient.focus() : null);
+          }
+      })
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_TEST_NOTIFICATION') {
+    const { title, options } = event.data;
+    event.waitUntil(self.registration.showNotification(title, options));
+  } else if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const preloadResponse = await event.preloadResponse;
+          if (preloadResponse) {
+            return preloadResponse;
+          }
+
+          const networkResponse = await fetch(event.request);
+          return networkResponse;
+        } catch (error) {
+          console.log('Fetch failed; returning offline page instead.', error);
+          const cache = await caches.open('offline-fallback');
+          const cachedResponse = await cache.match('/_offline');
+          return cachedResponse;
+        }
+      })()
+    );
+  }
 });

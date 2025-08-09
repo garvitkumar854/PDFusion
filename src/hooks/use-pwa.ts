@@ -16,17 +16,18 @@ export function usePwa() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const wb = (window as any).workbox;
       if (wb) {
-        wb.addEventListener('installed', (event: any) => {
+         wb.addEventListener('installed', (event: any) => {
+          // This event fires when a new SW has been installed.
+          // If this is an update, we want to prompt the user to refresh.
           if (event.isUpdate) {
-            const UpdateAction = React.createElement(ToastAction, {
-              altText: 'Update',
+             const UpdateAction = React.createElement(ToastAction, {
               onClick: () => wb.messageSW({ type: 'SKIP_WAITING' })
-            }, 'Update');
-
-            toast({
+            }, 'Reload');
+            
+             toast({
               variant: "info",
-              title: "Update Available",
-              description: "A new version of the app is available. Click here to update.",
+              title: "Update Downloaded",
+              description: "A new version of the app is ready. Click reload to update.",
               duration: 10000,
               action: UpdateAction,
             });
@@ -40,6 +41,8 @@ export function usePwa() {
         };
 
         navigator.serviceWorker.addEventListener('message', handleMessage);
+
+        wb.register();
       }
       
       // Request notification permission on first visit only
