@@ -1,61 +1,94 @@
+/**
+ * Welcome to your Workbox-powered service worker!
+ *
+ * You'll need to register this file in your web app.
+ * See https://goo.gl/yCJYRv
+ *
+ * The documentation for Workbox is available at https://developers.google.com/web/tools/workbox/
+ */
 
-self.addEventListener('install', (event) => {
-  const newWorker = event.target;
+if (typeof importScripts === 'function') {
+  importScripts(
+    'https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js'
+  );
   
-  // When a new service worker is installed, it means an update is available.
-  // We can show a native notification here if the user has granted permission.
-  if (self.registration.active) { // Only show notification if there's an existing active worker
-    self.registration.showNotification('Update Available for PDFusion', {
-      body: 'A new version of the app is ready. Click here to update now!',
-      icon: '/icons/icon-192x192.png',
-      tag: 'pwa-update' // Use a tag to prevent multiple notifications
-    }).catch(err => {
-      console.log("Update notification failed to show:", err);
-    });
-  }
-});
+  /* global workbox */
+  if (workbox) {
+    console.log('Workbox is loaded');
 
-self.addEventListener('activate', (event) => {
-  // This event is fired when the service worker is activated.
-  // We claim clients here to take control of the page immediately.
-  event.waitUntil(self.clients.claim());
-});
+    // Prevent debugging messages in production
+    workbox.setConfig({ debug: false });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+    // Precaching: This will be populated by next-pwa with the list of assets to cache
+    // The manifest will be injected by the build process
+    workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.notification.tag === 'pwa-update') {
-    event.waitUntil(
-      self.clients.matchAll({ type: 'window' }).then((clientList) => {
-        // Find the most recently focused client
-        const focusedClient = clientList.find(c => c.focused);
-        const clientToFocus = focusedClient || (clientList.length ? clientList[0] : null);
-
-        if (clientToFocus) {
-          // If a client is found, focus it and then reload.
-          clientToFocus.focus().then(c => {
-            if (c) c.navigate(c.url); // This reloads the page
-          });
-        } else {
-          // If no client is found, open a new one.
-          self.clients.openWindow('/');
-        }
-        
-        // Ensure the new service worker activates
-        self.skipWaiting();
+    // Cache the Google Fonts stylesheets with a stale-while-revalidate strategy.
+    workbox.routing.registerRoute(
+      ({url}) => url.origin === 'https://fonts.googleapis.com',
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'google-fonts-stylesheets',
       })
     );
-  }
-});
 
-// Basic caching strategy (can be expanded)
-self.addEventListener('fetch', (event) => {
-    // For now, we'll just go to the network.
-    // This file can be enhanced with caching strategies using next-pwa's output.
-});
+    // Cache the underlying font files with a cache-first strategy for 1 year.
+    workbox.routing.registerRoute(
+      ({url}) => url.origin === 'https://fonts.gstatic.com',
+      new workbox.strategies.CacheFirst({
+        cacheName: 'google-fonts-webfonts',
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [0, 200],
+          }),
+          new workbox.expiration.ExpirationPlugin({
+            maxAgeSeconds: 60 * 60 * 24 * 365,
+            maxEntries: 30,
+          }),
+        ],
+      })
+    );
+    
+    // Default caching strategy for pages and assets: Stale-While-Revalidate
+    workbox.routing.registerRoute(
+      ({ request }) => request.destination === 'document' ||
+                       request.destination === 'script' ||
+                       request.destination === 'style',
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'pages-and-assets',
+        plugins: [
+          new workbox.expiration.ExpirationPlugin({
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+          }),
+        ],
+      })
+    );
+    
+    // Cache images with a cache-first strategy
+    workbox.routing.registerRoute(
+      ({ request }) => request.destination === 'image',
+      new workbox.strategies.CacheFirst({
+        cacheName: 'images',
+        plugins: [
+          new workbox.expiration.ExpirationPlugin({
+            maxEntries: 60,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+          }),
+        ],
+      })
+    );
+
+    // Offline fallback
+    const offlineFallback = '/_offline';
+    workbox.routing.setCatchHandler(({ event }) => {
+        switch (event.request.destination) {
+            case 'document':
+                return caches.match(offlineFallback);
+            default:
+                return Response.error();
+        }
+    });
+
+  } else {
+    console.log('Workbox could not be loaded. No offline support.');
+  }
+}
