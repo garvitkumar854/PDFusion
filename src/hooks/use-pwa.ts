@@ -22,7 +22,9 @@ export function usePwa() {
             action: (
               <ToastAction
                 altText="Update"
-                onClick={() => (window as any).workbox.messageSW({ type: 'SKIP_WAITING' })}
+                onClick={() => {
+                  (window as any).workbox.messageSW({ type: 'SKIP_WAITING' });
+                }}
               >
                 Update
               </ToastAction>
