@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowDownToLine, ExternalLink } from 'lucide-react';
+import { ArrowDownToLine, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -19,8 +19,7 @@ interface BeforeInstallPromptEvent extends Event {
 const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
@@ -32,9 +31,6 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       if (typeof window !== 'undefined') {
         const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
         setIsStandalone(isStandaloneMode);
-        if(isStandaloneMode) {
-          setIsInstalled(true);
-        }
       }
     };
     checkStandalone();
@@ -47,16 +43,17 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      if (!window.matchMedia('(display-mode: standalone)').matches) {
-        setCanInstall(true);
-      }
     };
 
     const handleAppInstalled = () => {
       setInstallPrompt(null);
-      setCanInstall(false);
-      setIsInstalled(true);
+      setIsInstalling(false);
       setIsStandalone(true);
+      toast({
+        variant: "success",
+        title: "App Installed!",
+        description: "PDFusion has been added to your device.",
+      });
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -66,10 +63,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [toast]);
 
   const handleInstallClick = useCallback(async () => {
-    if (isIos && !isInstalled) {
+    if (isIos) {
         toast({
             variant: "info",
             title: "Installation Guide",
@@ -81,23 +78,28 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     
     if (!installPrompt) return;
     
+    setIsInstalling(true);
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      toast({
-        variant: "success",
-        title: "App Installed!",
-        description: "PDFusion has been added to your home screen.",
-      });
-      setIsInstalled(true);
-      setCanInstall(false);
+        // The 'appinstalled' event will handle the rest.
+    } else {
+        setIsInstalling(false);
     }
     setInstallPrompt(null);
-  }, [installPrompt, toast, isIos, isInstalled]);
+  }, [installPrompt, toast, isIos]);
 
   const handleOpenApp = () => {
-    window.open(window.location.origin, '_blank');
+      if (isInstalling) {
+          toast({
+              variant: "info",
+              title: "Installation in Progress",
+              description: "Please wait a moment while the app is being installed.",
+          });
+          return;
+      }
+      window.open(window.location.origin, '_blank');
   };
   
   const buttonClassName = inSheet
@@ -106,13 +108,14 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   
   const buttonVariant = inSheet ? "ghost" : "default";
 
-  if (!mounted || isStandalone) {
-    return null; 
+  if (!mounted) {
+    return null;
   }
 
+  const canInstall = installPrompt || isIos;
   
-  if (isInstalled && !isStandalone) {
-    return (
+  if (isStandalone) {
+     return (
       <Button
         onClick={handleOpenApp}
         variant="default"
@@ -125,17 +128,17 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     );
   }
 
-  
-  if (canInstall || (isIos && !isInstalled)) {
+  if (canInstall) {
     return (
       <Button
         onClick={handleInstallClick}
         variant={buttonVariant}
         size="sm"
         className={cn(buttonClassName, !inSheet && "h-8 px-3")}
+        disabled={isInstalling}
       >
-        <ArrowDownToLine className={cn("w-4 h-4", !inSheet && "sm:mr-2")} />
-        <span className={cn(inSheet ? "inline-block" : "hidden sm:inline-block")}>Install App</span>
+        {isInstalling ? <Loader2 className={cn("w-4 h-4 animate-spin", !inSheet && "sm:mr-2")} /> : <ArrowDownToLine className={cn("w-4 h-4", !inSheet && "sm:mr-2")} />}
+        <span className={cn(inSheet ? "inline-block" : "hidden sm:inline-block")}>{isInstalling ? 'Installing...' : 'Install App'}</span>
       </Button>
     );
   }

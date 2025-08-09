@@ -38,7 +38,7 @@ export function usePwa() {
       navigator.serviceWorker.addEventListener('message', handleMessage);
 
       // Request notification permission on first visit
-      if (Notification.permission === 'default') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         const timer = setTimeout(() => {
           Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
@@ -52,7 +52,7 @@ export function usePwa() {
           });
         }, 5000); // Ask after 5 seconds
         return () => clearTimeout(timer);
-      } else if (Notification.permission === 'granted') {
+      } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         setIsNotificationPermissionGranted(true);
       }
 
