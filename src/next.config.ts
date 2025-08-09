@@ -7,7 +7,7 @@ const withPWA = withPWAInit({
   dest: 'public',
   sw: 'sw.js',
   register: true,
-  skipWaiting: true,
+  skipWaiting: false,
   disable: process.env.NODE_ENV === 'development',
   fallbacks: {
     document: '/_offline',
