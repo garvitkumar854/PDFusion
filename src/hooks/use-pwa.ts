@@ -2,35 +2,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useToast } from './use-toast';
-import { ToastAction } from '@/components/ui/toast';
-import React from 'react';
+
+const PERMISSION_REQUESTED_KEY = 'notificationPermissionRequested';
 
 export function usePwa() {
-  const { toast } = useToast();
-
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const wb = (window as any).workbox;
       if (wb) {
-        // This event fires when a new SW has been installed.
-        wb.addEventListener('installed', (event: any) => {
-          if (event.isUpdate) {
-             // The service worker will show a notification, no need for a toast.
-          }
-        });
-
-        // This event fires when the new SW has taken control.
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'new-version-installed') {
-                window.location.reload();
-            }
-        };
-
-        navigator.serviceWorker.addEventListener('message', handleMessage);
-
         wb.register();
       }
+
+      // Request notification permission on first visit
+      const permissionRequested = localStorage.getItem(PERMISSION_REQUESTED_KEY);
+      if (!permissionRequested && Notification.permission === 'default') {
+        setTimeout(() => {
+          Notification.requestPermission().then(permission => {
+            localStorage.setItem(PERMISSION_REQUESTED_KEY, 'true');
+          });
+        }, 3000);
+      }
     }
-  }, [toast]);
+  }, []);
 }

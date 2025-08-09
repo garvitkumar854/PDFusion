@@ -71,8 +71,8 @@ export default function AboutPage() {
   const { toast } = useToast();
 
   const sendTestNotification = () => {
-    navigator.serviceWorker.ready.then(registration => {
-      registration.active?.postMessage({
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
         type: 'SHOW_TEST_NOTIFICATION',
         title: 'PDFusion Test',
         options: {
@@ -86,7 +86,13 @@ export default function AboutPage() {
         title: 'Test Notification Sent',
         description: "If you don't see it, check your OS notification settings.",
       });
-    });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Service Worker Not Ready',
+            description: 'Please wait a moment and try again.',
+        });
+    }
   };
 
   const handleTestNotification = async () => {
