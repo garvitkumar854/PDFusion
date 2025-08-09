@@ -28,6 +28,8 @@ export default function NotificationPermissionRequester() {
 
     const currentPermission = await Notification.requestPermission();
     setPermission(currentPermission);
+    localStorage.setItem('notificationPermission', currentPermission);
+
 
     if (currentPermission === 'granted') {
       toast({
@@ -48,8 +50,10 @@ export default function NotificationPermissionRequester() {
   };
 
   useEffect(() => {
+    const permissionStatus = localStorage.getItem('notificationPermission');
+
     const timer = setTimeout(() => {
-      if (permission === 'default') {
+      if (permission === 'default' && !permissionStatus) {
         toast({
           variant: 'info',
           title: 'Stay Updated!',
