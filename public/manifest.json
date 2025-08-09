@@ -1,177 +1,47 @@
-
 {
-<<<<<<< HEAD
-    "theme_color": "#5e4dff",
-    "background_color": "#040B1D",
-    "display": "standalone",
-    "scope": "/",
-    "start_url": "/",
-    "name": "PDFusion: Your All-in-One PDF Toolkit",
-    "short_name": "PDFusion",
-    "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
-    "display_override": ["standalone", "minimal-ui"],
-    "icons": [
-        {
-            "src": "/192x192.png",
-            "type": "image/png",
-            "sizes": "192x192"
-        },
-        {
-            "src": "/512x512.png",
-            "type": "image/png",
-            "sizes": "512x512"
-        },
-        {
-            "src": "/maskable_icon_x512.png",
-            "type": "image/png",
-            "sizes": "512x512",
-            "purpose": "maskable"
-        }
-    ],
-    "screenshots": [
-        {
-          "src": "/screenshot-desktop.png",
-          "sizes": "1280x720",
-          "type": "image/png",
-          "form_factor": "wide",
-          "label": "PDFusion on Desktop"
-        },
-        {
-          "src": "/screenshot-mobile.png",
-          "sizes": "720x1280",
-          "type": "image/png",
-          "form_factor": "narrow",
-          "label": "PDFusion on Mobile"
-        }
-    ],
-    "shortcuts": [
-        {
-            "name": "Merge PDFs",
-            "short_name": "Merge",
-            "description": "Combine multiple PDF files into one document.",
-            "url": "/merger",
-            "icons": [{ "src": "/shortcut-icons/merge.svg", "sizes": "any", "purpose": "any" }]
-        },
-        {
-            "name": "Split PDF",
-            "short_name": "Split",
-            "description": "Extract pages from a PDF file.",
-            "url": "/split-pdf",
-            "icons": [{ "src": "/shortcut-icons/split.svg", "sizes": "any", "purpose": "any" }]
-        },
-        {
-            "name": "Compress PDF",
-            "short_name": "Compress",
-            "description": "Reduce the file size of your PDF.",
-            "url": "/compress-pdf",
-            "icons": [{ "src": "/shortcut-icons/compress.svg", "sizes": "any", "purpose": "any" }]
-        }
-    ]
-}
-=======
-<<<<<<< HEAD
-  "name": "PDFusion: Your All-in-One PDF Toolkit",
-=======
   "name": "PDFusion",
->>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
   "short_name": "PDFusion",
   "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone"],
   "background_color": "#040B1D",
   "theme_color": "#5e4dff",
   "icons": [
     {
-      "src": "/192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "/maskable_icon_x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ],
   "shortcuts": [
     {
       "name": "Merge PDF",
-      "short_name": "Merge",
-<<<<<<< HEAD
+      "url": "/merger",
       "description": "Combine multiple PDF files into one document.",
-      "url": "/merger",
-      "icons": [
-        {
-          "src": "/merge.svg",
-          "type": "image/svg+xml",
-          "sizes": "any"
-        }
-      ]
-=======
-      "description": "Combine multiple PDF files into one document",
-      "url": "/merger",
-      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
->>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
+      "icons": [{ "src": "/icons/merge.png", "sizes": "192x192" }]
     },
     {
       "name": "Split PDF",
-      "short_name": "Split",
-<<<<<<< HEAD
+      "url": "/split-pdf",
       "description": "Extract pages from a PDF file.",
-      "url": "/split-pdf",
-      "icons": [
-        {
-          "src": "/split.svg",
-          "type": "image/svg+xml",
-          "sizes": "any"
-        }
-      ]
-=======
-      "description": "Extract pages from a PDF file",
-      "url": "/split-pdf",
-      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
->>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
+      "icons": [{ "src": "/icons/split.png", "sizes": "192x192" }]
     },
     {
       "name": "Compress PDF",
-      "short_name": "Compress",
-<<<<<<< HEAD
+      "url": "/compress-pdf",
       "description": "Reduce the file size of your PDF.",
-      "url": "/compress-pdf",
-      "icons": [
-        {
-          "src": "/compress.svg",
-          "type": "image/svg+xml",
-          "sizes": "any"
-        }
-      ]
-    },
-    {
-      "name": "JPG to PDF",
-      "short_name": "JPG to PDF",
-      "description": "Convert JPG images to a PDF file.",
-      "url": "/jpg-to-pdf",
-      "icons": [
-        {
-          "src": "/jpgtopdf.svg",
-          "type": "image/svg+xml",
-          "sizes": "any"
-        }
-      ]
-=======
-      "description": "Reduce the file size of your PDF",
-      "url": "/compress-pdf",
-      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "PDF to JPG",
-      "short_name": "PDF to JPG",
-      "description": "Convert PDF pages to JPG images",
-      "url": "/pdf-to-jpg",
-      "icons": [{ "src": "/96x96.png", "sizes": "96x96" }]
->>>>>>> 58336a2bdf2f8ed72343d59ac40b193dac4da74b
+      "icons": [{ "src": "/icons/compress.png", "sizes": "192x192" }]
     }
   ]
 }
->>>>>>> 4716c3791d6f4d054549cc568f0002ccbce9ef86
