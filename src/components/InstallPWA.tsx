@@ -56,6 +56,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       setInstallPrompt(null);
       setCanInstall(false);
       setIsInstalled(true);
+      setIsStandalone(true);
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -89,11 +90,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
         title: "App Installed!",
         description: "PDFusion has been added to your home screen.",
       });
+      setIsInstalled(true);
+      setCanInstall(false);
     }
-    // After the prompt is shown, it can't be used again.
     setInstallPrompt(null);
-    setCanInstall(false);
-
   }, [installPrompt, toast, isIos, isInstalled]);
 
   const handleOpenApp = () => {
@@ -106,8 +106,8 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   
   const buttonVariant = inSheet ? "ghost" : "default";
 
-  if (!mounted) {
-    return null; // Don't render on the server or before hydration
+  if (!mounted || isStandalone) {
+    return null; // Don't render on server or when running as installed PWA
   }
 
   // App is installed, but viewed in browser -> show Open App button
