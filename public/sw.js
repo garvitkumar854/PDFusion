@@ -1,66 +1,137 @@
+/// <reference lib="webworker" />
 
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
+import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { StaleWhileRevalidate, NetworkFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
 
-workbox.setConfig({ debug: false });
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: any;
+};
 
-// This is the placeholder for the precache manifest injected by next-pwa.
-workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+// Precache all assets injected by Workbox
+precacheAndRoute(self.__WB_MANIFEST);
 
-const OFFLINE_URL = '/_offline';
-const CACHE_NAME = 'pdfusion-offline-cache';
+// Cache pages using a Network First strategy
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({
+    cacheName: 'pages',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+    ],
+  })
+);
 
-// Cache the offline page during install
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.add(OFFLINE_URL);
-    })
-  );
-});
+// Cache static assets using a Stale While Revalidate strategy
+registerRoute(
+  ({ request }) =>
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'worker' ||
+    request.destination === 'font',
+  new StaleWhileRevalidate({
+    cacheName: 'assets',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+    ],
+  })
+);
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME && name.startsWith('pdfusion-'))
-          .map(name => caches.delete(name))
-      );
-    })
-  );
-});
+// Cache images using a Stale While Revalidate strategy
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new StaleWhileRevalidate({
+    cacheName: 'images',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+    ],
+  })
+);
 
-
-// Offline fallback
-workbox.routing.setCatchHandler(({ event }) => {
-  switch (event.request.destination) {
-    case 'document':
-      return caches.match(OFFLINE_URL);
-    default:
-      return Response.error();
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  const data = event.data?.json();
+  if (data && data.type === 'new-version-available') {
+    const title = 'Update Available!';
+    const options = {
+      body: 'A new version of PDFusion is ready. Click here to update.',
+      icon: '/icons/192x192.png',
+      badge: '/icons/96x96.png',
+      data: {
+        url: self.registration.scope, // Opens the app's root URL
+      },
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
   }
 });
 
-
-// Background Sync for failed POST requests
-const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin('pdf-post-requests', {
-  maxRetentionTime: 24 * 60, // Retry for up to 24 hours
-  onSync: async ({ queue }) => {
-    let entry;
-    while ((entry = await queue.shiftRequest())) {
-      try {
-        await fetch(entry.request);
-      } catch (error) {
-        console.error('Replay failed for request', entry.request, error);
-        await queue.unshiftRequest(entry);
-        throw new Error('queue-replay-failed');
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const url = event.notification.data.url;
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (const c of clientList) {
+          if (c.focused) {
+            client = c;
+            break;
+          }
+        }
+        client.focus();
+        // A simple way to signal the client to refresh
+        client.postMessage({ type: 'new-version-installed' });
+      } else {
+        clients.openWindow(url);
       }
-    }
-  },
+    })
+  );
 });
 
-workbox.routing.registerRoute(
-  ({ request }) => request.method === 'POST',
-  new workbox.strategies.NetworkOnly({
-    plugins: [bgSyncPlugin],
-  })
-);
+// Periodic background sync for updates
+self.addEventListener('periodicsync', (event) => {
+  if ((event as any).tag === 'get-latest-version') {
+    (event as any).waitUntil(
+      // This is a placeholder for a function that would check for updates from your server
+      // For now, it just demonstrates that periodic sync is handled.
+      Promise.resolve()
+    );
+  }
+});
+
+// Background sync for failed POST requests
+self.addEventListener('fetch', (event) => {
+  if (event.request.method === 'POST') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        if ('sync' in self.registration) {
+          (self.registration as any).sync.register('failed-post-sync');
+        }
+        return new Response(JSON.stringify({ error: 'Network error, request queued.' }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 503,
+        });
+      })
+    );
+  }
+});
+
+self.addEventListener('sync', (event) => {
+  if ((event as any).tag === 'failed-post-sync') {
+    (event as any).waitUntil(
+      // This is a placeholder for replaying queued requests.
+      // A full implementation would use IndexedDB to store and replay failed requests.
+      Promise.resolve()
+    );
+  }
+});

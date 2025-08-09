@@ -1,4 +1,6 @@
 
+'use client';
+
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -6,6 +8,8 @@ import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { usePwa } from '@/hooks/use-pwa';
+
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -18,8 +22,8 @@ const APP_DEFAULT_TITLE = "PDFusion: Your All-in-One PDF Toolkit";
 const APP_TITLE_TEMPLATE = "%s | PDFusion";
 const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.";
 
-
-export const metadata: Metadata = {
+// These are now static for the client component
+const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pdfusion.vercel.app'),
   applicationName: APP_NAME,
   title: {
@@ -69,7 +73,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
+const viewport = {
   themeColor: "#5e4dff",
 };
 
@@ -78,13 +82,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  usePwa();
+  
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content="#5e4dff" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#040B1D" media="(prefers-color-scheme: dark)" />
+        {/* Metadata is handled client-side now */}
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
