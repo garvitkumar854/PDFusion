@@ -70,30 +70,55 @@ const howItWorksSteps = [
 export default function AboutPage() {
   const { toast } = useToast();
 
-  const handleTestNotification = () => {
-    if ('Notification' in window && 'serviceWorker' in navigator && Notification.permission === 'granted') {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.active?.postMessage({
-          type: 'SHOW_TEST_NOTIFICATION',
-          title: 'PDFusion Test',
-          options: {
-            body: 'This is a test notification!',
-            icon: '/icons/icon-192x192.png',
-            badge: '/icons/icon-72x72.png',
-          }
-        });
-        toast({
-          variant: 'success',
-          title: 'Test Notification Sent',
-          description: "If you don't see it, check your OS notification settings.",
-        });
+  const sendTestNotification = () => {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.active?.postMessage({
+        type: 'SHOW_TEST_NOTIFICATION',
+        title: 'PDFusion Test',
+        options: {
+          body: 'This is a test notification!',
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/icon-72x72.png',
+        }
+      });
+      toast({
+        variant: 'success',
+        title: 'Test Notification Sent',
+        description: "If you don't see it, check your OS notification settings.",
+      });
+    });
+  };
+
+  const handleTestNotification = async () => {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported Browser',
+        description: "Your browser does not support notifications.",
+      });
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      sendTestNotification();
+    } else if (Notification.permission === 'denied') {
+      toast({
+        variant: 'warning',
+        title: 'Notifications Blocked',
+        description: "You have blocked notifications. Please enable them in your browser settings to receive updates.",
+        duration: 8000
       });
     } else {
-       toast({
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        sendTestNotification();
+      } else {
+        toast({
           variant: 'warning',
-          title: 'Notification Permission Needed',
-          description: "Please allow notifications for this site to test this feature.",
+          title: 'Permission Not Granted',
+          description: "You will not receive notifications about app updates.",
         });
+      }
     }
   };
 
