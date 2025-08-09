@@ -5,9 +5,8 @@ import BorderBeam from "@/components/BorderBeam";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download, Bell } from "lucide-react";
+import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
-import { useToast } from "@/hooks/use-toast";
 
 const whyChooseUsFeatures = [
     {
@@ -68,74 +67,6 @@ const howItWorksSteps = [
 
 
 export default function AboutPage() {
-  const { toast } = useToast();
-
-  const sendTestNotification = () => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.active?.postMessage({
-          type: 'SHOW_TEST_NOTIFICATION',
-          title: 'PDFusion Test',
-          options: {
-            body: 'This is a test notification!',
-            icon: '/icons/icon-192x192.png',
-            badge: '/icons/icon-72x72.png',
-          }
-        });
-        toast({
-          variant: 'success',
-          title: 'Test Notification Sent',
-          description: "If you don't see it, check your OS notification settings.",
-        });
-      }).catch(error => {
-          toast({
-            variant: 'destructive',
-            title: 'Service Worker Error',
-            description: 'Could not connect to the service worker.',
-        });
-      });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Service Worker Not Supported',
-            description: 'Your browser does not support this feature.',
-        });
-    }
-  };
-
-  const handleTestNotification = async () => {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-      toast({
-        variant: 'destructive',
-        title: 'Unsupported Browser',
-        description: "Your browser does not support notifications.",
-      });
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      sendTestNotification();
-    } else if (Notification.permission === 'denied') {
-      toast({
-        variant: 'warning',
-        title: 'Notifications Blocked',
-        description: "You have blocked notifications. Please enable them in your browser settings to receive updates.",
-        duration: 8000
-      });
-    } else {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        sendTestNotification();
-      } else {
-        toast({
-          variant: 'warning',
-          title: 'Permission Not Granted',
-          description: "You will not receive notifications about app updates.",
-        });
-      }
-    }
-  };
-
   return (
     <>
       <section className="relative py-20 md:py-24 overflow-hidden">
@@ -305,30 +236,6 @@ export default function AboutPage() {
                 </p>
               </div>
             </Card>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
-      <section className="py-20 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <AnimateOnScroll
-            animation="animate-in fade-in-0 slide-in-from-bottom-12"
-            className="duration-500"
-          >
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-              <Bell className="w-4 h-4" />
-              Developer Tools
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              Test PWA Features
-            </h2>
-            <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-8">
-              Use the button below to test the push notification functionality.
-            </p>
-            <Button onClick={handleTestNotification}>
-              <Bell className="mr-2 h-4 w-4" />
-              Send Test Notification
-            </Button>
           </AnimateOnScroll>
         </div>
       </section>
