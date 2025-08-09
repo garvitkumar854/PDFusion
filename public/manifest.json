@@ -1,122 +1,152 @@
 
 {
-    "name": "PDFusion: Your All-in-One PDF Toolkit",
-    "short_name": "PDFusion",
-    "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
-    "start_url": "/",
-    "display": "standalone",
-    "display_override": [
-        "standalone",
-        "minimal-ui"
-    ],
-    "background_color": "#040B1D",
-    "theme_color": "#5e4dff",
-    "orientation": "portrait-primary",
-    "categories": [
-        "productivity",
-        "utilities",
-        "education"
-    ],
-    "icons": [
+  "name": "PDFusion: Your All-in-One PDF Toolkit",
+  "short_name": "PDFusion",
+  "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
+  "start_url": "/",
+  "id": "/?source=pwa",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#FFFFFF",
+  "theme_color": "#5E4DFF",
+  "orientation": "any",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
+  "iarc_rating_id": "e84b072d-4548-472d-8646-3483b6329139",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+pdf",
+      "url": "/merger?url=%s"
+    }
+  ],
+  "scope_extensions": [
+    { "origin": "*.pdfusion.vercel.app" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDFs",
+      "short_name": "Merge",
+      "description": "Combine multiple PDF files into one.",
+      "url": "/merger",
+      "icons": [
         {
-            "src": "/icons/icon-72x72.png",
-            "sizes": "72x72",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-96x96.png",
-            "sizes": "96x96",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-128x128.png",
-            "sizes": "128x128",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-144x144.png",
-            "sizes": "144x144",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-152x152.png",
-            "sizes": "152x152",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "/icons/icon-384x384.png",
-            "sizes": "384x384",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/maskable-icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
+          "src": "/images/icons/shortcut-merge-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
-    ],
-    "screenshots": [
+      ]
+    },
+    {
+      "name": "Split a PDF",
+      "short_name": "Split",
+      "description": "Extract pages from a PDF file.",
+      "url": "/split-pdf",
+      "icons": [
         {
-            "src": "/screenshots/screenshot-desktop-1.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "Merge PDF Interface"
-        },
-        {
-            "src": "/screenshots/screenshot-desktop-2.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "Organize PDF Pages"
-        },
-        {
-            "src": "/screenshots/screenshot-mobile-1.png",
-            "sizes": "720x1280",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Homepage on Mobile"
-        },
-        {
-            "src": "/screenshots/screenshot-mobile-2.png",
-            "sizes": "720x1280",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "JPG to PDF Conversion"
+          "src": "/images/icons/shortcut-split-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
-    ],
-    "shortcuts": [
+      ]
+    },
+    {
+      "name": "Compress a PDF",
+      "short_name": "Compress",
+      "description": "Reduce the file size of a PDF.",
+      "url": "/compress-pdf",
+      "icons": [
         {
-            "name": "Merge PDFs",
-            "short_name": "Merge",
-            "description": "Combine multiple PDF files into one.",
-            "url": "/merger",
-            "icons": [{ "src": "/icons/shortcut-merge.png", "sizes": "192x192" }]
-        },
-        {
-            "name": "Split PDF",
-            "short_name": "Split",
-            "description": "Extract pages from a PDF.",
-            "url": "/split-pdf",
-            "icons": [{ "src": "/icons/shortcut-split.png", "sizes": "192x192" }]
-        },
-        {
-            "name": "Compress PDF",
-            "short_name": "Compress",
-            "description": "Reduce the file size of your PDF.",
-            "url": "/compress-pdf",
-            "icons": [{ "src": "/icons/shortcut-compress.png", "sizes": "192x192" }]
+          "src": "/images/icons/shortcut-compress-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
-    ]
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshots/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Homepage showing available PDF tools"
+    },
+    {
+      "src": "/images/screenshots/screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Organize PDF feature with a visual page sorter"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/images/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "related_applications": []
 }
