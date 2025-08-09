@@ -45,7 +45,7 @@
         {
           "src": "/icons/combine.svg",
           "sizes": "192x192",
-          "type": "svg+xml"
+          "type": "image/png"
         }
       ]
     },
@@ -58,7 +58,7 @@
         {
           "src": "/icons/split.svg",
           "sizes": "192x192",
-          "type": "svg+xml"
+          "type": "image/png"
         }
       ]
     },
@@ -71,7 +71,7 @@
         {
           "src": "/icons/compress.svg",
           "sizes": "192x192",
-          "type": "svg+xml"
+          "type": "image/png"
         }
       ]
     }

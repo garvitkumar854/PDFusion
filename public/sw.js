@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'PDFusion';
   const options = {
     body: data.body || 'You have a new notification.',
-    icon: '/images/icons/icon-192x192.png',
-    badge: '/images/icons/icon-72x72.png',
+    icon: '/192x192.png',
+    badge: '/72x72.png',
     data: {
         path: data.path || '/'
     }
