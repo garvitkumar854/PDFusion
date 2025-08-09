@@ -87,7 +87,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
-        {/* Metadata is handled client-side now */}
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider

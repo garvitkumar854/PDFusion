@@ -1,83 +1,29 @@
 {
-  "theme_color": "#5e4dff",
-  "background_color": "#040B1D",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
-  "name": "PDFusion",
+  "name": "PDFusion: Your All-in-One PDF Toolkit",
   "short_name": "PDFusion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#040B1D",
+  "theme_color": "#5e4dff",
   "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
-  "id": "/",
-  "dir": "ltr",
-  "lang": "en-US",
-  "orientation": "any",
-  "iarc_rating_id": "e84b072d-4547-465a-a452-b673b0a42426",
-  "prefer_related_applications": false,
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "categories": [
-    "utilities",
-    "productivity",
-    "developer tools"
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Merge multiple PDFs"
-    },
-    {
-      "src": "/screenshots/screenshot2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Organize PDF pages"
-    }
-  ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+pdfusion",
-      "url": "/?url=%s"
-    }
-  ],
-  "share_target": {
-    "action": "/share-target",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "files": [
-        {
-          "name": "files",
-          "accept": ["application/pdf", "image/jpeg", "image/png"]
-        }
-      ]
-    }
-  },
   "icons": [
     {
-      "src": "/192x192.png",
+      "src": "/icons/192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/384x384.png",
+      "src": "/icons/384x384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/maskable_icon_x512.png",
+      "src": "/icons/maskable_icon_x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
   "shortcuts": [
@@ -86,12 +32,12 @@
       "short_name": "Merge",
       "description": "Combine multiple PDF files into one.",
       "url": "/merger",
-      "icons": [{ "src": "/icons/combine.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/merge.svg", "sizes": "96x96" }]
     },
     {
       "name": "Split PDF",
       "short_name": "Split",
-      "description": "Extract pages from a PDF file.",
+      "description": "Extract pages from a PDF.",
       "url": "/split-pdf",
       "icons": [{ "src": "/icons/split.svg", "sizes": "96x96" }]
     },
@@ -102,5 +48,31 @@
       "url": "/compress-pdf",
       "icons": [{ "src": "/icons/compress.svg", "sizes": "96x96" }]
     }
-  ]
+  ],
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "id": "/?source=pwa",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1.png",
+      "type": "image/png",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screenshot2.png",
+      "type": "image/png",
+      "sizes": "1920x1080",
+      "form_factor": "wide"
+    }
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "e84b072d-8685-4c3e-8263-00a3a44ab6eb",
+  "categories": ["utilities", "productivity"]
 }
