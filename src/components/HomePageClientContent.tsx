@@ -227,7 +227,7 @@ const FeatureAccordion = () => {
                       open: { opacity: 1, height: 'auto' },
                       collapsed: { opacity: 0, height: 0 }
                     }}
-                    transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     className="overflow-hidden"
                   >
                     <p className="text-muted-foreground text-sm sm:text-base mt-4 pl-12">

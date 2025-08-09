@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 const whyChooseUsFeatures = [
     {
@@ -65,6 +66,31 @@ const howItWorksSteps = [
     }
 ]
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12,
+    },
+  },
+};
+
 
 export default function AboutPage() {
   return (
@@ -113,17 +139,26 @@ export default function AboutPage() {
                 </p>
             </AnimateOnScroll>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+            >
                 {whyChooseUsFeatures.map((feature, index) => (
-                    <AnimateOnScroll
+                    <motion.div
                       key={index}
-                      animation="animate-in fade-in-0 zoom-in-95"
-                      className="duration-500 h-full"
-                      delay={index * 150}
+                      variants={itemVariants}
+                      className="h-full"
                     >
-                      <div className="group relative h-full">
+                      <motion.div
+                        className="group relative h-full"
+                        whileHover={{ scale: 1.03, rotateZ: 1, rotateY: -5 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                      >
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-4 md:p-6 flex flex-col h-full bg-card">
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={`p-2 sm:p-3 rounded-lg ${feature.bgColor}`}>
@@ -136,10 +171,10 @@ export default function AboutPage() {
                                   </div>
                               </CardContent>
                           </Card>
-                      </div>
-                    </AnimateOnScroll>
+                      </motion.div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
         </div>
       </section>
 
@@ -160,25 +195,30 @@ export default function AboutPage() {
               Your privacy is our priority. All processing happens securely in your browser.
             </p>
           </AnimateOnScroll>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <motion.div
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {howItWorksSteps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center h-full">
-                    <AnimateOnScroll
-                        animation="animate-in fade-in-0 zoom-in-95"
-                        className="duration-500 w-full h-full"
-                        delay={index * 200}
-                    >
-                        <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col">
-                            <div className="flex flex-col items-center text-center flex-grow">
-                                <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6 shrink-0">
-                                {step.icon}
-                                </div>
-                                <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                                <p className="text-muted-foreground flex-grow">{step.description}</p>
+                <motion.div key={index} variants={itemVariants} className="flex flex-col items-center h-full">
+                  <div className="relative w-full p-6 sm:p-8 rounded-2xl overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col">
+                      <div className="flex flex-col items-center text-center flex-grow">
+                          <motion.div
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                          >
+                            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6 shrink-0">
+                            {step.icon}
                             </div>
-                            <BorderBeam size={150} duration={12} delay={index * 2} />
-                        </div>
-                    </AnimateOnScroll>
+                          </motion.div>
+                          <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                          <p className="text-muted-foreground flex-grow">{step.description}</p>
+                      </div>
+                      <BorderBeam size={150} duration={12} delay={index * 2} />
+                  </div>
                     {index < howItWorksSteps.length - 1 && (
                     <div className="mt-8 lg:hidden">
                         <AnimateOnScroll
@@ -193,9 +233,9 @@ export default function AboutPage() {
                         </AnimateOnScroll>
                     </div>
                     )}
-                </div>
+                </motion.div>
             ))}
-            </div>
+            </motion.div>
             <div className="hidden lg:flex items-center justify-center -mt-16">
                  <svg width="66%" height="24" viewBox="0 0 800 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary/30">
                     <path d="M1 12.5C1 12.5 130.5 12.5 200 12.5C321 12.5 380 12.5 400 12.5C420 12.5 479 12.5 600 12.5C669.5 12.5 799 12.5 799 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="8 8"/>
@@ -223,19 +263,24 @@ export default function AboutPage() {
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
               className="duration-700 delay-150"
           >
-            <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8 bg-card">
-              <Avatar className="w-24 h-24 border-4 border-primary/50">
-                <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
-                <AvatarFallback>GK</AvatarFallback>
-              </Avatar>
-              <div className="text-center sm:text-left">
-                <h3 className="text-2xl font-bold text-foreground">Garvit Kumar</h3>
-                <p className="text-primary font-semibold mb-2">Creator & Developer</p>
-                <p className="text-muted-foreground">
-                  "I built PDFusion with a simple goal: to create a beautiful, fast, and private tool that solves a common problem. I hope you find it as useful as I do. Thank you for your support!"
-                </p>
-              </div>
-            </Card>
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8 bg-card">
+                <Avatar className="w-24 h-24 border-4 border-primary/50">
+                  <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
+                  <AvatarFallback>GK</AvatarFallback>
+                </Avatar>
+                <div className="text-center sm:text-left">
+                  <h3 className="text-2xl font-bold text-foreground">Garvit Kumar</h3>
+                  <p className="text-primary font-semibold mb-2">Creator & Developer</p>
+                  <p className="text-muted-foreground">
+                    "I built PDFusion with a simple goal: to create a beautiful, fast, and private tool that solves a common problem. I hope you find it as useful as I do. Thank you for your support!"
+                  </p>
+                </div>
+              </Card>
+            </motion.div>
           </AnimateOnScroll>
         </div>
       </section>
