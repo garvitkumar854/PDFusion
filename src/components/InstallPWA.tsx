@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowDownToLine, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowDownToLine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -21,12 +21,9 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isIos, setIsIos] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
-    setMounted(true);
-
     const checkStandalone = () => {
       if (typeof window !== 'undefined') {
         const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
@@ -58,7 +55,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [toast]);
+  }, []);
 
   const handleInstallClick = useCallback(async () => {
     if (isIos) {
@@ -93,10 +90,6 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     }
 
   }, [installPrompt, toast, isIos]);
-
-  if (!mounted) {
-    return null;
-  }
   
   // Don't show any button if the app is running as an installed PWA
   if (isStandalone) {
