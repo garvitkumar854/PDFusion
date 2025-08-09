@@ -49,11 +49,6 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       setInstallPrompt(null);
       setIsInstalling(false);
       setIsStandalone(true);
-      toast({
-        variant: "success",
-        title: "App Installed!",
-        description: "PDFusion has been added to your device.",
-      });
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -79,56 +74,44 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     if (!installPrompt) return;
     
     setIsInstalling(true);
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-        // The 'appinstalled' event will handle the rest.
-    } else {
-        setIsInstalling(false);
-    }
-    setInstallPrompt(null);
-  }, [installPrompt, toast, isIos]);
-
-  const handleOpenApp = () => {
-      if (isInstalling) {
+    try {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
           toast({
-              variant: "info",
-              title: "Installation in Progress",
-              description: "Please wait a moment while the app is being installed.",
+              variant: "success",
+              title: "App Installed!",
+              description: "PDFusion has been added to your device.",
           });
-          return;
       }
-      window.open(window.location.origin, '_blank');
-  };
-  
-  const buttonClassName = inSheet
-    ? "w-full justify-start text-muted-foreground hover:text-primary"
-    : "inline-flex items-center gap-2 rounded-full font-semibold";
-  
-  const buttonVariant = inSheet ? "ghost" : "default";
+    } catch (e) {
+        // Silently catch errors if user dismisses prompt on some browsers
+    } finally {
+      setIsInstalling(false);
+      setInstallPrompt(null);
+    }
+
+  }, [installPrompt, toast, isIos]);
 
   if (!mounted) {
     return null;
   }
+  
+  // Don't show any button if the app is running as an installed PWA
+  if (isStandalone) {
+     return null;
+  }
 
   const canInstall = installPrompt || isIos;
   
-  if (isStandalone) {
-     return (
-      <Button
-        onClick={handleOpenApp}
-        variant="default"
-        size="sm"
-        className={cn(buttonClassName, "bg-green-600 hover:bg-green-700 h-8 px-3")}
-      >
-        <ExternalLink className="w-4 h-4 sm:mr-2" />
-        <span className="hidden sm:inline-block">Open App</span>
-      </Button>
-    );
-  }
-
   if (canInstall) {
+    const buttonClassName = inSheet
+      ? "w-full justify-start text-muted-foreground hover:text-primary"
+      : "inline-flex items-center gap-2 rounded-full font-semibold";
+    
+    const buttonVariant = inSheet ? "ghost" : "default";
+
     return (
       <Button
         onClick={handleInstallClick}
