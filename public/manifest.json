@@ -12,37 +12,111 @@
     "background_color": "#040B1D",
     "theme_color": "#5e4dff",
     "orientation": "portrait-primary",
-    "icons": [
-        {
-            "src": "/logo.svg",
-            "sizes": "192x192",
-            "type": "image/svg+xml",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/logo.svg",
-            "sizes": "512x512",
-            "type": "image/svg+xml"
-        }
-    ],
     "categories": [
         "productivity",
-        "utilities"
+        "utilities",
+        "education"
+    ],
+    "icons": [
+        {
+            "src": "/icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/maskable-icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
     ],
     "screenshots": [
         {
-            "src": "/og-image.png",
-            "sizes": "1200x630",
+            "src": "/screenshots/screenshot-desktop-1.png",
+            "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "PDFusion Toolkit"
+            "label": "Merge PDF Interface"
         },
         {
-            "src": "/og-image.png",
-            "sizes": "1200x630",
+            "src": "/screenshots/screenshot-desktop-2.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Organize PDF Pages"
+        },
+        {
+            "src": "/screenshots/screenshot-mobile-1.png",
+            "sizes": "720x1280",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "PDFusion Toolkit"
+            "label": "Homepage on Mobile"
+        },
+        {
+            "src": "/screenshots/screenshot-mobile-2.png",
+            "sizes": "720x1280",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "JPG to PDF Conversion"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Merge PDFs",
+            "short_name": "Merge",
+            "description": "Combine multiple PDF files into one.",
+            "url": "/merger",
+            "icons": [{ "src": "/icons/shortcut-merge.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Split PDF",
+            "short_name": "Split",
+            "description": "Extract pages from a PDF.",
+            "url": "/split-pdf",
+            "icons": [{ "src": "/icons/shortcut-split.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Compress PDF",
+            "short_name": "Compress",
+            "description": "Reduce the file size of your PDF.",
+            "url": "/compress-pdf",
+            "icons": [{ "src": "/icons/shortcut-compress.png", "sizes": "192x192" }]
         }
     ]
 }

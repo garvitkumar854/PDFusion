@@ -41,7 +41,7 @@ const metadata = {
   },
   icons: {
     icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    apple: '/icons/icon-192x192.png',
   },
   openGraph: {
     type: 'website',
