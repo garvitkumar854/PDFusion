@@ -86,7 +86,7 @@
       "short_name": "Merge",
       "description": "Combine multiple PDF files into one.",
       "url": "/merger",
-      "icons": [{ "src": "/icons/merge.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/combine.svg", "sizes": "96x96" }]
     },
     {
       "name": "Split PDF",
