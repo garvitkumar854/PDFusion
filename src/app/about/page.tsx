@@ -71,26 +71,34 @@ export default function AboutPage() {
   const { toast } = useToast();
 
   const sendTestNotification = () => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SHOW_TEST_NOTIFICATION',
-        title: 'PDFusion Test',
-        options: {
-          body: 'This is a test notification!',
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/icon-72x72.png',
-        }
-      });
-      toast({
-        variant: 'success',
-        title: 'Test Notification Sent',
-        description: "If you don't see it, check your OS notification settings.",
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.active?.postMessage({
+          type: 'SHOW_TEST_NOTIFICATION',
+          title: 'PDFusion Test',
+          options: {
+            body: 'This is a test notification!',
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+          }
+        });
+        toast({
+          variant: 'success',
+          title: 'Test Notification Sent',
+          description: "If you don't see it, check your OS notification settings.",
+        });
+      }).catch(error => {
+          toast({
+            variant: 'destructive',
+            title: 'Service Worker Error',
+            description: 'Could not connect to the service worker.',
+        });
       });
     } else {
         toast({
             variant: 'destructive',
-            title: 'Service Worker Not Ready',
-            description: 'Please wait a moment and try again.',
+            title: 'Service Worker Not Supported',
+            description: 'Your browser does not support this feature.',
         });
     }
   };
