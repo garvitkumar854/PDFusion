@@ -6,6 +6,8 @@ import { useToast } from './use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import React from 'react';
 
+const NOTIFICATION_PERMISSION_REQUESTED_KEY = 'notificationPermissionRequested';
+
 export function usePwa() {
   const { toast } = useToast();
   const [isNotificationPermissionGranted, setIsNotificationPermissionGranted] = useState(false);
@@ -37,21 +39,25 @@ export function usePwa() {
 
       navigator.serviceWorker.addEventListener('message', handleMessage);
 
-      // Request notification permission on first visit
+      // Request notification permission on first visit only
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        const timer = setTimeout(() => {
-          Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              setIsNotificationPermissionGranted(true);
-              toast({
-                variant: 'success',
-                title: 'Notifications Enabled',
-                description: 'You will be notified about app updates.',
-              });
-            }
-          });
-        }, 5000); // Ask after 5 seconds
-        return () => clearTimeout(timer);
+        const permissionRequested = localStorage.getItem(NOTIFICATION_PERMISSION_REQUESTED_KEY);
+        if (!permissionRequested) {
+            const timer = setTimeout(() => {
+                Notification.requestPermission().then(permission => {
+                    localStorage.setItem(NOTIFICATION_PERMISSION_REQUESTED_KEY, 'true');
+                    if (permission === 'granted') {
+                        setIsNotificationPermissionGranted(true);
+                        toast({
+                            variant: 'success',
+                            title: 'Notifications Enabled',
+                            description: 'You will be notified about app updates.',
+                        });
+                    }
+                });
+            }, 5000); // Ask after 5 seconds
+            return () => clearTimeout(timer);
+        }
       } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         setIsNotificationPermissionGranted(true);
       }
