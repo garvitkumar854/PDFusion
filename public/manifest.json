@@ -43,9 +43,9 @@
       "url": "/merger",
       "icons": [
         {
-          "src": "/icons/combine.svg",
-          "sizes": "192x192",
-          "type": "image/png"
+          "src": "/icons/merge.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
         }
       ]
     },
@@ -57,8 +57,8 @@
       "icons": [
         {
           "src": "/icons/split.svg",
-          "sizes": "192x192",
-          "type": "image/png"
+          "sizes": "any",
+          "type": "image/svg+xml"
         }
       ]
     },
@@ -70,8 +70,8 @@
       "icons": [
         {
           "src": "/icons/compress.svg",
-          "sizes": "192x192",
-          "type": "image/png"
+          "sizes": "any",
+          "type": "image/svg+xml"
         }
       ]
     }
