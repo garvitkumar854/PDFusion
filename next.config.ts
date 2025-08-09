@@ -9,6 +9,7 @@ const withPWA = withPWAInit({
   register: true,
   skipWaiting: false,
   disable: process.env.NODE_ENV === 'development',
+  scope: '/',
 });
 
 const nextConfig: NextConfig = {

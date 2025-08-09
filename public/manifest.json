@@ -1,33 +1,54 @@
 {
-    "theme_color": "#5e4dff",
-    "background_color": "#040B1D",
-    "display": "standalone",
-    "scope": "/",
-    "start_url": "/",
-    "name": "PDFusion",
+    "name": "PDFusion: Your All-in-One PDF Toolkit",
     "short_name": "PDFusion",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "display_override": [
+        "standalone"
+    ],
+    "background_color": "#040B1D",
+    "theme_color": "#5e4dff",
     "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
+    "orientation": "any",
+    "iarc_rating_id": "e84b072d-8698-4474-98c3-4c9eafd32960",
+    "dir": "ltr",
+    "lang": "en-US",
+    "prefer_related_applications": false,
+    "categories": [
+        "utilities",
+        "productivity",
+        "education",
+        "business"
+    ],
+    "launch_handler": {
+        "client_mode": "navigate-existing"
+    },
     "icons": [
-        {
-            "src": "/icons/192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/384x384.png",
-            "sizes": "384x384",
-            "type": "image/png"
-        },
-        {
-            "src": "/icons/512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
         {
             "src": "/icons/maskable_icon_x512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "maskable"
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any"
         }
     ],
     "shortcuts": [
@@ -46,7 +67,7 @@
         {
             "name": "Split PDF",
             "short_name": "Split",
-            "description": "Extract pages from a PDF file.",
+            "description": "Extract pages from a PDF.",
             "url": "/split-pdf",
             "icons": [
                 {
@@ -67,18 +88,5 @@
                 }
             ]
         }
-    ],
-    "display_override": [
-        "standalone"
-    ],
-    "prefer_related_applications": false,
-    "dir": "ltr",
-    "lang": "en-US",
-    "iarc_rating_id": "e84b072d-8685-4c3e-826a-8c394c8b8e6a",
-    "categories": [
-        "utilities",
-        "productivity",
-        "developer tools",
-        "graphics & design"
     ]
 }
