@@ -107,10 +107,10 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   const buttonVariant = inSheet ? "ghost" : "default";
 
   if (!mounted || isStandalone) {
-    return null; // Don't render on server or when running as installed PWA
+    return null; 
   }
 
-  // App is installed, but viewed in browser -> show Open App button
+  
   if (isInstalled && !isStandalone) {
     return (
       <Button
@@ -125,7 +125,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
     );
   }
 
-  // App is not installed, show "Install" button
+  
   if (canInstall || (isIos && !isInstalled)) {
     return (
       <Button
