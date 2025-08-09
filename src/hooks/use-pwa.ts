@@ -14,21 +14,17 @@ export function usePwa() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && (window as any).workbox !== undefined) {
        (window as any).workbox.addEventListener('installed', (event: any) => {
         if (event.isUpdate) {
+          const UpdateAction = React.createElement(ToastAction, {
+            altText: "Update",
+            onClick: () => (window as any).workbox.messageSW({ type: 'SKIP_WAITING' })
+          }, 'Update');
+
           toast({
             variant: "info",
             title: "Update Available",
             description: "A new version of the app is available. Click here to update.",
             duration: 10000,
-            action: (
-              <ToastAction
-                altText="Update"
-                onClick={() => {
-                  (window as any).workbox.messageSW({ type: 'SKIP_WAITING' });
-                }}
-              >
-                Update
-              </ToastAction>
-            ),
+            action: UpdateAction,
           });
         }
       });
