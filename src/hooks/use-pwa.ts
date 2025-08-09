@@ -3,13 +3,34 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from './use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import React from 'react';
 
 export function usePwa() {
   const { toast } = useToast();
   const [isNotificationPermissionGranted, setIsNotificationPermissionGranted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && (window as any).workbox !== undefined) {
+       (window as any).workbox.addEventListener('installed', (event: any) => {
+        if (event.isUpdate) {
+          toast({
+            variant: "info",
+            title: "Update Available",
+            description: "A new version of the app is available. Click here to update.",
+            duration: 10000,
+            action: (
+              <ToastAction
+                altText="Update"
+                onClick={() => (window as any).workbox.messageSW({ type: 'SKIP_WAITING' })}
+              >
+                Update
+              </ToastAction>
+            ),
+          });
+        }
+      });
+      
       const handleMessage = (event: MessageEvent) => {
         if (event.data?.type === 'new-version-installed') {
           window.location.reload();
