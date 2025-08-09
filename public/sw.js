@@ -1,54 +1,66 @@
-/**
- * This is a custom service worker file that provides advanced caching and offline capabilities.
- */
-if (typeof self !== 'undefined') {
-  self.addEventListener('install', (event) => {
-    self.skipWaiting();
-  });
 
-  self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
-  });
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-  self.addEventListener('fetch', (event) => {
-    if (event.request.url.startsWith(self.location.origin)) {
-      event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
+workbox.setConfig({ debug: false });
 
-          return caches.open('dynamic').then((cache) => {
-            return fetch(event.request).then((response) => {
-              if(event.request.method === 'GET') {
-                  cache.put(event.request, response.clone());
-              }
-              return response;
-            });
-          });
-        })
+// This is the placeholder for the precache manifest injected by next-pwa.
+workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+
+const OFFLINE_URL = '/_offline';
+const CACHE_NAME = 'pdfusion-offline-cache';
+
+// Cache the offline page during install
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.add(OFFLINE_URL);
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(name => name !== CACHE_NAME && name.startsWith('pdfusion-'))
+          .map(name => caches.delete(name))
       );
-    }
-  });
+    })
+  );
+});
 
-  self.addEventListener('sync', function(event) {
-    if (event.tag == 'sync-failed-requests') {
-      event.waitUntil(
-        (async () => {
-          const cache = await caches.open('failed-requests');
-          const requests = await cache.keys();
-          for (const request of requests) {
-            try {
-              const response = await fetch(request);
-              if (response.ok) {
-                await cache.delete(request);
-              }
-            } catch (error) {
-              console.error('Sync failed for request:', request.url, error);
-            }
-          }
-        })()
-      );
+
+// Offline fallback
+workbox.routing.setCatchHandler(({ event }) => {
+  switch (event.request.destination) {
+    case 'document':
+      return caches.match(OFFLINE_URL);
+    default:
+      return Response.error();
+  }
+});
+
+
+// Background Sync for failed POST requests
+const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin('pdf-post-requests', {
+  maxRetentionTime: 24 * 60, // Retry for up to 24 hours
+  onSync: async ({ queue }) => {
+    let entry;
+    while ((entry = await queue.shiftRequest())) {
+      try {
+        await fetch(entry.request);
+      } catch (error) {
+        console.error('Replay failed for request', entry.request, error);
+        await queue.unshiftRequest(entry);
+        throw new Error('queue-replay-failed');
+      }
     }
-  });
-}
+  },
+});
+
+workbox.routing.registerRoute(
+  ({ request }) => request.method === 'POST',
+  new workbox.strategies.NetworkOnly({
+    plugins: [bgSyncPlugin],
+  })
+);
