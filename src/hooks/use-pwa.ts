@@ -21,7 +21,6 @@ export function usePwa() {
             duration: 10000,
             action: (
               <ToastAction
-                altText="Update"
                 onClick={() => {
                   (window as any).workbox.messageSW({ type: 'SKIP_WAITING' });
                 }}
