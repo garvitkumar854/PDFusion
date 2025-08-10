@@ -1,13 +1,14 @@
 
 'use client';
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+import AnimatedArrow from "@/components/AnimatedArrow";
 import BorderBeam from "@/components/BorderBeam";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download } from "lucide-react";
+import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState } from "react";
 
 const whyChooseUsFeatures = [
@@ -95,21 +96,6 @@ const itemVariants = {
 const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
 
-    const arrowVariants = {
-        initial: { x: 0, y: 0 },
-        hover: {
-            x: '125%',
-            y: '-125%',
-            transition: { duration: 0.2, ease: 'easeOut' }
-        },
-        newInitial: { x: '-125%', y: '125%' },
-        newHover: {
-            x: 0,
-            y: 0,
-            transition: { duration: 0.2, ease: 'easeOut', delay: 0.15 }
-        },
-    };
-
     return (
         <Button
             asChild
@@ -119,35 +105,8 @@ const CTAButton = () => {
             onMouseLeave={() => setIsHovered(false)}
         >
             <Link href="/#services">
-                Explore Services
-                <div className="ml-2 w-5 h-5 relative overflow-hidden">
-                    <AnimatePresence>
-                         <motion.span
-                            key={isHovered ? "arrow1-exit" : "arrow1-enter"}
-                            initial="initial"
-                            animate={isHovered ? 'hover' : 'initial'}
-                            exit="hover"
-                            variants={arrowVariants}
-                            className="absolute"
-                        >
-                           <ArrowUpRight className="w-5 h-5" />
-                        </motion.span>
-                    </AnimatePresence>
-                    <AnimatePresence>
-                        {isHovered && (
-                            <motion.span
-                                key="arrow2"
-                                initial="newInitial"
-                                animate="newHover"
-                                exit="newInitial"
-                                variants={arrowVariants}
-                                className="absolute"
-                            >
-                                <ArrowUpRight className="w-5 h-5" />
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
-                </div>
+                Start Exploring Now
+                <AnimatedArrow isHovered={isHovered} />
             </Link>
         </Button>
     );
@@ -357,10 +316,10 @@ export default function AboutPage() {
                         className="duration-700 w-full"
                     >
                       <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
-                        Ready to <span className="text-primary">Streamline</span> Your PDFs?
+                        Ready to <span className="text-primary">Transform</span> Your Workflow?
                       </h2>
                       <p className="max-w-xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg mb-8 lg:mb-0">
-                        Experience the simplicity and security of PDFusion for yourself.
+                        Dive into our suite of tools and see how easy PDF management can be.
                       </p>
                     </AnimateOnScroll>
                   <AnimateOnScroll

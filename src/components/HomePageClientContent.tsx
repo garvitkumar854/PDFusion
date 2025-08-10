@@ -9,6 +9,7 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { GlowingCard } from './GlowingCard';
+import AnimatedArrow from './AnimatedArrow';
 
 const services = [
     {
@@ -247,21 +248,6 @@ const FeatureAccordion = () => {
 const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
 
-    const arrowVariants = {
-        initial: { x: 0, y: 0 },
-        hover: {
-            x: '125%',
-            y: '-125%',
-            transition: { duration: 0.2, ease: 'easeOut' }
-        },
-        newInitial: { x: '-125%', y: '125%' },
-        newHover: {
-            x: 0,
-            y: 0,
-            transition: { duration: 0.2, ease: 'easeOut', delay: 0.15 }
-        },
-    };
-
     return (
         <Button
             asChild
@@ -272,34 +258,7 @@ const CTAButton = () => {
         >
             <Link href="#services">
                 Explore Services
-                <div className="ml-2 w-5 h-5 relative overflow-hidden">
-                    <AnimatePresence>
-                         <motion.span
-                            key={isHovered ? "arrow1-exit" : "arrow1-enter"}
-                            initial="initial"
-                            animate={isHovered ? 'hover' : 'initial'}
-                            exit="hover"
-                            variants={arrowVariants}
-                            className="absolute"
-                        >
-                            <ArrowUpRight className="w-5 h-5" />
-                        </motion.span>
-                    </AnimatePresence>
-                    <AnimatePresence>
-                        {isHovered && (
-                            <motion.span
-                                key="arrow2"
-                                initial="newInitial"
-                                animate="newHover"
-                                exit="newInitial"
-                                variants={arrowVariants}
-                                className="absolute"
-                            >
-                               <ArrowUpRight className="w-5 h-5" />
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
-                </div>
+                <AnimatedArrow isHovered={isHovered} />
             </Link>
         </Button>
     );

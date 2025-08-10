@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { useTheme } from 'next-themes';
-import { ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import AnimatedArrow from './AnimatedArrow';
 
 const toolsLinks = [
   { href: '/merger', label: 'Merge PDF' },
@@ -19,6 +20,22 @@ const exploreLinks = [
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
+
+const FooterLink = ({ href, label }: { href: string; label: string }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <Link 
+            href={href} 
+            className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors group inline-flex items-center gap-1"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {label}
+            <AnimatedArrow isHovered={isHovered} />
+        </Link>
+    )
+}
 
 export default function Footer() {
   const { theme } = useTheme();
@@ -49,10 +66,7 @@ export default function Footer() {
                 <ul className="space-y-3">
                   {toolsLinks.map(link => (
                     <li key={link.href}>
-                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors group inline-flex items-center gap-1">
-                          {link.label}
-                          <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </Link>
+                      <FooterLink href={link.href} label={link.label} />
                     </li>
                   ))}
                 </ul>
@@ -64,10 +78,7 @@ export default function Footer() {
                 <ul className="space-y-3">
                   {exploreLinks.map(link => (
                     <li key={link.href}>
-                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors group inline-flex items-center gap-1">
-                          {link.label}
-                          <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </Link>
+                      <FooterLink href={link.href} label={link.label} />
                     </li>
                   ))}
                 </ul>
