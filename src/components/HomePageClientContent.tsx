@@ -224,6 +224,7 @@ const FeatureAccordion = () => {
             <GlowingCard
               animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
+              glowing={isExpanded}
             >
               <div className="flex items-center gap-4">
                 {feature.icon}
