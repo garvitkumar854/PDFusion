@@ -272,7 +272,7 @@ const CTAButton = () => {
                             animate={isHovered ? 'hover' : 'initial'}
                             exit="hover"
                             variants={arrowVariants}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            transition={{ duration: 0.5, ease: 'easeInOut' }}
                             className="absolute"
                         >
                             <ArrowUpRight className="w-5 h-5" />
@@ -284,7 +284,7 @@ const CTAButton = () => {
                                 animate="newHover"
                                 exit="newInitial"
                                 variants={arrowVariants}
-                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                transition={{ duration: 0.5, ease: 'easeInOut' }}
                                 className="absolute"
                             >
                                 <ArrowUpRight className="w-5 h-5" />
