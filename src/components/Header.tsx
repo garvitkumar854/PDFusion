@@ -138,9 +138,9 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-96"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-auto"
                   >
-                    <div className="bg-popover p-4 rounded-xl border text-popover-foreground shadow-lg grid grid-cols-2 gap-2">
+                    <div className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-2 w-max">
                       {services.map((service) => (
                         <Link
                           href={service.href}
@@ -148,7 +148,7 @@ export default function Header() {
                           className="flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
                         >
                           {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5' })}
-                          <span className="text-sm font-medium">{service.label}</span>
+                          <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
                         </Link>
                       ))}
                     </div>
