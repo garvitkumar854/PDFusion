@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,13 +11,14 @@ export function useScrollDirection() {
 
     const updateScrollDirection = () => {
       const scrollY = window.pageYOffset;
-      
-      if (Math.abs(scrollY - lastScrollY) < 10) {
+
+      if (Math.abs(scrollY - lastScrollY) < 10 && scrollY !== 0) {
         ticking = false;
         return;
       }
-
-      const direction = scrollY > lastScrollY ? 'down' : 'up';
+      
+      // Only show header if user is at the top of the page.
+      const direction = scrollY > lastScrollY || scrollY !== 0 ? 'down' : 'up';
       
       if (direction !== scrollDirection) {
         setScrollDirection(direction);
@@ -36,6 +36,9 @@ export function useScrollDirection() {
     };
 
     window.addEventListener('scroll', onScroll);
+    
+    // Set initial direction
+    updateScrollDirection();
     
     return () => window.removeEventListener('scroll', onScroll);
   }, [scrollDirection]);
