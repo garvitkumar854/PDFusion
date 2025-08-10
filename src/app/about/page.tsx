@@ -96,18 +96,14 @@ const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
 
     const arrowVariants = {
-        initial: { x: 0, y: 0, opacity: 1 },
-        hover: (isExiting: boolean) => ({
-            x: 5,
-            y: -5,
-            opacity: 0,
-            transition: { duration: 0.2, ease: 'easeOut', delay: isExiting ? 0 : 0.15 }
-        }),
-        newInitial: { x: -5, y: 5, opacity: 0 },
+        initial: { x: 0 },
+        hover: {
+            x: '125%',
+            transition: { duration: 0.2, ease: 'easeOut' }
+        },
+        newInitial: { x: '-125%' },
         newHover: {
             x: 0,
-            y: 0,
-            opacity: 1,
             transition: { duration: 0.2, ease: 'easeOut', delay: 0.15 }
         },
     };
@@ -123,17 +119,16 @@ const CTAButton = () => {
             <Link href="/#services">
                 Explore Services
                 <div className="ml-2 w-5 h-5 relative overflow-hidden">
-                    <AnimatePresence custom>
+                    <AnimatePresence>
                          <motion.span
                             key={isHovered ? "arrow1-exit" : "arrow1-enter"}
                             initial="initial"
                             animate={isHovered ? 'hover' : 'initial'}
                             exit="hover"
-                            custom={isHovered}
                             variants={arrowVariants}
                             className="absolute"
                         >
-                            <ArrowUpRight className="w-5 h-5" />
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </motion.span>
                     </AnimatePresence>
                     <AnimatePresence>
@@ -146,7 +141,7 @@ const CTAButton = () => {
                                 variants={arrowVariants}
                                 className="absolute"
                             >
-                                <ArrowUpRight className="w-5 h-5" />
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             </motion.span>
                         )}
                     </AnimatePresence>
