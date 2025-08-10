@@ -197,20 +197,49 @@ const serviceItemVariants = {
 
 const FeatureAccordion = () => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+  const [justClickedIndex, setJustClickedIndex] = useState<number | null>(null);
+
+  const handleClick = (index: number) => {
+    setJustClickedIndex(index);
+    setExpandedIndex(prev => (prev === index ? null : index));
+  };
+  
+  const bounceVariant = {
+    bounce: {
+      scale: [1, 1.03, 1],
+      transition: { duration: 0.5, type: 'spring', stiffness: 300, damping: 20 },
+    },
+    initial: {
+      scale: 1,
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 text-left">
       {whyChooseUsFeatures.map((feature, index) => {
         const isExpanded = index === expandedIndex;
+        const distance = justClickedIndex !== null ? Math.abs(index - justClickedIndex) : null;
+        
+        let animateState = 'initial';
+        let transitionDelay = 0;
+        if (distance !== null && distance > 0 && distance < 3) {
+            animateState = 'bounce';
+            transitionDelay = distance * 0.07;
+        }
+
         return (
           <motion.div
             key={feature.title}
-            initial={false}
-            animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            onClick={() => setExpandedIndex(isExpanded ? null : index)}
+            initial="initial"
+            animate={animateState}
+            variants={bounceVariant}
+            transition={{ delay: transitionDelay }}
+            onClick={() => handleClick(index)}
           >
-            <GlowingCard>
+            <GlowingCard
+              animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
               <div className="flex items-center gap-4">
                 {feature.icon}
                 <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
@@ -244,6 +273,7 @@ const FeatureAccordion = () => {
     </div>
   );
 };
+
 
 const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
