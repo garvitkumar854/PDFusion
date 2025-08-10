@@ -69,7 +69,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 };
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const pathname = usePathname();
   const services = [
@@ -105,30 +105,26 @@ export default function Header() {
             <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
               <div onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
                 <DropdownMenuTrigger asChild>
-                  <div
-                    className="group"
-                  >
-                    <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
+                   <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
                       <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                      <div className="flex items-center">
-                        <motion.div
+                      <motion.div
                           animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
-                        >
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        </motion.div>
-                      </div>
+                          style={{ originX: 0.5, originY: 0.5 }}
+                      >
+                         <ChevronDown className="h-4 w-4" />
+                      </motion.div>
                       <span
                         className={cn(
                           "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                          isServicesMenuOpen || isServicesActive ? "w-[calc(100%-1.25rem)]" : "w-0 group-hover:w-[calc(100%-1.25rem)]"
+                          isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
                         )}
                       />
-                    </div>
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   className="mt-2"
+                  onMouseLeave={() => setIsServicesMenuOpen(false)}
                 >
                     {services.map((service) => (
                         <DropdownMenuItem key={service.href} asChild>
@@ -149,7 +145,7 @@ export default function Header() {
             <InstallPWA />
             <ThemeToggle />
             <div className="md:hidden">
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="mr-2">
                             <Menu className="h-6 w-6" />
@@ -160,7 +156,7 @@ export default function Header() {
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">
-                                <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+                                <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
                                     <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
                                     <h1 className="text-xl font-bold tracking-tight">
                                     <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
@@ -170,12 +166,12 @@ export default function Header() {
                                 </Link>
                             </div>
                             <nav className="flex flex-col gap-1 items-start px-2 mb-6">
-                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsOpen(false)} />
-                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsOpen(false)} />
-                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsOpen(false)} />
+                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 <div className="text-lg font-semibold text-foreground pt-3">Services</div>
                                 {services.map((service) => (
-                                    <Link key={service.href} href={service.href} onClick={() => setIsOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
+                                    <Link key={service.href} href={service.href} onClick={() => setIsSheetOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
                                         {service.icon}
                                         {service.label}
                                     </Link>
