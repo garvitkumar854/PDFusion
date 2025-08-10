@@ -106,7 +106,6 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <div
                   onMouseEnter={() => setIsServicesMenuOpen(true)}
-                  onMouseLeave={() => setIsServicesMenuOpen(false)}
                   className="group"
                 >
                   <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
@@ -125,22 +124,21 @@ export default function Header() {
                       )}
                     />
                   </div>
-                   <DropdownMenuContent
-                    className="mt-2"
-                    onMouseEnter={() => setIsServicesMenuOpen(true)}
-                    onMouseLeave={() => setIsServicesMenuOpen(false)}
-                  >
-                      {services.map((service) => (
-                          <DropdownMenuItem key={service.href} asChild>
-                              <Link href={service.href} className="flex items-center">
-                                  {service.icon}
-                                  {service.label}
-                              </Link>
-                          </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
                 </div>
               </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="mt-2"
+                onMouseLeave={() => setIsServicesMenuOpen(false)}
+              >
+                  {services.map((service) => (
+                      <DropdownMenuItem key={service.href} asChild>
+                          <Link href={service.href} className="flex items-center">
+                              {service.icon}
+                              {service.label}
+                          </Link>
+                      </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
             </DropdownMenu>
             <NavLink href="/about">About</NavLink>
             <NavLink href="/contact">Contact</NavLink>
