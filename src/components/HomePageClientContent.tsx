@@ -248,10 +248,10 @@ const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
 
     const arrowVariants = {
-        initial: { x: 0, opacity: 1 },
-        hover: { x: 5, opacity: 0 },
-        newInitial: { x: -8, opacity: 0 },
-        newHover: { x: 0, opacity: 1 },
+        initial: { x: 0, y: 0, opacity: 1 },
+        hover: { x: 5, y: -5, opacity: 0 },
+        newInitial: { x: -5, y: 5, opacity: 0 },
+        newHover: { x: 0, y: 0, opacity: 1 },
     };
 
     return (
