@@ -37,11 +37,11 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
       )}
     >
       {children}
-      <motion.div
-        className="absolute bottom-0 left-0 h-0.5 bg-primary"
-        style={{ width: isActive ? '100%' : '0%' }}
-        whileHover={{ width: '100%' }}
-        transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+      <span
+        className={cn(
+          "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+          isActive ? "w-full" : "w-0 group-hover:w-full"
+        )}
       />
     </Link>
   );
@@ -118,11 +118,11 @@ export default function Header() {
                             <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}>
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </motion.div>
-                             <motion.div
-                                className="absolute bottom-0 left-0 h-0.5 bg-primary"
-                                initial={{ width: isServicesActive ? '100%' : '0%' }}
-                                animate={{ width: isServicesMenuOpen || isServicesActive ? '100%' : '0%' }}
-                                transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+                             <span
+                                className={cn(
+                                "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                                isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
+                                )}
                               />
                         </button>
                     </DropdownMenuTrigger>
