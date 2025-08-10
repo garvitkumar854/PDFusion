@@ -4,7 +4,7 @@
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { Poppins, Open_Sans } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -16,12 +16,6 @@ const poppins = Poppins({
   subsets: ['latin'], 
   variable: '--font-sans',
   weight: ['400', '500', '600', '700', '800']
-})
-
-const openSans = Open_Sans({
-  subsets: ['latin'],
-  variable: '--font-header',
-  weight: ['600', '700']
 })
 
 const APP_NAME = "PDFusion";
@@ -91,7 +85,7 @@ export default function RootLayout({
   usePwa();
   
   return (
-    <html lang="en" className={cn(poppins.variable, openSans.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
       </head>

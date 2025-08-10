@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
 import Image from 'next/image';
@@ -86,8 +86,29 @@ export default function Header() {
   ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenChange = (open: boolean) => {
+    if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+    }
+    setIsServicesMenuOpen(open);
+  };
+  
+  const onMouseEnter = () => {
+    handleOpenChange(true);
+  };
+
+  const onMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+        handleOpenChange(false);
+    }, 100);
+  };
+
+
   return (
-    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg font-header">
+    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0 flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
@@ -102,8 +123,8 @@ export default function Header() {
         
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
-            <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
-              <div className="relative" onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
+            <DropdownMenu open={isServicesMenuOpen} onOpenChange={handleOpenChange}>
+              <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
                 <DropdownMenuTrigger asChild>
                    <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
                       <span className={cn(isServicesActive && "text-primary")}>Services</span>
@@ -130,7 +151,7 @@ export default function Header() {
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <DropdownMenuContent className="mt-2" onMouseLeave={() => setIsServicesMenuOpen(false)}>
+                        <DropdownMenuContent className="mt-2" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
                             {services.map((service) => (
                                 <DropdownMenuItem key={service.href} asChild>
                                     <Link href={service.href} className="flex items-center">
@@ -160,7 +181,7 @@ export default function Header() {
                             <span className="sr-only">Open menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="top" className="h-auto p-0 font-header">
+                    <SheetContent side="top" className="h-auto p-0">
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">
