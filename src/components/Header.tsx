@@ -31,12 +31,9 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className={cn(
-        "group relative py-2 font-semibold transition-colors",
-        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-      )}
+      className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary"
     >
-      {children}
+      <span className={cn(isActive && "text-primary")}>{children}</span>
       <span
         className={cn(
           "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
@@ -105,39 +102,42 @@ export default function Header() {
         
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
-            <div className="relative" onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
-                <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            className={cn(
-                                "group relative py-2 font-semibold transition-colors flex items-center",
-                                isServicesActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-                            )}
-                        >
-                            <span>Services</span>
-                            <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}>
-                                <ChevronDown className="ml-1 h-4 w-4" />
-                            </motion.div>
-                             <span
-                                className={cn(
-                                "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                                isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
-                                )}
-                              />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        {services.map((service) => (
-                            <DropdownMenuItem key={service.href} asChild>
-                                <Link href={service.href} className="flex items-center">
-                                    {service.icon}
-                                    {service.label}
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+            <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <div
+                  className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer"
+                  onMouseEnter={() => setIsServicesMenuOpen(true)}
+                  onMouseLeave={() => setIsServicesMenuOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <span className={cn(isServicesActive && "text-primary")}>Services</span>
+                    <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}>
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                    </motion.div>
+                  </div>
+                  <span
+                    className={cn(
+                      "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                      isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
+                    )}
+                  />
+                  <DropdownMenuContent 
+                    className="mt-2"
+                    onMouseEnter={() => setIsServicesMenuOpen(true)}
+                    onMouseLeave={() => setIsServicesMenuOpen(false)}
+                  >
+                      {services.map((service) => (
+                          <DropdownMenuItem key={service.href} asChild>
+                              <Link href={service.href} className="flex items-center">
+                                  {service.icon}
+                                  {service.label}
+                              </Link>
+                          </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </div>
+              </DropdownMenuTrigger>
+            </DropdownMenu>
             <NavLink href="/about">About</NavLink>
             <NavLink href="/contact">Contact</NavLink>
         </nav>
