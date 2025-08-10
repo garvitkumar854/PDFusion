@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { useTheme } from 'next-themes';
+import { ArrowUpRight } from 'lucide-react';
 
 const toolsLinks = [
   { href: '/merger', label: 'Merge PDF' },
@@ -48,8 +49,9 @@ export default function Footer() {
                 <ul className="space-y-3">
                   {toolsLinks.map(link => (
                     <li key={link.href}>
-                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors">
+                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors group inline-flex items-center gap-1">
                           {link.label}
+                          <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </Link>
                     </li>
                   ))}
@@ -62,8 +64,9 @@ export default function Footer() {
                 <ul className="space-y-3">
                   {exploreLinks.map(link => (
                     <li key={link.href}>
-                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors">
+                      <Link href={link.href} className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors group inline-flex items-center gap-1">
                           {link.label}
+                          <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </Link>
                     </li>
                   ))}
