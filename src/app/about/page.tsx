@@ -97,9 +97,19 @@ const CTAButton = () => {
 
     const arrowVariants = {
         initial: { x: 0, y: 0, opacity: 1 },
-        hover: { x: 5, y: -5, opacity: 0 },
+        hover: (isExiting: boolean) => ({
+            x: 5,
+            y: -5,
+            opacity: 0,
+            transition: { duration: 0.2, ease: 'easeOut', delay: isExiting ? 0 : 0.15 }
+        }),
         newInitial: { x: -5, y: 5, opacity: 0 },
-        newHover: { x: 0, y: 0, opacity: 1 },
+        newHover: {
+            x: 0,
+            y: 0,
+            opacity: 1,
+            transition: { duration: 0.2, ease: 'easeOut', delay: 0.15 }
+        },
     };
 
     return (
@@ -113,18 +123,20 @@ const CTAButton = () => {
             <Link href="/#services">
                 Explore Services
                 <div className="ml-2 w-5 h-5 relative overflow-hidden">
-                    <AnimatePresence>
-                        <motion.span
-                            key="arrow1"
+                    <AnimatePresence custom>
+                         <motion.span
+                            key={isHovered ? "arrow1-exit" : "arrow1-enter"}
                             initial="initial"
                             animate={isHovered ? 'hover' : 'initial'}
                             exit="hover"
+                            custom={isHovered}
                             variants={arrowVariants}
-                            transition={{ duration: 0.5, ease: 'easeInOut' }}
                             className="absolute"
                         >
                             <ArrowUpRight className="w-5 h-5" />
                         </motion.span>
+                    </AnimatePresence>
+                    <AnimatePresence>
                         {isHovered && (
                             <motion.span
                                 key="arrow2"
@@ -132,7 +144,6 @@ const CTAButton = () => {
                                 animate="newHover"
                                 exit="newInitial"
                                 variants={arrowVariants}
-                                transition={{ duration: 0.5, ease: 'easeInOut' }}
                                 className="absolute"
                             >
                                 <ArrowUpRight className="w-5 h-5" />
