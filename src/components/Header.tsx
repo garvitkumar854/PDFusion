@@ -7,12 +7,6 @@ import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Sheet,
   SheetContent,
   SheetTitle,
@@ -112,7 +106,6 @@ export default function Header() {
                    <motion.div
                       animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
-                      style={{ originY: 0.5, originX: 0.5 }}
                       className="inline-flex items-center justify-center"
                   >
                      <ChevronDown className="h-4 w-4" />
@@ -131,17 +124,17 @@ export default function Header() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80"
                     >
-                       <div className="bg-popover p-1 rounded-md border text-popover-foreground shadow-md min-w-[8rem]">
+                       <div className="bg-popover p-4 rounded-md border text-popover-foreground shadow-lg grid grid-cols-2 gap-4">
                         {services.map((service) => (
                           <Link
                             href={service.href}
                             key={service.href}
-                            className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground"
+                            className="flex items-center p-2 rounded-md transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground focus:outline-none"
                           >
                              {service.icon}
-                             {service.label}
+                             <span className="text-sm font-medium">{service.label}</span>
                           </Link>
                         ))}
                        </div>
