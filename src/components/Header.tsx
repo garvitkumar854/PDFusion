@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import InstallPWA from './InstallPWA';
 import { ThemeToggle } from './ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollDirection } from '@/hooks/use-scroll-direction';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -66,6 +67,8 @@ export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const pathname = usePathname();
+  const scrollDirection = useScrollDirection();
+  
   const services = [
       { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-3 h-5 w-5" /> },
       { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-3 h-5 w-5" /> },
@@ -81,7 +84,15 @@ export default function Header() {
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
   return (
-    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
+    <motion.header 
+      className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg"
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: "-100%" },
+      }}
+      animate={scrollDirection === "down" ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+    >
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0 flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
@@ -96,49 +107,52 @@ export default function Header() {
         
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
-             <motion.div
-                className="relative"
-                onHoverStart={() => setIsServicesMenuOpen(true)}
-                onHoverEnd={() => setIsServicesMenuOpen(false)}
+            <motion.div
+              className="relative"
+              onHoverStart={() => setIsServicesMenuOpen(true)}
+              onHoverEnd={() => setIsServicesMenuOpen(false)}
             >
-               <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
-                  <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                   <motion.div
-                      animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="inline-flex items-center justify-center"
-                  >
-                     <ChevronDown className="h-4 w-4" />
-                  </motion.div>
-                  <span
-                    className={cn(
-                      "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                       (isServicesMenuOpen || isServicesActive) ? "w-full" : "w-0 group-hover:w-full"
-                    )}
-                  />
+              <div
+                className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
+              >
+                <span className={cn(isServicesActive && "text-primary")}>Services</span>
+                <motion.div
+                  animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="inline-flex items-center justify-center"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </motion.div>
+                <span
+                  className={cn(
+                    "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                    (isServicesMenuOpen || isServicesActive) ? "w-full" : "w-0 group-hover:w-full"
+                  )}
+                />
               </div>
-               <AnimatePresence>
+
+              <AnimatePresence>
                 {isServicesMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[28rem]"
-                    >
-                       <div className="bg-popover p-4 rounded-xl border text-popover-foreground shadow-lg grid grid-cols-2 gap-2">
-                        {services.map((service) => (
-                          <Link
-                            href={service.href}
-                            key={service.href}
-                            className="flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
-                          >
-                             {service.icon}
-                             <span className="text-sm font-medium">{service.label}</span>
-                          </Link>
-                        ))}
-                       </div>
-                    </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[28rem]"
+                  >
+                    <div className="bg-popover p-4 rounded-xl border text-popover-foreground shadow-lg grid grid-cols-2 gap-2">
+                      {services.map((service) => (
+                        <Link
+                          href={service.href}
+                          key={service.href}
+                          className="flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                        >
+                          {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5' })}
+                          <span className="text-sm font-medium">{service.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
@@ -191,6 +205,6 @@ export default function Header() {
             </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }
