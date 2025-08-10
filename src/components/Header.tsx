@@ -138,7 +138,7 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[28rem]"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-96"
                   >
                     <div className="bg-popover p-4 rounded-xl border text-popover-foreground shadow-lg grid grid-cols-2 gap-2">
                       {services.map((service) => (
