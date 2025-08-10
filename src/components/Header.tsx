@@ -104,14 +104,18 @@ export default function Header() {
             <NavLink href="/">Home</NavLink>
             <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <div 
-                  className="group"
+                <div
                   onMouseEnter={() => setIsServicesMenuOpen(true)}
                   onMouseLeave={() => setIsServicesMenuOpen(false)}
+                  className="group"
                 >
                   <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
                     <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                    <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <motion.div
+                      style={{ display: 'inline-block' }}
+                      animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </motion.div>
                      <span
