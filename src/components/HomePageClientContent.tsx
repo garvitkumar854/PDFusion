@@ -211,15 +211,8 @@ const FeatureAccordion = () => {
           <motion.div
             key={feature.title}
             onClick={() => handleClick(index)}
-            animate={{
-              scale: isExpanded ? 1 : 0.97
-            }}
-            transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 20,
-                delay: isExpanded ? 0.1 : 0
-            }}
+            layout
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
           >
             <GlowingCard
               animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
@@ -243,7 +236,7 @@ const FeatureAccordion = () => {
                       open: { opacity: 1, height: 'auto' },
                       collapsed: { opacity: 0, height: 0 }
                     }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30, duration: 0.4 }}
                     className="overflow-hidden"
                   >
                     <p className="text-muted-foreground text-sm sm:text-base mt-4 pl-12">
@@ -351,7 +344,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         Why Choose PDFusion?
                         </div>
                         <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-                        Experience the <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Future of PDF Tools</span>
+                        Experience the <span className="text-primary">Future of PDF Tools</span>
                         </h2>
                         <p className="max-w-3xl mx-auto text-muted-foreground text-base md:text-lg mb-12">
                         Discover the most intuitive and powerful PDF tools available online. Built with cutting-edge technology for the best user experience.
