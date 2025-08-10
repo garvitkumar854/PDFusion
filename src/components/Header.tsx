@@ -104,24 +104,24 @@ export default function Header() {
             <NavLink href="/">Home</NavLink>
             <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <div
-                  className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer"
+                <div 
+                  className="group"
                   onMouseEnter={() => setIsServicesMenuOpen(true)}
                   onMouseLeave={() => setIsServicesMenuOpen(false)}
                 >
-                  <div className="flex items-center">
+                  <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
                     <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                    <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}>
-                        <ChevronDown className="ml-1 h-4 w-4" />
+                    <motion.div animate={{ rotate: isServicesMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown className="ml-1 h-4 w-4" />
                     </motion.div>
+                     <span
+                      className={cn(
+                        "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                        isServicesMenuOpen || isServicesActive ? "w-[calc(100%-1.25rem)]" : "w-0 group-hover:w-[calc(100%-1.25rem)]"
+                      )}
+                    />
                   </div>
-                  <span
-                    className={cn(
-                      "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                      isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
-                    )}
-                  />
-                  <DropdownMenuContent 
+                   <DropdownMenuContent
                     className="mt-2"
                     onMouseEnter={() => setIsServicesMenuOpen(true)}
                     onMouseLeave={() => setIsServicesMenuOpen(false)}
