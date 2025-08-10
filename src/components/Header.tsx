@@ -86,27 +86,6 @@ export default function Header() {
   ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleOpenChange = (open: boolean) => {
-    if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-    }
-    setIsServicesMenuOpen(open);
-  };
-  
-  const onMouseEnter = () => {
-    handleOpenChange(true);
-  };
-
-  const onMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-        handleOpenChange(false);
-    }, 100);
-  };
-
-
   return (
     <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
@@ -123,49 +102,53 @@ export default function Header() {
         
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
-            <DropdownMenu open={isServicesMenuOpen} onOpenChange={handleOpenChange}>
-              <div onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-                <DropdownMenuTrigger asChild>
-                   <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
-                      <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                       <motion.div
-                          animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="inline-block"
-                      >
-                         <ChevronDown className="h-4 w-4" />
-                      </motion.div>
-                      <span
-                        className={cn(
-                          "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                           (isServicesMenuOpen || isServicesActive) ? "w-full" : "w-0 group-hover:w-full"
-                        )}
-                      />
-                  </div>
-                </DropdownMenuTrigger>
-                <AnimatePresence>
+             <motion.div
+              className="relative"
+              onHoverStart={() => setIsServicesMenuOpen(true)}
+              onHoverEnd={() => setIsServicesMenuOpen(false)}
+            >
+               <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
+                  <span className={cn(isServicesActive && "text-primary")}>Services</span>
+                   <motion.div
+                      animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ originY: 0.5, originX: 0.5 }}
+                      className="inline-flex items-center justify-center"
+                  >
+                     <ChevronDown className="h-4 w-4" />
+                  </motion.div>
+                  <span
+                    className={cn(
+                      "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                       (isServicesMenuOpen || isServicesActive) ? "w-full" : "w-0 group-hover:w-full"
+                    )}
+                  />
+              </div>
+               <AnimatePresence>
                 {isServicesMenuOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2"
                     >
-                        <DropdownMenuContent className="mt-2" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-                            {services.map((service) => (
-                                <DropdownMenuItem key={service.href} asChild>
-                                    <Link href={service.href} className="flex items-center">
-                                        {service.icon}
-                                        {service.label}
-                                    </Link>
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
+                       <div className="bg-popover p-1 rounded-md border text-popover-foreground shadow-md min-w-[8rem]">
+                        {services.map((service) => (
+                          <Link
+                            href={service.href}
+                            key={service.href}
+                            className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground"
+                          >
+                             {service.icon}
+                             {service.label}
+                          </Link>
+                        ))}
+                       </div>
                     </motion.div>
                 )}
-                </AnimatePresence>
-              </div>
-            </DropdownMenu>
+              </AnimatePresence>
+            </motion.div>
             <NavLink href="/about">About</NavLink>
             <NavLink href="/contact">Contact</NavLink>
         </nav>
