@@ -103,42 +103,43 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
             <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <div
-                  onMouseEnter={() => setIsServicesMenuOpen(true)}
-                  className="group"
-                >
-                  <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
-                    <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                    <motion.div
-                      style={{ display: 'inline-block' }}
-                      animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    </motion.div>
-                     <span
-                      className={cn(
-                        "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                        isServicesMenuOpen || isServicesActive ? "w-[calc(100%-1.25rem)]" : "w-0 group-hover:w-[calc(100%-1.25rem)]"
-                      )}
-                    />
+              <div onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
+                <DropdownMenuTrigger asChild>
+                  <div
+                    className="group"
+                  >
+                    <div className="relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center">
+                      <span className={cn(isServicesActive && "text-primary")}>Services</span>
+                      <div className="flex items-center">
+                        <motion.div
+                          animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="ml-1 h-4 w-4" />
+                        </motion.div>
+                      </div>
+                      <span
+                        className={cn(
+                          "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
+                          isServicesMenuOpen || isServicesActive ? "w-[calc(100%-1.25rem)]" : "w-0 group-hover:w-[calc(100%-1.25rem)]"
+                        )}
+                      />
+                    </div>
                   </div>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="mt-2"
-                onMouseLeave={() => setIsServicesMenuOpen(false)}
-              >
-                  {services.map((service) => (
-                      <DropdownMenuItem key={service.href} asChild>
-                          <Link href={service.href} className="flex items-center">
-                              {service.icon}
-                              {service.label}
-                          </Link>
-                      </DropdownMenuItem>
-                  ))}
-              </DropdownMenuContent>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="mt-2"
+                >
+                    {services.map((service) => (
+                        <DropdownMenuItem key={service.href} asChild>
+                            <Link href={service.href} className="flex items-center">
+                                {service.icon}
+                                {service.label}
+                            </Link>
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+              </div>
             </DropdownMenu>
             <NavLink href="/about">About</NavLink>
             <NavLink href="/contact">Contact</NavLink>
