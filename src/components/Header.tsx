@@ -122,10 +122,7 @@ export default function Header() {
                       />
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="mt-2"
-                  onMouseLeave={() => setIsServicesMenuOpen(false)}
-                >
+                <DropdownMenuContent className="mt-2">
                     {services.map((service) => (
                         <DropdownMenuItem key={service.href} asChild>
                             <Link href={service.href} className="flex items-center">
