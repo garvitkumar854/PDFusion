@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, ArrowUpRight, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
 
 const whyChooseUsFeatures = [
     {
@@ -89,6 +90,59 @@ const itemVariants = {
       damping: 12,
     },
   },
+};
+
+const CTAButton = () => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    const arrowVariants = {
+        initial: { x: 0, opacity: 1 },
+        hover: { x: 5, opacity: 0 },
+        newInitial: { x: -8, opacity: 0 },
+        newHover: { x: 0, opacity: 1 },
+    };
+
+    return (
+        <Button
+            asChild
+            size="lg"
+            className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <Link href="/#services">
+                Explore Services
+                <div className="ml-2 w-5 h-5 relative overflow-hidden">
+                    <AnimatePresence>
+                        <motion.span
+                            key="arrow1"
+                            initial="initial"
+                            animate={isHovered ? 'hover' : 'initial'}
+                            exit="hover"
+                            variants={arrowVariants}
+                            transition={{ duration: 0.2 }}
+                            className="absolute"
+                        >
+                            <ArrowUpRight className="w-5 h-5" />
+                        </motion.span>
+                        {isHovered && (
+                            <motion.span
+                                key="arrow2"
+                                initial="newInitial"
+                                animate="newHover"
+                                exit="newInitial"
+                                variants={arrowVariants}
+                                transition={{ duration: 0.2 }}
+                                className="absolute"
+                            >
+                                <ArrowUpRight className="w-5 h-5" />
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </Link>
+        </Button>
+    );
 };
 
 
@@ -306,12 +360,7 @@ export default function AboutPage() {
                         className="duration-700 flex-shrink-0 w-full lg:w-auto"
                         delay={200}
                     >
-                    <Button asChild size="lg" className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
-                      <Link href="/#services">
-                        Explore Services
-                        <ArrowUpRight className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </Link>
-                    </Button>
+                        <CTAButton />
                   </AnimateOnScroll>
                 </div>
               </div>
