@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -55,7 +54,7 @@ export default function Footer() {
               </h2>
             </Link>
             <p className="text-muted-foreground text-sm md:text-base">
-              Your All-in-One PDF Toolkit. Secure, reliable, and completely free.
+              Your All-in-One PDF Toolkit. Secure, reliable, and completely free. Process your files in seconds without ever uploading them.
             </p>
           </div>
 
