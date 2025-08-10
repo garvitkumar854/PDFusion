@@ -22,7 +22,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import InstallPWA from './InstallPWA';
 import { ThemeToggle } from './ThemeToggle';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -87,7 +87,7 @@ export default function Header() {
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
   return (
-    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
+    <header className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg font-header">
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0 flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
@@ -103,7 +103,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
             <DropdownMenu open={isServicesMenuOpen} onOpenChange={setIsServicesMenuOpen}>
-              <div onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
+              <div className="relative" onMouseEnter={() => setIsServicesMenuOpen(true)} onMouseLeave={() => setIsServicesMenuOpen(false)}>
                 <DropdownMenuTrigger asChild>
                    <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
                       <span className={cn(isServicesActive && "text-primary")}>Services</span>
@@ -117,21 +117,32 @@ export default function Header() {
                       <span
                         className={cn(
                           "absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-300",
-                          isServicesMenuOpen || isServicesActive ? "w-full" : "w-0 group-hover:w-full"
+                           (isServicesMenuOpen || isServicesActive) ? "w-full" : "w-0 group-hover:w-full"
                         )}
                       />
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="mt-2">
-                    {services.map((service) => (
-                        <DropdownMenuItem key={service.href} asChild>
-                            <Link href={service.href} className="flex items-center">
-                                {service.icon}
-                                {service.label}
-                            </Link>
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
+                <AnimatePresence>
+                {isServicesMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <DropdownMenuContent className="mt-2" onMouseLeave={() => setIsServicesMenuOpen(false)}>
+                            {services.map((service) => (
+                                <DropdownMenuItem key={service.href} asChild>
+                                    <Link href={service.href} className="flex items-center">
+                                        {service.icon}
+                                        {service.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </motion.div>
+                )}
+                </AnimatePresence>
               </div>
             </DropdownMenu>
             <NavLink href="/about">About</NavLink>
@@ -149,7 +160,7 @@ export default function Header() {
                             <span className="sr-only">Open menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="top" className="h-auto p-0">
+                    <SheetContent side="top" className="h-auto p-0 font-header">
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">

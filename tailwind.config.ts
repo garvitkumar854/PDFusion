@@ -20,6 +20,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", "sans-serif"],
+        header: ["var(--font-header)", "sans-serif"],
       },
       colors: {
         background: 'hsl(var(--background))',
