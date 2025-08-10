@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
 import Image from 'next/image';
@@ -67,16 +67,16 @@ export default function Header() {
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const pathname = usePathname();
   const services = [
-      { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-2 h-4 w-4" /> },
-      { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-2 h-4 w-4" /> },
-      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-2 h-4 w-4" /> },
-      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-2 h-4 w-4" /> },
-      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-2 h-4 w-4" /> },
-      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
-      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-2 h-4 w-4" /> },
-      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-2 h-4 w-4" /> },
-      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-2 h-4 w-4" /> },
-      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-2 h-4 w-4" /> },
+      { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-3 h-5 w-5" /> },
+      { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-3 h-5 w-5" /> },
+      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-3 h-5 w-5" /> },
+      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-3 h-5 w-5" /> },
+      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-3 h-5 w-5" /> },
+      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-3 h-5 w-5" /> },
+      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-3 h-5 w-5" /> },
+      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-3 h-5 w-5" /> },
+      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-3 h-5 w-5" /> },
+      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-3 h-5 w-5" /> },
   ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
@@ -97,9 +97,9 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
              <motion.div
-              className="relative"
-              onHoverStart={() => setIsServicesMenuOpen(true)}
-              onHoverEnd={() => setIsServicesMenuOpen(false)}
+                className="relative"
+                onHoverStart={() => setIsServicesMenuOpen(true)}
+                onHoverEnd={() => setIsServicesMenuOpen(false)}
             >
                <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
                   <span className={cn(isServicesActive && "text-primary")}>Services</span>
@@ -120,18 +120,18 @@ export default function Header() {
                <AnimatePresence>
                 {isServicesMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80"
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[28rem]"
                     >
-                       <div className="bg-popover p-4 rounded-md border text-popover-foreground shadow-lg grid grid-cols-2 gap-4">
+                       <div className="bg-popover p-4 rounded-xl border text-popover-foreground shadow-lg grid grid-cols-2 gap-2">
                         {services.map((service) => (
                           <Link
                             href={service.href}
                             key={service.href}
-                            className="flex items-center p-2 rounded-md transition-colors hover:bg-accent focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                            className="flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
                           >
                              {service.icon}
                              <span className="text-sm font-medium">{service.label}</span>
@@ -177,7 +177,7 @@ export default function Header() {
                                 <div className="text-lg font-semibold text-foreground pt-3">Services</div>
                                 {services.map((service) => (
                                     <Link key={service.href} href={service.href} onClick={() => setIsSheetOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
-                                        {service.icon}
+                                        {React.cloneElement(service.icon, { className: 'mr-2 h-4 w-4' })}
                                         {service.label}
                                     </Link>
                                 ))}
