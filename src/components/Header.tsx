@@ -107,10 +107,10 @@ export default function Header() {
                 <DropdownMenuTrigger asChild>
                    <div className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
                       <span className={cn(isServicesActive && "text-primary")}>Services</span>
-                      <motion.div
+                       <motion.div
                           animate={{ rotate: isServicesMenuOpen ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
-                          style={{ originX: 0.5, originY: 0.5 }}
+                          className="inline-block"
                       >
                          <ChevronDown className="h-4 w-4" />
                       </motion.div>
