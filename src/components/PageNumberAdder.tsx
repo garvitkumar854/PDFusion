@@ -7,7 +7,7 @@ import {
   UploadCloud,
   Download,
   X,
-  CheckCircle,
+  Check,
   FolderOpen,
   Loader2,
   Ban,
@@ -404,7 +404,9 @@ export function PageNumberAdder() {
   if (result) {
     return (
       <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl">
-        <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-500 mb-6" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
+            <Check className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+        </div>
         <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">PDF Updated Successfully!</h2>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">

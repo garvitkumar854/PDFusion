@@ -4,7 +4,7 @@
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X, AlertTriangle, CheckCircle, Info, AlertCircle } from "lucide-react"
+import { X, AlertTriangle, CheckCircle, Info, AlertCircle, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
@@ -143,7 +143,7 @@ const ToastIcon = ({ variant }: { variant: VariantProps<typeof toastVariants>["v
   
   switch (variant) {
     case "success":
-      return <div className={cn(containerBaseClasses, "bg-green-100 dark:bg-green-900/30")}><CheckCircle className={cn(iconBaseClasses, "text-green-500 dark:text-green-400")} /></div>;
+      return <div className={cn(containerBaseClasses, "bg-green-500")}><Check className={cn(iconBaseClasses, "text-white")} /></div>;
     case "destructive":
       return <div className={cn(containerBaseClasses, "bg-red-100 dark:bg-red-900/30")}><AlertCircle className={cn(iconBaseClasses, "text-red-500 dark:text-red-400")} /></div>;
     case "warning":
