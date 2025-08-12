@@ -35,7 +35,7 @@ export default function EditPdfPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full h-[calc(100vh-12rem)]">
         <div className="max-w-full mx-auto h-full">
           <PdfEditorLoader />
         </div>

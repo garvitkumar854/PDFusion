@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -19,8 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
-import { ScrollArea } from "./ui/scroll-area";
-import { Skeleton } from "./ui/skeleton";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -342,21 +339,19 @@ export function PdfEditor() {
         </Card>
         
         {!file.isEncrypted && (
-            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden h-[calc(100vh-14rem)]">
-                <div className="col-span-3 lg:col-span-2 h-full">
-                    <ScrollArea className="h-full pr-3 -mr-3">
-                        <div className="grid grid-cols-1 gap-3">
-                            {pages.map(page => (
-                                <PageThumbnail 
-                                    key={page.pageNumber}
-                                    pageInfo={page}
-                                    isSelected={selectedPage?.pageNumber === page.pageNumber}
-                                    onClick={() => handlePageSelect(page)}
-                                    onVisible={onThumbnailVisible}
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
+            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden h-full">
+                <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-3 -mr-3">
+                    <div className="grid grid-cols-1 gap-3">
+                        {pages.map(page => (
+                            <PageThumbnail 
+                                key={page.pageNumber}
+                                pageInfo={page}
+                                isSelected={selectedPage?.pageNumber === page.pageNumber}
+                                onClick={() => handlePageSelect(page)}
+                                onVisible={onThumbnailVisible}
+                            />
+                        ))}
+                    </div>
                 </div>
                 <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
                     <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
