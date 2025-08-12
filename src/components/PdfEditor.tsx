@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
+import { PdfSidebar, PageInfo } from "./PdfSidebar";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -26,12 +27,6 @@ if (typeof window !== 'undefined') {
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-type PageInfo = {
-  pageNumber: number;
-  dataUrl?: string;
-  pdfjsPage: pdfjsLib.PDFPageProxy;
-};
-
 type PDFFile = {
   id: string;
   file: File;
@@ -39,58 +34,6 @@ type PDFFile = {
   pdfjsDoc: pdfjsLib.PDFDocumentProxy;
   isEncrypted: boolean;
 };
-
-function formatBytes(bytes: number, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: { pageInfo: PageInfo; isSelected: boolean; onClick: () => void; onVisible: (pageNumber: number) => void; }) => {
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting && !pageInfo.dataUrl) {
-                onVisible(pageInfo.pageNumber);
-                if (ref.current) observer.unobserve(ref.current);
-            }
-        }, { threshold: 0.1 });
-
-        if (ref.current) observer.observe(ref.current);
-
-        return () => {
-            if (ref.current) observer.unobserve(ref.current);
-        };
-    }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
-
-    return (
-        <div
-            ref={ref}
-            onClick={onClick}
-            className={cn(
-                "relative rounded-lg border-2 bg-background cursor-pointer transition-all duration-200 aspect-[7/10]",
-                isSelected ? "border-primary shadow-md" : "border-transparent hover:border-primary/50"
-            )}
-        >
-            {pageInfo.dataUrl ? (
-                <img src={pageInfo.dataUrl} alt={`Page ${pageInfo.pageNumber}`} className="w-full h-full object-contain" />
-            ) : (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    <span>Page {pageInfo.pageNumber}</span>
-                </div>
-            )}
-            <div className="absolute top-1 right-1 bg-background/80 text-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border shadow-sm">
-                {pageInfo.pageNumber}
-            </div>
-        </div>
-    );
-});
-PageThumbnail.displayName = 'PageThumbnail';
 
 
 export function PdfEditor() {
@@ -145,7 +88,7 @@ export function PdfEditor() {
         }
         const pdfjsPages = await Promise.all(pagePromises);
         
-        const pageInfos = pdfjsPages.map((p, i) => ({
+        const pageInfos: PageInfo[] = pdfjsPages.map((p, i) => ({
           pageNumber: i + 1,
           pdfjsPage: p
         }));
@@ -158,6 +101,7 @@ export function PdfEditor() {
           pdfjsDoc,
           isEncrypted: false,
         });
+        setSelectedPage(pageInfos[0]);
 
       } catch (error: any) {
           if (operationId.current !== currentOperationId) return;
@@ -191,15 +135,6 @@ export function PdfEditor() {
     disabled: isLoading,
   });
 
-  const removeFile = () => {
-    operationId.current++;
-    if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
-    setFile(null);
-    setPages([]);
-    setSelectedPage(null);
-    setIsLoading(false);
-  };
-  
   const onThumbnailVisible = useCallback(async (pageNumber: number) => {
      setPages(currentPages => {
         const pageIndex = currentPages.findIndex(p => p.pageNumber === pageNumber);
@@ -217,16 +152,6 @@ export function PdfEditor() {
      });
   }, [renderPdfPage]);
   
-  const handlePageSelect = async (pageInfo: PageInfo) => {
-    setSelectedPage(pageInfo);
-  };
-
-  useEffect(() => {
-    if (pages.length > 0 && !selectedPage) {
-        handlePageSelect(pages[0]);
-    }
-  }, [pages, selectedPage]);
-
   useEffect(() => {
     const renderMainCanvas = async () => {
         if (!selectedPage || !mainCanvasRef.current) return;
@@ -235,24 +160,21 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        // Show a temporary low-res preview
         if(selectedPage.dataUrl) {
           const img = new Image();
           img.onload = () => {
-            canvas.width = img.width * 3.75; // Scale up for better temp quality
+            canvas.width = img.width * 3.75;
             canvas.height = img.height * 3.75;
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.drawImage(img, 0, 0, canvas.width, canvas.height);
           };
           img.src = selectedPage.dataUrl;
         } else {
-            // If no thumbnail, show loading state
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = "#f1f5f9";
             context.fillRect(0,0, canvas.width, canvas.height);
         }
 
-        // Render high-res version
         const dataUrl = await renderPdfPage(selectedPage.pdfjsPage, 1.5);
         if(dataUrl) {
           const img = new Image();
@@ -311,23 +233,18 @@ export function PdfEditor() {
   }
 
   return (
-     <div className="flex flex-col h-full">
-        <div className="flex-1 grid grid-cols-12 gap-4 h-[calc(100vh-14rem)]">
-            <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-3 space-y-3">
-                {pages.map(page => (
-                    <PageThumbnail 
-                        key={page.pageNumber}
-                        pageInfo={page}
-                        isSelected={selectedPage?.pageNumber === page.pageNumber}
-                        onClick={() => handlePageSelect(page)}
-                        onVisible={onThumbnailVisible}
-                    />
-                ))}
-            </div>
-            <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
-                <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
-            </div>
+     <div className="grid grid-cols-12 gap-4 h-full">
+        <div className="col-span-3 lg:col-span-2 h-full">
+            <PdfSidebar
+                pages={pages}
+                selectedPage={selectedPage}
+                onPageSelect={setSelectedPage}
+                onThumbnailVisible={onThumbnailVisible}
+            />
         </div>
-     </div>
+        <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
+            <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
+        </div>
+    </div>
   );
 }
