@@ -70,16 +70,16 @@ export default function Header() {
   const scrollDirection = useScrollDirection();
   
   const services = [
-      { href: "/merger", label: "Merge PDF", icon: <Combine className="mr-3 h-5 w-5" /> },
-      { href: "/split-pdf", label: "Split PDF", icon: <Scissors className="mr-3 h-5 w-5" /> },
-      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive className="mr-3 h-5 w-5" /> },
-      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered className="mr-3 h-5 w-5" /> },
-      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon className="mr-3 h-5 w-5" /> },
-      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText className="mr-3 h-5 w-5" /> },
-      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code className="mr-3 h-5 w-5" /> },
-      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText className="mr-3 h-5 w-5" /> },
-      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw className="mr-3 h-5 w-5" /> },
-      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash className="mr-3 h-5 w-5" /> },
+      { href: "/merger", label: "Merge PDF", icon: <Combine /> },
+      { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
+      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive /> },
+      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
+      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
+      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
+      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
+      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
+      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
+      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
   ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
@@ -145,9 +145,9 @@ export default function Header() {
                         <Link
                           href={service.href}
                           key={service.href}
-                          className="flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                          className="group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
                         >
-                          {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5' })}
+                          {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
                           <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
                         </Link>
                       ))}
