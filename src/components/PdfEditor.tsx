@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
@@ -18,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
+import { ScrollArea } from "./ui/scroll-area";
+import { Skeleton } from "./ui/skeleton";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -26,11 +29,17 @@ if (typeof window !== 'undefined') {
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
+type PageInfo = {
+  pageNumber: number;
+  dataUrl?: string;
+  pdfjsPage: pdfjsLib.PDFPageProxy;
+};
+
 type PDFFile = {
   id: string;
   file: File;
   totalPages: number;
-  pdfjsDoc?: pdfjsLib.PDFDocumentProxy;
+  pdfjsDoc: pdfjsLib.PDFDocumentProxy;
   isEncrypted: boolean;
 };
 
@@ -43,13 +52,76 @@ function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: { pageInfo: PageInfo; isSelected: boolean; onClick: () => void; onVisible: (pageNumber: number) => void; }) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting && !pageInfo.dataUrl) {
+                onVisible(pageInfo.pageNumber);
+                if (ref.current) observer.unobserve(ref.current);
+            }
+        }, { threshold: 0.1 });
+
+        if (ref.current) observer.observe(ref.current);
+
+        return () => {
+            if (ref.current) observer.unobserve(ref.current);
+        };
+    }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
+
+    return (
+        <div
+            ref={ref}
+            onClick={onClick}
+            className={cn(
+                "relative rounded-lg border-2 bg-background cursor-pointer transition-all duration-200 aspect-[7/10]",
+                isSelected ? "border-primary shadow-md" : "border-transparent hover:border-primary/50"
+            )}
+        >
+            {pageInfo.dataUrl ? (
+                <img src={pageInfo.dataUrl} alt={`Page ${pageInfo.pageNumber}`} className="w-full h-full object-contain" />
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span>Page {pageInfo.pageNumber}</span>
+                </div>
+            )}
+            <div className="absolute top-1 right-1 bg-background/80 text-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border shadow-sm">
+                {pageInfo.pageNumber}
+            </div>
+        </div>
+    );
+});
+PageThumbnail.displayName = 'PageThumbnail';
+
 
 export function PdfEditor() {
   const [file, setFile] = useState<PDFFile | null>(null);
+  const [pages, setPages] = useState<PageInfo[]>([]);
+  const [selectedPage, setSelectedPage] = useState<PageInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const mainCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { toast } = useToast();
   const operationId = useRef<number>(0);
+
+  const renderPdfPage = useCallback(async (pdfjsPage: pdfjsLib.PDFPageProxy, scale: number = 1.0): Promise<string | null> => {
+    try {
+        const viewport = pdfjsPage.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext('2d');
+        if (context) {
+            await pdfjsPage.render({ canvasContext: context, viewport }).promise;
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+    } catch (e) {
+      console.error(`Error rendering page ${pdfjsPage.pageNumber}:`, e);
+    }
+    return null;
+  }, []);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -70,6 +142,18 @@ export function PdfEditor() {
         
         const pageCount = pdfjsDoc.numPages;
         
+        const pagePromises: Promise<pdfjsLib.PDFPageProxy>[] = [];
+        for (let i = 1; i <= pageCount; i++) {
+          pagePromises.push(pdfjsDoc.getPage(i));
+        }
+        const pdfjsPages = await Promise.all(pagePromises);
+        
+        const pageInfos = pdfjsPages.map((p, i) => ({
+          pageNumber: i + 1,
+          pdfjsPage: p
+        }));
+
+        setPages(pageInfos);
         setFile({ 
           id: `${singleFile.name}-${Date.now()}`, 
           file: singleFile, 
@@ -87,7 +171,7 @@ export function PdfEditor() {
                   file: singleFile,
                   totalPages: 0,
                   isEncrypted: true,
-                  pdfjsDoc: undefined,
+                  pdfjsDoc: new Proxy({}, { get: () => { throw new Error("Document is encrypted")}}) as any,
               })
           } else {
               console.error("Failed to load PDF", error);
@@ -114,8 +198,67 @@ export function PdfEditor() {
     operationId.current++;
     if(file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
+    setPages([]);
+    setSelectedPage(null);
     setIsLoading(false);
   };
+  
+  const onThumbnailVisible = useCallback(async (pageNumber: number) => {
+     setPages(currentPages => {
+        const pageIndex = currentPages.findIndex(p => p.pageNumber === pageNumber);
+        if (pageIndex === -1 || currentPages[pageIndex].dataUrl) {
+          return currentPages;
+        }
+        
+        const pageToRender = currentPages[pageIndex];
+        renderPdfPage(pageToRender.pdfjsPage, 0.4).then(dataUrl => {
+            if(dataUrl) {
+                 setPages(prev => prev.map(p => p.pageNumber === pageNumber ? {...p, dataUrl} : p));
+            }
+        });
+        return currentPages;
+     });
+  }, [renderPdfPage]);
+  
+  const handlePageSelect = async (pageInfo: PageInfo) => {
+    setSelectedPage(pageInfo);
+    if (!mainCanvasRef.current) return;
+    
+    const canvas = mainCanvasRef.current;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    // Show a temporary low-res preview
+    if(pageInfo.dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width * 2.5; // Scale up for better temp quality
+        canvas.height = img.height * 2.5;
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.src = pageInfo.dataUrl;
+    }
+
+
+    // Render high-res version
+    const dataUrl = await renderPdfPage(pageInfo.pdfjsPage, 1.5);
+    if(dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0);
+      };
+      img.src = dataUrl;
+    }
+  };
+
+  useEffect(() => {
+    if (pages.length > 0 && !selectedPage) {
+        handlePageSelect(pages[0]);
+    }
+  }, [pages, selectedPage]);
+
 
   if (!file) {
     return (
@@ -158,18 +301,23 @@ export function PdfEditor() {
     );
   }
 
-  // Editor UI will go here in the next steps
   return (
-     <div>
+     <div className="flex flex-col h-[calc(100vh-10rem)]">
         <Card className="mb-4">
-            <CardHeader className="flex flex-row items-center justify-between p-4">
-                <div>
-                    <CardTitle className="text-lg truncate max-w-md" title={file.file.name}>{file.file.name}</CardTitle>
-                    <CardDescription>{formatBytes(file.file.size)} - {file.totalPages} pages</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4">
+                <div className="flex items-center gap-3 min-w-0">
+                    <FileIcon className="w-6 h-6 text-destructive hidden sm:block shrink-0"/>
+                    <div className="min-w-0">
+                        <CardTitle className="text-base sm:text-lg truncate" title={file.file.name}>{file.file.name}</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">{formatBytes(file.file.size)} - {file.totalPages} pages</CardDescription>
+                    </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={removeFile}>
-                    <X className="w-5 h-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">Save</Button>
+                    <Button variant="ghost" size="icon" onClick={removeFile} className="w-8 h-8">
+                        <X className="w-5 h-5" />
+                    </Button>
+                </div>
             </CardHeader>
             {file.isEncrypted && (
                 <CardContent className="p-4 pt-0">
@@ -181,12 +329,29 @@ export function PdfEditor() {
             )}
         </Card>
         
-        {/* Placeholder for the editor interface */}
         {!file.isEncrypted && (
-          <div className="text-center p-10 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">PDF Editor interface will be built here.</p>
-          </div>
+            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden">
+                <div className="col-span-3 lg:col-span-2">
+                    <ScrollArea className="h-full pr-3 -mr-3">
+                        <div className="grid grid-cols-1 gap-3">
+                            {pages.map(page => (
+                                <PageThumbnail 
+                                    key={page.pageNumber}
+                                    pageInfo={page}
+                                    isSelected={selectedPage?.pageNumber === page.pageNumber}
+                                    onClick={() => handlePageSelect(page)}
+                                    onVisible={onThumbnailVisible}
+                                />
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+                <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
+                    <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
+                </div>
+            </div>
         )}
      </div>
   );
 }
+
