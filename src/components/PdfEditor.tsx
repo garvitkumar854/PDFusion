@@ -314,7 +314,7 @@ export function PdfEditor() {
   }
 
   return (
-     <div className="flex flex-col h-[calc(100vh-10rem)]">
+     <div className="flex flex-col h-full">
         <Card className="mb-4">
             <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4">
                 <div className="flex items-center gap-3 min-w-0">
@@ -342,8 +342,8 @@ export function PdfEditor() {
         </Card>
         
         {!file.isEncrypted && (
-            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden">
-                <div className="col-span-3 lg:col-span-2">
+            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden h-[calc(100vh-14rem)]">
+                <div className="col-span-3 lg:col-span-2 h-full">
                     <ScrollArea className="h-full pr-3 -mr-3">
                         <div className="grid grid-cols-1 gap-3">
                             {pages.map(page => (
