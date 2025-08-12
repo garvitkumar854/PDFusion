@@ -62,6 +62,8 @@ export function PdfEditor() {
         canvas.height = viewport.height;
         const context = canvas.getContext('2d');
         if (context) {
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, canvas.width, canvas.height);
             await pdfjsPage.render({ canvasContext: context, viewport }).promise;
             return canvas.toDataURL('image/jpeg', 0.9);
         }
@@ -278,7 +280,7 @@ export function PdfEditor() {
                 </Button>
             </CardHeader>
         </Card>
-     <div className="grid grid-cols-12 gap-4 h-[calc(100vh-14rem)]">
+     <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden h-[calc(100vh-12rem)]">
         <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-2">
             <PdfSidebar
                 pages={pages}
@@ -288,7 +290,15 @@ export function PdfEditor() {
             />
         </div>
         <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
-            <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
+             {file.isEncrypted ? (
+                <div className="flex flex-col items-center text-center text-muted-foreground">
+                    <Lock className="w-12 h-12 mb-4" />
+                    <h3 className="font-semibold text-lg text-foreground">Encrypted PDF</h3>
+                    <p>This file is password-protected and cannot be edited.</p>
+                </div>
+            ) : (
+                <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
+            )}
         </div>
     </div>
     </div>
