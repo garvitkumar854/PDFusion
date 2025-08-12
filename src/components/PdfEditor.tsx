@@ -312,52 +312,22 @@ export function PdfEditor() {
 
   return (
      <div className="flex flex-col h-full">
-        <Card className="mb-4">
-            <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-4">
-                <div className="flex items-center gap-3 min-w-0">
-                    <FileIcon className="w-6 h-6 text-destructive hidden sm:block shrink-0"/>
-                    <div className="min-w-0">
-                        <CardTitle className="text-base sm:text-lg truncate" title={file.file.name}>{file.file.name}</CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">{formatBytes(file.file.size)} - {file.totalPages} pages</CardDescription>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">Save</Button>
-                    <Button variant="ghost" size="icon" onClick={removeFile} className="w-8 h-8">
-                        <X className="w-5 h-5" />
-                    </Button>
-                </div>
-            </CardHeader>
-            {file.isEncrypted && (
-                <CardContent className="p-4 pt-0">
-                    <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
-                        <ShieldAlert className="h-5 w-5 shrink-0" />
-                        <div>This PDF is password-protected and cannot be edited. Please upload an unlocked file.</div>
-                    </div>
-                </CardContent>
-            )}
-        </Card>
-        
-        {!file.isEncrypted && (
-            <div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden h-full">
-                <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-3 -mr-3">
-                    <div className="grid grid-cols-1 gap-3">
-                        {pages.map(page => (
-                            <PageThumbnail 
-                                key={page.pageNumber}
-                                pageInfo={page}
-                                isSelected={selectedPage?.pageNumber === page.pageNumber}
-                                onClick={() => handlePageSelect(page)}
-                                onVisible={onThumbnailVisible}
-                            />
-                        ))}
-                    </div>
-                </div>
-                <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
-                    <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
-                </div>
+        <div className="flex-1 grid grid-cols-12 gap-4 h-[calc(100vh-14rem)]">
+            <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-3 space-y-3">
+                {pages.map(page => (
+                    <PageThumbnail 
+                        key={page.pageNumber}
+                        pageInfo={page}
+                        isSelected={selectedPage?.pageNumber === page.pageNumber}
+                        onClick={() => handlePageSelect(page)}
+                        onVisible={onThumbnailVisible}
+                    />
+                ))}
             </div>
-        )}
+            <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
+                <canvas ref={mainCanvasRef} className="max-w-full max-h-full object-contain shadow-lg border"></canvas>
+            </div>
+        </div>
      </div>
   );
 }
