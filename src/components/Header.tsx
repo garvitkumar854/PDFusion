@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,6 +74,7 @@ export default function Header() {
       { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
       { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive /> },
       { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
+      { href: "/edit-pdf", label: "Edit PDF", icon: <Pencil /> },
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },

@@ -1,4 +1,4 @@
-import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash } from 'lucide-react';
+import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil } from 'lucide-react';
 import React from 'react';
 
 export interface Service {
@@ -25,11 +25,25 @@ export const services: Service[] = [
       href: '/split-pdf'
     },
     {
+      icon: <FileArchive className="w-6 h-6 text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Compress PDF',
+      description: 'Reduce file size while optimizing for maximal PDF quality.',
+      href: '/compress-pdf'
+    },
+    {
       icon: <ListOrdered className="w-6 h-6 text-cyan-500" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
+    },
+    {
+      icon: <Pencil className="w-6 h-6 text-orange-500" />,
+      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      title: 'Edit PDF',
+      description: 'Add text, images, and annotations to your PDF documents.',
+      href: '/edit-pdf'
     },
     {
       icon: <Image className="w-6 h-6 text-blue-500" />,
