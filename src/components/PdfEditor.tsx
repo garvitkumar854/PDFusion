@@ -4,18 +4,15 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import {
   UploadCloud,
-  File as FileIcon,
   X,
   FolderOpen,
   Loader2,
   Lock,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
 import { PdfSidebar, PageInfo } from "./PdfSidebar";
@@ -151,6 +148,10 @@ export function PdfEditor() {
         return currentPages;
      });
   }, [renderPdfPage]);
+
+  const handlePageSelect = (page: PageInfo) => {
+    setSelectedPage(page);
+  };
   
   useEffect(() => {
     const renderMainCanvas = async () => {
@@ -160,20 +161,9 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        if(selectedPage.dataUrl) {
-          const img = new Image();
-          img.onload = () => {
-            canvas.width = img.width * 3.75;
-            canvas.height = img.height * 3.75;
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(img, 0, 0, canvas.width, canvas.height);
-          };
-          img.src = selectedPage.dataUrl;
-        } else {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = "#f1f5f9";
-            context.fillRect(0,0, canvas.width, canvas.height);
-        }
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "#f1f5f9"; // muted-foreground
+        context.fillRect(0,0, canvas.width, canvas.height);
 
         const dataUrl = await renderPdfPage(selectedPage.pdfjsPage, 1.5);
         if(dataUrl) {
@@ -233,12 +223,12 @@ export function PdfEditor() {
   }
 
   return (
-     <div className="grid grid-cols-12 gap-4 h-full">
-        <div className="col-span-3 lg:col-span-2 h-full">
+     <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+        <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto">
             <PdfSidebar
                 pages={pages}
                 selectedPage={selectedPage}
-                onPageSelect={setSelectedPage}
+                onPageSelect={handlePageSelect}
                 onThumbnailVisible={onThumbnailVisible}
             />
         </div>
