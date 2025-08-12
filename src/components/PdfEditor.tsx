@@ -222,35 +222,6 @@ export function PdfEditor() {
   
   const handlePageSelect = async (pageInfo: PageInfo) => {
     setSelectedPage(pageInfo);
-    if (!mainCanvasRef.current) return;
-    
-    const canvas = mainCanvasRef.current;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    
-    // Show a temporary low-res preview
-    if(pageInfo.dataUrl) {
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width * 2.5; // Scale up for better temp quality
-        canvas.height = img.height * 2.5;
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-      };
-      img.src = pageInfo.dataUrl;
-    }
-
-
-    // Render high-res version
-    const dataUrl = await renderPdfPage(pageInfo.pdfjsPage, 1.5);
-    if(dataUrl) {
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        context.drawImage(img, 0, 0);
-      };
-      img.src = dataUrl;
-    }
   };
 
   useEffect(() => {
@@ -258,6 +229,47 @@ export function PdfEditor() {
         handlePageSelect(pages[0]);
     }
   }, [pages, selectedPage]);
+
+  useEffect(() => {
+    const renderMainCanvas = async () => {
+        if (!selectedPage || !mainCanvasRef.current) return;
+        
+        const canvas = mainCanvasRef.current;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        
+        // Show a temporary low-res preview
+        if(selectedPage.dataUrl) {
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = img.width * 3.75; // Scale up for better temp quality
+            canvas.height = img.height * 3.75;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+          };
+          img.src = selectedPage.dataUrl;
+        } else {
+            // If no thumbnail, show loading state
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = "#f1f5f9";
+            context.fillRect(0,0, canvas.width, canvas.height);
+        }
+
+        // Render high-res version
+        const dataUrl = await renderPdfPage(selectedPage.pdfjsPage, 1.5);
+        if(dataUrl) {
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(img, 0, 0);
+          };
+          img.src = dataUrl;
+        }
+    }
+    renderMainCanvas();
+  }, [selectedPage, renderPdfPage]);
 
 
   if (!file) {
@@ -354,4 +366,3 @@ export function PdfEditor() {
      </div>
   );
 }
-
