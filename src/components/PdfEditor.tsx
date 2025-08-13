@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
 import { PdfSidebar, PageInfo } from "./PdfSidebar";
@@ -64,8 +64,9 @@ const initialState: State = {
 function editorReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'START_LOADING':
+      // Reset everything except isLoading
       if (state.file?.pdfjsDoc) {
-          state.file.pdfjsDoc.destroy();
+        state.file.pdfjsDoc.destroy();
       }
       return { ...initialState, isLoading: true };
     case 'FILE_LOAD_SUCCESS':
@@ -79,6 +80,9 @@ function editorReducer(state: State, action: Action): State {
       };
     case 'FILE_LOAD_ERROR': {
         const fileState = action.file ? { file: action.file as PDFFile } : {};
+        if (state.file?.pdfjsDoc) {
+          state.file.pdfjsDoc.destroy();
+        }
         return { ...initialState, ...fileState, isLoading: false, error: action.error };
     }
     case 'PAGE_RENDERED': {
@@ -251,9 +255,10 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
+        // Fit canvas to available container size, cap to a reasonable scale
         const baseViewport = selectedPage.pdfjsPage.getViewport({ scale: 1 });
         
-        const PADDING = 32; // 2rem
+        const PADDING = 32; // p-4 = 1rem * 2 = 32px
         let scale = 1;
         if (containerSize.width > PADDING && containerSize.height > PADDING) {
           const scaleToWidth = (containerSize.width - PADDING) / baseViewport.width;
