@@ -15,10 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
 import { PdfSidebar, PageInfo } from "./PdfSidebar";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -44,7 +45,7 @@ type State = {
 };
 
 type Action =
-  | { type: 'START_LOADING'; file: File }
+  | { type: 'START_LOADING' }
   | { type: 'FILE_LOAD_SUCCESS'; file: PDFFile; pages: PageInfo[] }
   | { type: 'FILE_LOAD_ERROR'; error: string }
   | { type: 'PAGE_RENDERED'; pageNumber: number; dataUrl: string; pdfjsPage: pdfjsLib.PDFPageProxy; }
@@ -73,7 +74,7 @@ function editorReducer(state: State, action: Action): State {
         error: null,
       };
     case 'FILE_LOAD_ERROR':
-      return { ...initialState, error: action.error };
+      return { ...initialState, isLoading: false, error: action.error };
     case 'PAGE_RENDERED': {
       const newPages = state.pages.map(p =>
         p.pageNumber === action.pageNumber ? { ...p, dataUrl: action.dataUrl, pdfjsPage: action.pdfjsPage } : p
@@ -116,21 +117,12 @@ export function PdfEditor() {
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   
-  // Effect to clean up PDF.js document on unmount or file change
-  useEffect(() => {
-    return () => {
-        if(file?.pdfjsDoc) {
-            file.pdfjsDoc.destroy();
-        }
-    }
-  }, [file]);
-
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
       const singleFile = acceptedFiles[0];
       
       dispatch({ type: 'RESET' });
-      dispatch({ type: 'START_LOADING', file: singleFile });
+      dispatch({ type: 'START_LOADING' });
 
       try {
         const pdfBytes = await singleFile.arrayBuffer();
@@ -217,6 +209,8 @@ export function PdfEditor() {
   
   // Effect for rendering the main canvas
   useEffect(() => {
+    let renderTask: pdfjsLib.RenderTask | null = null;
+    
     const renderMainCanvas = async () => {
         if (!selectedPage || !selectedPage.pdfjsPage || !mainCanvasRef.current) return;
         
@@ -246,9 +240,17 @@ export function PdfEditor() {
         const viewport = selectedPage.pdfjsPage.getViewport({ scale: 1.5 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        await selectedPage.pdfjsPage.render({ canvasContext: context, viewport }).promise;
+        renderTask = selectedPage.pdfjsPage.render({ canvasContext: context, viewport });
+        await renderTask.promise;
+        renderTask = null;
     }
     renderMainCanvas();
+    
+    return () => {
+        if(renderTask) {
+            renderTask.cancel();
+        }
+    }
   }, [selectedPage]);
 
   if (!file && !isLoading && !error) {
@@ -283,34 +285,36 @@ export function PdfEditor() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-        <Card className="bg-transparent shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between p-4">
-                <div className="flex items-center gap-3 overflow-hidden">
-                    {isLoading ? (
-                      <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
-                    ) : error ? (
-                      <ShieldAlert className="w-6 h-6 text-destructive shrink-0" />
-                    ) : file?.isEncrypted ? (
-                      <Lock className="w-6 h-6 text-yellow-500 shrink-0" />
-                    ) : (
-                      <FileIcon className="w-6 h-6 text-destructive shrink-0" />
-                    )}
-                    <div className="flex flex-col overflow-hidden">
-                        <span className="text-sm font-medium truncate" title={file?.file.name}>
-                          {isLoading ? "Loading PDF..." : error ? "Error" : file?.file.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {isLoading ? "Please wait..." : error ? error : `${formatBytes(file?.file.size || 0)}`}
-                        </span>
+        {file && (
+            <Card className="bg-transparent shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between p-4">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        {isLoading ? (
+                        <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
+                        ) : error ? (
+                        <ShieldAlert className="w-6 h-6 text-destructive shrink-0" />
+                        ) : file?.isEncrypted ? (
+                        <Lock className="w-6 h-6 text-yellow-500 shrink-0" />
+                        ) : (
+                        <FileIcon className="w-6 h-6 text-destructive shrink-0" />
+                        )}
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-medium truncate" title={file?.file.name}>
+                            {isLoading ? "Loading PDF..." : error ? "Error" : file?.file.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                            {isLoading ? "Please wait..." : error ? error : `${formatBytes(file?.file.size || 0)}`}
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={() => dispatch({ type: 'RESET' })}>
-                    <X className="w-4 h-4" />
-                </Button>
-            </CardHeader>
-        </Card>
+                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={() => dispatch({ type: 'RESET' })}>
+                        <X className="w-4 h-4" />
+                    </Button>
+                </CardHeader>
+            </Card>
+        )}
         
-     <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden h-[calc(100vh-12rem)]" key={file?.id}>
+     <div className="grid grid-cols-12 gap-4 flex-1 h-[calc(100vh-14rem)]" key={file?.id}>
         <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-2">
             <PdfSidebar
                 pages={pages}
@@ -341,3 +345,4 @@ export function PdfEditor() {
     </div>
   );
 }
+
