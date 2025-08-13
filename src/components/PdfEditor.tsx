@@ -19,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
 import { PdfSidebar, PageInfo } from "./PdfSidebar";
-import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -47,7 +46,7 @@ type State = {
 type Action =
   | { type: 'START_LOADING' }
   | { type: 'FILE_LOAD_SUCCESS'; file: PDFFile; pages: PageInfo[] }
-  | { type: 'FILE_LOAD_ERROR'; error: string }
+  | { type: 'FILE_LOAD_ERROR'; error: string, file?: Partial<PDFFile> }
   | { type: 'PAGE_RENDERED'; pageNumber: number; dataUrl: string; pdfjsPage: pdfjsLib.PDFPageProxy; }
   | { type: 'SELECT_PAGE'; pageNumber: number }
   | { type: 'RESET' };
@@ -74,7 +73,8 @@ function editorReducer(state: State, action: Action): State {
         error: null,
       };
     case 'FILE_LOAD_ERROR':
-      return { ...initialState, isLoading: false, error: action.error };
+        const fileState = action.file ? { file: action.file as PDFFile } : {};
+        return { ...initialState, ...fileState, isLoading: false, error: action.error };
     case 'PAGE_RENDERED': {
       const newPages = state.pages.map(p =>
         p.pageNumber === action.pageNumber ? { ...p, dataUrl: action.dataUrl, pdfjsPage: action.pdfjsPage } : p
@@ -149,10 +149,18 @@ export function PdfEditor() {
 
       } catch (err: any) {
           let errorMessage = "Could not read PDF. The file might be corrupted.";
+          let errorFile: Partial<PDFFile> | undefined = undefined;
+
           if (err.name === 'PasswordException') {
               errorMessage = "This PDF is password-protected and cannot be edited.";
+              errorFile = {
+                 id: `${singleFile.name}-${Date.now()}`,
+                 file: singleFile,
+                 totalPages: 0,
+                 isEncrypted: true,
+              };
           }
-          dispatch({ type: 'FILE_LOAD_ERROR', error: errorMessage });
+          dispatch({ type: 'FILE_LOAD_ERROR', error: errorMessage, file: errorFile });
           toast({ variant: "destructive", title: "Error Loading File", description: errorMessage });
       }
     }, [toast]);
@@ -212,37 +220,18 @@ export function PdfEditor() {
     let renderTask: pdfjsLib.RenderTask | null = null;
     
     const renderMainCanvas = async () => {
-        if (!selectedPage || !selectedPage.pdfjsPage || !mainCanvasRef.current) return;
+        if (!selectedPage?.pdfjsPage || !mainCanvasRef.current) return;
         
         const canvas = mainCanvasRef.current;
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        // Show low-res preview immediately
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        if (selectedPage.dataUrl) {
-          const img = new Image();
-          img.onload = () => {
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-            tempCtx?.drawImage(img, 0, 0);
-            
-            canvas.width = img.width * 3;
-            canvas.height = img.height * 3;
-            context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-          };
-          img.src = selectedPage.dataUrl;
-        }
-
         // Render high-res version
         const viewport = selectedPage.pdfjsPage.getViewport({ scale: 1.5 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         renderTask = selectedPage.pdfjsPage.render({ canvasContext: context, viewport });
         await renderTask.promise;
-        renderTask = null;
     }
     renderMainCanvas();
     
@@ -285,36 +274,34 @@ export function PdfEditor() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-        {file && (
-            <Card className="bg-transparent shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between p-4">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        {isLoading ? (
-                        <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
-                        ) : error ? (
-                        <ShieldAlert className="w-6 h-6 text-destructive shrink-0" />
-                        ) : file?.isEncrypted ? (
-                        <Lock className="w-6 h-6 text-yellow-500 shrink-0" />
-                        ) : (
-                        <FileIcon className="w-6 h-6 text-destructive shrink-0" />
-                        )}
-                        <div className="flex flex-col overflow-hidden">
-                            <span className="text-sm font-medium truncate" title={file?.file.name}>
-                            {isLoading ? "Loading PDF..." : error ? "Error" : file?.file.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                            {isLoading ? "Please wait..." : error ? error : `${formatBytes(file?.file.size || 0)}`}
-                            </span>
-                        </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={() => dispatch({ type: 'RESET' })}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                </CardHeader>
-            </Card>
-        )}
+      <Card className="bg-transparent shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between p-4">
+              <div className="flex items-center gap-3 overflow-hidden">
+                  {isLoading ? (
+                  <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
+                  ) : error ? (
+                  <ShieldAlert className="w-6 h-6 text-destructive shrink-0" />
+                  ) : file?.isEncrypted ? (
+                  <Lock className="w-6 h-6 text-yellow-500 shrink-0" />
+                  ) : (
+                  <FileIcon className="w-6 h-6 text-destructive shrink-0" />
+                  )}
+                  <div className="flex flex-col overflow-hidden">
+                      <span className="text-sm font-medium truncate" title={file?.file.name}>
+                      {isLoading ? "Loading PDF..." : error ? "Error" : file?.file.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                      {isLoading ? "Please wait..." : error ? error : `${formatBytes(file?.file.size || 0)}`}
+                      </span>
+                  </div>
+              </div>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={() => dispatch({ type: 'RESET' })}>
+                  <X className="w-4 h-4" />
+              </Button>
+          </CardHeader>
+      </Card>
         
-     <div className="grid grid-cols-12 gap-4 flex-1 h-[calc(100vh-14rem)]" key={file?.id}>
+     <div className="grid grid-cols-12 gap-4 flex-1 h-[calc(100vh-21rem)]" key={file?.id}>
         <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-2">
             <PdfSidebar
                 pages={pages}
@@ -332,7 +319,7 @@ export function PdfEditor() {
                     <p>Please wait a moment...</p>
                 </div>
              ) : error ? (
-                 <div className="flex flex-col items-center text-center text-muted-foreground">
+                 <div className="flex flex-col items-center text-center text-muted-foreground p-4">
                     <ShieldAlert className="w-12 h-12 mb-4 text-destructive" />
                     <h3 className="font-semibold text-lg text-foreground">Loading Failed</h3>
                     <p>{error}</p>
@@ -345,4 +332,3 @@ export function PdfEditor() {
     </div>
   );
 }
-
