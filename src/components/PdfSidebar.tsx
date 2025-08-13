@@ -111,7 +111,7 @@ export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesCh
     }
 
     return (
-        <div ref={rootRef} className="h-full overflow-y-auto pr-1 space-y-3">
+        <div ref={rootRef} className="space-y-3">
             {pages.map(page => (
                  <div key={page.pageNumber} data-page-number={page.pageNumber}>
                     <PageThumbnail

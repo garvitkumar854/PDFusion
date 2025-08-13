@@ -41,6 +41,7 @@ type State = {
   selectedPage: PageInfo | null;
   isLoading: boolean;
   error: string | null;
+  visiblePages: Set<number>;
 };
 
 type Action =
@@ -49,6 +50,7 @@ type Action =
   | { type: 'FILE_LOAD_ERROR'; error: string, file?: Partial<PDFFile> }
   | { type: 'PAGE_RENDERED'; pageNumber: number; dataUrl: string; pdfjsPage: pdfjsLib.PDFPageProxy; }
   | { type: 'SELECT_PAGE'; pageNumber: number }
+  | { type: 'SET_VISIBLE_PAGES', pages: Set<number> }
   | { type: 'RESET' };
   
 const initialState: State = {
@@ -57,11 +59,13 @@ const initialState: State = {
   selectedPage: null,
   isLoading: false,
   error: null,
+  visiblePages: new Set(),
 };
 
 function editorReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'START_LOADING':
+      // Reset everything except isLoading
       return { ...initialState, isLoading: true };
     case 'FILE_LOAD_SUCCESS':
       return {
@@ -90,6 +94,8 @@ function editorReducer(state: State, action: Action): State {
         const pageToSelect = state.pages.find(p => p.pageNumber === action.pageNumber);
         return { ...state, selectedPage: pageToSelect || state.selectedPage };
     }
+    case 'SET_VISIBLE_PAGES':
+        return { ...state, visiblePages: action.pages };
     case 'RESET':
         if(state.file?.pdfjsDoc) {
           state.file.pdfjsDoc.destroy();
@@ -112,9 +118,8 @@ function formatBytes(bytes: number, decimals = 2) {
 
 export function PdfEditor() {
   const [state, dispatch] = useReducer(editorReducer, initialState);
-  const { file, pages, selectedPage, isLoading, error } = state;
-  const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set());
-
+  const { file, pages, selectedPage, isLoading, error, visiblePages } = state;
+  
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   
@@ -171,9 +176,9 @@ export function PdfEditor() {
     if (!visiblePages || !file?.pdfjsDoc || visiblePages.size === 0) return;
 
     const renderThumbnails = async () => {
+      if (!visiblePages) return;
       for (const pageNumber of visiblePages) {
         const pageInfo = pages.find(p => p.pageNumber === pageNumber);
-        // Only render if it doesn't have a dataUrl yet
         if (pageInfo && !pageInfo.dataUrl) {
           try {
             const pdfjsPage = await file.pdfjsDoc!.getPage(pageNumber);
@@ -227,7 +232,6 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        // Render high-res version
         const viewport = selectedPage.pdfjsPage.getViewport({ scale: 1.5 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -247,7 +251,8 @@ export function PdfEditor() {
     return (
         <Card className="bg-transparent shadow-lg max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">Upload PDF</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Upload PDF to Begin</CardTitle>
+                <CardDescription>Drag and drop your file or click the button below.</CardDescription>
             </CardHeader>
             <CardContent>
             <div
@@ -275,7 +280,7 @@ export function PdfEditor() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <Card className="bg-transparent shadow-lg">
+      <Card className="bg-transparent shadow-lg shrink-0">
           <CardHeader className="flex flex-row items-center justify-between p-4">
               <div className="flex items-center gap-3 overflow-hidden">
                   {isLoading ? (
@@ -302,17 +307,17 @@ export function PdfEditor() {
           </CardHeader>
       </Card>
         
-     <div className="grid grid-cols-12 gap-4 flex-1 h-[calc(100vh-21rem)]" key={file?.id}>
+     <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden" key={file?.id}>
         <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-2">
             <PdfSidebar
                 pages={pages}
                 selectedPage={selectedPage}
                 onPageSelect={handlePageSelect}
-                onVisiblePagesChange={setVisiblePages}
+                onVisiblePagesChange={(pages) => dispatch({ type: 'SET_VISIBLE_PAGES', pages })}
                 isLoading={isLoading}
             />
         </div>
-        <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 overflow-auto">
+        <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 h-full overflow-auto">
              {isLoading ? (
                  <div className="flex flex-col items-center text-center text-muted-foreground">
                     <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />
