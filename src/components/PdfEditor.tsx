@@ -102,17 +102,13 @@ export function PdfEditor() {
         
         const pageCount = pdfjsDoc.numPages;
         
-        const pagePromises: Promise<pdfjsLib.PDFPageProxy>[] = [];
-        for (let i = 1; i <= pageCount; i++) {
-          pagePromises.push(pdfjsDoc.getPage(i));
-        }
-        const pdfjsPages = await Promise.all(pagePromises);
+        const pageInfos: PageInfo[] = pdfjsDoc.getPage(1).then(p => {
+            return Array.from({ length: pageCount }, (_, i) => ({
+                pageNumber: i + 1,
+                pdfjsPage: p, // Placeholder, will be fetched on demand
+            }));
+        }) as unknown as PageInfo[];
         
-        const pageInfos: PageInfo[] = pdfjsPages.map((p, i) => ({
-          pageNumber: i + 1,
-          pdfjsPage: p
-        }));
-
         setPages(pageInfos);
         setFile({ 
           id: `${singleFile.name}-${Date.now()}`, 
@@ -162,12 +158,14 @@ export function PdfEditor() {
           return currentPages;
         }
         
-        const pageToRender = currentPages[pageIndex];
-        renderPdfPage(file.pdfjsDoc.getPage(pageToRender.pageNumber), 0.4).then(dataUrl => {
-            if(dataUrl) {
-                 setPages(prev => prev.map(p => p.pageNumber === pageNumber ? {...p, dataUrl} : p));
-            }
+        file.pdfjsDoc.getPage(pageNumber).then(pdfjsPage => {
+            renderPdfPage(pdfjsPage, 0.4).then(dataUrl => {
+                if(dataUrl) {
+                     setPages(prev => prev.map(p => p.pageNumber === pageNumber ? {...p, dataUrl, pdfjsPage } : p));
+                }
+            });
         });
+
         return currentPages;
      });
   }, [file, renderPdfPage]);
@@ -184,21 +182,14 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        // Show low-res preview immediately
         context.clearRect(0, 0, canvas.width, canvas.height);
         const lowResDataUrl = pages.find(p => p.pageNumber === selectedPage.pageNumber)?.dataUrl;
         if (lowResDataUrl) {
           const img = new Image();
           img.onload = () => {
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-            if(tempCtx) tempCtx.drawImage(img, 0, 0);
-
-            canvas.width = tempCanvas.width * 2;
-            canvas.height = tempCanvas.height * 2;
-            context.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+            canvas.width = img.width * 3;
+            canvas.height = img.height * 3;
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
           };
           img.src = lowResDataUrl;
         } else {
@@ -206,7 +197,6 @@ export function PdfEditor() {
           context.fillRect(0,0, canvas.width, canvas.height);
         }
 
-        // Render high-res version
         const dataUrl = await renderPdfPage(selectedPage.pdfjsPage, 1.5);
         if(dataUrl) {
           const img = new Image();
