@@ -1,15 +1,16 @@
 
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { PDFPageProxy } from 'pdfjs-dist';
 import { Loader2 } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
 
 export type PageInfo = {
   pageNumber: number;
   dataUrl?: string;
-  pdfjsPage: PDFPageProxy;
+  pdfjsPage?: PDFPageProxy;
 };
 
 const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: { pageInfo: PageInfo; isSelected: boolean; onClick: () => void; onVisible: (pageNumber: number) => void; }) => {
@@ -17,9 +18,8 @@ const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: 
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting && !pageInfo.dataUrl) {
+            if (entry.isIntersecting) {
                 onVisible(pageInfo.pageNumber);
-                if (ref.current) observer.unobserve(ref.current);
             }
         }, { threshold: 0.1 });
 
@@ -29,7 +29,7 @@ const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: 
         return () => {
             if (currentRef) observer.unobserve(currentRef);
         };
-    }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
+    }, [pageInfo.pageNumber, onVisible]);
 
     return (
         <div
@@ -59,21 +59,62 @@ PageThumbnail.displayName = 'PageThumbnail';
 interface PdfSidebarProps {
     pages: PageInfo[];
     selectedPage: PageInfo | null;
-    onPageSelect: (page: PageInfo) => void;
-    onThumbnailVisible: (pageNumber: number) => void;
+    onPageSelect: (pageNumber: number) => void;
+    onVisiblePagesChange: (visiblePages: Set<number>) => void;
+    isLoading: boolean;
 }
 
-export function PdfSidebar({ pages, selectedPage, onPageSelect, onThumbnailVisible }: PdfSidebarProps) {
+export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesChange, isLoading }: PdfSidebarProps) {
+    const rootRef = useRef<HTMLDivElement>(null);
+    
+    const handleScroll = useCallback(() => {
+        const visible = new Set<number>();
+        if(rootRef.current) {
+            const children = rootRef.current.children;
+            for(let i = 0; i < children.length; i++) {
+                const child = children[i] as HTMLDivElement;
+                const rect = child.getBoundingClientRect();
+                const rootRect = rootRef.current.getBoundingClientRect();
+                if(rect.top < rootRect.bottom && rect.bottom > rootRect.top) {
+                    const pageNum = parseInt(child.dataset.pageNumber || '0', 10);
+                    if(pageNum) visible.add(pageNum);
+                }
+            }
+        }
+        onVisiblePagesChange(visible);
+    }, [onVisiblePagesChange]);
+
+    useEffect(() => {
+        const currentRoot = rootRef.current;
+        if(currentRoot) {
+            handleScroll(); // Initial check
+            currentRoot.addEventListener('scroll', handleScroll);
+            return () => currentRoot.removeEventListener('scroll', handleScroll);
+        }
+    }, [handleScroll]);
+
+
+    if(isLoading) {
+      return (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="w-full aspect-[7/10] rounded-lg" />
+          ))}
+        </div>
+      )
+    }
+
     return (
-        <div className="h-full overflow-y-auto pr-3 space-y-3">
+        <div ref={rootRef} className="h-full overflow-y-auto pr-1 space-y-3">
             {pages.map(page => (
-                <PageThumbnail 
-                    key={page.pageNumber}
-                    pageInfo={page}
-                    isSelected={selectedPage?.pageNumber === page.pageNumber}
-                    onClick={() => onPageSelect(page)}
-                    onVisible={onThumbnailVisible}
-                />
+                 <div key={page.pageNumber} data-page-number={page.pageNumber}>
+                    <PageThumbnail
+                        pageInfo={page}
+                        isSelected={selectedPage?.pageNumber === page.pageNumber}
+                        onClick={() => onPageSelect(page.pageNumber)}
+                        onVisible={handleScroll}
+                    />
+                </div>
             ))}
         </div>
     );
