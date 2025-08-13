@@ -72,9 +72,10 @@ function editorReducer(state: State, action: Action): State {
         selectedPage: action.pages[0] || null,
         error: null,
       };
-    case 'FILE_LOAD_ERROR':
+    case 'FILE_LOAD_ERROR': {
         const fileState = action.file ? { file: action.file as PDFFile } : {};
         return { ...initialState, ...fileState, isLoading: false, error: action.error };
+    }
     case 'PAGE_RENDERED': {
       const newPages = state.pages.map(p =>
         p.pageNumber === action.pageNumber ? { ...p, dataUrl: action.dataUrl, pdfjsPage: action.pdfjsPage } : p
@@ -167,7 +168,7 @@ export function PdfEditor() {
     
   // Effect for rendering visible page thumbnails
   useEffect(() => {
-    if (!file?.pdfjsDoc || visiblePages.size === 0) return;
+    if (!visiblePages || !file?.pdfjsDoc || visiblePages.size === 0) return;
 
     const renderThumbnails = async () => {
       for (const pageNumber of visiblePages) {
