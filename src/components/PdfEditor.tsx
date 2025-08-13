@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect, useReducer } from "react";
@@ -15,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import * as pdfjsLib from 'pdfjs-dist';
 import { motion } from "framer-motion";
 import { PdfSidebar, PageInfo } from "./PdfSidebar";
@@ -65,7 +64,9 @@ const initialState: State = {
 function editorReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'START_LOADING':
-      // Reset everything except isLoading
+      if (state.file?.pdfjsDoc) {
+          state.file.pdfjsDoc.destroy();
+      }
       return { ...initialState, isLoading: true };
     case 'FILE_LOAD_SUCCESS':
       return {
@@ -122,6 +123,24 @@ export function PdfEditor() {
   
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+  const mainContainerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  // Observe container size to fit canvas accordingly
+  useEffect(() => {
+    const element = mainContainerRef.current;
+    if (!element) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+    resizeObserver.observe(element);
+    // Initial size
+    setContainerSize({ width: element.clientWidth, height: element.clientHeight });
+    return () => resizeObserver.disconnect();
+  }, []);
   
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -232,7 +251,17 @@ export function PdfEditor() {
         const context = canvas.getContext('2d');
         if (!context) return;
         
-        const viewport = selectedPage.pdfjsPage.getViewport({ scale: 1.5 });
+        const baseViewport = selectedPage.pdfjsPage.getViewport({ scale: 1 });
+        
+        const PADDING = 32; // 2rem
+        let scale = 1;
+        if (containerSize.width > PADDING && containerSize.height > PADDING) {
+          const scaleToWidth = (containerSize.width - PADDING) / baseViewport.width;
+          const scaleToHeight = (containerSize.height - PADDING) / baseViewport.height;
+          scale = Math.min(scaleToWidth, scaleToHeight, 2); // Cap scale at 2x
+        }
+
+        const viewport = selectedPage.pdfjsPage.getViewport({ scale });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         renderTask = selectedPage.pdfjsPage.render({ canvasContext: context, viewport });
@@ -245,7 +274,7 @@ export function PdfEditor() {
             renderTask.cancel();
         }
     }
-  }, [selectedPage]);
+  }, [selectedPage, containerSize.width, containerSize.height]);
 
   if (!file && !isLoading && !error) {
     return (
@@ -307,8 +336,8 @@ export function PdfEditor() {
           </CardHeader>
       </Card>
         
-     <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden" key={file?.id}>
-        <div className="col-span-3 lg:col-span-2 h-full overflow-y-auto pr-2">
+     <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden h-[calc(100vh-21rem)]" key={file?.id}>
+        <div className="col-span-3 lg:col-span-2 h-full">
             <PdfSidebar
                 pages={pages}
                 selectedPage={selectedPage}
@@ -317,7 +346,7 @@ export function PdfEditor() {
                 isLoading={isLoading}
             />
         </div>
-        <div className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 h-full overflow-auto">
+        <div ref={mainContainerRef} className="col-span-9 lg:col-span-10 bg-muted/40 rounded-lg flex items-center justify-center p-4 h-full overflow-auto">
              {isLoading ? (
                  <div className="flex flex-col items-center text-center text-muted-foreground">
                     <Loader2 className="w-12 h-12 mb-4 animate-spin text-primary" />

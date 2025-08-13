@@ -26,7 +26,7 @@ export default function EditPdfPage() {
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
             className="duration-500"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-4">
             Edit PDF
             <br />
             <span className="relative inline-block">
@@ -39,7 +39,7 @@ export default function EditPdfPage() {
         </AnimateOnScroll>
       </section>
       
-      <main className="flex-1 w-full h-full flex flex-col">
+      <main className="flex-1 w-full flex flex-col">
           <PdfEditorLoader />
       </main>
     </div>

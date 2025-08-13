@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect, useCallback } from "react";
@@ -102,8 +101,8 @@ export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesCh
 
     if(isLoading) {
       return (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div ref={rootRef} className="space-y-3 h-full overflow-y-auto pr-1">
+          {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="w-full aspect-[7/10] rounded-lg" />
           ))}
         </div>
@@ -111,14 +110,31 @@ export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesCh
     }
 
     return (
-        <div ref={rootRef} className="space-y-3">
+        <div ref={rootRef} className="space-y-3 h-full overflow-y-auto pr-1">
             {pages.map(page => (
                  <div key={page.pageNumber} data-page-number={page.pageNumber}>
                     <PageThumbnail
                         pageInfo={page}
                         isSelected={selectedPage?.pageNumber === page.pageNumber}
                         onClick={() => onPageSelect(page.pageNumber)}
-                        onVisible={onVisiblePagesChange}
+                        onVisible={(pageNumber) => {
+                            const currentVisible = new Set<number>();
+                            if (rootRef.current) {
+                                const children = Array.from(rootRef.current.children);
+                                for (const child of children) {
+                                    const pageNumStr = (child as HTMLElement).dataset.pageNumber;
+                                    if (pageNumStr) {
+                                        const pageNum = parseInt(pageNumStr, 10);
+                                        const rect = child.getBoundingClientRect();
+                                        const rootRect = rootRef.current.getBoundingClientRect();
+                                        if (rect.top < rootRect.bottom && rect.bottom > rootRect.top) {
+                                            currentVisible.add(pageNum);
+                                        }
+                                    }
+                                }
+                            }
+                            onVisiblePagesChange(currentVisible);
+                        }}
                     />
                 </div>
             ))}
