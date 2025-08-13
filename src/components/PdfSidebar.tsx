@@ -18,8 +18,11 @@ const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: 
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
+            if (entry.isIntersecting && !pageInfo.dataUrl) {
                 onVisible(pageInfo.pageNumber);
+                if (ref.current) {
+                    observer.unobserve(ref.current);
+                }
             }
         }, { threshold: 0.1 });
 
@@ -29,7 +32,8 @@ const PageThumbnail = React.memo(({ pageInfo, isSelected, onClick, onVisible }: 
         return () => {
             if (currentRef) observer.unobserve(currentRef);
         };
-    }, [pageInfo.pageNumber, onVisible]);
+    }, [pageInfo.pageNumber, onVisible, pageInfo.dataUrl]);
+
 
     return (
         <div
@@ -67,18 +71,20 @@ interface PdfSidebarProps {
 export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesChange, isLoading }: PdfSidebarProps) {
     const rootRef = useRef<HTMLDivElement>(null);
     
-    const handleScroll = useCallback(() => {
+    const handleVisibleChange = useCallback(() => {
         const visible = new Set<number>();
         if(rootRef.current) {
-            const children = rootRef.current.children;
-            for(let i = 0; i < children.length; i++) {
-                const child = children[i] as HTMLDivElement;
-                const rect = child.getBoundingClientRect();
-                const rootRect = rootRef.current.getBoundingClientRect();
-                if(rect.top < rootRect.bottom && rect.bottom > rootRect.top) {
-                    const pageNum = parseInt(child.dataset.pageNumber || '0', 10);
-                    if(pageNum) visible.add(pageNum);
-                }
+            const children = Array.from(rootRef.current.children);
+            for(const child of children) {
+                 const pageNumStr = (child as HTMLElement).dataset.pageNumber;
+                 if (pageNumStr) {
+                    const pageNum = parseInt(pageNumStr, 10);
+                    const rect = child.getBoundingClientRect();
+                    const rootRect = rootRef.current.getBoundingClientRect();
+                    if(rect.top < rootRect.bottom && rect.bottom > rootRect.top) {
+                        visible.add(pageNum);
+                    }
+                 }
             }
         }
         onVisiblePagesChange(visible);
@@ -87,11 +93,11 @@ export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesCh
     useEffect(() => {
         const currentRoot = rootRef.current;
         if(currentRoot) {
-            handleScroll(); // Initial check
-            currentRoot.addEventListener('scroll', handleScroll);
-            return () => currentRoot.removeEventListener('scroll', handleScroll);
+            handleVisibleChange(); // Initial check
+            currentRoot.addEventListener('scroll', handleVisibleChange);
+            return () => currentRoot.removeEventListener('scroll', handleVisibleChange);
         }
-    }, [handleScroll]);
+    }, [handleVisibleChange, pages]);
 
 
     if(isLoading) {
@@ -112,7 +118,7 @@ export function PdfSidebar({ pages, selectedPage, onPageSelect, onVisiblePagesCh
                         pageInfo={page}
                         isSelected={selectedPage?.pageNumber === page.pageNumber}
                         onClick={() => onPageSelect(page.pageNumber)}
-                        onVisible={handleScroll}
+                        onVisible={onVisiblePagesChange}
                     />
                 </div>
             ))}

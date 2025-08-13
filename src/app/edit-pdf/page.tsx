@@ -20,7 +20,7 @@ const PdfEditorLoader = dynamic(() => import('@/components/PdfEditorLoader'), {
 
 export default function EditPdfPage() {
   return (
-    <div className="flex flex-col flex-1 h-full py-8 sm:py-12">
+    <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-12">
         <AnimateOnScroll
             animation="animate-in fade-in-0 slide-in-from-bottom-12"
