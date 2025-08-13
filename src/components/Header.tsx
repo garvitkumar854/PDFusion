@@ -74,7 +74,6 @@ export default function Header() {
       { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
       { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive /> },
       { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
-      { href: "/edit-pdf", label: "Edit PDF", icon: <Pencil /> },
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },

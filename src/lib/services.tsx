@@ -39,13 +39,6 @@ export const services: Service[] = [
       href: '/organize-pdf'
     },
     {
-      icon: <Pencil className="w-6 h-6 text-orange-500" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
-      title: 'Edit PDF',
-      description: 'Add text, images, and annotations to your PDF documents.',
-      href: '/edit-pdf'
-    },
-    {
       icon: <Image className="w-6 h-6 text-blue-500" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'PDF to JPG',
