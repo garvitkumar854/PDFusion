@@ -10,7 +10,7 @@ import AnimatedArrow from './AnimatedArrow';
 const toolsLinks = [
   { href: '/merger', label: 'Merge PDF' },
   { href: '/split-pdf', label: 'Split PDF' },
-  { href: '/compress-pdf', label: 'Compress PDF' },
+  { href: '/rotate-pdf', label: 'Rotate PDF' },
   { href: '/pdf-to-jpg', label: 'PDF to JPG' },
 ];
 
