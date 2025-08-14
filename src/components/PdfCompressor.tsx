@@ -258,7 +258,7 @@ export function PdfCompressor() {
                 </div>
             )}
             
-            <div className="pt-6 border-t h-20 flex flex-col justify-center">
+            <div className="pt-6 border-t flex flex-col justify-center">
               <AnimatePresence mode="wait">
                 {isProcessing ? (
                   <motion.div

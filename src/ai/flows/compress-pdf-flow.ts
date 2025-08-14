@@ -15,9 +15,9 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
 import os from 'os';
+import qpdf from 'qpdf-bin';
 
 const execAsync = promisify(exec);
-const qpdfPath = 'qpdf';
 
 const CompressPdfInputSchema = z.object({
   pdfDataUri: z.string().describe("The PDF file to compress, as a data URI."),
@@ -58,7 +58,7 @@ const compressPdfFlow = ai.defineFlow(
         await fs.writeFile(inputPath, pdfBytes);
 
         // Use qpdf to optimize the PDF structure
-        const qpdfCommand = `"${qpdfPath}" "${inputPath}" "${outputPath}" --object-streams=generate --recompress-flate --compression-level=9`;
+        const qpdfCommand = `"${qpdf.path}" "${inputPath}" "${outputPath}" --object-streams=generate --recompress-flate --compression-level=9`;
         await execAsync(qpdfCommand);
 
         const compressedBytes = await fs.readFile(outputPath);
