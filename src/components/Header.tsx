@@ -72,7 +72,6 @@ export default function Header() {
   const services = [
       { href: "/merger", label: "Merge PDF", icon: <Combine /> },
       { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
-      { href: "/compress-pdf", label: "Compress PDF", icon: <FileArchive /> },
       { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },

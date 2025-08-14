@@ -25,13 +25,6 @@ export const services: Service[] = [
       href: '/split-pdf'
     },
     {
-      icon: <FileArchive className="w-6 h-6 text-yellow-500" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Compress PDF',
-      description: 'Reduce file size while optimizing for maximal PDF quality.',
-      href: '/compress-pdf'
-    },
-    {
       icon: <ListOrdered className="w-6 h-6 text-cyan-500" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Organize PDF',
