@@ -10,14 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-import fs from 'fs/promises';
-import os from 'os';
-import qpdf from 'qpdf-bin';
-
-const execAsync = promisify(exec);
+import { PDFDocument } from 'pdf-lib';
 
 const CompressPdfInputSchema = z.object({
   pdfDataUri: z.string().describe("The PDF file to compress, as a data URI."),
@@ -48,45 +41,44 @@ const compressPdfFlow = ai.defineFlow(
     outputSchema: CompressPdfOutputSchema,
   },
   async ({ pdfDataUri }) => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf-compress-'));
-    const inputPath = path.join(tempDir, 'input.pdf');
-    const outputPath = path.join(tempDir, 'output.pdf');
-
     try {
         const pdfBytes = Buffer.from(pdfDataUri.split(',')[1], 'base64');
         const originalSize = pdfBytes.length;
-        await fs.writeFile(inputPath, pdfBytes);
 
-        // Use qpdf to optimize the PDF structure
-        const qpdfCommand = `"${qpdf.path}" "${inputPath}" "${outputPath}" --object-streams=generate --recompress-flate --compression-level=9`;
-        await execAsync(qpdfCommand);
+        const pdfDoc = await PDFDocument.load(pdfBytes, {
+            // Skips parsing of objects that are not required to save the document.
+            // This can significantly speed up loading of large documents.
+            updateMetadata: false
+        });
+        
+        // This process of saving the document with `pdf-lib` can itself
+        // result in a smaller file size due to optimization of the PDF structure.
+        const compressedBytes = await pdfDoc.save({
+            // Re-use existing objects when possible to reduce file size.
+            useObjectStreams: true,
+        });
 
-        const compressedBytes = await fs.readFile(outputPath);
         const newSize = compressedBytes.length;
 
         return {
-            pdfDataUri: `data:application/pdf;base64,${compressedBytes.toString('base64')}`,
+            pdfDataUri: `data:application/pdf;base64,${Buffer.from(compressedBytes).toString('base64')}`,
             stats: {
                 originalSize,
                 newSize,
-                pagesProcessed: 0, // qpdf doesn't easily expose this
-                imagesCompressed: 0, // qpdf doesn't recompress images in this mode
+                pagesProcessed: pdfDoc.getPageCount(),
+                imagesCompressed: 0, // pdf-lib does not re-compress images in this mode
             },
         };
 
     } catch (e: any) {
         console.error("Compression failed:", e);
         let userMessage = "Failed to compress PDF.";
-        if (e.stderr) {
-            if (e.stderr.includes('password') || e.stderr.includes('permission to open')) {
-                userMessage = "The file is password-protected and cannot be compressed.";
-            } else if (e.stderr.includes('is not a PDF file')) {
-                userMessage = "The file is corrupted or not a valid PDF.";
-            }
+        if (e.message.includes('encrypted')) {
+            userMessage = "The file is password-protected and cannot be compressed.";
+        } else if (e.message.includes('Invalid PDF')) {
+            userMessage = "The file is corrupted or not a valid PDF.";
         }
         return { error: userMessage };
-    } finally {
-        await fs.rm(tempDir, { recursive: true, force: true });
     }
   }
 );
