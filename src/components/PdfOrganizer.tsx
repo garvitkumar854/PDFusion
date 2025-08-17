@@ -350,7 +350,7 @@ export function PdfOrganizer() {
         </Card>
       ) : (
         <>
-            <Card className="sticky top-20 z-10 bg-background/95 border-b">
+            <Card className="bg-background/95 border-b">
                 <CardHeader className="flex flex-col gap-2 p-3 md:p-4">
                      <div className="flex items-center justify-between gap-2 w-full">
                         <CardTitle className="text-base sm:text-lg truncate flex-1 min-w-0" title={file?.file.name}>
