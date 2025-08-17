@@ -62,6 +62,8 @@ export function PdfOrganizer() {
   const dragOverItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const dragScrollInterval = useRef<number | null>(null);
+
 
   const operationId = useRef<number>(0);
   const { toast } = useToast();
@@ -72,6 +74,9 @@ export function PdfOrganizer() {
       // Cleanup pdf.js document to free memory
       if(file?.pdfjsDoc) {
         file.pdfjsDoc.destroy();
+      }
+      if (dragScrollInterval.current) {
+        cancelAnimationFrame(dragScrollInterval.current);
       }
     }
   }, [file]);
@@ -220,12 +225,16 @@ export function PdfOrganizer() {
     setIsDragging(false);
     dragItem.current = null;
     dragOverItem.current = null;
+    if (dragScrollInterval.current) {
+      cancelAnimationFrame(dragScrollInterval.current);
+      dragScrollInterval.current = null;
+    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!scrollContainerRef.current) return;
-
+    
     const container = scrollContainerRef.current;
     const { top, bottom, height } = container.getBoundingClientRect();
     const mouseY = e.clientY;
@@ -233,12 +242,27 @@ export function PdfOrganizer() {
     const scrollThreshold = height * 0.15; // 15% of container height for hot zone
     const maxScrollSpeed = 20; // pixels per frame
 
+    let scrollAmount = 0;
+    
     if (mouseY < top + scrollThreshold) {
-      const intensity = 1 - (mouseY - top) / scrollThreshold;
-      container.scrollTop -= maxScrollSpeed * intensity;
+      scrollAmount = -maxScrollSpeed * (1 - (mouseY - top) / scrollThreshold);
     } else if (mouseY > bottom - scrollThreshold) {
-      const intensity = 1 - (bottom - mouseY) / scrollThreshold;
-      container.scrollTop += maxScrollSpeed * intensity;
+      scrollAmount = maxScrollSpeed * (1 - (bottom - mouseY) / scrollThreshold);
+    }
+
+    if (scrollAmount !== 0) {
+        const scroll = () => {
+          container.scrollTop += scrollAmount;
+          dragScrollInterval.current = requestAnimationFrame(scroll);
+        };
+        if (!dragScrollInterval.current) {
+          dragScrollInterval.current = requestAnimationFrame(scroll);
+        }
+    } else {
+        if (dragScrollInterval.current) {
+          cancelAnimationFrame(dragScrollInterval.current);
+          dragScrollInterval.current = null;
+        }
     }
   }
   
@@ -513,5 +537,7 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
 PageCard.displayName = 'PageCard';
 
 
+
+    
 
     
