@@ -230,8 +230,8 @@ export function PdfOrganizer() {
     const { top, bottom, height } = container.getBoundingClientRect();
     const mouseY = e.clientY;
     
-    const scrollThreshold = height * 0.20; // 20% of the container height for the hot zone
-    const maxScrollSpeed = 15;
+    const scrollThreshold = height * 0.15; // 15% of container height for hot zone
+    const maxScrollSpeed = 20; // pixels per frame
 
     if (mouseY < top + scrollThreshold) {
       const intensity = 1 - (mouseY - top) / scrollThreshold;
@@ -351,25 +351,25 @@ export function PdfOrganizer() {
       ) : (
         <>
             <Card className="sticky top-20 z-10 bg-background/95 border-b">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 md:p-4">
-                    <div className="flex-grow min-w-0">
-                        <CardTitle className="text-base sm:text-lg truncate" title={file?.file.name}>
-                            Organizing: <span className="font-normal">{file?.file.name || 'Loading...'}</span>
+                <CardHeader className="flex flex-col gap-2 p-3 md:p-4">
+                     <div className="flex items-center justify-between gap-2 w-full">
+                        <CardTitle className="text-base sm:text-lg truncate flex-1 min-w-0" title={file?.file.name}>
+                            {file?.file.name || 'Loading...'}
                         </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">
-                            {isLoading ? 'Loading...' : `${pages.length} pages`}
-                        </CardDescription>
+                        <div className="flex gap-2 shrink-0">
+                            <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive" onClick={removeFile} disabled={isSaving || isLoading}>
+                                <X className="w-5 h-5" />
+                                <span className="sr-only">Change File</span>
+                            </Button>
+                            <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted} className="sm:w-auto">
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                                <span className="hidden sm:inline ml-2">Save</span>
+                            </Button>
+                        </div>
                     </div>
-                    <div className="flex gap-2 self-end sm:self-center">
-                         <Button variant="ghost" size="icon" className="w-9 h-9 text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isSaving || isLoading}>
-                            <X className="w-5 h-5" />
-                            <span className="sr-only">Change File</span>
-                         </Button>
-                         <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save
-                         </Button>
-                    </div>
+                    <CardDescription className="text-xs sm:text-sm">
+                        {isLoading ? 'Loading...' : `${pages.length} pages`}
+                    </CardDescription>
                 </CardHeader>
                 {file?.isEncrypted && (
                     <CardContent className="p-4 pt-0">
@@ -384,7 +384,7 @@ export function PdfOrganizer() {
               ref={scrollContainerRef}
               {...getRootProps({
                   onDragOver: handleDragOver, 
-                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)] sm:h-[45rem]',
+                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)] sm:h-[45rem] h-[34rem]',
                   onClick: (e) => {
                       if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
                           // Let page card handle its own click
