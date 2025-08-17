@@ -49,7 +49,7 @@ type PDFFile = {
 };
 
 
-export function PdfOrganizer() {
+export function PdfOrganizer({ onFileChange }: { onFileChange?: (isFile: boolean) => void }) {
   const [file, setFile] = useState<PDFFile | null>(null);
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +80,12 @@ export function PdfOrganizer() {
       }
     }
   }, [file]);
+  
+  useEffect(() => {
+    if (onFileChange) {
+      onFileChange(!!file);
+    }
+  }, [file, onFileChange]);
 
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return undefined;
@@ -408,7 +414,7 @@ export function PdfOrganizer() {
               ref={scrollContainerRef}
               {...getRootProps({
                   onDragOver: handleDragOver, 
-                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)] sm:h-[45rem] h-[34rem]',
+                  className: 'outline-none',
                   onClick: (e) => {
                       if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
                           // Let page card handle its own click

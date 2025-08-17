@@ -1,3 +1,4 @@
+
 "use client";
 
 import dynamic from 'next/dynamic';
@@ -8,6 +9,6 @@ const PdfOrganizer = dynamic(() => import('@/components/PdfOrganizer').then(mod 
   loading: () => <div className="flex justify-center items-center h-96"><LoadingDots /></div>
 });
 
-export default function PdfOrganizerLoader() {
-  return <PdfOrganizer />;
+export default function PdfOrganizerLoader({ onFileChange }: { onFileChange?: (isFile: boolean) => void }) {
+  return <PdfOrganizer onFileChange={onFileChange} />;
 }
