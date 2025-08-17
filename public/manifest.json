@@ -5,6 +5,7 @@
   "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
   "start_url": "/",
   "id": "/?source=pwa",
+  "version": "1.5.3",
   "display": "standalone",
   "display_override": [
     "window-controls-overlay",
