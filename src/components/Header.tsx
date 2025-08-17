@@ -48,7 +48,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-lg font-semibold transition-colors w-fit",
+            "group relative py-2 text-base font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -183,27 +183,27 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-4 items-start px-2 mb-6">
-                                <div className="flex flex-col gap-1 items-start">
+                            <nav className="flex flex-col gap-3 items-start px-2 mb-6">
+                                <div className="flex flex-col gap-1 items-start w-full">
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                </div>
                                 
-                                <div className="w-full">
-                                    <div className="text-lg font-semibold text-foreground pt-2 mb-2">Services</div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {services.map((service) => (
-                                            <Link 
-                                                key={service.href} 
-                                                href={service.href} 
-                                                onClick={() => setIsSheetOpen(false)} 
-                                                className="group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground"
-                                            >
-                                                {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
-                                                <span className="text-sm font-medium">{service.label}</span>
-                                            </Link>
-                                        ))}
+                                    <div className="w-full pt-2">
+                                        <div className="text-base font-semibold text-foreground mb-2">Services</div>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                            {services.map((service) => (
+                                                <Link 
+                                                    key={service.href} 
+                                                    href={service.href} 
+                                                    onClick={() => setIsSheetOpen(false)} 
+                                                    className="group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                >
+                                                    {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
+                                                    <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
