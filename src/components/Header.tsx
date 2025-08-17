@@ -48,7 +48,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-1 text-lg font-semibold transition-colors w-fit",
+            "group relative py-2 text-lg font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -183,17 +183,30 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-1 items-start px-2 mb-6">
-                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                <div className="text-lg font-semibold text-foreground pt-3">Services</div>
-                                {services.map((service) => (
-                                    <Link key={service.href} href={service.href} onClick={() => setIsSheetOpen(false)} className="flex items-center text-muted-foreground hover:text-primary transition-colors ml-4 py-1.5">
-                                        {React.cloneElement(service.icon, { className: 'mr-2 h-4 w-4' })}
-                                        {service.label}
-                                    </Link>
-                                ))}
+                            <nav className="flex flex-col gap-4 items-start px-2 mb-6">
+                                <div className="flex flex-col gap-1 items-start">
+                                    <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                </div>
+                                
+                                <div className="w-full">
+                                    <div className="text-lg font-semibold text-foreground pt-2 mb-2">Services</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {services.map((service) => (
+                                            <Link 
+                                                key={service.href} 
+                                                href={service.href} 
+                                                onClick={() => setIsSheetOpen(false)} 
+                                                className="group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            >
+                                                {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
+                                                <span className="text-sm font-medium">{service.label}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+
                                  <div className="pt-4 w-full">
                                     <InstallPWA inSheet={true} />
                                 </div>
