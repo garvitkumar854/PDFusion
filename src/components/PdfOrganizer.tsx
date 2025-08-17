@@ -230,8 +230,8 @@ export function PdfOrganizer() {
     const { top, bottom, height } = container.getBoundingClientRect();
     const mouseY = e.clientY;
     
-    const scrollThreshold = height * 0.25; // Increased sensitivity
-    const maxScrollSpeed = 20;
+    const scrollThreshold = height * 0.20; // 20% of the container height for the hot zone
+    const maxScrollSpeed = 15;
 
     if (mouseY < top + scrollThreshold) {
       const intensity = 1 - (mouseY - top) / scrollThreshold;
@@ -384,7 +384,7 @@ export function PdfOrganizer() {
               ref={scrollContainerRef}
               {...getRootProps({
                   onDragOver: handleDragOver, 
-                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)]',
+                  className: 'outline-none -mx-4 px-4 overflow-y-auto max-h-[calc(100vh-12rem)] sm:h-[45rem]',
                   onClick: (e) => {
                       if (isTouchDevice && (e.target as HTMLElement).closest('.page-card-container')) {
                           // Let page card handle its own click
@@ -512,3 +512,6 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
 });
 PageCard.displayName = 'PageCard';
 
+
+
+    
