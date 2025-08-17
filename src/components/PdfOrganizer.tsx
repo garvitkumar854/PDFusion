@@ -240,35 +240,44 @@ export function PdfOrganizer({ onFileChange }: { onFileChange?: (isFile: boolean
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!scrollContainerRef.current) return;
-    
+
     const container = scrollContainerRef.current;
-    const { top, bottom, height } = container.getBoundingClientRect();
+    const { top, height } = container.getBoundingClientRect();
     const mouseY = e.clientY;
     
-    const scrollThreshold = height * 0.15; // 15% of container height for hot zone
-    const maxScrollSpeed = 20; // pixels per frame
+    // Position of the mouse relative to the container (0 at top, 1 at bottom)
+    const relativeY = (mouseY - top) / height;
+
+    const scrollThreshold = 0.2; // 20% of container height for hot zone
+    const maxScrollSpeed = 25; // pixels per frame
 
     let scrollAmount = 0;
-    
-    if (mouseY < top + scrollThreshold) {
-      scrollAmount = -maxScrollSpeed * (1 - (mouseY - top) / scrollThreshold);
-    } else if (mouseY > bottom - scrollThreshold) {
-      scrollAmount = maxScrollSpeed * (1 - (bottom - mouseY) / scrollThreshold);
+
+    if (relativeY < scrollThreshold) {
+      // Scrolling up
+      const intensity = 1 - relativeY / scrollThreshold;
+      scrollAmount = -maxScrollSpeed * intensity * intensity;
+    } else if (relativeY > 1 - scrollThreshold) {
+      // Scrolling down
+      const intensity = (relativeY - (1 - scrollThreshold)) / scrollThreshold;
+      scrollAmount = maxScrollSpeed * intensity * intensity;
     }
 
     if (scrollAmount !== 0) {
-        const scroll = () => {
-          container.scrollTop += scrollAmount;
-          dragScrollInterval.current = requestAnimationFrame(scroll);
-        };
-        if (!dragScrollInterval.current) {
-          dragScrollInterval.current = requestAnimationFrame(scroll);
+      const scroll = () => {
+        container.scrollTop += scrollAmount;
+        if (isDragging) { // Continue scrolling as long as dragging is active
+            dragScrollInterval.current = requestAnimationFrame(scroll);
         }
+      };
+      if (!dragScrollInterval.current) {
+        dragScrollInterval.current = requestAnimationFrame(scroll);
+      }
     } else {
-        if (dragScrollInterval.current) {
-          cancelAnimationFrame(dragScrollInterval.current);
-          dragScrollInterval.current = null;
-        }
+      if (dragScrollInterval.current) {
+        cancelAnimationFrame(dragScrollInterval.current);
+        dragScrollInterval.current = null;
+      }
     }
   }
   
@@ -380,8 +389,8 @@ export function PdfOrganizer({ onFileChange }: { onFileChange?: (isFile: boolean
         </Card>
       ) : (
         <>
-            <Card className="bg-background/95 border-b">
-                <CardHeader className="flex flex-col gap-2 p-3 md:p-4">
+            <div className="bg-background/95 border-b p-3 md:p-4 rounded-lg">
+                 <div className="flex flex-col gap-2">
                      <div className="flex items-center justify-between gap-2 w-full">
                         <CardTitle className="text-base sm:text-lg truncate flex-1 min-w-0" title={file?.file.name}>
                             {file?.file.name || 'Loading...'}
@@ -392,24 +401,24 @@ export function PdfOrganizer({ onFileChange }: { onFileChange?: (isFile: boolean
                                 <span className="sr-only">Change File</span>
                             </Button>
                             <Button size="sm" onClick={handleSave} disabled={isSaving || isLoading || !file || file.isEncrypted} className="sm:w-auto">
-                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                                <span className="hidden sm:inline ml-2">Save</span>
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <CheckCircle className="h-4 w-4 sm:mr-2" />}
+                                <span className="hidden sm:inline">Save</span>
                             </Button>
                         </div>
                     </div>
                     <CardDescription className="text-xs sm:text-sm">
                         {isLoading ? 'Loading...' : `${pages.length} pages`}
                     </CardDescription>
-                </CardHeader>
+                </div>
                 {file?.isEncrypted && (
-                    <CardContent className="p-4 pt-0">
+                    <div className="mt-2">
                          <div className="flex items-center gap-3 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
                             <ShieldAlert className="h-5 w-5 shrink-0" />
                             <div>This PDF is password-protected and cannot be processed. Please upload an unlocked file.</div>
                         </div>
-                    </CardContent>
+                    </div>
                 )}
-            </Card>
+            </div>
             <div 
               ref={scrollContainerRef}
               {...getRootProps({
@@ -547,3 +556,4 @@ PageCard.displayName = 'PageCard';
     
 
     
+
