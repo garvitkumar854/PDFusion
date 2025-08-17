@@ -1,7 +1,6 @@
 
 'use client';
 
-import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
@@ -10,6 +9,9 @@ import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { usePwa } from '@/hooks/use-pwa';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import BottomNavbar from '@/components/BottomNavbar';
+import { useEffect, useState } from 'react';
 
 
 const poppins = Poppins({ 
@@ -23,71 +25,38 @@ const APP_DEFAULT_TITLE = "PDFusion: Your All-in-One PDF Toolkit";
 const APP_TITLE_TEMPLATE = "%s | PDFusion";
 const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.";
 
-// These are now static for the client component
-const metadata = {
-  applicationName: APP_NAME,
-  title: {
-    default: APP_DEFAULT_TITLE,
-    template: APP_TITLE_TEMPLATE,
-  },
-  description: APP_DESCRIPTION,
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: APP_DEFAULT_TITLE,
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/icons/icon-192x192.png',
-  },
-  openGraph: {
-    type: 'website',
-    siteName: APP_NAME,
-    title: {
-        default: APP_DEFAULT_TITLE,
-        template: APP_TITLE_TEMPLATE,
-    },
-    description: APP_DESCRIPTION,
-    url: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pdfusion.vercel.app'),
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'PDFusion - All-in-one PDF toolkit banner',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: {
-        default: APP_DEFAULT_TITLE,
-        template: APP_TITLE_TEMPLATE,
-    },
-    description: APP_DESCRIPTION,
-     images: ['/og-image.png'],
-  },
-};
-
-const viewport = {
-  themeColor: "#5e4dff",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   usePwa();
+  const isMobile = useIsMobile();
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    };
+    setIsStandalone(checkStandalone());
+  }, []);
   
+  const showBottomNav = isMobile && isStandalone;
+
   return (
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
       <head>
+        <title>{APP_DEFAULT_TITLE}</title>
+        <meta name="description" content={APP_DESCRIPTION} />
+        <meta name="application-name" content={APP_NAME} />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content={APP_DEFAULT_TITLE} />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="theme-color" content="#5e4dff" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
@@ -97,10 +66,10 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Header />
-            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
+            <main className={cn("flex-1 container mx-auto px-4 sm:px-6 lg:px-8", showBottomNav && "pb-24")}>
             {children}
             </main>
-            <FooterLoader />
+            {showBottomNav ? <BottomNavbar /> : <FooterLoader />}
             <Toaster />
           </ThemeProvider>
       </body>
