@@ -25,18 +25,9 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
   
   useEffect(() => {
     const checkStandalone = () => {
-      if (typeof window !== 'undefined') {
-        const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-        setIsStandalone(isStandaloneMode);
-      }
+      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     };
-    checkStandalone();
-    
-    if (typeof navigator !== 'undefined') {
-      const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      setIsIos(isIosDevice);
-    }
-    
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
@@ -47,13 +38,25 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
       setIsInstalling(false);
       setIsStandalone(true);
     };
+
+    setIsStandalone(checkStandalone());
+    
+    if (typeof navigator !== 'undefined') {
+      const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      setIsIos(isIosDevice);
+    }
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleChange = () => setIsStandalone(checkStandalone());
+    mediaQuery.addEventListener('change', handleChange);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
 
