@@ -129,11 +129,12 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               let { position } = textOptions;
               
               if (pageMode === 'facing') {
-                if (pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 === 0) { // Left page of a spread
-                    if(position.includes('right')) position = position.replace('right', 'left');
-                } else if (pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 !== 0) { // Right page of a spread
-                    if(position.includes('left')) position = position.replace('left', 'right');
-                }
+                  const isLeftPage = pageInfo.pageNumber % 2 !== 0; 
+                  if (isLeftPage && position.includes('right')) {
+                      position = position.replace('right', 'left');
+                  } else if (!isLeftPage && position.includes('left')) {
+                      position = position.replace('left', 'right');
+                  }
               }
 
               ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
@@ -166,17 +167,19 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
     }, [pageInfo.dataUrl, text, textOptions]);
 
     return (
-        <div ref={containerRef} className={cn("relative rounded-md border transition-all aspect-[7/10] bg-background shadow-sm", className)}>
+        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center", className)}>
+            <div className="relative aspect-[7/10] w-full">
             {pageInfo.dataUrl ? (
-                <canvas ref={ref} className="w-full h-full object-contain rounded-md" />
+                <canvas ref={ref} className="w-full h-full object-contain rounded-md border" />
             ) : (
-                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-xs p-2 text-center">
+                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-xs p-2 text-center rounded-md border">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     <span className="mt-2">Page {pageInfo.pageNumber}</span>
                 </div>
             )}
              <div className="absolute bottom-1 right-2 bg-black/50 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                 {pageInfo.pageNumber}
+            </div>
             </div>
         </div>
     );
@@ -375,10 +378,11 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            if (pageNum > 1 && pageNum % 2 === 0) { // Left page of a spread
-                if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-            } else if (pageNum > 1 && pageNum % 2 !== 0) { // Right page of a spread
-                if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+            const isLeftPage = pageNum % 2 !== 0; 
+            if (isLeftPage && position.includes('right')) {
+                effectivePosition = position.replace('right', 'left') as Position;
+            } else if (!isLeftPage && position.includes('left')) {
+                effectivePosition = position.replace('left', 'right') as Position;
             }
         }
         
@@ -529,10 +533,7 @@ export function PageNumberAdder() {
                                 <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (p.pageNumber === 1) { // Render first page alone
-                                            return <div key={p.pageNumber} className="md:col-span-2 flex justify-center"><PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} className="max-w-[50%]" /></div>
-                                        }
-                                        if (p.pageNumber % 2 !== 0) return null; // We only render the start of a pair
+                                        if (p.pageNumber % 2 === 0) return null; // We only render the start of a pair
 
                                         const secondPage = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
 
@@ -660,5 +661,3 @@ export function PageNumberAdder() {
     </div>
   );
 }
-
-    
