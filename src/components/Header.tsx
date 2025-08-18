@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil } from 'lucide-react';
 import Image from 'next/image';
@@ -18,6 +18,7 @@ import InstallPWA from './InstallPWA';
 import { ThemeToggle } from './ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
+import { useTheme } from 'next-themes';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -68,6 +69,12 @@ export default function Header() {
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
   const pathname = usePathname();
   const scrollDirection = useScrollDirection();
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const services = [
       { href: "/merger", label: "Merge PDF", icon: <Combine /> },
@@ -82,6 +89,8 @@ export default function Header() {
   ]
   const isServicesActive = services.some(s => pathname.startsWith(s.href));
 
+  const logoSrc = resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+
   return (
     <motion.header 
       className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg"
@@ -95,7 +104,7 @@ export default function Header() {
       <div className="container mx-auto px-4 flex justify-between items-center gap-4">
         <div className="flex-shrink-0 flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
+            {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
             <h1 className="text-xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                 PDFusion
@@ -181,7 +190,7 @@ export default function Header() {
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">
                                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
-                                    <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
+                                    {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
                                     <h1 className="text-xl font-bold tracking-tight">
                                     <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                                         PDFusion
