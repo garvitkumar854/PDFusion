@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { useTheme } from 'next-themes';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AnimatedArrow from './AnimatedArrow';
 
 const toolsLinks = [
@@ -37,7 +37,15 @@ const FooterLink = ({ href, label }: { href: string; label: string }) => {
 }
 
 export default function Footer() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc = resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
+  const githubLogoSrc = resolvedTheme === 'dark' ? '/github-light.svg' : '/github-dark.svg';
 
   return (
     <footer className="bg-background/95 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_12px_-5px_rgba(255,255,255,0.05)] border-t border-border/20">
@@ -46,7 +54,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="PDFusion Logo" width={32} height={32} />
+              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
               <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                   PDFusion
@@ -92,7 +100,7 @@ export default function Footer() {
                 <div className="flex gap-2 items-center">
                     <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                         <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-muted">
-                            <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={40} height={40} />
+                           {mounted ? <Image src={githubLogoSrc} alt="GitHub" width={40} height={40} /> : <div style={{width: 40, height: 40}} />}
                         </div>
                     </Link>
                     <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
