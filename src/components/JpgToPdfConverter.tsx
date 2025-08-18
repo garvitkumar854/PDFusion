@@ -38,7 +38,8 @@ const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 type ImageFile = {
   id: string;
   file: File;
-  previewUrl: string;
+  previewUrl: string | null;
+  error?: string;
 };
 
 type Orientation = "portrait" | "landscape";
@@ -53,9 +54,16 @@ interface PagePreviewProps {
 }
 
 const PagePreview = React.memo(
-  function PagePreview(props: PagePreviewProps) {
-    const { fileInfo, orientation, pageSize, marginSize } = props;
-
+  function PagePreview({ fileInfo, orientation, pageSize, marginSize }: PagePreviewProps) {
+    if (!fileInfo.previewUrl) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-destructive/10 rounded-lg text-destructive text-xs">
+          <AlertTriangle className="w-6 h-6 mb-2" />
+          Preview failed to load.
+        </div>
+      );
+    }
+    
     if (pageSize === 'Fit') {
         return (
              <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
@@ -115,6 +123,7 @@ const PagePreview = React.memo(
   (prevProps, nextProps) => {
     return (
         prevProps.fileInfo.id === nextProps.fileInfo.id &&
+        prevProps.fileInfo.previewUrl === nextProps.fileInfo.previewUrl &&
         prevProps.orientation === nextProps.orientation &&
         prevProps.pageSize === nextProps.pageSize &&
         prevProps.marginSize === nextProps.marginSize
@@ -154,17 +163,20 @@ export function JpgToPdfConverter() {
   
   const operationId = useRef<number>(0);
   const { toast } = useToast();
-
+  
   useEffect(() => {
     return () => {
       operationId.current = 0;
-      files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+      files.forEach(f => {
+        if(f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+      });
       if (conversionResults) {
         conversionResults.forEach(r => URL.revokeObjectURL(r.url));
       }
     };
-  }, [files, conversionResults]);
-  
+  }, []); // Only on mount and unmount
+
+
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: any[]) => {
       if (files.length + acceptedFiles.length > MAX_FILES) {
@@ -186,21 +198,46 @@ export function JpgToPdfConverter() {
         return true;
       });
 
-      const filesToAdd = newFiles.map(file => ({ 
+      const filesToProcess = newFiles.map(file => ({ 
         id: `${file.name}-${Date.now()}`, 
         file,
-        previewUrl: URL.createObjectURL(file),
+        previewUrl: null,
       }));
       
-      setFiles(prev => [...prev, ...filesToAdd]);
+      setFiles(prev => [...prev, ...filesToProcess]);
       setTotalSize(prev => prev + newFiles.reduce((acc, file) => acc + file.size, 0));
 
-      if (filesToAdd.length > 0) {
+      if (filesToProcess.length > 0) {
         toast({
             variant: "success",
-            title: `${filesToAdd.length} image(s) added successfully!`,
+            title: `${filesToProcess.length} image(s) added successfully!`,
         });
       }
+      
+      filesToProcess.forEach(fileToProcess => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(fileToProcess.file);
+        
+        img.onload = () => {
+          setFiles(currentFiles => 
+            currentFiles.map(f => 
+              f.id === fileToProcess.id ? { ...f, previewUrl: objectUrl } : f
+            )
+          );
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          toast({
+              variant: "destructive",
+              title: "Preview Failed",
+              description: `Could not load preview for "${fileToProcess.file.name}". It might be corrupted. File removed.`
+          });
+          setFiles(currentFiles => currentFiles.filter(f => f.id !== fileToProcess.id));
+          setTotalSize(currentSize => currentSize - fileToProcess.file.size);
+        };
+        
+        img.src = objectUrl;
+      });
 
       if (rejectedFiles.length > 0) {
         toast({ variant: "destructive", title: "Invalid file(s) rejected", description: "Some files were not valid image types or exceeded size limits." });
@@ -224,9 +261,13 @@ export function JpgToPdfConverter() {
         dragItem.current = null;
         dragOverItem.current = null;
         setTimeout(() => {
-            const fileToRevoke = files.find(f => f.id === fileId);
-            setFiles(prev => prev.filter(f => f.id !== fileId));
-            setTotalSize(prev => prev - (fileToRevoke?.file.size || 0));
+            setFiles(prev => prev.filter(f => {
+               if (f.id === fileId && f.previewUrl) {
+                  URL.revokeObjectURL(f.previewUrl);
+               }
+               return f.id !== fileId;
+            }));
+            setTotalSize(prev => prev - (fileToRemove?.file.size || 0));
             toast({ variant: "info", title: `Removed "${fileToRemove.file.name}"` });
             setRemovingFileId(null);
         }, 300);
@@ -234,7 +275,9 @@ export function JpgToPdfConverter() {
   };
   
   const handleClearAll = () => {
-    files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    files.forEach(f => {
+      if(f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+    });
     setFiles([]);
     setTotalSize(0);
     toast({ variant: "info", title: "All files cleared." });
@@ -280,8 +323,12 @@ export function JpgToPdfConverter() {
           'image/jpeg',
           imageQuality / 100
         );
+        URL.revokeObjectURL(img.src);
       };
-      img.onerror = reject;
+      img.onerror = (e) => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error("Image failed to load for recompression."));
+      }
       img.src = URL.createObjectURL(file);
     });
   };
@@ -538,7 +585,13 @@ export function JpgToPdfConverter() {
                                 )}
                                 tabIndex={0}
                             >
-                                <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                {imgFile.previewUrl ? (
+                                    <PagePreview fileInfo={imgFile} orientation={orientation} pageSize={pageSize} marginSize={marginSize} />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                    </div>
+                                )}
                                 <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                                     <Button 
                                         variant="ghost" 
