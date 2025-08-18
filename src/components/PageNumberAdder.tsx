@@ -129,9 +129,9 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               let { position } = textOptions;
               
               if (pageMode === 'facing') {
-                if(pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 === 0) { // is a left page
+                if (pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 === 0) { // Left page of a spread
                     if(position.includes('right')) position = position.replace('right', 'left');
-                } else if(pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 !== 0) { // is a right page
+                } else if (pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 !== 0) { // Right page of a spread
                     if(position.includes('left')) position = position.replace('left', 'right');
                 }
               }
@@ -525,7 +525,7 @@ export function PageNumberAdder() {
                         <CardHeader><CardTitle className="text-xl">Preview</CardTitle></CardHeader>
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                            <div className="overflow-y-auto lg:h-[1200px] pr-2">
+                            <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
                                 <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
@@ -661,3 +661,4 @@ export function PageNumberAdder() {
   );
 }
 
+    
