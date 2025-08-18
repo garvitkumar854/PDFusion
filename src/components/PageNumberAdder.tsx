@@ -122,75 +122,80 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
         
         const img = new Image();
         img.onload = () => {
-          const devicePixelRatio = window.devicePixelRatio || 1;
-          const backingStoreRatio = (ctx as any).webkitBackingStorePixelRatio || (ctx as any).mozBackingStorePixelRatio || (ctx as any).msBackingStorePixelRatio || (ctx as any).oBackingStorePixelRatio || (ctx as any).backingStorePixelRatio || 1;
-          const ratio = devicePixelRatio / backingStoreRatio;
+            const dpr = window.devicePixelRatio || 1;
+            const canvasWidth = pageInfo.width!;
+            const canvasHeight = pageInfo.height!;
 
-          const canvasWidth = pageInfo.width!;
-          const canvasHeight = pageInfo.height!;
-          
-          canvas.width = canvasWidth * ratio;
-          canvas.height = canvasHeight * ratio;
-          canvas.style.width = `${canvasWidth}px`;
-          canvas.style.height = `${canvasHeight}px`;
-          
-          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+            canvas.style.width = `${canvasWidth}px`;
+            canvas.style.height = `${canvasHeight}px`;
+            ctx.scale(dpr, dpr);
 
-          ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+            ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
-          if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
-              const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
-              let { position } = textOptions;
-              
-              if (pageMode === 'facing') {
-                  const isLeftPage = (pageInfo.pageNumber-1) % 2 === 0;
-                  if (pageInfo.pageNumber > 0) {
-                    if (isLeftPage && position.includes('right')) {
-                        position = position.replace('right', 'left');
-                    } else if (!isLeftPage && position.includes('left')) {
+            if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
+                const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
+                let { position } = textOptions;
+
+                const isFacingMode = pageMode === 'facing';
+                const isEvenPage = pageInfo.pageNumber % 2 === 0;
+
+                if (isFacingMode && pageInfo.pageNumber > 0) {
+                    if (isEvenPage && position.includes('left')) {
                         position = position.replace('left', 'right');
+                    } else if (!isEvenPage && position.includes('right')) {
+                        position = position.replace('right', 'left');
                     }
-                  }
-              }
+                }
 
-              ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}pt ${font}`;
-              ctx.fillStyle = textColor;
-              ctx.textBaseline = 'alphabetic';
-              const textMetrics = ctx.measureText(text);
-              const textHeight = fontSize; // in points
+                ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
+                ctx.fillStyle = textColor;
+                ctx.textBaseline = 'alphabetic';
 
-              let x = 0, y = 0;
-              const [vPos, hPos] = position.split('-');
+                // Scale font size for preview canvas
+                const pdfFontSizeInPx = (fontSize / 72) * 96; // Approximate conversion from pt to px
+                const scaleRatio = canvasWidth / pageInfo.width!; // should be 1
+                const previewFontSize = pdfFontSizeInPx * scaleRatio;
+                ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${previewFontSize}px ${font}`;
 
-              if (vPos === 'top') y = canvasHeight - margin;
-              else y = margin + textHeight * 0.8;
+                const textMetrics = ctx.measureText(text);
+                const textHeight = previewFontSize;
+                
+                const previewMargin = (margin / pageInfo.width!) * canvasWidth;
 
-              if (hPos === 'left') x = margin;
-              else if (hPos === 'center') x = (canvasWidth - textMetrics.width) / 2;
-              else x = canvasWidth - margin - textMetrics.width;
+                let x = 0, y = 0;
+                const [vPos, hPos] = position.split('-');
 
-              ctx.fillText(text, x, y);
-              
-              if (isUnderline) {
-                ctx.beginPath();
-                ctx.moveTo(x, y + 2);
-                ctx.lineTo(x + textMetrics.width, y + 2);
-                ctx.strokeStyle = textColor;
-                ctx.lineWidth = Math.max(0.5, fontSize / 15);
-                ctx.stroke();
-              }
-          }
+                if (vPos === 'top') y = previewMargin + textHeight;
+                else y = canvasHeight - previewMargin;
+
+                if (hPos === 'left') x = previewMargin;
+                else if (hPos === 'center') x = (canvasWidth - textMetrics.width) / 2;
+                else x = canvasWidth - previewMargin - textMetrics.width;
+
+                ctx.fillText(text, x, y);
+
+                if (isUnderline) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + 2);
+                    ctx.lineTo(x + textMetrics.width, y + 2);
+                    ctx.strokeStyle = textColor;
+                    ctx.lineWidth = Math.max(0.5, previewFontSize / 15);
+                    ctx.stroke();
+                }
+            }
         };
         img.src = pageInfo.dataUrl;
     }, [pageInfo.dataUrl, text, textOptions, pageInfo.width, pageInfo.height]);
 
     return (
-        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
+        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center border rounded-md", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
             <div className="relative w-full h-full">
             {pageInfo.dataUrl ? (
-                <canvas ref={ref} className="w-full h-full object-contain rounded-md border" />
+                <canvas ref={ref} className="w-full h-full object-contain" />
             ) : (
-                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-xs p-2 text-center rounded-md border">
+                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-xs p-2 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     <span className="mt-2">Page {pageInfo.pageNumber}</span>
                 </div>
@@ -232,18 +237,23 @@ export function PageNumberAdder() {
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return null;
     try {
-      const page = await pdfjsDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const context = canvas.getContext('2d');
-      if (context) {
-          await page.render({ canvasContext: context, viewport }).promise;
-           if (operationId.current !== currentOperationId) return null;
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-          return { dataUrl, width: viewport.width, height: viewport.height };
-      }
+        const page = await pdfjsDoc.getPage(pageNum);
+        const desiredWidth = 500; // Render at a higher base resolution for clarity
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = desiredWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+        const context = canvas.getContext('2d');
+        if (context) {
+            await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+            if (operationId.current !== currentOperationId) return null;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            // Pass original PDF page dimensions for accurate text placement
+            return { dataUrl, width: viewport.width, height: viewport.height };
+        }
     } catch (e) {
       console.error(`Error rendering page ${pageNum}:`, e);
     }
@@ -398,17 +408,16 @@ export function PageNumberAdder() {
         const numFontSize = Number(fontSize);
         const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
         
-        let x = 0, y = 0;
         let effectivePosition = position;
         
-        if (pageMode === 'facing') {
-            const isLeftPage = (pageNum-1) % 2 === 0;
-            if (pageNum > 0) {
-              if (isLeftPage && position.includes('right')) {
-                  effectivePosition = position.replace('right', 'left') as Position;
-              } else if (!isLeftPage && position.includes('left')) {
-                  effectivePosition = position.replace('left', 'right') as Position;
-              }
+        const isFacingMode = pageMode === 'facing';
+        const isEvenPage = pageNum % 2 === 0;
+
+        if (isFacingMode && pageNum > 0) {
+            if (isEvenPage && position.includes('left')) {
+                effectivePosition = position.replace('left', 'right') as Position;
+            } else if (!isEvenPage && position.includes('right')) {
+                effectivePosition = position.replace('right', 'left') as Position;
             }
         }
         
@@ -417,8 +426,8 @@ export function PageNumberAdder() {
         const margin = MARGIN_MAP[marginSize];
         const textHeight = embeddedFont.heightAtSize(numFontSize);
 
-        if (vPos === 'top') y = height - margin - textHeight;
-        else y = margin;
+        if (vPos === 'top') y = height - margin;
+        else y = margin + textHeight;
         
         if (hPos === 'left') x = margin;
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
@@ -557,7 +566,7 @@ export function PageNumberAdder() {
                                 <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (i % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
+                                        if ((i + 1) % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
                                         
                                         const firstPageInPair = pagePreviews[i];
                                         const secondPageInPair = pagePreviews[i+1];
@@ -589,7 +598,7 @@ export function PageNumberAdder() {
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
+                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-1 grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
                                     <Label htmlFor="pm-s" className={cn("flex items-center justify-center space-x-2 border rounded-md p-2 cursor-pointer", pageMode === 'single' && 'border-primary')}>
                                       <RadioGroupItem value="single" id="pm-s" /><span>Single page</span>
                                     </Label>
@@ -602,8 +611,12 @@ export function PageNumberAdder() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="font-semibold">Position</Label>
-                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-square">
-                                        {positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button> ))}
+                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-[3/2]">
+                                        {positions.map(p => ( 
+                                          <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className="rounded-md transition-colors relative flex items-center justify-center group">
+                                             <span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span>
+                                          </button> 
+                                        ))}
                                     </div>
                                 </div>
                                 <div>
