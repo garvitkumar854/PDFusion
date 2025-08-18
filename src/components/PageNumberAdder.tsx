@@ -60,6 +60,8 @@ type MarginSize = 'small' | 'recommended' | 'big';
 type PagePreviewInfo = {
   pageNumber: number;
   dataUrl?: string;
+  width?: number;
+  height?: number;
 };
 
 const FONT_MAP: Record<Font, StandardFonts> = {
@@ -120,19 +122,8 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
         
         const img = new Image();
         img.onload = () => {
-          const canvasAspectRatio = canvas.width / canvas.height;
-          const imageAspectRatio = img.width / img.height;
-          let drawWidth = canvas.width;
-          let drawHeight = canvas.height;
-
-          if(canvasAspectRatio > imageAspectRatio) {
-            drawHeight = canvas.width / imageAspectRatio;
-          } else {
-            drawWidth = canvas.height * imageAspectRatio;
-          }
-
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = pageInfo.width!;
+          canvas.height = pageInfo.height!;
           ctx.drawImage(img, 0, 0);
 
           if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
@@ -140,7 +131,7 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               let { position } = textOptions;
               
               if (pageMode === 'facing') {
-                  const isLeftPage = (pageInfo.pageNumber - 1) % 2 === 0;
+                  const isLeftPage = (pageInfo.pageNumber) % 2 !== 0; // 1, 3, 5 are left pages
                   if (isLeftPage && position.includes('right')) {
                       position = position.replace('right', 'left');
                   } else if (!isLeftPage && position.includes('left')) {
@@ -176,11 +167,13 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
           }
         };
         img.src = pageInfo.dataUrl;
-    }, [pageInfo.dataUrl, text, textOptions]);
+    }, [pageInfo.dataUrl, text, textOptions, pageInfo.width, pageInfo.height]);
+    
+    const aspectRatio = pageInfo.width && pageInfo.height ? pageInfo.width / pageInfo.height : 7/10;
 
     return (
-        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center", className)}>
-            <div className="relative aspect-[7/10] w-full">
+        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center", className)} style={{ aspectRatio }}>
+            <div className="relative w-full h-full">
             {pageInfo.dataUrl ? (
                 <canvas ref={ref} className="w-full h-full object-contain rounded-md border" />
             ) : (
@@ -235,7 +228,8 @@ export function PageNumberAdder() {
       if (context) {
           await page.render({ canvasContext: context, viewport }).promise;
            if (operationId.current !== currentOperationId) return null;
-          return canvas.toDataURL('image/jpeg', 0.9);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          return { dataUrl, width: canvas.width, height: canvas.height };
       }
     } catch (e) {
       console.error(`Error rendering page ${pageNum}:`, e);
@@ -305,13 +299,13 @@ export function PageNumberAdder() {
         if (pageIndex === -1 || prev[pageIndex].dataUrl) return prev;
 
         const newPreviews = [...prev];
-        renderPage(file.pdfjsDoc!, pageNumber, currentOperationId).then(dataUrl => {
-            if (dataUrl && operationId.current === currentOperationId) {
+        renderPage(file.pdfjsDoc!, pageNumber, currentOperationId).then(renderResult => {
+            if (renderResult && operationId.current === currentOperationId) {
                 setPagePreviews(current => {
                     const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
                     if (latestIndex > -1) {
                        const finalPreviews = [...current];
-                       finalPreviews[latestIndex].dataUrl = dataUrl;
+                       finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], ...renderResult };
                        return finalPreviews;
                     }
                     return current;
@@ -387,7 +381,7 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = (pageNum -1) % 2 === 0;
+            const isLeftPage = (pageNum) % 2 !== 0; // 1, 3, 5 are left
             if (isLeftPage && position.includes('right')) {
                 effectivePosition = position.replace('right', 'left') as Position;
             } else if (!isLeftPage && position.includes('left')) {
@@ -542,18 +536,10 @@ export function PageNumberAdder() {
                                 <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (i === 0) { // Page 1 is always single on the right
-                                            return (
-                                                <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
-                                                    <div></div>
-                                                    <PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
-                                                </div>
-                                            )
-                                        }
-                                        if (p.pageNumber % 2 !== 0) return null; // We render pairs starting from even numbers (page 2)
-
-                                        const firstPageInPair = pagePreviews.find(sp => sp.pageNumber === p.pageNumber);
-                                        const secondPageInPair = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
+                                        if (i % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
+                                        
+                                        const firstPageInPair = pagePreviews[i];
+                                        const secondPageInPair = pagePreviews[i+1];
                                         
                                         return (
                                             <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
@@ -580,11 +566,15 @@ export function PageNumberAdder() {
                         <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
-                             <div>
+                            <div>
                                 <Label className="font-semibold">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 flex space-x-4" disabled={isProcessing || file.isEncrypted}>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="single" id="pm-s" /><Label htmlFor="pm-s" className="cursor-pointer">Single page</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="facing" id="pm-f" /><Label htmlFor="pm-f" className="cursor-pointer">Facing pages</Label></div>
+                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
+                                    <Label htmlFor="pm-s" className={cn("flex items-center space-x-2 border rounded-md p-2 cursor-pointer", pageMode === 'single' && 'border-primary')}>
+                                      <RadioGroupItem value="single" id="pm-s" /><span>Single page</span>
+                                    </Label>
+                                    <Label htmlFor="pm-f" className={cn("flex items-center space-x-2 border rounded-md p-2 cursor-pointer", pageMode === 'facing' && 'border-primary')}>
+                                      <RadioGroupItem value="facing" id="pm-f" /><span>Facing pages</span>
+                                    </Label>
                                 </RadioGroup>
                             </div>
 
