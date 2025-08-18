@@ -140,16 +140,22 @@ export default function Header() {
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-auto"
                   >
                     <div className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-2 w-max">
-                      {services.map((service) => (
+                      {services.map((service) => {
+                        const isActive = pathname.startsWith(service.href);
+                        return (
                         <Link
                           href={service.href}
                           key={service.href}
-                          className="group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                          className={cn(
+                            "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                            isActive && "bg-accent text-accent-foreground"
+                          )}
                         >
                           {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
                           <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
                         </Link>
-                      ))}
+                        )
+                      })}
                     </div>
                   </motion.div>
                 )}
@@ -192,17 +198,22 @@ export default function Header() {
                                     <div className="w-full pt-2">
                                         <div className="text-base font-semibold text-foreground mb-2">Services</div>
                                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                            {services.map((service) => (
+                                            {services.map((service) => {
+                                                const isActive = pathname.startsWith(service.href);
+                                                return (
                                                 <Link 
                                                     key={service.href} 
                                                     href={service.href} 
                                                     onClick={() => setIsSheetOpen(false)} 
-                                                    className="group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                    className={cn(
+                                                        "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                                        isActive && "bg-accent text-accent-foreground"
+                                                    )}
                                                 >
                                                     {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
                                                     <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
                                                 </Link>
-                                            ))}
+                                            )})}
                                         </div>
                                     </div>
                                 </div>
