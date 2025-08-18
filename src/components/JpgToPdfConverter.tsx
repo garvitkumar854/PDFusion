@@ -28,6 +28,7 @@ import JSZip from 'jszip';
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { Input } from "./ui/input";
 
 
 const MAX_FILES = 50;
@@ -157,6 +158,7 @@ export function JpgToPdfConverter() {
   const [marginSize, setMarginSize] = useState<MarginSize>("none");
   const [mergeIntoOnePdf, setMergeIntoOnePdf] = useState(true);
   const [imageQuality, setImageQuality] = useState(80);
+  const [outputFilename, setOutputFilename] = useState("converted_document.pdf");
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -376,7 +378,8 @@ export function JpgToPdfConverter() {
                     if(mergeIntoOnePdf) {
                         const mergedBytes = await mergedPdf.save();
                         const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-                        results.push({ url: URL.createObjectURL(blob), filename: 'converted_document.pdf' });
+                        const finalFilename = outputFilename.endsWith('.pdf') ? outputFilename : `${outputFilename}.pdf`;
+                        results.push({ url: URL.createObjectURL(blob), filename: finalFilename });
                     } else {
                         if(pdfDocs.length === 1) {
                             const blob = new Blob([pdfDocs[0].bytes], { type: 'application/pdf' });
@@ -385,7 +388,8 @@ export function JpgToPdfConverter() {
                             const zip = new JSZip();
                             pdfDocs.forEach(doc => zip.file(doc.name, doc.bytes));
                             const zipBlob = await zip.generateAsync({type:"blob"});
-                            results.push({ url: URL.createObjectURL(zipBlob), filename: 'converted_images.zip' });
+                            const finalFilename = outputFilename.endsWith('.zip') ? outputFilename : `${outputFilename}.zip`;
+                            results.push({ url: URL.createObjectURL(zipBlob), filename: finalFilename });
                         }
                     }
                     
@@ -687,6 +691,18 @@ export function JpgToPdfConverter() {
                 <div className={cn("flex items-center space-x-2 pt-4 border-t", isConverting && "opacity-70 pointer-events-none")}>
                     <Checkbox id="merge" checked={mergeIntoOnePdf} onCheckedChange={(c) => setMergeIntoOnePdf(Boolean(c))} disabled={isConverting} />
                     <Label htmlFor="merge" className="font-semibold cursor-pointer">Merge all images into one PDF file</Label>
+                </div>
+
+                <div className={cn("pt-4 border-t", isConverting && "opacity-70 pointer-events-none")}>
+                    <Label htmlFor="output-filename" className="font-semibold">Output Filename</Label>
+                    <Input 
+                        id="output-filename" 
+                        value={outputFilename} 
+                        onChange={(e) => setOutputFilename(e.target.value)}
+                        className="mt-1"
+                        placeholder="e.g., converted_document.pdf"
+                        disabled={isConverting}
+                    />
                 </div>
                 
                 <div className="pt-6 border-t h-[104px] flex flex-col justify-center">
