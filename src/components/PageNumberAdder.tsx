@@ -54,6 +54,8 @@ type Position = "top-left" | "top-center" | "top-right" | "bottom-left" | "botto
 type Font = "Helvetica" | "TimesRoman" | "Courier";
 type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
 type PageMode = "single" | "facing";
+type MarginSize = 'small' | 'recommended' | 'big';
+
 
 type PagePreviewInfo = {
   pageNumber: number;
@@ -70,6 +72,12 @@ const FONT_STYLE_MAP: Record<Font, { bold: StandardFonts, italic: StandardFonts,
     Helvetica: { bold: StandardFonts.HelveticaBold, italic: StandardFonts.HelveticaOblique, boldItalic: StandardFonts.HelveticaBoldOblique },
     TimesRoman: { bold: StandardFonts.TimesRomanBold, italic: StandardFonts.TimesRomanItalic, boldItalic: StandardFonts.TimesRomanBoldItalic },
     Courier: { bold: StandardFonts.CourierBold, italic: StandardFonts.CourierOblique, boldItalic: StandardFonts.CourierBoldOblique },
+}
+
+const MARGIN_MAP: Record<MarginSize, number> = {
+    small: 24,
+    recommended: 36,
+    big: 72,
 }
 
 const hexToRgb = (hex: string) => {
@@ -120,13 +128,12 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
               let { position } = textOptions;
               
-              if(pageMode === 'facing' && position.includes('-')) {
-                 const isOddPage = pageInfo.pageNumber % 2 !== 0; // Left page in a spread
-                 if (isOddPage) {
-                    if (position.includes('right')) position = position.replace('right', 'left');
-                 } else {
-                    if (position.includes('left')) position = position.replace('left', 'right');
-                 }
+              if (pageMode === 'facing') {
+                if(pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 === 0) { // is a left page
+                    if(position.includes('right')) position = position.replace('right', 'left');
+                } else if(pageInfo.pageNumber > 1 && pageInfo.pageNumber % 2 !== 0) { // is a right page
+                    if(position.includes('left')) position = position.replace('left', 'right');
+                }
               }
 
               ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
@@ -186,8 +193,8 @@ export function PageNumberAdder() {
 
   // Options
   const [position, setPosition] = useState<Position>("bottom-center");
-  const [margin, setMargin] = useState(36);
-  const [fontSize, setFontSize] = useState(12);
+  const [marginSize, setMarginSize] = useState<MarginSize>('recommended');
+  const [fontSize, setFontSize] = useState<number | string>(12);
   const [font, setFont] = useState<Font>("Helvetica");
   const [textColor, setTextColor] = useState("#000000");
   const [isBold, setIsBold] = useState(false);
@@ -360,23 +367,25 @@ export function PageNumberAdder() {
         const { width, height } = page.getSize();
         const pageNum = i + 1;
         const text = getPageNumberText(pageNum, totalPages);
-        const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-        const textHeight = embeddedFont.heightAtSize(fontSize);
+        const numFontSize = Number(fontSize);
+        const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
+        const textHeight = embeddedFont.heightAtSize(numFontSize);
         
         let x = 0, y = 0;
         let effectivePosition = position;
         
-        if(pageMode === 'facing' && position.includes('-')) {
-            const isOddPage = pageNum % 2 !== 0; // Left page in a spread
-            if (isOddPage) {
+        if (pageMode === 'facing') {
+            if (pageNum > 1 && pageNum % 2 === 0) { // Left page of a spread
                 if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-            } else {
+            } else if (pageNum > 1 && pageNum % 2 !== 0) { // Right page of a spread
                 if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
             }
         }
         
         const [vPos, hPos] = effectivePosition.split('-');
         
+        const margin = MARGIN_MAP[marginSize];
+
         if (vPos === 'top') y = height - margin;
         else y = margin;
         
@@ -387,13 +396,13 @@ export function PageNumberAdder() {
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
         else x = width - margin - textWidth;
 
-        page.drawText(text, { x, y, size: fontSize, font: embeddedFont, color: rgb(colorRgb.r, colorRgb.g, colorRgb.b) });
+        page.drawText(text, { x, y, size: numFontSize, font: embeddedFont, color: rgb(colorRgb.r, colorRgb.g, colorRgb.b) });
 
         if (isUnderline) {
           page.drawLine({
             start: { x: x, y: y - 2 },
             end: { x: x + textWidth, y: y - 2 },
-            thickness: Math.max(0.5, fontSize / 15),
+            thickness: Math.max(0.5, numFontSize / 15),
             color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
           });
         }
@@ -448,7 +457,7 @@ export function PageNumberAdder() {
     setTimeout(() => { document.body.removeChild(link) }, 100);
   };
 
-  const textOptions = { startPage, endPage, font, isBold, isItalic, fontSize, textColor, isUnderline, position, margin, pageMode };
+  const textOptions = { startPage, endPage, font, isBold, isItalic, fontSize: Number(fontSize), textColor, isUnderline, position, margin: MARGIN_MAP[marginSize], pageMode };
   const totalPages = file?.pdfjsDoc?.numPages || 0;
 
   if (result) {
@@ -516,12 +525,14 @@ export function PageNumberAdder() {
                         <CardHeader><CardTitle className="text-xl">Preview</CardTitle></CardHeader>
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                            <div className="overflow-y-auto h-[1200px] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
+                            <div className="overflow-y-auto lg:h-[1200px] pr-2">
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        const isOddPage = p.pageNumber % 2 !== 0;
-                                        if (!isOddPage) return null; // We only render the start of a pair
+                                        if (p.pageNumber === 1) { // Render first page alone
+                                            return <div key={p.pageNumber} className="md:col-span-2 flex justify-center"><PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} className="max-w-[50%]" /></div>
+                                        }
+                                        if (p.pageNumber % 2 !== 0) return null; // We only render the start of a pair
 
                                         const secondPage = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
 
@@ -552,13 +563,13 @@ export function PageNumberAdder() {
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                              <div>
                                 <Label className="font-semibold">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 flex space-x-2" disabled={isProcessing || file.isEncrypted}>
+                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 flex space-x-4" disabled={isProcessing || file.isEncrypted}>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="single" id="pm-s" /><Label htmlFor="pm-s" className="cursor-pointer">Single page</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="facing" id="pm-f" /><Label htmlFor="pm-f" className="cursor-pointer">Facing pages</Label></div>
                                 </RadioGroup>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="font-semibold">Position</Label>
                                     <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 h-16 p-1 rounded-lg bg-muted">
@@ -593,8 +604,21 @@ export function PageNumberAdder() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                 <div><Label htmlFor="margin" className="font-semibold">Margin</Label><Input id="margin" type="number" value={margin} onChange={e => setMargin(Number(e.target.value))} className="mt-1" disabled={isProcessing || file.isEncrypted}/></div>
-                                <div><Label htmlFor="font-size" className="font-semibold">Font Size</Label><Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} className="mt-1" disabled={isProcessing || file.isEncrypted}/></div>
+                                 <div>
+                                    <Label htmlFor="margin" className="font-semibold">Margin</Label>
+                                    <Select value={marginSize} onValueChange={v => setMarginSize(v as MarginSize)} disabled={isProcessing || file.isEncrypted}>
+                                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="small">Small</SelectItem>
+                                            <SelectItem value="recommended">Recommended</SelectItem>
+                                            <SelectItem value="big">Big</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                 </div>
+                                <div>
+                                    <Label htmlFor="font-size" className="font-semibold">Font Size</Label>
+                                    <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value)))} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><Label htmlFor="font" className="font-semibold">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing || file.isEncrypted}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
@@ -636,3 +660,4 @@ export function PageNumberAdder() {
     </div>
   );
 }
+
