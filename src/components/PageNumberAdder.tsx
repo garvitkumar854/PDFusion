@@ -162,7 +162,6 @@ export function PageNumberAdder() {
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
   const operationId = useRef<number>(0);
-  const rerenderTimeout = useRef<number | null>(null);
   const { toast } = useToast();
 
   const getPageNumberText = useCallback((logicalPageNumber: number, totalLogicalPages: number) => {
@@ -205,11 +204,15 @@ export function PageNumberAdder() {
                  const logicalPageNumber = firstNumber + (pageNum - startPage) - (isCoverPage && pageNum > 1 ? 1 : 0);
 
                 let effectivePosition = position;
-                 if (pageMode === 'facing') {
-                    const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-                    if (isLeftHandPage) {
-                        if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
-                        else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                
+                if (pageMode === 'facing') {
+                    const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+                    if (isLeftPage) {
+                        if(position.includes('right')) {
+                            effectivePosition = position.replace('right', 'left') as Position;
+                        } else if(position.includes('left')) {
+                            effectivePosition = position.replace('left', 'right') as Position;
+                        }
                     }
                 }
                 
@@ -300,7 +303,7 @@ export function PageNumberAdder() {
       for(let i=1; i<=pdfjsDoc.numPages; i++) {
         const page = await pdfjsDoc.getPage(i);
         const viewport = page.getViewport({ scale: 1 });
-        previews.push({ pageNumber: i, aspectRatio: viewport.width / viewport.height });
+        previews.push({ pageNumber: i, aspectRatio: viewport.width / viewport.height, dataUrl: undefined });
       }
 
       setPagePreviews(previews);
@@ -343,26 +346,26 @@ export function PageNumberAdder() {
   });
 
   // Debounced re-render logic
-   const triggerRerender = useCallback(() => {
+  useEffect(() => {
     if (!file || !file.pdfjsDoc) return;
     
-    if (rerenderTimeout.current) {
-        clearTimeout(rerenderTimeout.current);
-    }
+    operationId.current++;
+    const currentOperationId = operationId.current;
     
-    rerenderTimeout.current = window.setTimeout(() => {
-        operationId.current++;
-        setPagePreviews(prev => prev.map(p => ({...p, dataUrl: undefined })));
-        const initialPagesToLoad = Math.min(pagePreviews.length, 6);
-        for(let i=1; i<=initialPagesToLoad; i++) {
-            onPageVisible(i);
+    // Reset all previews
+    setPagePreviews(prev => prev.map(p => ({ ...p, dataUrl: undefined })));
+    
+    // Eagerly re-render the first few visible pages
+    setTimeout(() => {
+        if (operationId.current === currentOperationId) {
+            const initialPagesToLoad = Math.min(pagePreviews.length, 6);
+            for(let i=1; i<=initialPagesToLoad; i++) {
+                onPageVisible(i);
+            }
         }
-    }, 300);
-  }, [file, pagePreviews.length, onPageVisible]);
+    }, 100);
 
-  useEffect(() => {
-    triggerRerender();
-  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, triggerRerender, isCoverPage, firstNumber]);
+  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, isCoverPage, firstNumber]);
 
 
   const removeFile = () => {
@@ -427,10 +430,13 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-            if (isLeftHandPage) {
-                if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
-                else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+            const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+            if(isLeftPage) {
+                if(position.includes('right')) {
+                    effectivePosition = position.replace('right', 'left') as Position;
+                } else if(position.includes('left')) {
+                    effectivePosition = position.replace('left', 'right') as Position;
+                }
             }
         }
         
@@ -620,18 +626,18 @@ export function PageNumberAdder() {
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold mb-2 block">Page mode</Label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <RadioGroup value={pageMode} onValueChange={(v) => setPageMode(v as PageMode)} className="grid grid-cols-2 gap-2">
                                     <Label htmlFor="pm-s" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'single' && 'border-primary bg-primary/5')}>
                                       <RectangleVertical className="w-6 h-6"/>
                                       <span className="text-sm">Single</span>
-                                      <RadioGroupItem value="single" id="pm-s" checked={pageMode === 'single'} onClick={() => setPageMode('single')} className="sr-only" />
+                                      <RadioGroupItem value="single" id="pm-s" className="sr-only" />
                                     </Label>
                                     <Label htmlFor="pm-f" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'facing' && 'border-primary bg-primary/5')}>
                                       <RectangleHorizontal className="w-6 h-6"/>
                                       <span className="text-sm">Facing</span>
-                                      <RadioGroupItem value="facing" id="pm-f" checked={pageMode === 'facing'} onClick={() => setPageMode('facing')} className="sr-only" />
+                                      <RadioGroupItem value="facing" id="pm-f" className="sr-only" />
                                     </Label>
-                                </div>
+                                </RadioGroup>
                             </div>
 
                              {pageMode === 'facing' && (
