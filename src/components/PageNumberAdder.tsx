@@ -207,14 +207,14 @@ export function PageNumberAdder() {
                 
                 if (pageMode === 'facing') {
                     if (isCoverPage) { // Page 1 is cover, odd pages are right-hand
-                        const isLeftPage = pageNum % 2 === 0;
-                        if (isLeftPage) {
+                        const isEvenPage = pageNum % 2 === 0;
+                        if (isEvenPage) {
                            if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                            else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         }
                     } else { // Page 1 is left-hand, even pages are right-hand
-                        const isRightPage = pageNum % 2 === 0;
-                        if (!isRightPage) {
+                        const isOddPage = pageNum % 2 !== 0;
+                        if (isOddPage) {
                             if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                             else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         }
@@ -427,30 +427,28 @@ export function PageNumberAdder() {
         const pageNum = i + 1;
         const inRange = pageNum >= effectiveStart && pageNum <= effectiveEnd;
         
-        const isCoverAndFirstPage = isCoverPage && pageNum === 1;
-
-        if (inRange && !isCoverAndFirstPage) {
-            const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage ? 1 : 0);
+        if (inRange) {
+            const logicalPageNumber = (pageNum - effectiveStart) + firstNumber;
             
             const page = pages[i];
             const { width, height } = page.getSize();
             
-            const text = getPageNumberText(logicalPageNumber, totalLogicalPages - (isCoverPage ? 1: 0));
+            const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
             const numFontSize = Number(fontSize);
             const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
             
             let effectivePosition = position;
             
             if (pageMode === 'facing') {
-                if (isCoverPage) { // Page 1 is cover, odd pages are right-hand
-                    const isLeftPage = pageNum % 2 === 0;
-                    if (isLeftPage) {
+                if (isCoverPage) {
+                    const isEvenPage = pageNum % 2 === 0;
+                    if (isEvenPage) {
                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
-                } else { // Page 1 is left-hand, even pages are right-hand
-                    const isRightPage = pageNum % 2 === 0;
-                    if (!isRightPage) {
+                } else {
+                    const isOddPage = pageNum % 2 !== 0;
+                    if (isOddPage) {
                         if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                         else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
