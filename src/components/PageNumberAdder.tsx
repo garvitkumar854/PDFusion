@@ -54,7 +54,7 @@ type ProcessResult = {
 };
 
 type Position = "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
-type Font = "Helvetica" | "TimesRoman" | "Courier";
+type Font = "Helvetica" | "TimesRoman" | "Courier" | "Symbol" | "ZapfDingbats";
 type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
 type PageMode = "single" | "facing";
 type MarginSize = 'small' | 'recommended' | 'big';
@@ -69,12 +69,16 @@ const FONT_MAP: Record<Font, StandardFonts> = {
   Helvetica: StandardFonts.Helvetica,
   TimesRoman: StandardFonts.TimesRoman,
   Courier: StandardFonts.Courier,
+  Symbol: StandardFonts.Symbol,
+  ZapfDingbats: StandardFonts.ZapfDingbats,
 };
 
 const FONT_STYLE_MAP: Record<Font, { bold: StandardFonts, italic: StandardFonts, boldItalic: StandardFonts }> = {
     Helvetica: { bold: StandardFonts.HelveticaBold, italic: StandardFonts.HelveticaOblique, boldItalic: StandardFonts.HelveticaBoldOblique },
     TimesRoman: { bold: StandardFonts.TimesRomanBold, italic: StandardFonts.TimesRomanItalic, boldItalic: StandardFonts.TimesRomanBoldItalic },
     Courier: { bold: StandardFonts.CourierBold, italic: StandardFonts.CourierOblique, boldItalic: StandardFonts.CourierBoldOblique },
+    Symbol: { bold: StandardFonts.Symbol, italic: StandardFonts.Symbol, boldItalic: StandardFonts.Symbol }, // Symbol and ZapfDingbats don't have styles
+    ZapfDingbats: { bold: StandardFonts.ZapfDingbats, italic: StandardFonts.ZapfDingbats, boldItalic: StandardFonts.ZapfDingbats },
 }
 
 const MARGIN_MAP: Record<MarginSize, number> = {
@@ -205,14 +209,11 @@ export function PageNumberAdder() {
 
                 let effectivePosition = position;
                 
-                if (pageMode === 'facing') {
-                    const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-                    if (isLeftHandPage) { // Mirror position for left-hand pages
-                        if (position.includes('right')) {
-                            effectivePosition = position.replace('right', 'left') as Position;
-                        } else if (position.includes('left')) {
-                            effectivePosition = position.replace('left', 'right') as Position;
-                        }
+                 if (pageMode === 'facing') {
+                    const isLeftPage = isCoverPage ? pageNum % 2 === 0 : (pageNum + 1) % 2 === 0;
+                    if (isLeftPage) {
+                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
                 }
                 
@@ -349,21 +350,25 @@ export function PageNumberAdder() {
   useEffect(() => {
     if (!file || !file.pdfjsDoc) return;
     
-    operationId.current++;
-    const currentOperationId = operationId.current;
-    
-    // Reset all previews
-    setPagePreviews(prev => prev.map(p => ({ ...p, dataUrl: undefined })));
-    
-    // Eagerly re-render the first few visible pages
-    setTimeout(() => {
-        if (operationId.current === currentOperationId) {
-            const initialPagesToLoad = Math.min(pagePreviews.length, 6);
-            for(let i=1; i<=initialPagesToLoad; i++) {
-                onPageVisible(i);
+    const handler = setTimeout(() => {
+        operationId.current++;
+        const currentOperationId = operationId.current;
+        
+        // Reset all previews
+        setPagePreviews(prev => prev.map(p => ({ ...p, dataUrl: undefined })));
+        
+        // Eagerly re-render the first few visible pages
+        setTimeout(() => {
+            if (operationId.current === currentOperationId) {
+                const initialPagesToLoad = Math.min(pagePreviews.length, 6);
+                for(let i=1; i<=initialPagesToLoad; i++) {
+                    onPageVisible(i);
+                }
             }
-        }
-    }, 100);
+        }, 50);
+    }, 300);
+
+    return () => clearTimeout(handler);
 
   }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, isCoverPage, firstNumber]);
 
@@ -408,57 +413,58 @@ export function PageNumberAdder() {
       const pages = pdfDoc.getPages();
       const totalLogicalPages = (effectiveEnd - effectiveStart) + 1;
 
-      for (let i = effectiveStart - 1; i < effectiveEnd; i++) {
+      for (let i = 0; i < totalPages; i++) {
         if (operationId.current !== currentOperationId) return;
 
         const pageNum = i + 1;
-        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber;
-        
-        const page = pages[i];
-        const { width, height } = page.getSize();
-        
-        const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
-        const numFontSize = Number(fontSize);
-        const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
-        
-        let effectivePosition = position;
-        
-        if (pageMode === 'facing') {
-            const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-             if (isLeftHandPage) { // Mirror position for left-hand pages
-                if (position.includes('right')) {
-                    effectivePosition = position.replace('right', 'left') as Position;
-                } else if (position.includes('left')) {
-                    effectivePosition = position.replace('left', 'right') as Position;
+        const inRange = pageNum >= effectiveStart && pageNum <= effectiveEnd;
+
+        if (inRange) {
+            const logicalPageNumber = (pageNum - effectiveStart) + firstNumber;
+            
+            const page = pages[i];
+            const { width, height } = page.getSize();
+            
+            const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
+            const numFontSize = Number(fontSize);
+            const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
+            
+            let effectivePosition = position;
+            
+            if (pageMode === 'facing') {
+                const isLeftPage = isCoverPage ? pageNum % 2 === 0 : (pageNum + 1) % 2 === 0;
+                 if (isLeftPage) {
+                    if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                    else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                 }
+            }
+            
+            const [vPos, hPos] = effectivePosition.split('-');
+            
+            const margin = MARGIN_MAP[marginSize];
+            const textHeight = embeddedFont.heightAtSize(numFontSize, { descender: false });
+
+            let x=0, y=0;
+            if (vPos === 'top') y = height - margin - textHeight;
+            else y = margin;
+            
+            if (hPos === 'left') x = margin;
+            else if (hPos === 'center') x = width / 2 - textWidth / 2;
+            else x = width - margin - textWidth;
+
+            page.drawText(text, { x, y, size: numFontSize, font: embeddedFont, color: rgb(colorRgb.r, colorRgb.g, colorRgb.b) });
+
+            if (isUnderline) {
+            page.drawLine({
+                start: { x: x, y: y - 2 },
+                end: { x: x + textWidth, y: y - 2 },
+                thickness: Math.max(0.5, numFontSize / 15),
+                color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
+            });
             }
         }
         
-        const [vPos, hPos] = effectivePosition.split('-');
-        
-        const margin = MARGIN_MAP[marginSize];
-        const textHeight = embeddedFont.heightAtSize(numFontSize, { descender: false });
-
-        let x=0, y=0;
-        if (vPos === 'top') y = height - margin - textHeight;
-        else y = margin;
-        
-        if (hPos === 'left') x = margin;
-        else if (hPos === 'center') x = width / 2 - textWidth / 2;
-        else x = width - margin - textWidth;
-
-        page.drawText(text, { x, y, size: numFontSize, font: embeddedFont, color: rgb(colorRgb.r, colorRgb.g, colorRgb.b) });
-
-        if (isUnderline) {
-          page.drawLine({
-            start: { x: x, y: y - 2 },
-            end: { x: x + textWidth, y: y - 2 },
-            thickness: Math.max(0.5, numFontSize / 15),
-            color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
-          });
-        }
-        
-        setProgress(Math.round(((i - effectiveStart + 2) / (effectiveEnd - effectiveStart + 1)) * 100));
+        setProgress(Math.round(((i + 1) / totalPages) * 100));
       }
 
       if (operationId.current !== currentOperationId) return;
@@ -580,7 +586,7 @@ export function PageNumberAdder() {
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
                                         if (isCoverPage) {
-                                            if(i === 0) return <div key={p.pageNumber} className="sm:col-span-2 grid grid-cols-2 gap-4"><div/><PagePreviewCard pageInfo={p}/></div>;
+                                            if (i === 0) return <div key={p.pageNumber} className="sm:col-span-2 grid grid-cols-2 gap-4"><div/><PagePreviewCard pageInfo={p}/></div>;
                                             if ((i-1) % 2 !== 0) return null; // We render pairs starting from index 1 (2,4,6...)
                                             const leftPage = pagePreviews[i];
                                             const rightPage = pagePreviews[i + 1];
@@ -699,12 +705,46 @@ export function PageNumberAdder() {
                                  </div>
                                 <div>
                                     <Label htmlFor="font-size" className="font-semibold">Font Size</Label>
-                                    <Input id="font-size" type="number" value={fontSize} onChange={e => setFontSize(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value)))} className="mt-1" disabled={isProcessing || file.isEncrypted}/>
+                                    <Input 
+                                        id="font-size" 
+                                        type="number" 
+                                        value={fontSize} 
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setFontSize(val === '' ? '' : parseInt(val));
+                                        }}
+                                        onBlur={e => {
+                                            if (e.target.value === '' || Number(e.target.value) <= 0) {
+                                                setFontSize(12);
+                                            }
+                                        }}
+                                        className="mt-1" 
+                                        disabled={isProcessing || file.isEncrypted}
+                                    />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div><Label htmlFor="font" className="font-semibold">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing || file.isEncrypted}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
-                                <div><Label className="font-semibold">Style</Label><div className="mt-1 flex items-center gap-2"><Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing || file.isEncrypted}><Bold className="w-4 h-4" /></Button><Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing || file.isEncrypted}><Italic className="w-4 h-4" /></Button><Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing || file.isEncrypted}><Underline className="w-4 h-4" /></Button></div></div>
+                                <div>
+                                    <Label htmlFor="font" className="font-semibold">Font</Label>
+                                    <Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing || file.isEncrypted}>
+                                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Helvetica">Helvetica</SelectItem>
+                                            <SelectItem value="TimesRoman">Times New Roman</SelectItem>
+                                            <SelectItem value="Courier">Courier</SelectItem>
+                                            <SelectItem value="Symbol">Symbol</SelectItem>
+                                            <SelectItem value="ZapfDingbats">Zapf Dingbats</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="font-semibold">Style</Label>
+                                    <div className="mt-1 flex items-center gap-2">
+                                        <Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing || file.isEncrypted}><Bold className="w-4 h-4" /></Button>
+                                        <Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing || file.isEncrypted}><Italic className="w-4 h-4" /></Button>
+                                        <Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing || file.isEncrypted}><Underline className="w-4 h-4" /></Button>
+                                    </div>
+                                </div>
                             </div>
                              <div>
                                 <Label htmlFor="textColor" className="font-semibold">Text Color</Label>
