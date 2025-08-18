@@ -104,10 +104,15 @@ const PagePreviewCard = React.memo(({ pageInfo, className }: { pageInfo: PagePre
             }
         }, { rootMargin: "200px" });
 
-        if (ref.current) observer.observe(ref.current);
+        const currentRef = ref.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
         
         return () => {
-            if (ref.current) observer.unobserve(ref.current);
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
         };
     }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
 
@@ -190,11 +195,9 @@ export function PageNumberAdder() {
             if (pageNum >= startPage && pageNum <= endPage) {
                 let effectivePosition = position;
                 if (pageMode === 'facing') {
-                    const isLeftPage = (pageNum % 2 !== 0);
-                    if (isLeftPage && position.includes('left')) {
-                        effectivePosition = position.replace('left', 'right') as Position;
-                    } else if (isLeftPage && position.includes('right')) {
-                        effectivePosition = position.replace('right', 'left') as Position;
+                    if (pageNum % 2 === 1) { // Left page
+                        if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                        else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                     }
                 }
                 
@@ -239,6 +242,25 @@ export function PageNumberAdder() {
     return null;
   }, [getPageNumberText, startPage, endPage, position, pageMode, isItalic, isBold, fontSize, textColor, font, isUnderline, marginSize]);
   
+  const onPageVisible = useCallback((pageNumber: number) => {
+    if (!file || !file.pdfjsDoc) return;
+    const currentOperationId = operationId.current;
+
+    renderPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
+      if (dataUrl && operationId.current === currentOperationId) {
+          setPagePreviews(current => {
+              const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
+              if (latestIndex > -1) {
+                 const finalPreviews = [...current];
+                 finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
+                 return finalPreviews;
+              }
+              return current;
+          });
+      }
+    });
+  }, [file, renderPage]);
+
   const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
@@ -270,6 +292,12 @@ export function PageNumberAdder() {
       setPagePreviews(previews);
       toast({ variant: 'success', title: 'File Uploaded', description: `"${fileToLoad.name}" is ready.` });
 
+       // Eagerly load first few pages
+      const initialPagesToLoad = Math.min(previews.length, 6);
+      for(let i=1; i<=initialPagesToLoad; i++) {
+        onPageVisible(i);
+      }
+
     } catch (e: any) {
         if (operationId.current === currentOperationId) {
             if (e.name === 'PasswordException') {
@@ -284,7 +312,7 @@ export function PageNumberAdder() {
           setIsProcessing(false);
        }
     }
-  }, [file, toast]);
+  }, [file, toast, onPageVisible]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) loadPdf(acceptedFiles[0]);
@@ -300,25 +328,6 @@ export function PageNumberAdder() {
     disabled: isProcessing,
   });
 
-  const onPageVisible = useCallback((pageNumber: number) => {
-    if (!file || !file.pdfjsDoc) return;
-    const currentOperationId = operationId.current;
-
-    renderPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
-      if (dataUrl && operationId.current === currentOperationId) {
-          setPagePreviews(current => {
-              const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
-              if (latestIndex > -1) {
-                 const finalPreviews = [...current];
-                 finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
-                 return finalPreviews;
-              }
-              return current;
-          });
-      }
-    });
-  }, [file, renderPage]);
-
   // Debounced re-render logic
    const triggerRerender = useCallback(() => {
     if (!file || !file.pdfjsDoc) return;
@@ -330,8 +339,12 @@ export function PageNumberAdder() {
     rerenderTimeout.current = window.setTimeout(() => {
         operationId.current++;
         setPagePreviews(prev => prev.map(p => ({...p, dataUrl: undefined })));
+        const initialPagesToLoad = Math.min(pagePreviews.length, 6);
+        for(let i=1; i<=initialPagesToLoad; i++) {
+            onPageVisible(i);
+        }
     }, 300);
-  }, [file]);
+  }, [file, pagePreviews.length, onPageVisible]);
 
   useEffect(() => {
     triggerRerender();
@@ -390,12 +403,10 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = (pageNum % 2 !== 0);
-            if (isLeftPage && position.includes('left')) {
-                effectivePosition = position.replace('left', 'right') as Position;
-            } else if (isLeftPage && position.includes('right')) {
-                effectivePosition = position.replace('right', 'left') as Position;
-            }
+           if (pageNum % 2 === 1) { // Left page
+              if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+              else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+           }
         }
         
         const [vPos, hPos] = effectivePosition.split('-');
@@ -540,18 +551,18 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (i % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
+                                        if (p.pageNumber % 2 !== 1) return null; // We render pairs starting from odd indices (1, 3, 5...)
                                         
                                         const leftPage = pagePreviews[i];
                                         const rightPage = pagePreviews[i + 1];
                                         
                                         return (
-                                            <div key={p.pageNumber} className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
+                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start">
                                                 {leftPage && <PagePreviewCard pageInfo={leftPage} />}
-                                                {rightPage && <PagePreviewCard pageInfo={rightPage} />}
+                                                {rightPage ? <PagePreviewCard pageInfo={rightPage} /> : <div/>}
                                             </div>
                                         );
                                     } else {
@@ -682,5 +693,3 @@ export function PageNumberAdder() {
     </div>
   );
 }
-
-    
