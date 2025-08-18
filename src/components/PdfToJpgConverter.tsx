@@ -586,9 +586,9 @@ export function PdfToJpgConverter() {
                  >
                     <div className="p-4 border rounded-lg bg-primary/5 space-y-2">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                                <p className="text-sm font-medium text-primary">Converting to JPG...</p>
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />
+                                <p className="text-sm font-medium text-primary truncate pr-2">Converting to JPG...</p>
                             </div>
                             <p className="text-sm font-medium text-primary">{Math.round(conversionProgress)}%</p>
                         </div>
