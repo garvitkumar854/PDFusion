@@ -120,6 +120,17 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
         
         const img = new Image();
         img.onload = () => {
+          const canvasAspectRatio = canvas.width / canvas.height;
+          const imageAspectRatio = img.width / img.height;
+          let drawWidth = canvas.width;
+          let drawHeight = canvas.height;
+
+          if(canvasAspectRatio > imageAspectRatio) {
+            drawHeight = canvas.width / imageAspectRatio;
+          } else {
+            drawWidth = canvas.height * imageAspectRatio;
+          }
+
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
@@ -129,7 +140,7 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               let { position } = textOptions;
               
               if (pageMode === 'facing') {
-                  const isLeftPage = pageInfo.pageNumber % 2 !== 0; 
+                  const isLeftPage = (pageInfo.pageNumber - 1) % 2 === 0;
                   if (isLeftPage && position.includes('right')) {
                       position = position.replace('right', 'left');
                   } else if (!isLeftPage && position.includes('left')) {
@@ -140,12 +151,13 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
               ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
               ctx.fillStyle = textColor;
               const textMetrics = ctx.measureText(text);
+              const textHeight = fontSize;
 
               let x = 0, y = 0;
               const [vPos, hPos] = position.split('-');
 
-              if (vPos === 'top') y = margin;
-              else if (vPos === 'bottom') y = canvas.height - margin;
+              if (vPos === 'top') y = margin + textHeight;
+              else y = canvas.height - margin;
 
               if (hPos === 'left') x = margin;
               else if (hPos === 'center') x = (canvas.width - textMetrics.width) / 2;
@@ -177,9 +189,6 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
                     <span className="mt-2">Page {pageInfo.pageNumber}</span>
                 </div>
             )}
-             <div className="absolute bottom-1 right-2 bg-black/50 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                {pageInfo.pageNumber}
-            </div>
             </div>
         </div>
     );
@@ -218,7 +227,7 @@ export function PageNumberAdder() {
     if (operationId.current !== currentOperationId) return null;
     try {
       const page = await pdfjsDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 0.5 });
+      const viewport = page.getViewport({ scale: 1.5 }); // Higher scale for better quality
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
@@ -226,7 +235,7 @@ export function PageNumberAdder() {
       if (context) {
           await page.render({ canvasContext: context, viewport }).promise;
            if (operationId.current !== currentOperationId) return null;
-          return canvas.toDataURL('image/jpeg', 0.8);
+          return canvas.toDataURL('image/jpeg', 0.9);
       }
     } catch (e) {
       console.error(`Error rendering page ${pageNum}:`, e);
@@ -378,7 +387,7 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = pageNum % 2 !== 0; 
+            const isLeftPage = (pageNum -1) % 2 === 0;
             if (isLeftPage && position.includes('right')) {
                 effectivePosition = position.replace('right', 'left') as Position;
             } else if (!isLeftPage && position.includes('left')) {
@@ -390,11 +399,11 @@ export function PageNumberAdder() {
         
         const margin = MARGIN_MAP[marginSize];
 
-        if (vPos === 'top') y = height - margin;
+        if (vPos === 'top') y = height - margin - textHeight;
         else y = margin;
         
         let baselineOffset = textHeight * 0.25; 
-        y -= baselineOffset;
+        y += baselineOffset;
 
         if (hPos === 'left') x = margin;
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
@@ -533,21 +542,30 @@ export function PageNumberAdder() {
                                 <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (p.pageNumber % 2 === 0) return null; // We only render the start of a pair
+                                        if (i === 0) { // Page 1 is always single on the right
+                                            return (
+                                                <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
+                                                    <div></div>
+                                                    <PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
+                                                </div>
+                                            )
+                                        }
+                                        if (p.pageNumber % 2 !== 0) return null; // We render pairs starting from even numbers (page 2)
 
-                                        const secondPage = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
-
+                                        const firstPageInPair = pagePreviews.find(sp => sp.pageNumber === p.pageNumber);
+                                        const secondPageInPair = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
+                                        
                                         return (
                                             <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
-                                                <PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
-                                                {secondPage ? (
-                                                    <PagePreviewCard pageInfo={secondPage} text={getPageNumberText(secondPage.pageNumber, totalPages)} textOptions={textOptions} />
+                                                {firstPageInPair && <PagePreviewCard pageInfo={firstPageInPair} text={getPageNumberText(firstPageInPair.pageNumber, totalPages)} textOptions={textOptions} />}
+                                                {secondPageInPair ? (
+                                                    <PagePreviewCard pageInfo={secondPageInPair} text={getPageNumberText(secondPageInPair.pageNumber, totalPages)} textOptions={textOptions} />
                                                 ) : <div />}
                                             </div>
                                         );
                                     } else {
                                         return (
-                                            <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
+                                            <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} className="w-full"/>
                                         );
                                     }
                                 })}
