@@ -200,16 +200,24 @@ export function PageNumberAdder() {
             const inRange = pageNum >= startPage && pageNum <= endPage;
             
             if (inRange) {
-                 const totalLogicalPages = (endPage - startPage) + 1;
-                 const logicalPageNumber = firstNumber + (pageNum - startPage);
+                const totalLogicalPages = (endPage - startPage) + 1;
+                const logicalPageNumber = firstNumber + (pageNum - startPage);
 
                 let effectivePosition = position;
                 
-                 if (pageMode === 'facing') {
-                    const isRightPage = isCoverPage ? pageNum % 2 === 0 : pageNum % 2 !== 0;
-                    if (!isRightPage) {
-                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                if (pageMode === 'facing') {
+                    if (isCoverPage) { // Page 1 is a single right page
+                        const isRightPage = pageNum % 2 !== 0; // 1, 3, 5 are right
+                        if (!isRightPage) { // Mirror left pages (2, 4, 6)
+                           if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                           else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                        }
+                    } else { // Page 1-2 is the first spread
+                        const isRightPage = pageNum % 2 === 0; // 2, 4, 6 are right
+                        if (!isRightPage) { // Mirror left pages (1, 3, 5)
+                            if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                            else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                        }
                     }
                 }
                 
@@ -274,13 +282,15 @@ export function PageNumberAdder() {
   }, [file, renderPage]);
 
   const loadPdf = useCallback(async (fileToLoad: File) => {
-    const currentOperationId = ++operationId.current;
+    operationId.current++;
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setResult(null);
     setIsProcessing(true);
     setPagePreviews([]);
     
+    const currentOperationId = operationId.current;
+
     try {
       const pdfBytes = await fileToLoad.arrayBuffer();
       const pdfjsDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
@@ -350,19 +360,20 @@ export function PageNumberAdder() {
     const handler = setTimeout(() => {
         operationId.current++;
         
-        // Reset all previews
         setPagePreviews(prev => prev.map(p => ({ ...p, dataUrl: undefined })));
         
-        // Eagerly re-render the first few visible pages
         const currentOperationId = operationId.current;
+        
+        // Eagerly re-render visible pages
         setTimeout(() => {
             if (operationId.current === currentOperationId) {
-                const initialPagesToLoad = Math.min(pagePreviews.length, 6);
-                for(let i=1; i<=initialPagesToLoad; i++) {
-                    onPageVisible(i);
-                }
+                 const initialPagesToLoad = Math.min(pagePreviews.length, 6);
+                 for(let i=1; i<=initialPagesToLoad; i++) {
+                     onPageVisible(i);
+                 }
             }
         }, 50);
+
     }, 300);
 
     return () => clearTimeout(handler);
@@ -429,10 +440,18 @@ export function PageNumberAdder() {
             let effectivePosition = position;
             
             if (pageMode === 'facing') {
-                const isRightPage = isCoverPage ? pageNum % 2 === 0 : pageNum % 2 !== 0;
-                if (!isRightPage) { // This is a left page
-                    if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-                    else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                if (isCoverPage) { // Page 1 is a single right page
+                    const isRightPage = pageNum % 2 !== 0; // 1, 3, 5 are right
+                    if (!isRightPage) { // Mirror left pages (2, 4, 6)
+                       if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                       else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                    }
+                } else { // Page 1-2 is the first spread
+                    const isRightPage = pageNum % 2 === 0; // 2, 4, 6 are right
+                    if (!isRightPage) { // Mirror left pages (1, 3, 5)
+                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                    }
                 }
             }
             
