@@ -17,6 +17,8 @@ import {
   Underline,
   Lock,
   ShieldAlert,
+  RectangleHorizontal,
+  RectangleVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -137,7 +139,7 @@ export function PageNumberAdder() {
   // Options
   const [position, setPosition] = useState<Position>("bottom-center");
   const [marginSize, setMarginSize] = useState<MarginSize>('recommended');
-  const [fontSize, setFontSize] = useState<number | string>(12);
+  const [fontSize, setFontSize] = useState<number | "">(12);
   const [font, setFont] = useState<Font>("Helvetica");
   const [textColor, setTextColor] = useState("#000000");
   const [isBold, setIsBold] = useState(false);
@@ -180,16 +182,17 @@ export function PageNumberAdder() {
         canvas.height = Math.floor(viewport.height);
         const context = canvas.getContext('2d');
         if (context) {
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, canvas.width, canvas.height);
             await page.render({ canvasContext: context, viewport }).promise;
             
-             // Draw text overlay if applicable
             const totalPages = pdfjsDoc.numPages;
             if (pageNum >= startPage && pageNum <= endPage) {
                 let effectivePosition = position;
-                if (pageMode === 'facing' && pageNum > 0) {
-                   if (pageNum % 2 === 0 && position.includes('right')) {
+                if (pageMode === 'facing' && pageNum > 1) {
+                   if (pageNum % 2 === 0 && position.includes('right')) { // Even pages (left side of spread)
                        effectivePosition = position.replace('right', 'left') as Position;
-                   } else if (pageNum % 2 !== 0 && position.includes('left')) {
+                   } else if (pageNum % 2 !== 0 && position.includes('left')) { // Odd pages (right side of spread)
                        effectivePosition = position.replace('left', 'right') as Position;
                    }
                 }
@@ -207,19 +210,19 @@ export function PageNumberAdder() {
                 let x = 0, y = 0;
                 const [vPos, hPos] = effectivePosition.split('-');
 
-                if (vPos === 'top') y = margin + textHeight;
-                else y = canvas.height - margin;
+                if (vPos === 'top') y = margin;
+                else y = canvas.height - margin - textHeight;
 
                 if (hPos === 'left') x = margin;
                 else if (hPos === 'center') x = (canvas.width - textMetrics.width) / 2;
                 else x = canvas.width - margin - textMetrics.width;
 
-                context.fillText(text, x, y);
+                context.fillText(text, x, y + textHeight);
 
                 if (isUnderline) {
                     context.beginPath();
-                    context.moveTo(x, y + 2 * scale);
-                    context.lineTo(x + textMetrics.width, y + 2 * scale);
+                    context.moveTo(x, y + textHeight + 2 * scale);
+                    context.lineTo(x + textMetrics.width, y + textHeight + 2 * scale);
                     context.strokeStyle = textColor;
                     context.lineWidth = Math.max(0.5, (Number(fontSize) / 15) * scale);
                     context.stroke();
@@ -324,16 +327,8 @@ export function PageNumberAdder() {
     }
     
     rerenderTimeout.current = window.setTimeout(() => {
-        const currentOperationId = ++operationId.current;
-        setPagePreviews(prev => {
-            const newPreviews = [...prev];
-            newPreviews.forEach((p, index) => {
-                if (p.dataUrl) { // Only re-render visible pages
-                    newPreviews[index] = { ...p, dataUrl: undefined };
-                }
-            });
-            return newPreviews;
-        });
+        operationId.current++;
+        setPagePreviews(prev => prev.map(p => ({...p, dataUrl: undefined })));
     }, 300);
   }, [file]);
 
@@ -393,10 +388,10 @@ export function PageNumberAdder() {
         
         let effectivePosition = position;
         
-        if (pageMode === 'facing' && pageNum > 0) {
-            if (pageNum % 2 === 0 && position.includes('right')) {
-                effectivePosition = position.replace('right', 'left') as Position;
-            } else if (pageNum % 2 !== 0 && position.includes('left')) {
+        if (pageMode === 'facing' && pageNum > 1) {
+            if (pageNum % 2 === 0 && position.includes('right')) { // Even pages (left side of spread)
+               effectivePosition = position.replace('right', 'left') as Position;
+            } else if (pageNum % 2 !== 0 && position.includes('left')) { // Odd pages (right side of spread)
                 effectivePosition = position.replace('left', 'right') as Position;
             }
         }
@@ -404,11 +399,11 @@ export function PageNumberAdder() {
         const [vPos, hPos] = effectivePosition.split('-');
         
         const margin = MARGIN_MAP[marginSize];
-        const textHeight = embeddedFont.heightAtSize(numFontSize, { descender: false }) * 0.8;
+        const textHeight = embeddedFont.heightAtSize(numFontSize, { descender: false });
 
         let x=0, y=0;
-        if (vPos === 'top') y = height - margin;
-        else y = margin + textHeight;
+        if (vPos === 'top') y = height - margin - textHeight;
+        else y = margin;
         
         if (hPos === 'left') x = margin;
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
@@ -543,27 +538,27 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 md:grid-cols-2")}>
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (i === 0) { // Page 1 is a single page
+                                        if (i === 0) { // Page 1 is a single page on the right
                                             return (
-                                                <div key={p.pageNumber} className="md:col-span-2 flex justify-center">
+                                                <div key={p.pageNumber} className="flex justify-center md:justify-end">
                                                     <div className="w-full md:w-1/2">
                                                          <PagePreviewCard pageInfo={p} />
                                                     </div>
                                                 </div>
                                             )
                                         }
-                                        if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
+                                        if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...) which are left-hand pages
                                         
-                                        const firstPageInPair = pagePreviews[i];
-                                        const secondPageInPair = pagePreviews[i-1];
+                                        const leftPage = pagePreviews[i]; // e.g. page 2
+                                        const rightPage = pagePreviews[i+1]; // e.g. page 3
                                         
                                         return (
-                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
-                                                {secondPageInPair && <PagePreviewCard pageInfo={secondPageInPair} />}
-                                                {firstPageInPair && <PagePreviewCard pageInfo={firstPageInPair} />}
+                                            <div key={p.pageNumber} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                {leftPage && <PagePreviewCard pageInfo={leftPage} />}
+                                                {rightPage && <PagePreviewCard pageInfo={rightPage} />}
                                             </div>
                                         );
                                     } else {
@@ -584,13 +579,17 @@ export function PageNumberAdder() {
                         <CardContent className="space-y-4">
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
-                                <Label className="font-semibold">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-1 grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
-                                    <Label htmlFor="pm-s" className={cn("flex items-center justify-center space-x-2 border rounded-md p-2 cursor-pointer", pageMode === 'single' && 'border-primary')}>
-                                      <RadioGroupItem value="single" id="pm-s" /><span>Single page</span>
+                                <Label className="font-semibold mb-2 block">Page mode</Label>
+                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
+                                    <Label htmlFor="pm-s" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'single' && 'border-primary bg-primary/5')}>
+                                      <RectangleVertical className="w-6 h-6"/>
+                                      <span className="text-sm">Single</span>
+                                      <RadioGroupItem value="single" id="pm-s" className="sr-only" />
                                     </Label>
-                                    <Label htmlFor="pm-f" className={cn("flex items-center justify-center space-x-2 border rounded-md p-2 cursor-pointer", pageMode === 'facing' && 'border-primary')}>
-                                      <RadioGroupItem value="facing" id="pm-f" /><span>Facing pages</span>
+                                    <Label htmlFor="pm-f" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'facing' && 'border-primary bg-primary/5')}>
+                                      <RectangleHorizontal className="w-6 h-6"/>
+                                      <span className="text-sm">Facing</span>
+                                      <RadioGroupItem value="facing" id="pm-f" className="sr-only" />
                                     </Label>
                                 </RadioGroup>
                             </div>
@@ -690,3 +689,5 @@ export function PageNumberAdder() {
     </div>
   );
 }
+
+    
