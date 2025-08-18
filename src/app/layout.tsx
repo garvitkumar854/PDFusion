@@ -10,7 +10,6 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { usePwa } from '@/hooks/use-pwa';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import BottomNavbar from '@/components/BottomNavbar';
 import { useEffect, useState } from 'react';
 
 
@@ -69,7 +68,7 @@ export default function RootLayout({
             <main className={cn("flex-1 container mx-auto px-4 sm:px-6 lg:px-8", showBottomNav && "pb-24")}>
             {children}
             </main>
-            {showBottomNav ? <BottomNavbar /> : <FooterLoader />}
+            <FooterLoader />
             <Toaster />
           </ThemeProvider>
       </body>
