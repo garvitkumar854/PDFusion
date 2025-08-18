@@ -655,10 +655,10 @@ export function PdfSplitter() {
                 <TabsContent value="range" className="mt-6">
                     <RadioGroup value={rangeMode} onValueChange={(v) => setRangeMode(v as any)} className="space-y-4" disabled={isSplitting}>
                     <div>
-                        <div className="flex items-center space-x-2 mb-2">
-                        <RadioGroupItem value="custom" id="r-custom" />
-                        <Label htmlFor="r-custom" className="font-semibold">Custom ranges</Label>
-                        </div>
+                        <Label htmlFor="r-custom" className="flex items-center space-x-2 mb-2 cursor-pointer">
+                            <RadioGroupItem value="custom" id="r-custom" />
+                            <span className="font-semibold">Custom ranges</span>
+                        </Label>
                         <Input 
                         disabled={rangeMode !== 'custom' || isSplitting}
                         id="split-ranges" 
@@ -675,10 +675,10 @@ export function PdfSplitter() {
                         </p>
                     </div>
                     <div>
-                        <div className="flex items-center space-x-2 mb-2">
-                        <RadioGroupItem value="fixed" id="r-fixed" />
-                        <Label htmlFor="r-fixed" className="font-semibold">Fixed ranges</Label>
-                        </div>
+                        <Label htmlFor="r-fixed" className="flex items-center space-x-2 mb-2 cursor-pointer">
+                            <RadioGroupItem value="fixed" id="r-fixed" />
+                            <span className="font-semibold">Fixed ranges</span>
+                        </Label>
                         <div className="flex items-center gap-2">
                         <Input
                             disabled={rangeMode !== 'fixed' || isSplitting}
@@ -697,15 +697,15 @@ export function PdfSplitter() {
 
                 <TabsContent value="extract" className="mt-6">
                     <RadioGroup value={extractMode} onValueChange={(v) => setExtractMode(v as any)} className="space-y-4" disabled={isSplitting}>
-                    <div className="flex items-center space-x-2">
+                    <Label htmlFor="r-all" className="flex items-center space-x-2 cursor-pointer">
                         <RadioGroupItem value="all" id="r-all" />
-                        <Label htmlFor="r-all">Extract all pages into separate PDFs</Label>
-                    </div>
+                        <span>Extract all pages into separate PDFs</span>
+                    </Label>
                     <div>
-                        <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="select" id="r-select" />
-                        <Label htmlFor="r-select">Select pages to extract into one PDF</Label>
-                        </div>
+                        <Label htmlFor="r-select" className="flex items-center space-x-2 cursor-pointer">
+                            <RadioGroupItem value="select" id="r-select" />
+                            <span>Select pages to extract into one PDF</span>
+                        </Label>
                     </div>
                     </RadioGroup>
                 </TabsContent>
@@ -862,5 +862,3 @@ export function PdfSplitter() {
     </div>
   );
 }
-
-    

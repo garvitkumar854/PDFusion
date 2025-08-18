@@ -341,9 +341,21 @@ export function PdfRotator() {
                     <div className={cn((isProcessing || isEncrypted) && "opacity-50 pointer-events-none")}>
                         <Label className="font-semibold">Angle of Rotation</Label>
                         <RadioGroup value={String(angle)} onValueChange={(v) => setAngle(Number(v) as RotationAngle)} className="mt-2 grid grid-cols-3 gap-2" disabled={isProcessing || isEncrypted}>
-                            <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50  transition-colors", angle === 90 && "border-primary bg-primary/5")}><RadioGroupItem value="90" className="sr-only"/><RotateCw className="w-6 h-6 mb-2"/>90°</Label>
-                            <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 180 && "border-primary bg-primary/5")}><RadioGroupItem value="180" className="sr-only"/><RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(90deg)'}}/>180°</Label>
-                            <Label className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 270 && "border-primary bg-primary/5")}><RadioGroupItem value="270" className="sr-only"/><RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(180deg)'}}/>270°</Label>
+                            <Label htmlFor="r-90" className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 90 && "border-primary bg-primary/5")}>
+                                <RadioGroupItem value="90" id="r-90" className="sr-only"/>
+                                <RotateCw className="w-6 h-6 mb-2"/>
+                                90°
+                            </Label>
+                            <Label htmlFor="r-180" className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 180 && "border-primary bg-primary/5")}>
+                                <RadioGroupItem value="180" id="r-180" className="sr-only"/>
+                                <RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(90deg)'}}/>
+                                180°
+                            </Label>
+                             <Label htmlFor="r-270" className={cn("flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer hover:border-primary/50 transition-colors", angle === 270 && "border-primary bg-primary/5")}>
+                                <RadioGroupItem value="270" id="r-270" className="sr-only"/>
+                                <RotateCw className="w-6 h-6 mb-2" style={{transform: 'rotate(180deg)'}}/>
+                                270°
+                            </Label>
                         </RadioGroup>
                     </div>
 

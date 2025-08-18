@@ -13,6 +13,7 @@ import {
   Loader2,
   Ban,
   FileArchive,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -55,8 +56,8 @@ interface PagePreviewProps {
 
 const PagePreview = React.memo(
   function PagePreview({ fileInfo, orientation, pageSize, marginSize }: PagePreviewProps) {
-    if (!fileInfo.previewUrl) {
-      return (
+    if (fileInfo.error) {
+       return (
         <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-destructive/10 rounded-lg text-destructive text-xs">
           <AlertTriangle className="w-6 h-6 mb-2" />
           Preview failed to load.
@@ -68,7 +69,7 @@ const PagePreview = React.memo(
         return (
              <div className="w-full h-full flex items-center justify-center p-1 bg-muted/30 rounded-lg">
                 <img
-                    src={fileInfo.previewUrl}
+                    src={fileInfo.previewUrl!}
                     alt="Preview"
                     className="max-w-full max-h-full object-contain shadow-md"
                 />
@@ -111,7 +112,7 @@ const PagePreview = React.memo(
             <div style={pageContainerStyle}>
                 <div style={imageContainerStyle}>
                     <img
-                        src={fileInfo.previewUrl}
+                        src={fileInfo.previewUrl!}
                         alt="Preview"
                         className="max-w-full max-h-full object-contain"
                     />
@@ -224,16 +225,20 @@ export function JpgToPdfConverter() {
               f.id === fileToProcess.id ? { ...f, previewUrl: objectUrl } : f
             )
           );
+           URL.revokeObjectURL(objectUrl);
         };
         img.onerror = () => {
           URL.revokeObjectURL(objectUrl);
+           setFiles(currentFiles => 
+            currentFiles.map(f => 
+              f.id === fileToProcess.id ? { ...f, error: "Preview failed" } : f
+            )
+          );
           toast({
               variant: "destructive",
               title: "Preview Failed",
-              description: `Could not load preview for "${fileToProcess.file.name}". It might be corrupted. File removed.`
+              description: `Could not load preview for "${fileToProcess.file.name}". It might be corrupted.`
           });
-          setFiles(currentFiles => currentFiles.filter(f => f.id !== fileToProcess.id));
-          setTotalSize(currentSize => currentSize - fileToProcess.file.size);
         };
         
         img.src = objectUrl;
@@ -311,6 +316,8 @@ export function JpgToPdfConverter() {
       const img = new Image();
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      const objectUrl = URL.createObjectURL(file);
+
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
@@ -323,13 +330,13 @@ export function JpgToPdfConverter() {
           'image/jpeg',
           imageQuality / 100
         );
-        URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(objectUrl);
       };
       img.onerror = (e) => {
-        URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(objectUrl);
         reject(new Error("Image failed to load for recompression."));
       }
-      img.src = URL.createObjectURL(file);
+      img.src = objectUrl;
     });
   };
   
@@ -622,28 +629,52 @@ export function JpgToPdfConverter() {
                 <CardTitle className="text-xl sm:text-2xl">Conversion Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className={cn("grid grid-cols-2 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
+                <div className={cn("grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
                     <div>
                         <Label className="font-semibold">Page Orientation</Label>
                         <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="portrait" id="o-p" /><Label htmlFor="o-p">Portrait</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="landscape" id="o-l" /><Label htmlFor="o-l">Landscape</Label></div>
+                           <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="portrait" id="o-p" />
+                                <Label htmlFor="o-p">Portrait</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="landscape" id="o-l" />
+                                <Label htmlFor="o-l">Landscape</Label>
+                            </div>
                         </RadioGroup>
                     </div>
                     <div>
                         <Label className="font-semibold">Page Size</Label>
                         <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="A4" id="ps-a4" /><Label htmlFor="ps-a4">A4</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Letter" id="ps-letter" /><Label htmlFor="ps-letter">Letter</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="Fit" id="ps-fit" /><Label htmlFor="ps-fit">Fit Image</Label></div>
+                           <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="A4" id="ps-a4" />
+                                <Label htmlFor="ps-a4">A4</Label>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Letter" id="ps-letter" />
+                                <Label htmlFor="ps-letter">Letter</Label>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Fit" id="ps-fit" />
+                                <Label htmlFor="ps-fit">Fit Image</Label>
+                           </div>
                         </RadioGroup>
                     </div>
                     <div>
                         <Label className="font-semibold">Margin</Label>
-                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-3 flex space-x-4" disabled={isConverting || pageSize === 'Fit'}>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} /><Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>None</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} /><Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} /><Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label></div>
+                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} />
+                                <Label htmlFor="m-none" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>None</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} />
+                                <Label htmlFor="m-small" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Small</Label>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} />
+                                <Label htmlFor="m-big" className={cn(pageSize === 'Fit' && "text-muted-foreground")}>Big</Label>
+                            </div>
                         </RadioGroup>
                     </div>
                 </div>
