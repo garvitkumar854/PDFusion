@@ -200,13 +200,14 @@ export function PageNumberAdder() {
             const totalPages = pdfjsDoc.numPages;
             const inRange = pageNum >= startPage && pageNum <= endPage;
             
-            if (inRange && !(pageMode === 'facing' && isCoverPage && pageNum === 1)) {
-                 const logicalPageNumber = (pageNum - startPage) + firstNumber + (isCoverPage ? -1 : 0);
-                 const totalLogicalPages = (endPage - startPage) + 1 + (isCoverPage ? -1 : 0);
+            if (inRange && !(isCoverPage && pageNum === 1)) {
+                 const totalLogicalPages = (endPage - startPage) + 1 - (isCoverPage ? 1 : 0);
+                 const logicalPageNumber = firstNumber + (pageNum - startPage) - (isCoverPage ? 1 : 0);
 
                 let effectivePosition = position;
-                if (pageMode === 'facing') {
-                    if (pageNum % 2 === 1) { 
+                 if (pageMode === 'facing') {
+                    const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+                    if (isLeftPage) {
                         if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                     }
@@ -409,12 +410,12 @@ export function PageNumberAdder() {
 
         const pageNum = i + 1;
 
-        if (pageMode === 'facing' && isCoverPage && pageNum === 1) {
+        if (isCoverPage && pageNum === 1) {
              setProgress(Math.round(((i - effectiveStart + 2) / (effectiveEnd - effectiveStart + 1)) * 100));
              continue;
         }
 
-        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber + (isCoverPage ? -1 : 0);
+        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage ? 1 : 0);
         
         const page = pages[i];
         const { width, height } = page.getSize();
@@ -426,10 +427,11 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-           if (pageNum % 2 === 1) { 
-              if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
-              else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-           }
+            const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+            if (isLeftPage) {
+                if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+            }
         }
         
         const [vPos, hPos] = effectivePosition.split('-');
@@ -579,20 +581,26 @@ export function PageNumberAdder() {
                                     if (pageMode === 'facing') {
                                         if (isCoverPage) {
                                             if(i === 0) return <PagePreviewCard key={p.pageNumber} pageInfo={p} className="sm:col-start-2" />;
-                                            if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
+                                            if ((i-1) % 2 !== 0) return null; // We render pairs starting from index 1 (2,4,6...)
+                                            const leftPage = pagePreviews[i];
+                                            const rightPage = pagePreviews[i + 1];
+                                            return (
+                                                <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start sm:col-span-2">
+                                                    {leftPage && <PagePreviewCard pageInfo={leftPage} />}
+                                                    {rightPage ? <PagePreviewCard pageInfo={rightPage} /> : <div/>}
+                                                </div>
+                                            );
                                         } else {
-                                            if (i % 2 !== 0) return null;
+                                            if (i % 2 !== 0) return null; // We render pairs starting from index 0 (1,3,5...)
+                                            const leftPage = pagePreviews[i];
+                                            const rightPage = pagePreviews[i + 1];
+                                            return (
+                                                <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start sm:col-span-2">
+                                                    {leftPage && <PagePreviewCard pageInfo={leftPage} />}
+                                                    {rightPage ? <PagePreviewCard pageInfo={rightPage} /> : <div/>}
+                                                </div>
+                                            );
                                         }
-                                        
-                                        const leftPage = pagePreviews[i + (isCoverPage ? 0 : 1)];
-                                        const rightPage = pagePreviews[i + (isCoverPage ? 1 : 0)];
-
-                                        return (
-                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start sm:col-span-2">
-                                                {rightPage && <PagePreviewCard pageInfo={rightPage} />}
-                                                {leftPage ? <PagePreviewCard pageInfo={leftPage} /> : <div/>}
-                                            </div>
-                                        );
                                     } else {
                                         return (
                                             <PagePreviewCard key={p.pageNumber} pageInfo={p} className="w-full"/>
