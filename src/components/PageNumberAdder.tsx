@@ -117,8 +117,18 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
           ctx.drawImage(img, 0, 0);
 
           if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
-              const { font, isBold, isItalic, fontSize, textColor, isUnderline, position, margin } = textOptions;
+              const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
+              let { position } = textOptions;
               
+              if(pageMode === 'facing' && position.includes('-')) {
+                 const isOddPage = pageInfo.pageNumber % 2 !== 0; // Left page in a spread
+                 if (isOddPage) {
+                    if (position.includes('right')) position = position.replace('right', 'left');
+                 } else {
+                    if (position.includes('left')) position = position.replace('left', 'right');
+                 }
+              }
+
               ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
               ctx.fillStyle = textColor;
               const textMetrics = ctx.measureText(text);
@@ -354,7 +364,18 @@ export function PageNumberAdder() {
         const textHeight = embeddedFont.heightAtSize(fontSize);
         
         let x = 0, y = 0;
-        const [vPos, hPos] = position.split('-');
+        let effectivePosition = position;
+        
+        if(pageMode === 'facing' && position.includes('-')) {
+            const isOddPage = pageNum % 2 !== 0; // Left page in a spread
+            if (isOddPage) {
+                if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+            } else {
+                if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+            }
+        }
+        
+        const [vPos, hPos] = effectivePosition.split('-');
         
         if (vPos === 'top') y = height - margin;
         else y = margin;
@@ -427,7 +448,7 @@ export function PageNumberAdder() {
     setTimeout(() => { document.body.removeChild(link) }, 100);
   };
 
-  const textOptions = { startPage, endPage, font, isBold, isItalic, fontSize, textColor, isUnderline, position, margin };
+  const textOptions = { startPage, endPage, font, isBold, isItalic, fontSize, textColor, isUnderline, position, margin, pageMode };
   const totalPages = file?.pdfjsDoc?.numPages || 0;
 
   if (result) {
@@ -491,30 +512,34 @@ export function PageNumberAdder() {
             </Card>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div className="lg:col-span-2 order-2 lg:order-1">
-                    <Card className="bg-transparent shadow-lg">
+                    <Card className="bg-transparent shadow-lg h-full">
                         <CardHeader><CardTitle className="text-xl">Preview</CardTitle></CardHeader>
-                        <CardContent>
+                        <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
-                            <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
-                              {pagePreviews.map((p, i) => {
-                                 if (pageMode === 'facing' && p.pageNumber === 1) {
-                                    return <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} className="md:col-start-2" />
-                                 }
-                                 if (pageMode === 'facing' && p.pageNumber > 1 && i % 2 === 0) return null;
-                                 
-                                 const secondPage = pageMode === 'facing' ? pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1) : null;
-                                 
-                                 return pageMode === 'facing' ? (
-                                    <div key={p.pageNumber} className="grid grid-cols-2 gap-4">
-                                      <PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
-                                      {secondPage ? (
-                                        <PagePreviewCard pageInfo={secondPage} text={getPageNumberText(secondPage.pageNumber, totalPages)} textOptions={textOptions} />
-                                      ): <div />}
-                                    </div>
-                                 ) : (
-                                    <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
-                                 )
-                              })}
+                            <div className="overflow-y-auto h-[1200px] pr-2">
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
+                                {pagePreviews.map((p, i) => {
+                                    if (pageMode === 'facing') {
+                                        const isOddPage = p.pageNumber % 2 !== 0;
+                                        if (!isOddPage) return null; // We only render the start of a pair
+
+                                        const secondPage = pagePreviews.find(sp => sp.pageNumber === p.pageNumber + 1);
+
+                                        return (
+                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
+                                                <PagePreviewCard pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
+                                                {secondPage ? (
+                                                    <PagePreviewCard pageInfo={secondPage} text={getPageNumberText(secondPage.pageNumber, totalPages)} textOptions={textOptions} />
+                                                ) : <div />}
+                                            </div>
+                                        );
+                                    } else {
+                                        return (
+                                            <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} />
+                                        );
+                                    }
+                                })}
+                                </div>
                             </div>
                           </PageVisibilityContext.Provider>
                         </CardContent>
@@ -525,32 +550,41 @@ export function PageNumberAdder() {
                         <CardHeader><CardTitle className="text-xl">Numbering Options</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
-                            <div>
+                             <div>
                                 <Label className="font-semibold">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 space-y-1" disabled={isProcessing || file.isEncrypted}>
+                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="mt-2 flex space-x-2" disabled={isProcessing || file.isEncrypted}>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="single" id="pm-s" /><Label htmlFor="pm-s" className="cursor-pointer">Single page</Label></div>
                                     <div className="flex items-center space-x-2"><RadioGroupItem value="facing" id="pm-f" /><Label htmlFor="pm-f" className="cursor-pointer">Facing pages</Label></div>
                                 </RadioGroup>
                             </div>
-                            <div>
-                                <Label className="font-semibold">Position</Label>
-                                <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 w-24 h-16 p-1 rounded-lg bg-muted">
-                                    {positions.filter(p=>!p.startsWith("middle")).map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button> ))}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="font-semibold">Position</Label>
+                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 h-16 p-1 rounded-lg bg-muted">
+                                        {positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button> ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className="font-semibold">Format</Label>
+                                    <Select value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} disabled={isProcessing || file.isEncrypted}>
+                                        <SelectTrigger className="mt-2">
+                                            <SelectValue placeholder="Select format" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="n">1</SelectItem>
+                                            <SelectItem value="page_n">Page 1</SelectItem>
+                                            <SelectItem value="n_of_N">1 / {totalPages || 'N'}</SelectItem>
+                                            <SelectItem value="page_n_of_N">Page 1 of {totalPages || 'N'}</SelectItem>
+                                            <SelectItem value="custom">Custom</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
-                            <div>
-                                <Label className="font-semibold">Format</Label>
-                                <RadioGroup value={formatType} onValueChange={(v) => setFormatType(v as FormatType)} className="mt-2 space-y-1" disabled={isProcessing || file.isEncrypted}>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n" id="f-n" /><Label htmlFor="f-n">1</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n" id="f-pn" /><Label htmlFor="f-pn">Page 1</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="n_of_N" id="f-nn" /><Label htmlFor="f-nn">1 / {totalPages || 'N'}</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="page_n_of_N" id="f-pnn" /><Label htmlFor="f-pnn">Page 1 of {totalPages || 'N'}</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="custom" id="f-c" /><Label htmlFor="f-c">Custom</Label></div>
-                                </RadioGroup>
-                                {formatType === 'custom' && (
-                                    <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing || file.isEncrypted} placeholder="{p} of {n}"/>
-                                )}
-                            </div>
+                            
+                            {formatType === 'custom' && (
+                                <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing || file.isEncrypted} placeholder="{p} of {n}"/>
+                            )}
                              <div>
                                 <Label className="font-semibold">Pages</Label>
                                 <div className="grid grid-cols-2 gap-2 mt-1">
@@ -602,5 +636,3 @@ export function PageNumberAdder() {
     </div>
   );
 }
-
-    
