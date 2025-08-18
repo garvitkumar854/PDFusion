@@ -202,12 +202,12 @@ export function PageNumberAdder() {
             
             if (inRange && !(isCoverPage && pageNum === 1)) {
                  const totalLogicalPages = (endPage - startPage) + 1 - (isCoverPage ? 1 : 0);
-                 const logicalPageNumber = firstNumber + (pageNum - startPage) - (isCoverPage ? 1 : 0);
+                 const logicalPageNumber = firstNumber + (pageNum - startPage) - (isCoverPage && pageNum > 1 ? 1 : 0);
 
                 let effectivePosition = position;
                  if (pageMode === 'facing') {
-                    const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-                    if (isLeftPage) {
+                    const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+                    if (isLeftHandPage) {
                         if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                     }
@@ -415,7 +415,7 @@ export function PageNumberAdder() {
              continue;
         }
 
-        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage ? 1 : 0);
+        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage && pageNum > 1 ? 1 : 0);
         
         const page = pages[i];
         const { width, height } = page.getSize();
@@ -427,8 +427,8 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-            if (isLeftPage) {
+            const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+            if (isLeftHandPage) {
                 if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                 else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
             }
@@ -580,7 +580,7 @@ export function PageNumberAdder() {
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
                                         if (isCoverPage) {
-                                            if(i === 0) return <PagePreviewCard key={p.pageNumber} pageInfo={p} className="sm:col-start-2" />;
+                                            if(i === 0) return <div key={p.pageNumber} className="sm:col-span-2 grid grid-cols-2 gap-4"><div/><PagePreviewCard pageInfo={p}/></div>;
                                             if ((i-1) % 2 !== 0) return null; // We render pairs starting from index 1 (2,4,6...)
                                             const leftPage = pagePreviews[i];
                                             const rightPage = pagePreviews[i + 1];
@@ -620,18 +620,18 @@ export function PageNumberAdder() {
                         <div className={cn((isProcessing || file.isEncrypted) && "opacity-70 pointer-events-none")}>
                             <div>
                                 <Label className="font-semibold mb-2 block">Page mode</Label>
-                                <RadioGroup value={pageMode} onValueChange={v => setPageMode(v as PageMode)} className="grid grid-cols-2 gap-2" disabled={isProcessing || file.isEncrypted}>
+                                <div className="grid grid-cols-2 gap-2">
                                     <Label htmlFor="pm-s" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'single' && 'border-primary bg-primary/5')}>
                                       <RectangleVertical className="w-6 h-6"/>
                                       <span className="text-sm">Single</span>
-                                      <RadioGroupItem value="single" id="pm-s" className="sr-only" />
+                                      <RadioGroupItem value="single" id="pm-s" checked={pageMode === 'single'} onClick={() => setPageMode('single')} className="sr-only" />
                                     </Label>
                                     <Label htmlFor="pm-f" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'facing' && 'border-primary bg-primary/5')}>
                                       <RectangleHorizontal className="w-6 h-6"/>
                                       <span className="text-sm">Facing</span>
-                                      <RadioGroupItem value="facing" id="pm-f" className="sr-only" />
+                                      <RadioGroupItem value="facing" id="pm-f" checked={pageMode === 'facing'} onClick={() => setPageMode('facing')} className="sr-only" />
                                     </Label>
-                                </RadioGroup>
+                                </div>
                             </div>
 
                              {pageMode === 'facing' && (
@@ -708,7 +708,10 @@ export function PageNumberAdder() {
                             </div>
                              <div>
                                 <Label htmlFor="textColor" className="font-semibold">Text Color</Label>
-                                <div className="relative mt-1"><Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing || file.isEncrypted}/><Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" disabled={isProcessing || file.isEncrypted} /></div>
+                                <div className="relative mt-1">
+                                    <Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing || file.isEncrypted}/>
+                                    <Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-0 cursor-pointer" disabled={isProcessing || file.isEncrypted} />
+                                </div>
                             </div>
                         </div>
                         </CardContent>
