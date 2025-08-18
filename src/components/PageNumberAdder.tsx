@@ -122,17 +122,29 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
         
         const img = new Image();
         img.onload = () => {
-          canvas.width = pageInfo.width!;
-          canvas.height = pageInfo.height!;
-          ctx.drawImage(img, 0, 0);
+          const devicePixelRatio = window.devicePixelRatio || 1;
+          const backingStoreRatio = (ctx as any).webkitBackingStorePixelRatio || (ctx as any).mozBackingStorePixelRatio || (ctx as any).msBackingStorePixelRatio || (ctx as any).oBackingStorePixelRatio || (ctx as any).backingStorePixelRatio || 1;
+          const ratio = devicePixelRatio / backingStoreRatio;
+
+          const canvasWidth = pageInfo.width!;
+          const canvasHeight = pageInfo.height!;
+          
+          canvas.width = canvasWidth * ratio;
+          canvas.height = canvasHeight * ratio;
+          canvas.style.width = `${canvasWidth}px`;
+          canvas.style.height = `${canvasHeight}px`;
+          
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+          ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
           if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
               const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
               let { position } = textOptions;
               
               if (pageMode === 'facing') {
-                  const isLeftPage = (pageInfo.pageNumber - 1) % 2 === 0;
-                  if (pageInfo.pageNumber > 0) { // All pages except first in facing mode
+                  const isLeftPage = (pageInfo.pageNumber-1) % 2 === 0;
+                  if (pageInfo.pageNumber > 0) {
                     if (isLeftPage && position.includes('right')) {
                         position = position.replace('right', 'left');
                     } else if (!isLeftPage && position.includes('left')) {
@@ -141,20 +153,21 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
                   }
               }
 
-              ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
+              ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}pt ${font}`;
               ctx.fillStyle = textColor;
+              ctx.textBaseline = 'alphabetic';
               const textMetrics = ctx.measureText(text);
-              const textHeight = fontSize;
+              const textHeight = fontSize; // in points
 
               let x = 0, y = 0;
               const [vPos, hPos] = position.split('-');
 
-              if (vPos === 'top') y = margin + textHeight;
-              else y = canvas.height - margin;
+              if (vPos === 'top') y = canvasHeight - margin;
+              else y = margin + textHeight * 0.8;
 
               if (hPos === 'left') x = margin;
-              else if (hPos === 'center') x = (canvas.width - textMetrics.width) / 2;
-              else x = canvas.width - margin - textMetrics.width;
+              else if (hPos === 'center') x = (canvasWidth - textMetrics.width) / 2;
+              else x = canvasWidth - margin - textMetrics.width;
 
               ctx.fillText(text, x, y);
               
@@ -163,7 +176,7 @@ const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: 
                 ctx.moveTo(x, y + 2);
                 ctx.lineTo(x + textMetrics.width, y + 2);
                 ctx.strokeStyle = textColor;
-                ctx.lineWidth = Math.max(1, fontSize / 15);
+                ctx.lineWidth = Math.max(0.5, fontSize / 15);
                 ctx.stroke();
               }
           }
@@ -228,8 +241,8 @@ export function PageNumberAdder() {
       if (context) {
           await page.render({ canvasContext: context, viewport }).promise;
            if (operationId.current !== currentOperationId) return null;
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          return { dataUrl, width: viewport.width, height: viewport.height, aspectRatio: viewport.width / viewport.height };
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          return { dataUrl, width: viewport.width, height: viewport.height };
       }
     } catch (e) {
       console.error(`Error rendering page ${pageNum}:`, e);
@@ -313,7 +326,8 @@ export function PageNumberAdder() {
                     const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
                     if (latestIndex > -1) {
                        const finalPreviews = [...current];
-                       finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], ...renderResult };
+                       const page = finalPreviews[latestIndex];
+                       finalPreviews[latestIndex] = { ...page, dataUrl: renderResult.dataUrl, width: renderResult.width, height: renderResult.height };
                        return finalPreviews;
                     }
                     return current;
@@ -383,13 +397,12 @@ export function PageNumberAdder() {
         const text = getPageNumberText(pageNum, totalPages);
         const numFontSize = Number(fontSize);
         const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
-        const textHeight = embeddedFont.heightAtSize(numFontSize);
         
         let x = 0, y = 0;
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = (pageNum -1) % 2 === 0; 
+            const isLeftPage = (pageNum-1) % 2 === 0;
             if (pageNum > 0) {
               if (isLeftPage && position.includes('right')) {
                   effectivePosition = position.replace('right', 'left') as Position;
@@ -402,13 +415,11 @@ export function PageNumberAdder() {
         const [vPos, hPos] = effectivePosition.split('-');
         
         const margin = MARGIN_MAP[marginSize];
+        const textHeight = embeddedFont.heightAtSize(numFontSize);
 
         if (vPos === 'top') y = height - margin - textHeight;
         else y = margin;
         
-        let baselineOffset = textHeight * 0.25; 
-        y += baselineOffset;
-
         if (hPos === 'left') x = margin;
         else if (hPos === 'center') x = width / 2 - textWidth / 2;
         else x = width - margin - textWidth;
@@ -543,10 +554,10 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "grid-cols-1 md:grid-cols-2")}>
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if ((i-1) % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
+                                        if (i % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
                                         
                                         const firstPageInPair = pagePreviews[i];
                                         const secondPageInPair = pagePreviews[i+1];
@@ -591,7 +602,7 @@ export function PageNumberAdder() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="font-semibold">Position</Label>
-                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 h-16 p-1 rounded-lg bg-muted">
+                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-square">
                                         {positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className={cn("rounded-md transition-colors", position === p ? "bg-primary" : "hover:bg-muted-foreground/20")}></button> ))}
                                     </div>
                                 </div>
