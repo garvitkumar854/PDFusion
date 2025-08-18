@@ -632,7 +632,7 @@ export function JpgToPdfConverter() {
                 <CardTitle className="text-xl sm:text-2xl">Conversion Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className={cn("grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6", isConverting && "opacity-70 pointer-events-none")}>
+                <div className={cn("space-y-6", isConverting && "opacity-70 pointer-events-none")}>
                     <div>
                         <Label className="font-semibold">Page Orientation</Label>
                         <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
@@ -646,39 +646,41 @@ export function JpgToPdfConverter() {
                             </div>
                         </RadioGroup>
                     </div>
-                    <div>
-                        <Label className="font-semibold">Page Size</Label>
-                        <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
-                           <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="A4" id="ps-a4" />
-                                <Label htmlFor="ps-a4" className="cursor-pointer">A4</Label>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Letter" id="ps-letter" />
-                                <Label htmlFor="ps-letter" className="cursor-pointer">Letter</Label>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Fit" id="ps-fit" />
-                                <Label htmlFor="ps-fit" className="cursor-pointer">Fit Image</Label>
-                           </div>
-                        </RadioGroup>
-                    </div>
-                    <div>
-                        <Label className="font-semibold">Margin</Label>
-                        <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} />
-                                <Label htmlFor="m-none" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>None</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} />
-                                <Label htmlFor="m-small" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>Small</Label>
-                            </div>
-                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} />
-                                <Label htmlFor="m-big" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>Big</Label>
-                            </div>
-                        </RadioGroup>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+                        <div>
+                            <Label className="font-semibold">Page Size</Label>
+                            <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
+                               <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="A4" id="ps-a4" />
+                                    <Label htmlFor="ps-a4" className="cursor-pointer">A4</Label>
+                               </div>
+                               <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Letter" id="ps-letter" />
+                                    <Label htmlFor="ps-letter" className="cursor-pointer">Letter</Label>
+                               </div>
+                               <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Fit" id="ps-fit" />
+                                    <Label htmlFor="ps-fit" className="cursor-pointer">Fit Image</Label>
+                               </div>
+                            </RadioGroup>
+                        </div>
+                        <div>
+                            <Label className="font-semibold">Margin</Label>
+                            <RadioGroup value={pageSize === 'Fit' ? 'none' : marginSize} onValueChange={(v) => setMarginSize(v as MarginSize)} className="mt-2" disabled={isConverting || pageSize === 'Fit'}>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="none" id="m-none" disabled={pageSize === 'Fit'} />
+                                    <Label htmlFor="m-none" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>None</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="small" id="m-small" disabled={pageSize === 'Fit'} />
+                                    <Label htmlFor="m-small" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>Small</Label>
+                                </div>
+                                 <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="big" id="m-big" disabled={pageSize === 'Fit'} />
+                                    <Label htmlFor="m-big" className={cn(pageSize === 'Fit' ? "text-muted-foreground" : "cursor-pointer")}>Big</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
                     </div>
                 </div>
 
