@@ -112,7 +112,7 @@ const PagePreviewCard = React.memo(({ pageInfo, className }: { pageInfo: PagePre
     }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
 
     return (
-        <div ref={ref} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center border rounded-md", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
+        <div ref={ref} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center border rounded-md overflow-hidden", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
             <div className="relative w-full h-full">
             {pageInfo.dataUrl ? (
                 <img src={pageInfo.dataUrl} alt={`Page ${pageInfo.pageNumber}`} className="w-full h-full object-contain" />
@@ -189,10 +189,11 @@ export function PageNumberAdder() {
             const totalPages = pdfjsDoc.numPages;
             if (pageNum >= startPage && pageNum <= endPage) {
                 let effectivePosition = position;
-                if (pageMode === 'facing' && pageNum > 1) {
-                   if (pageNum % 2 === 0 && position.includes('right')) { // Even pages (left side of spread)
+                if (pageMode === 'facing') {
+                   // Odd pages are on the left of a spread, even on the right
+                   if (pageNum % 2 !== 0 && position.includes('right')) { 
                        effectivePosition = position.replace('right', 'left') as Position;
-                   } else if (pageNum % 2 !== 0 && position.includes('left')) { // Odd pages (right side of spread)
+                   } else if (pageNum % 2 === 0 && position.includes('left')) {
                        effectivePosition = position.replace('left', 'right') as Position;
                    }
                 }
@@ -388,10 +389,11 @@ export function PageNumberAdder() {
         
         let effectivePosition = position;
         
-        if (pageMode === 'facing' && pageNum > 1) {
-            if (pageNum % 2 === 0 && position.includes('right')) { // Even pages (left side of spread)
-               effectivePosition = position.replace('right', 'left') as Position;
-            } else if (pageNum % 2 !== 0 && position.includes('left')) { // Odd pages (right side of spread)
+        if (pageMode === 'facing') {
+            // Odd pages are on the left of a spread, even on the right
+            if (pageNum % 2 !== 0 && position.includes('right')) { 
+                effectivePosition = position.replace('right', 'left') as Position;
+            } else if (pageNum % 2 === 0 && position.includes('left')) {
                 effectivePosition = position.replace('left', 'right') as Position;
             }
         }
@@ -538,25 +540,16 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (i === 0) { // Page 1 is a single page on the right
-                                            return (
-                                                <div key={p.pageNumber} className="flex justify-center md:justify-end">
-                                                    <div className="w-full md:w-1/2">
-                                                         <PagePreviewCard pageInfo={p} />
-                                                    </div>
-                                                </div>
-                                            )
-                                        }
-                                        if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...) which are left-hand pages
+                                        if (i % 2 !== 0) return null; // We render pairs starting from even indices (0, 2, 4...)
                                         
-                                        const leftPage = pagePreviews[i]; // e.g. page 2
-                                        const rightPage = pagePreviews[i+1]; // e.g. page 3
+                                        const leftPage = pagePreviews[i];
+                                        const rightPage = pagePreviews[i + 1];
                                         
                                         return (
-                                            <div key={p.pageNumber} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div key={p.pageNumber} className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
                                                 {leftPage && <PagePreviewCard pageInfo={leftPage} />}
                                                 {rightPage && <PagePreviewCard pageInfo={rightPage} />}
                                             </div>
@@ -689,5 +682,3 @@ export function PageNumberAdder() {
     </div>
   );
 }
-
-    
