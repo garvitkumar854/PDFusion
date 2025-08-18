@@ -32,6 +32,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
+import { Checkbox } from "./ui/checkbox";
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -154,22 +155,27 @@ export function PageNumberAdder() {
   
   const [startPage, setStartPage] = useState(1);
   const [endPage, setEndPage] = useState(1);
+  const [firstNumber, setFirstNumber] = useState(1);
+  const [isCoverPage, setIsCoverPage] = useState(false);
+
   const [formatType, setFormatType] = useState<FormatType>('n');
   const [customFormat, setCustomFormat] = useState("{p} / {n}");
   
-
   const operationId = useRef<number>(0);
   const rerenderTimeout = useRef<number | null>(null);
   const { toast } = useToast();
 
-  const getPageNumberText = useCallback((page: number, total: number) => {
+  const getPageNumberText = useCallback((logicalPageNumber: number, totalLogicalPages: number) => {
     const format = formatType === 'custom' ? customFormat : formatType;
+    const pageVar = String(logicalPageNumber);
+    const totalVar = String(totalLogicalPages);
+    
     switch (format) {
-        case 'n': return `${page}`;
-        case 'page_n': return `Page ${page}`;
-        case 'n_of_N': return `${page} / ${total}`;
-        case 'page_n_of_N': return `Page ${page} of ${total}`;
-        default: return customFormat.replace(/\{p\}/g, String(page)).replace(/\{n\}/g, String(total));
+        case 'n': return pageVar;
+        case 'page_n': return `Page ${pageVar}`;
+        case 'n_of_N': return `${pageVar} / ${totalVar}`;
+        case 'page_n_of_N': return `Page ${pageVar} of ${totalVar}`;
+        default: return customFormat.replace(/\{p\}/g, pageVar).replace(/\{n\}/g, totalVar);
     }
   }, [formatType, customFormat]);
 
@@ -192,10 +198,15 @@ export function PageNumberAdder() {
             await page.render({ canvasContext: context, viewport }).promise;
             
             const totalPages = pdfjsDoc.numPages;
-            if (pageNum >= startPage && pageNum <= endPage) {
+            const inRange = pageNum >= startPage && pageNum <= endPage;
+            
+            if (inRange && !(pageMode === 'facing' && isCoverPage && pageNum === 1)) {
+                 const logicalPageNumber = (pageNum - startPage) + firstNumber + (isCoverPage ? -1 : 0);
+                 const totalLogicalPages = (endPage - startPage) + 1 + (isCoverPage ? -1 : 0);
+
                 let effectivePosition = position;
                 if (pageMode === 'facing') {
-                    if (pageNum % 2 === 1) { // Left page
+                    if (pageNum % 2 === 1) { 
                         if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                     }
@@ -205,7 +216,7 @@ export function PageNumberAdder() {
                 context.fillStyle = textColor;
                 context.textBaseline = 'alphabetic';
                 
-                const text = getPageNumberText(pageNum, totalPages);
+                const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
                 const textMetrics = context.measureText(text);
                 
                 const margin = MARGIN_MAP[marginSize] * scale;
@@ -240,7 +251,7 @@ export function PageNumberAdder() {
       console.error(`Error rendering page ${pageNum}:`, e);
     }
     return null;
-  }, [getPageNumberText, startPage, endPage, position, pageMode, isItalic, isBold, fontSize, textColor, font, isUnderline, marginSize]);
+  }, [getPageNumberText, startPage, endPage, position, pageMode, isItalic, isBold, fontSize, textColor, font, isUnderline, marginSize, isCoverPage, firstNumber]);
   
   const onPageVisible = useCallback((pageNumber: number) => {
     if (!file || !file.pdfjsDoc) return;
@@ -281,6 +292,8 @@ export function PageNumberAdder() {
       setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc, isEncrypted: false });
       setStartPage(1);
       setEndPage(pdfjsDoc.numPages);
+      setFirstNumber(1);
+      setIsCoverPage(false);
       
       const previews: PagePreviewInfo[] = [];
       for(let i=1; i<=pdfjsDoc.numPages; i++) {
@@ -348,7 +361,7 @@ export function PageNumberAdder() {
 
   useEffect(() => {
     triggerRerender();
-  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, triggerRerender]);
+  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, triggerRerender, isCoverPage, firstNumber]);
 
 
   const removeFile = () => {
@@ -389,21 +402,31 @@ export function PageNumberAdder() {
       const colorRgb = hexToRgb(textColor);
       
       const pages = pdfDoc.getPages();
+      const totalLogicalPages = (effectiveEnd - effectiveStart) + 1 - (isCoverPage ? 1 : 0);
 
       for (let i = effectiveStart - 1; i < effectiveEnd; i++) {
         if (operationId.current !== currentOperationId) return;
 
+        const pageNum = i + 1;
+
+        if (pageMode === 'facing' && isCoverPage && pageNum === 1) {
+             setProgress(Math.round(((i - effectiveStart + 2) / (effectiveEnd - effectiveStart + 1)) * 100));
+             continue;
+        }
+
+        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber + (isCoverPage ? -1 : 0);
+        
         const page = pages[i];
         const { width, height } = page.getSize();
-        const pageNum = i + 1;
-        const text = getPageNumberText(pageNum, totalPages);
+        
+        const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
         const numFontSize = Number(fontSize);
         const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
         
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-           if (pageNum % 2 === 1) { // Left page
+           if (pageNum % 2 === 1) { 
               if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
               else if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
            }
@@ -551,18 +574,23 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
+                                <div className={cn("grid gap-4 grid-cols-1 sm:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if (p.pageNumber % 2 !== 1) return null; // We render pairs starting from odd indices (1, 3, 5...)
+                                        if (isCoverPage) {
+                                            if(i === 0) return <PagePreviewCard key={p.pageNumber} pageInfo={p} className="sm:col-start-2" />;
+                                            if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
+                                        } else {
+                                            if (i % 2 !== 0) return null;
+                                        }
                                         
-                                        const leftPage = pagePreviews[i];
-                                        const rightPage = pagePreviews[i + 1];
-                                        
+                                        const leftPage = pagePreviews[i + (isCoverPage ? 0 : 1)];
+                                        const rightPage = pagePreviews[i + (isCoverPage ? 1 : 0)];
+
                                         return (
-                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start">
-                                                {leftPage && <PagePreviewCard pageInfo={leftPage} />}
-                                                {rightPage ? <PagePreviewCard pageInfo={rightPage} /> : <div/>}
+                                            <div key={p.pageNumber} className="grid grid-cols-2 gap-2 items-start sm:col-span-2">
+                                                {rightPage && <PagePreviewCard pageInfo={rightPage} />}
+                                                {leftPage ? <PagePreviewCard pageInfo={leftPage} /> : <div/>}
                                             </div>
                                         );
                                     } else {
@@ -598,10 +626,17 @@ export function PageNumberAdder() {
                                 </RadioGroup>
                             </div>
 
+                             {pageMode === 'facing' && (
+                                <div className="flex items-center space-x-2 pt-2">
+                                    <Checkbox id="cover-page" checked={isCoverPage} onCheckedChange={c => setIsCoverPage(Boolean(c))} disabled={isProcessing || file.isEncrypted} />
+                                    <Label htmlFor="cover-page" className="cursor-pointer">First page is a cover</Label>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="font-semibold">Position</Label>
-                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-square w-[90px]">
+                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">
                                         {positions.map(p => ( 
                                           <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className="rounded-md transition-colors relative flex items-center justify-center group">
                                              <span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span>
@@ -623,19 +658,25 @@ export function PageNumberAdder() {
                                             <SelectItem value="custom">Custom</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {formatType === 'custom' && (
+                                        <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing || file.isEncrypted} placeholder="{p} of {n}"/>
+                                    )}
                                 </div>
                             </div>
                             
-                            {formatType === 'custom' && (
-                                <Input type="text" value={customFormat} onChange={e => setCustomFormat(e.target.value)} className="mt-2" disabled={isProcessing || file.isEncrypted} placeholder="{p} of {n}"/>
-                            )}
-                             <div>
-                                <Label className="font-semibold">Pages</Label>
+                            <div>
+                                <Label className="font-semibold">Pages to number</Label>
                                 <div className="grid grid-cols-2 gap-2 mt-1">
                                     <Input placeholder="Start" type="number" value={startPage} min="1" max={totalPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} disabled={isProcessing || file.isEncrypted}/>
                                     <Input placeholder="End" type="number" value={endPage} min={startPage} max={totalPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} disabled={isProcessing || file.isEncrypted}/>
                                 </div>
                             </div>
+
+                             <div>
+                                <Label htmlFor="first-number" className="font-semibold">First number</Label>
+                                <Input id="first-number" type="number" value={firstNumber} onChange={e => setFirstNumber(parseInt(e.target.value) || 1)} className="mt-1" min="1" disabled={isProcessing || file.isEncrypted}/>
+                             </div>
+                            
                             <div className="grid grid-cols-2 gap-4">
                                  <div>
                                     <Label htmlFor="margin" className="font-semibold">Margin</Label>
