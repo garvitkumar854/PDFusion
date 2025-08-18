@@ -56,12 +56,9 @@ type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
 type PageMode = "single" | "facing";
 type MarginSize = 'small' | 'recommended' | 'big';
 
-
 type PagePreviewInfo = {
   pageNumber: number;
   dataUrl?: string;
-  width?: number;
-  height?: number;
   aspectRatio: number;
 };
 
@@ -93,107 +90,30 @@ const hexToRgb = (hex: string) => {
 const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
 const usePageVisibility = () => React.useContext(PageVisibilityContext);
 
-const PagePreviewCard = React.memo(({ pageInfo, text, textOptions, className }: { pageInfo: PagePreviewInfo, text: string, textOptions: any, className?: string }) => {
-    const ref = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+const PagePreviewCard = React.memo(({ pageInfo, className }: { pageInfo: PagePreviewInfo, className?: string }) => {
+    const ref = useRef<HTMLDivElement>(null);
     const { onVisible } = usePageVisibility();
 
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
+            if (entry.isIntersecting && !pageInfo.dataUrl) {
                 onVisible(pageInfo.pageNumber);
-                if (containerRef.current) observer.unobserve(containerRef.current);
+                if (ref.current) observer.unobserve(ref.current);
             }
         }, { rootMargin: "200px" });
 
-        if (containerRef.current) observer.observe(containerRef.current);
+        if (ref.current) observer.observe(ref.current);
         
         return () => {
-            if (containerRef.current) observer.unobserve(containerRef.current);
+            if (ref.current) observer.unobserve(ref.current);
         };
-    }, [pageInfo.pageNumber, onVisible]);
-
-    useEffect(() => {
-        if (!ref.current || !pageInfo.dataUrl) return;
-
-        const canvas = ref.current;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        
-        const img = new Image();
-        img.onload = () => {
-            const dpr = window.devicePixelRatio || 1;
-            const canvasWidth = pageInfo.width!;
-            const canvasHeight = pageInfo.height!;
-
-            canvas.width = canvasWidth * dpr;
-            canvas.height = canvasHeight * dpr;
-            canvas.style.width = `${canvasWidth}px`;
-            canvas.style.height = `${canvasHeight}px`;
-            ctx.scale(dpr, dpr);
-
-            ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-
-            if (pageInfo.pageNumber >= textOptions.startPage && pageInfo.pageNumber <= textOptions.endPage) {
-                const { font, isBold, isItalic, fontSize, textColor, isUnderline, margin, pageMode } = textOptions;
-                let { position } = textOptions;
-
-                const isFacingMode = pageMode === 'facing';
-                const isEvenPage = pageInfo.pageNumber % 2 === 0;
-
-                if (isFacingMode && pageInfo.pageNumber > 0) {
-                    if (isEvenPage && position.includes('left')) {
-                        position = position.replace('left', 'right');
-                    } else if (!isEvenPage && position.includes('right')) {
-                        position = position.replace('right', 'left');
-                    }
-                }
-
-                ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${fontSize}px ${font}`;
-                ctx.fillStyle = textColor;
-                ctx.textBaseline = 'alphabetic';
-
-                // Scale font size for preview canvas
-                const pdfFontSizeInPx = (fontSize / 72) * 96; // Approximate conversion from pt to px
-                const scaleRatio = canvasWidth / pageInfo.width!; // should be 1
-                const previewFontSize = pdfFontSizeInPx * scaleRatio;
-                ctx.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${previewFontSize}px ${font}`;
-
-                const textMetrics = ctx.measureText(text);
-                const textHeight = previewFontSize;
-                
-                const previewMargin = (margin / pageInfo.width!) * canvasWidth;
-
-                let x = 0, y = 0;
-                const [vPos, hPos] = position.split('-');
-
-                if (vPos === 'top') y = previewMargin + textHeight;
-                else y = canvasHeight - previewMargin;
-
-                if (hPos === 'left') x = previewMargin;
-                else if (hPos === 'center') x = (canvasWidth - textMetrics.width) / 2;
-                else x = canvasWidth - previewMargin - textMetrics.width;
-
-                ctx.fillText(text, x, y);
-
-                if (isUnderline) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, y + 2);
-                    ctx.lineTo(x + textMetrics.width, y + 2);
-                    ctx.strokeStyle = textColor;
-                    ctx.lineWidth = Math.max(0.5, previewFontSize / 15);
-                    ctx.stroke();
-                }
-            }
-        };
-        img.src = pageInfo.dataUrl;
-    }, [pageInfo.dataUrl, text, textOptions, pageInfo.width, pageInfo.height]);
+    }, [pageInfo.pageNumber, pageInfo.dataUrl, onVisible]);
 
     return (
-        <div ref={containerRef} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center border rounded-md", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
+        <div ref={ref} className={cn("relative transition-all bg-background shadow-sm flex items-center justify-center border rounded-md", className)} style={{ aspectRatio: pageInfo.aspectRatio }}>
             <div className="relative w-full h-full">
             {pageInfo.dataUrl ? (
-                <canvas ref={ref} className="w-full h-full object-contain" />
+                <img src={pageInfo.dataUrl} alt={`Page ${pageInfo.pageNumber}`} className="w-full h-full object-contain" />
             ) : (
                  <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground text-xs p-2 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -232,33 +152,88 @@ export function PageNumberAdder() {
   
 
   const operationId = useRef<number>(0);
+  const rerenderTimeout = useRef<number | null>(null);
   const { toast } = useToast();
+
+  const getPageNumberText = useCallback((page: number, total: number) => {
+    const format = formatType === 'custom' ? customFormat : formatType;
+    switch (format) {
+        case 'n': return `${page}`;
+        case 'page_n': return `Page ${page}`;
+        case 'n_of_N': return `${page} / ${total}`;
+        case 'page_n_of_N': return `Page ${page} of ${total}`;
+        default: return customFormat.replace(/\{p\}/g, String(page)).replace(/\{n\}/g, String(total));
+    }
+  }, [formatType, customFormat]);
 
   const renderPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number) => {
     if (operationId.current !== currentOperationId) return null;
     try {
         const page = await pdfjsDoc.getPage(pageNum);
-        const desiredWidth = 500; // Render at a higher base resolution for clarity
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = desiredWidth / viewport.width;
-        const scaledViewport = page.getViewport({ scale });
+        const desiredWidth = 1000;
+        const viewportBase = page.getViewport({ scale: 1 });
+        const scale = desiredWidth / viewportBase.width;
+        const viewport = page.getViewport({ scale });
 
         const canvas = document.createElement('canvas');
-        canvas.width = scaledViewport.width;
-        canvas.height = scaledViewport.height;
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
         const context = canvas.getContext('2d');
         if (context) {
-            await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+            await page.render({ canvasContext: context, viewport }).promise;
+            
+             // Draw text overlay if applicable
+            const totalPages = pdfjsDoc.numPages;
+            if (pageNum >= startPage && pageNum <= endPage) {
+                let effectivePosition = position;
+                if (pageMode === 'facing' && pageNum > 0) {
+                   if (pageNum % 2 === 0 && position.includes('right')) {
+                       effectivePosition = position.replace('right', 'left') as Position;
+                   } else if (pageNum % 2 !== 0 && position.includes('left')) {
+                       effectivePosition = position.replace('left', 'right') as Position;
+                   }
+                }
+                
+                context.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${Number(fontSize) * scale}px ${font}`;
+                context.fillStyle = textColor;
+                context.textBaseline = 'alphabetic';
+                
+                const text = getPageNumberText(pageNum, totalPages);
+                const textMetrics = context.measureText(text);
+                
+                const margin = MARGIN_MAP[marginSize] * scale;
+                const textHeight = (Number(fontSize) * scale) * 0.8;
+                
+                let x = 0, y = 0;
+                const [vPos, hPos] = effectivePosition.split('-');
+
+                if (vPos === 'top') y = margin + textHeight;
+                else y = canvas.height - margin;
+
+                if (hPos === 'left') x = margin;
+                else if (hPos === 'center') x = (canvas.width - textMetrics.width) / 2;
+                else x = canvas.width - margin - textMetrics.width;
+
+                context.fillText(text, x, y);
+
+                if (isUnderline) {
+                    context.beginPath();
+                    context.moveTo(x, y + 2 * scale);
+                    context.lineTo(x + textMetrics.width, y + 2 * scale);
+                    context.strokeStyle = textColor;
+                    context.lineWidth = Math.max(0.5, (Number(fontSize) / 15) * scale);
+                    context.stroke();
+                }
+            }
+
             if (operationId.current !== currentOperationId) return null;
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            // Pass original PDF page dimensions for accurate text placement
-            return { dataUrl, width: viewport.width, height: viewport.height };
+            return canvas.toDataURL('image/jpeg', 0.95);
         }
     } catch (e) {
       console.error(`Error rendering page ${pageNum}:`, e);
     }
     return null;
-  }, []);
+  }, [getPageNumberText, startPage, endPage, position, pageMode, isItalic, isBold, fontSize, textColor, font, isUnderline, marginSize]);
   
   const loadPdf = useCallback(async (fileToLoad: File) => {
     const currentOperationId = ++operationId.current;
@@ -325,46 +300,54 @@ export function PageNumberAdder() {
     if (!file || !file.pdfjsDoc) return;
     const currentOperationId = operationId.current;
 
-    setPagePreviews(prev => {
-        const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
-        if (pageIndex === -1 || prev[pageIndex].dataUrl) return prev;
-
-        const newPreviews = [...prev];
-        renderPage(file.pdfjsDoc!, pageNumber, currentOperationId).then(renderResult => {
-            if (renderResult && operationId.current === currentOperationId) {
-                setPagePreviews(current => {
-                    const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
-                    if (latestIndex > -1) {
-                       const finalPreviews = [...current];
-                       const page = finalPreviews[latestIndex];
-                       finalPreviews[latestIndex] = { ...page, dataUrl: renderResult.dataUrl, width: renderResult.width, height: renderResult.height };
-                       return finalPreviews;
-                    }
-                    return current;
-                });
-            }
-        });
-        return newPreviews;
+    renderPage(file.pdfjsDoc, pageNumber, currentOperationId).then(dataUrl => {
+      if (dataUrl && operationId.current === currentOperationId) {
+          setPagePreviews(current => {
+              const latestIndex = current.findIndex(p => p.pageNumber === pageNumber);
+              if (latestIndex > -1) {
+                 const finalPreviews = [...current];
+                 finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
+                 return finalPreviews;
+              }
+              return current;
+          });
+      }
     });
   }, [file, renderPage]);
+
+  // Debounced re-render logic
+   const triggerRerender = useCallback(() => {
+    if (!file || !file.pdfjsDoc) return;
+    
+    if (rerenderTimeout.current) {
+        clearTimeout(rerenderTimeout.current);
+    }
+    
+    rerenderTimeout.current = window.setTimeout(() => {
+        const currentOperationId = ++operationId.current;
+        setPagePreviews(prev => {
+            const newPreviews = [...prev];
+            newPreviews.forEach((p, index) => {
+                if (p.dataUrl) { // Only re-render visible pages
+                    newPreviews[index] = { ...p, dataUrl: undefined };
+                }
+            });
+            return newPreviews;
+        });
+    }, 300);
+  }, [file]);
+
+  useEffect(() => {
+    triggerRerender();
+  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, triggerRerender]);
+
 
   const removeFile = () => {
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setResult(null);
   };
-
-  const getPageNumberText = (page: number, total: number) => {
-    const format = formatType === 'custom' ? customFormat : formatType;
-    switch (format) {
-        case 'n': return `${page}`;
-        case 'page_n': return `Page ${page}`;
-        case 'n_of_N': return `${page} / ${total}`;
-        case 'page_n_of_N': return `Page ${page} of ${total}`;
-        default: return customFormat.replace(/\{p\}/g, String(page)).replace(/\{n\}/g, String(total));
-    }
-  }
-
+  
   const handleProcess = async () => {
     const fileToProcess = file?.file;
     if (!fileToProcess || file.isEncrypted) return;
@@ -410,22 +393,20 @@ export function PageNumberAdder() {
         
         let effectivePosition = position;
         
-        const isFacingMode = pageMode === 'facing';
-        const isEvenPage = pageNum % 2 === 0;
-
-        if (isFacingMode && pageNum > 0) {
-            if (isEvenPage && position.includes('left')) {
-                effectivePosition = position.replace('left', 'right') as Position;
-            } else if (!isEvenPage && position.includes('right')) {
+        if (pageMode === 'facing' && pageNum > 0) {
+            if (pageNum % 2 === 0 && position.includes('right')) {
                 effectivePosition = position.replace('right', 'left') as Position;
+            } else if (pageNum % 2 !== 0 && position.includes('left')) {
+                effectivePosition = position.replace('left', 'right') as Position;
             }
         }
         
         const [vPos, hPos] = effectivePosition.split('-');
         
         const margin = MARGIN_MAP[marginSize];
-        const textHeight = embeddedFont.heightAtSize(numFontSize);
+        const textHeight = embeddedFont.heightAtSize(numFontSize, { descender: false }) * 0.8;
 
+        let x=0, y=0;
         if (vPos === 'top') y = height - margin;
         else y = margin + textHeight;
         
@@ -493,8 +474,7 @@ export function PageNumberAdder() {
     link.click();
     setTimeout(() => { document.body.removeChild(link) }, 100);
   };
-
-  const textOptions = { startPage, endPage, font, isBold, isItalic, fontSize: Number(fontSize), textColor, isUnderline, position, margin: MARGIN_MAP[marginSize], pageMode };
+  
   const totalPages = file?.pdfjsDoc?.numPages || 0;
 
   if (result) {
@@ -563,25 +543,32 @@ export function PageNumberAdder() {
                         <CardContent className="h-full">
                           <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                             <div className="overflow-y-auto lg:h-[calc(100vh-22rem)] pr-2">
-                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1 md:grid-cols-2")}>
+                                <div className={cn("grid gap-4", pageMode === 'single' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 md:grid-cols-2")}>
                                 {pagePreviews.map((p, i) => {
                                     if (pageMode === 'facing') {
-                                        if ((i + 1) % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
+                                        if (i === 0) { // Page 1 is a single page
+                                            return (
+                                                <div key={p.pageNumber} className="md:col-span-2 flex justify-center">
+                                                    <div className="w-full md:w-1/2">
+                                                         <PagePreviewCard pageInfo={p} />
+                                                    </div>
+                                                </div>
+                                            )
+                                        }
+                                        if (i % 2 === 0) return null; // We render pairs starting from odd indices (1, 3, 5...)
                                         
                                         const firstPageInPair = pagePreviews[i];
-                                        const secondPageInPair = pagePreviews[i+1];
+                                        const secondPageInPair = pagePreviews[i-1];
                                         
                                         return (
                                             <div key={p.pageNumber} className="grid grid-cols-2 gap-1 md:col-span-2">
-                                                {firstPageInPair && <PagePreviewCard pageInfo={firstPageInPair} text={getPageNumberText(firstPageInPair.pageNumber, totalPages)} textOptions={textOptions} />}
-                                                {secondPageInPair ? (
-                                                    <PagePreviewCard pageInfo={secondPageInPair} text={getPageNumberText(secondPageInPair.pageNumber, totalPages)} textOptions={textOptions} />
-                                                ) : <div />}
+                                                {secondPageInPair && <PagePreviewCard pageInfo={secondPageInPair} />}
+                                                {firstPageInPair && <PagePreviewCard pageInfo={firstPageInPair} />}
                                             </div>
                                         );
                                     } else {
                                         return (
-                                            <PagePreviewCard key={p.pageNumber} pageInfo={p} text={getPageNumberText(p.pageNumber, totalPages)} textOptions={textOptions} className="w-full"/>
+                                            <PagePreviewCard key={p.pageNumber} pageInfo={p} className="w-full"/>
                                         );
                                     }
                                 })}
@@ -611,7 +598,7 @@ export function PageNumberAdder() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label className="font-semibold">Position</Label>
-                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-[3/2]">
+                                    <div className="mt-2 grid grid-cols-3 grid-rows-2 gap-1 p-1 rounded-lg bg-muted aspect-square w-[90px]">
                                         {positions.map(p => ( 
                                           <button key={p} onClick={() => setPosition(p)} disabled={isProcessing || file.isEncrypted} className="rounded-md transition-colors relative flex items-center justify-center group">
                                              <span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span>
