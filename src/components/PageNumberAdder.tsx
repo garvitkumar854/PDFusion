@@ -190,12 +190,12 @@ export function PageNumberAdder() {
             if (pageNum >= startPage && pageNum <= endPage) {
                 let effectivePosition = position;
                 if (pageMode === 'facing') {
-                   // Odd pages are on the left of a spread, even on the right
-                   if (pageNum % 2 !== 0 && position.includes('right')) { 
-                       effectivePosition = position.replace('right', 'left') as Position;
-                   } else if (pageNum % 2 === 0 && position.includes('left')) {
-                       effectivePosition = position.replace('left', 'right') as Position;
-                   }
+                    const isLeftPage = (pageNum % 2 !== 0);
+                    if (isLeftPage && position.includes('left')) {
+                        effectivePosition = position.replace('left', 'right') as Position;
+                    } else if (isLeftPage && position.includes('right')) {
+                        effectivePosition = position.replace('right', 'left') as Position;
+                    }
                 }
                 
                 context.font = `${isItalic ? 'italic' : ''} ${isBold ? 'bold' : ''} ${Number(fontSize) * scale}px ${font}`;
@@ -390,11 +390,11 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            // Odd pages are on the left of a spread, even on the right
-            if (pageNum % 2 !== 0 && position.includes('right')) { 
-                effectivePosition = position.replace('right', 'left') as Position;
-            } else if (pageNum % 2 === 0 && position.includes('left')) {
+            const isLeftPage = (pageNum % 2 !== 0);
+            if (isLeftPage && position.includes('left')) {
                 effectivePosition = position.replace('left', 'right') as Position;
+            } else if (isLeftPage && position.includes('right')) {
+                effectivePosition = position.replace('right', 'left') as Position;
             }
         }
         
@@ -682,3 +682,5 @@ export function PageNumberAdder() {
     </div>
   );
 }
+
+    
