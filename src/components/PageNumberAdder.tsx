@@ -54,7 +54,7 @@ type ProcessResult = {
 };
 
 type Position = "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
-type Font = "Helvetica" | "TimesRoman" | "Courier" | "Symbol" | "ZapfDingbats";
+type Font = "Helvetica" | "TimesRoman" | "Courier";
 type FormatType = 'n' | 'n_of_N' | 'page_n' | 'page_n_of_N' | 'custom';
 type PageMode = "single" | "facing";
 type MarginSize = 'small' | 'recommended' | 'big';
@@ -69,16 +69,12 @@ const FONT_MAP: Record<Font, StandardFonts> = {
   Helvetica: StandardFonts.Helvetica,
   TimesRoman: StandardFonts.TimesRoman,
   Courier: StandardFonts.Courier,
-  Symbol: StandardFonts.Symbol,
-  ZapfDingbats: StandardFonts.ZapfDingbats,
 };
 
 const FONT_STYLE_MAP: Record<Font, { bold: StandardFonts, italic: StandardFonts, boldItalic: StandardFonts }> = {
     Helvetica: { bold: StandardFonts.HelveticaBold, italic: StandardFonts.HelveticaOblique, boldItalic: StandardFonts.HelveticaBoldOblique },
     TimesRoman: { bold: StandardFonts.TimesRomanBold, italic: StandardFonts.TimesRomanItalic, boldItalic: StandardFonts.TimesRomanBoldItalic },
     Courier: { bold: StandardFonts.CourierBold, italic: StandardFonts.CourierOblique, boldItalic: StandardFonts.CourierBoldOblique },
-    Symbol: { bold: StandardFonts.Symbol, italic: StandardFonts.Symbol, boldItalic: StandardFonts.Symbol }, // Symbol and ZapfDingbats don't have styles
-    ZapfDingbats: { bold: StandardFonts.ZapfDingbats, italic: StandardFonts.ZapfDingbats, boldItalic: StandardFonts.ZapfDingbats },
 }
 
 const MARGIN_MAP: Record<MarginSize, number> = {
@@ -210,8 +206,8 @@ export function PageNumberAdder() {
                 let effectivePosition = position;
                 
                  if (pageMode === 'facing') {
-                    const isLeftPage = isCoverPage ? pageNum % 2 === 0 : (pageNum + 1) % 2 === 0;
-                    if (isLeftPage) {
+                    const isRightPage = isCoverPage ? pageNum % 2 === 0 : pageNum % 2 !== 0;
+                    if (!isRightPage) {
                         if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                         else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
@@ -294,14 +290,15 @@ export function PageNumberAdder() {
         return;
       }
 
+      const totalPages = pdfjsDoc.numPages;
       setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, pdfjsDoc, isEncrypted: false });
       setStartPage(1);
-      setEndPage(pdfjsDoc.numPages);
+      setEndPage(totalPages);
       setFirstNumber(1);
       setIsCoverPage(false);
       
       const previews: PagePreviewInfo[] = [];
-      for(let i=1; i<=pdfjsDoc.numPages; i++) {
+      for(let i=1; i<=totalPages; i++) {
         const page = await pdfjsDoc.getPage(i);
         const viewport = page.getViewport({ scale: 1 });
         previews.push({ pageNumber: i, aspectRatio: viewport.width / viewport.height, dataUrl: undefined });
@@ -330,7 +327,7 @@ export function PageNumberAdder() {
           setIsProcessing(false);
        }
     }
-  }, [file, toast, onPageVisible]);
+  }, [file?.pdfjsDoc, onPageVisible, toast]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) loadPdf(acceptedFiles[0]);
@@ -348,16 +345,16 @@ export function PageNumberAdder() {
 
   // Debounced re-render logic
   useEffect(() => {
-    if (!file || !file.pdfjsDoc) return;
+    if (!file || !file.pdfjsDoc || isProcessing) return;
     
     const handler = setTimeout(() => {
         operationId.current++;
-        const currentOperationId = operationId.current;
         
         // Reset all previews
         setPagePreviews(prev => prev.map(p => ({ ...p, dataUrl: undefined })));
         
         // Eagerly re-render the first few visible pages
+        const currentOperationId = operationId.current;
         setTimeout(() => {
             if (operationId.current === currentOperationId) {
                 const initialPagesToLoad = Math.min(pagePreviews.length, 6);
@@ -370,7 +367,7 @@ export function PageNumberAdder() {
 
     return () => clearTimeout(handler);
 
-  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, isCoverPage, firstNumber]);
+  }, [position, marginSize, fontSize, font, textColor, isBold, isItalic, isUnderline, pageMode, startPage, endPage, formatType, customFormat, isCoverPage, firstNumber, file, onPageVisible, pagePreviews.length, isProcessing]);
 
 
   const removeFile = () => {
@@ -432,8 +429,8 @@ export function PageNumberAdder() {
             let effectivePosition = position;
             
             if (pageMode === 'facing') {
-                const isLeftPage = isCoverPage ? pageNum % 2 === 0 : (pageNum + 1) % 2 === 0;
-                 if (isLeftPage) {
+                const isRightPage = isCoverPage ? pageNum % 2 === 0 : pageNum % 2 !== 0;
+                if (!isRightPage) { // This is a left page
                     if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                     else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                 }
@@ -510,7 +507,6 @@ export function PageNumberAdder() {
     link.href = result.url;
     link.download = result.filename;
     document.body.appendChild(link);
-    link.click();
     setTimeout(() => { document.body.removeChild(link) }, 100);
   };
   
@@ -709,11 +705,11 @@ export function PageNumberAdder() {
                                         id="font-size" 
                                         type="number" 
                                         value={fontSize} 
-                                        onChange={e => {
+                                        onChange={(e) => {
                                             const val = e.target.value;
                                             setFontSize(val === '' ? '' : parseInt(val));
                                         }}
-                                        onBlur={e => {
+                                        onBlur={(e) => {
                                             if (e.target.value === '' || Number(e.target.value) <= 0) {
                                                 setFontSize(12);
                                             }
@@ -732,8 +728,6 @@ export function PageNumberAdder() {
                                             <SelectItem value="Helvetica">Helvetica</SelectItem>
                                             <SelectItem value="TimesRoman">Times New Roman</SelectItem>
                                             <SelectItem value="Courier">Courier</SelectItem>
-                                            <SelectItem value="Symbol">Symbol</SelectItem>
-                                            <SelectItem value="ZapfDingbats">Zapf Dingbats</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
