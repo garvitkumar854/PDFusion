@@ -46,6 +46,9 @@ const nextConfig: NextConfig = {
       },
     });
 
+    config.resolve.alias['pdfjs-dist'] = path.join(__dirname, 'node_modules/pdfjs-dist');
+
+
     return config;
   },
 };

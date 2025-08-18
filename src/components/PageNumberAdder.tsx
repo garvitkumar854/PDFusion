@@ -35,7 +35,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "./ui/checkbox";
 
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).toString();
 }
 
 const MAX_FILE_SIZE_MB = 100;
@@ -205,8 +208,8 @@ export function PageNumberAdder() {
 
                 let effectivePosition = position;
                 
-                if (pageMode === 'facing') {
-                    if (isCoverPage) { // Page 1 is cover, odd pages are right-hand
+                 if (pageMode === 'facing') {
+                    if (isCoverPage) { // Page 1 is cover, odd pages are left-hand
                         const isEvenPage = pageNum % 2 === 0;
                         if (isEvenPage) {
                            if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
@@ -214,9 +217,9 @@ export function PageNumberAdder() {
                         }
                     } else { // Page 1 is left-hand, even pages are right-hand
                         const isOddPage = pageNum % 2 !== 0;
-                        if (isOddPage) {
-                            if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-                            else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                         if (isOddPage) {
+                           if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                           else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         }
                     }
                 }
@@ -439,18 +442,18 @@ export function PageNumberAdder() {
             
             let effectivePosition = position;
             
-            if (pageMode === 'facing') {
-                if (isCoverPage) {
+             if (pageMode === 'facing') {
+                if (isCoverPage) { // Page 1 is cover, odd pages are left-hand
                     const isEvenPage = pageNum % 2 === 0;
                     if (isEvenPage) {
                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
-                } else {
+                } else { // Page 1 is left-hand, even pages are right-hand
                     const isOddPage = pageNum % 2 !== 0;
-                    if (isOddPage) {
-                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
-                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
+                     if (isOddPage) {
+                       if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
+                       else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
                 }
             }
