@@ -633,20 +633,20 @@ export function JpgToPdfConverter() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className={cn("space-y-6", isConverting && "opacity-70 pointer-events-none")}>
-                    <div>
+                     <div>
                         <Label className="font-semibold">Page Orientation</Label>
-                        <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2" disabled={isConverting}>
-                           <div className="flex items-center space-x-2">
+                        <RadioGroup value={orientation} onValueChange={(v) => setOrientation(v as Orientation)} className="mt-2 grid grid-cols-2 gap-2">
+                           <Label htmlFor="o-p" className={cn("flex items-center space-x-2 border rounded-md p-3 cursor-pointer", orientation === "portrait" && "border-primary")}>
                                 <RadioGroupItem value="portrait" id="o-p" />
-                                <Label htmlFor="o-p" className="cursor-pointer">Portrait</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+                                <span>Portrait</span>
+                           </Label>
+                           <Label htmlFor="o-l" className={cn("flex items-center space-x-2 border rounded-md p-3 cursor-pointer", orientation === "landscape" && "border-primary")}>
                                 <RadioGroupItem value="landscape" id="o-l" />
-                                <Label htmlFor="o-l" className="cursor-pointer">Landscape</Label>
-                            </div>
+                                <span>Landscape</span>
+                           </Label>
                         </RadioGroup>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-6">
                         <div>
                             <Label className="font-semibold">Page Size</Label>
                             <RadioGroup value={pageSize} onValueChange={(v) => setPageSize(v as PageSize)} className="mt-2" disabled={isConverting}>
