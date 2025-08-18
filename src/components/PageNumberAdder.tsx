@@ -206,15 +206,15 @@ export function PageNumberAdder() {
                 let effectivePosition = position;
                 
                 if (pageMode === 'facing') {
-                    if (isCoverPage) { // Page 1 is a single right page
-                        const isRightPage = pageNum % 2 !== 0; // 1, 3, 5 are right
-                        if (!isRightPage) { // Mirror left pages (2, 4, 6)
+                    if (isCoverPage) { // Page 1 is cover, odd pages are right-hand
+                        const isLeftPage = pageNum % 2 === 0;
+                        if (isLeftPage) {
                            if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                            else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         }
-                    } else { // Page 1-2 is the first spread
-                        const isRightPage = pageNum % 2 === 0; // 2, 4, 6 are right
-                        if (!isRightPage) { // Mirror left pages (1, 3, 5)
+                    } else { // Page 1 is left-hand, even pages are right-hand
+                        const isRightPage = pageNum % 2 === 0;
+                        if (!isRightPage) {
                             if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                             else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                         }
@@ -426,29 +426,31 @@ export function PageNumberAdder() {
 
         const pageNum = i + 1;
         const inRange = pageNum >= effectiveStart && pageNum <= effectiveEnd;
+        
+        const isCoverAndFirstPage = isCoverPage && pageNum === 1;
 
-        if (inRange) {
-            const logicalPageNumber = (pageNum - effectiveStart) + firstNumber;
+        if (inRange && !isCoverAndFirstPage) {
+            const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage ? 1 : 0);
             
             const page = pages[i];
             const { width, height } = page.getSize();
             
-            const text = getPageNumberText(logicalPageNumber, totalLogicalPages);
+            const text = getPageNumberText(logicalPageNumber, totalLogicalPages - (isCoverPage ? 1: 0));
             const numFontSize = Number(fontSize);
             const textWidth = embeddedFont.widthOfTextAtSize(text, numFontSize);
             
             let effectivePosition = position;
             
             if (pageMode === 'facing') {
-                if (isCoverPage) { // Page 1 is a single right page
-                    const isRightPage = pageNum % 2 !== 0; // 1, 3, 5 are right
-                    if (!isRightPage) { // Mirror left pages (2, 4, 6)
+                if (isCoverPage) { // Page 1 is cover, odd pages are right-hand
+                    const isLeftPage = pageNum % 2 === 0;
+                    if (isLeftPage) {
                        if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                        else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
-                } else { // Page 1-2 is the first spread
-                    const isRightPage = pageNum % 2 === 0; // 2, 4, 6 are right
-                    if (!isRightPage) { // Mirror left pages (1, 3, 5)
+                } else { // Page 1 is left-hand, even pages are right-hand
+                    const isRightPage = pageNum % 2 === 0;
+                    if (!isRightPage) {
                         if (position.includes('right')) effectivePosition = position.replace('right', 'left') as Position;
                         else if (position.includes('left')) effectivePosition = position.replace('left', 'right') as Position;
                     }
@@ -526,6 +528,7 @@ export function PageNumberAdder() {
     link.href = result.url;
     link.download = result.filename;
     document.body.appendChild(link);
+    link.click();
     setTimeout(() => { document.body.removeChild(link) }, 100);
   };
   
@@ -658,7 +661,7 @@ export function PageNumberAdder() {
                              {pageMode === 'facing' && (
                                 <div className="flex items-center space-x-2 pt-2">
                                     <Checkbox id="cover-page" checked={isCoverPage} onCheckedChange={c => setIsCoverPage(Boolean(c))} disabled={isProcessing || file.isEncrypted} />
-                                    <Label htmlFor="cover-page" className="cursor-pointer">First page is a cover</Label>
+                                    <Label htmlFor="cover-page" className="cursor-pointer">First page is cover</Label>
                                 </div>
                             )}
 
