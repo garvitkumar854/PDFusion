@@ -199,18 +199,18 @@ export function PageNumberAdder() {
             const totalPages = pdfjsDoc.numPages;
             const inRange = pageNum >= startPage && pageNum <= endPage;
             
-            if (inRange && !(isCoverPage && pageNum === 1)) {
-                 const totalLogicalPages = (endPage - startPage) + 1 - (isCoverPage ? 1 : 0);
-                 const logicalPageNumber = firstNumber + (pageNum - startPage) - (isCoverPage && pageNum > 1 ? 1 : 0);
+            if (inRange) {
+                 const totalLogicalPages = (endPage - startPage) + 1;
+                 const logicalPageNumber = firstNumber + (pageNum - startPage);
 
                 let effectivePosition = position;
                 
                 if (pageMode === 'facing') {
-                    const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-                    if (isLeftPage) {
-                        if(position.includes('right')) {
+                    const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+                    if (isLeftHandPage) { // Mirror position for left-hand pages
+                        if (position.includes('right')) {
                             effectivePosition = position.replace('right', 'left') as Position;
-                        } else if(position.includes('left')) {
+                        } else if (position.includes('left')) {
                             effectivePosition = position.replace('left', 'right') as Position;
                         }
                     }
@@ -406,19 +406,13 @@ export function PageNumberAdder() {
       const colorRgb = hexToRgb(textColor);
       
       const pages = pdfDoc.getPages();
-      const totalLogicalPages = (effectiveEnd - effectiveStart) + 1 - (isCoverPage ? 1 : 0);
+      const totalLogicalPages = (effectiveEnd - effectiveStart) + 1;
 
       for (let i = effectiveStart - 1; i < effectiveEnd; i++) {
         if (operationId.current !== currentOperationId) return;
 
         const pageNum = i + 1;
-
-        if (isCoverPage && pageNum === 1) {
-             setProgress(Math.round(((i - effectiveStart + 2) / (effectiveEnd - effectiveStart + 1)) * 100));
-             continue;
-        }
-
-        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber - (isCoverPage && pageNum > 1 ? 1 : 0);
+        const logicalPageNumber = (pageNum - effectiveStart) + firstNumber;
         
         const page = pages[i];
         const { width, height } = page.getSize();
@@ -430,11 +424,11 @@ export function PageNumberAdder() {
         let effectivePosition = position;
         
         if (pageMode === 'facing') {
-            const isLeftPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
-            if(isLeftPage) {
-                if(position.includes('right')) {
+            const isLeftHandPage = isCoverPage ? (pageNum % 2 === 0) : (pageNum % 2 !== 0);
+             if (isLeftHandPage) { // Mirror position for left-hand pages
+                if (position.includes('right')) {
                     effectivePosition = position.replace('right', 'left') as Position;
-                } else if(position.includes('left')) {
+                } else if (position.includes('left')) {
                     effectivePosition = position.replace('left', 'right') as Position;
                 }
             }
@@ -628,14 +622,14 @@ export function PageNumberAdder() {
                                 <Label className="font-semibold mb-2 block">Page mode</Label>
                                 <RadioGroup value={pageMode} onValueChange={(v) => setPageMode(v as PageMode)} className="grid grid-cols-2 gap-2">
                                     <Label htmlFor="pm-s" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'single' && 'border-primary bg-primary/5')}>
+                                      <RadioGroupItem value="single" id="pm-s" className="sr-only" />
                                       <RectangleVertical className="w-6 h-6"/>
                                       <span className="text-sm">Single</span>
-                                      <RadioGroupItem value="single" id="pm-s" className="sr-only" />
                                     </Label>
                                     <Label htmlFor="pm-f" className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", pageMode === 'facing' && 'border-primary bg-primary/5')}>
+                                      <RadioGroupItem value="facing" id="pm-f" className="sr-only" />
                                       <RectangleHorizontal className="w-6 h-6"/>
                                       <span className="text-sm">Facing</span>
-                                      <RadioGroupItem value="facing" id="pm-f" className="sr-only" />
                                     </Label>
                                 </RadioGroup>
                             </div>
