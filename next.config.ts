@@ -34,7 +34,8 @@ const withPWA = withPWAInit({
                 url.pathname.startsWith('/pdf-to-html') ||
                 url.pathname.startsWith('/pdf-to-jpg') ||
                 url.pathname.startsWith('/rotate-pdf') ||
-                url.pathname.startsWith('/split-pdf')
+                url.pathname.startsWith('/split-pdf') ||
+                url.pathname.startsWith('/html-to-pdf')
             )
         },
         handler: 'NetworkFirst',
