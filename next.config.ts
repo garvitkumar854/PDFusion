@@ -9,6 +9,47 @@ const withPWA = withPWAInit({
   skipWaiting: false,
   disable: process.env.NODE_ENV === 'development',
   scope: '/',
+  runtimeCaching: [
+    {
+      urlPattern: ({ url, sameOrigin }) => {
+        return sameOrigin && url.pathname.startsWith('/_next/static/');
+      },
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'static-assets',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+    {
+        urlPattern: ({url, sameOrigin}) => {
+            return sameOrigin && (
+                url.pathname === '/' ||
+                url.pathname.startsWith('/add-page-numbers') ||
+                url.pathname.startsWith('/jpg-to-pdf') ||
+                url.pathname.startsWith('/merger') ||
+                url.pathname.startsWith('/organize-pdf') ||
+                url.pathname.startsWith('/pdf-to-html') ||
+                url.pathname.startsWith('/pdf-to-jpg') ||
+                url.pathname.startsWith('/rotate-pdf') ||
+                url.pathname.startsWith('/split-pdf')
+            )
+        },
+        handler: 'NetworkFirst',
+        options: {
+            cacheName: 'offline-pages',
+            expiration: {
+                maxEntries: 32,
+                maxAgeSeconds: 24 * 60 * 60,
+            }
+        }
+    }
+  ],
+  fallbacks: {
+    document: '/_offline',
+  }
 });
 
 const nextConfig: NextConfig = {
