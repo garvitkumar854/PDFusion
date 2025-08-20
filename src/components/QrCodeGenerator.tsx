@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare, ChevronDown } from "lucide-react";
+import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare } from "lucide-react";
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
@@ -89,7 +89,7 @@ export function QrCodeGenerator() {
   const form = useForm({
     resolver: zodResolver(formSchemas[qrType]),
     defaultValues: defaultValues[qrType],
-    mode: 'onChange'
+    mode: 'onBlur'
   });
   
   const formData = form.watch();
@@ -188,7 +188,7 @@ export function QrCodeGenerator() {
   
   const FormContent = () => (
     <Form {...form}>
-      <form className="space-y-4 pt-4">
+      <form className="space-y-4 pt-4" key={qrType}>
         {qrType === "url" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />}
         {qrType === "text" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />}
         {qrType === "phone" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />}
@@ -326,3 +326,5 @@ export function QrCodeGenerator() {
     </div>
   );
 }
+
+    
