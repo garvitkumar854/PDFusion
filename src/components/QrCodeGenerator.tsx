@@ -117,17 +117,12 @@ export function QrCodeGenerator() {
   const debouncedGenerate = useMemo(() => {
     let timeoutId: NodeJS.Timeout;
     return (currentQrType: QrType, currentFormData: any, currentSize: number, currentFgColor: string, currentBgColor: string, currentErrorCorrection: ErrorCorrectionLevel) => {
-        setIsLoading(true);
         clearTimeout(timeoutId);
         timeoutId = setTimeout(async () => {
+            setIsLoading(true);
             const isValid = await form.trigger();
-            if (!isValid) {
-                setQrCodeUrl(null);
-                setIsLoading(false);
-                return;
-            }
             const qrData = generateQrData(currentQrType, currentFormData);
-            if (!qrData.trim()) {
+            if (!isValid || !qrData.trim()) {
                 setQrCodeUrl(null);
                 setIsLoading(false);
                 return;
@@ -213,8 +208,8 @@ export function QrCodeGenerator() {
   )
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-        <div className="lg:col-span-3 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="space-y-6">
             <Card className="bg-transparent shadow-lg w-full">
                 <CardHeader>
                     <CardTitle className="text-xl sm:text-2xl">QR Code Generator</CardTitle>
@@ -293,7 +288,7 @@ export function QrCodeGenerator() {
             </Accordion>
         </div>
 
-        <div className="lg:col-span-2 w-full lg:sticky lg:top-24">
+        <div className="w-full lg:sticky lg:top-24">
              <Card className="bg-transparent shadow-lg w-full">
                 <CardHeader>
                     <CardTitle className="text-xl sm:text-2xl">Preview</CardTitle>
@@ -326,5 +321,7 @@ export function QrCodeGenerator() {
     </div>
   );
 }
+
+    
 
     
