@@ -128,7 +128,10 @@ export default function Header() {
             <motion.div
               className="relative"
               onHoverStart={() => setIsServicesMenuOpen(true)}
-              onHoverEnd={() => setIsServicesMenuOpen(false)}
+              onHoverEnd={() => {
+                setIsServicesMenuOpen(false);
+                setIsMoreToolsMenuOpen(false);
+              }}
             >
               <div
                 className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
@@ -156,10 +159,9 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-auto flex"
-                    onHoverEnd={() => setIsMoreToolsMenuOpen(false)}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex"
                   >
-                    <div className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-2 w-max">
+                    <div className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-1 w-max">
                       {services.map((service) => {
                         const isActive = pathname.startsWith(service.href);
                         return (
@@ -167,9 +169,10 @@ export default function Header() {
                           href={service.href}
                           key={service.href}
                           className={cn(
-                            "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                            "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                             isActive && "bg-accent text-accent-foreground"
                           )}
+                           onMouseEnter={() => setIsMoreToolsMenuOpen(false)}
                         >
                           {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
                           <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
@@ -179,7 +182,7 @@ export default function Header() {
                        <Link
                           href="/more-tools"
                           className={cn(
-                            "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none col-span-2",
+                            "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                             pathname.startsWith('/more-tools') && "bg-accent text-accent-foreground"
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
@@ -197,7 +200,8 @@ export default function Header() {
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           exit={{ opacity: 0, x: -10, scale: 0.95 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-2 w-max ml-2"
+                          className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-1 w-max ml-2"
+                           onMouseLeave={() => setIsMoreToolsMenuOpen(false)}
                         >
                           {moreTools.map((tool) => {
                             const isActive = pathname.startsWith(tool.href);
@@ -206,7 +210,7 @@ export default function Header() {
                                 href={tool.href}
                                 key={tool.href}
                                 className={cn(
-                                  "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                                  "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                                   isActive && "bg-accent text-accent-foreground"
                                 )}
                               >
