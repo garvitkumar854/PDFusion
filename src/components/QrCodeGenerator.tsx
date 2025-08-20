@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare } from "lucide-react";
+import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare, ChevronDown } from "lucide-react";
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
@@ -97,10 +97,9 @@ const generateQrData = (type: QrType, data: any): string => {
     }
 }
 
-
 const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
     const form = useFormContext();
-    const labelClass = "!text-foreground";
+    const labelClass = "text-foreground";
     switch(qrType) {
         case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
         case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
@@ -132,7 +131,6 @@ export function QrCodeGenerator() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Advanced Options
   const [size, setSize] = useState(300);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
