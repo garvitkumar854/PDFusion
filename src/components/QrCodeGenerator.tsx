@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare, ChevronDown } from "lucide-react";
+import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare } from "lucide-react";
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
@@ -33,22 +33,24 @@ const qrTypeOptions: { value: QrType; label: string; icon: React.ReactNode }[] =
     { value: 'email', label: 'Email', icon: <Mail className="h-4 w-4" /> },
 ];
 
-const urlSchema = z.object({ value: z.string().url({ message: "Please enter a valid URL." }) });
+const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
+
+const urlSchema = z.object({ value: z.string().url({ message: "Please enter a valid URL." }).min(1, "URL cannot be empty.") });
 const textSchema = z.object({ value: z.string().min(1, "Text cannot be empty.") });
-const phoneSchema = z.object({ value: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format.") });
+const phoneSchema = z.object({ value: z.string().regex(phoneRegex, "Invalid phone number format.") });
 const smsSchema = z.object({
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format."),
+  phone: z.string().regex(phoneRegex, "Invalid phone number format."),
   message: z.string().optional(),
 });
 const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().email("Please enter a valid email address.").min(1, "Email cannot be empty."),
   subject: z.string().optional(),
   body: z.string().optional(),
 });
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z.string().regex(phoneRegex, "Invalid phone number format.").optional().or(z.literal('')),
   email: z.string().email("Invalid email address.").optional().or(z.literal('')),
   company: z.string().optional(),
   title: z.string().optional(),
@@ -74,20 +76,22 @@ const defaultValues: Record<QrType, any> = {
 };
 
 const generateQrData = (type: QrType, data: any): string => {
+    const cleanPhone = (p: string) => p.replace(/[\s().-]/g, '');
     switch (type) {
       case 'url':
       case 'text':
+        return data.value || "";
       case 'phone':
-        return type === 'phone' ? `tel:${data.value}` : data.value;
+        return `tel:${cleanPhone(data.value || '')}`;
       case 'sms':
-        return `SMSTO:${data.phone || ''}:${data.message || ''}`;
+        return `SMSTO:${cleanPhone(data.phone || '')}:${data.message || ''}`;
       case 'email':
         const subject = data.subject ? `subject=${encodeURIComponent(data.subject)}` : '';
         const body = data.body ? `body=${encodeURIComponent(data.body)}` : '';
         const params = [subject, body].filter(Boolean).join('&');
         return `mailto:${data.email || ''}${params ? `?${params}`: ''}`;
       case 'contact':
-        return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''}\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.title ? `TITLE:${data.title}\n` : ''}${data.company ? `ORG:${data.company}\n` : ''}${data.phone ? `TEL;TYPE=CELL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
+        return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''}\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.title ? `TITLE:${data.title}\n` : ''}${data.company ? `ORG:${data.company}\n` : ''}${data.phone ? `TEL;TYPE=CELL:${cleanPhone(data.phone)}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
       default:
         return "";
     }
@@ -99,16 +103,16 @@ const QrCodeForm = ({ qrType }: { qrType: QrType }) => {
     switch(qrType) {
         case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
         case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone Number</FormLabel><FormControl><Input placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
         case "email": return <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
         case "contact": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name (optional)</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (optional)</FormLabel><FormControl><Input type="tel" placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (optional)</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (optional)</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (optional)</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -125,7 +129,8 @@ export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [debouncedData, setDebouncedData] = useState({});
+  const [debouncedData, setDebouncedData] = useState<any>(defaultValues.url);
+  const [isValid, setIsValid] = useState(false);
 
   // Advanced Options
   const [size, setSize] = useState(300);
@@ -145,19 +150,22 @@ export function QrCodeGenerator() {
 
   useEffect(() => {
     form.reset(defaultValues[qrType]);
+    setQrCodeUrl(null);
+    setIsValid(false);
   }, [qrType, form]);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const handler = setTimeout(async () => {
         setDebouncedData(watchedData);
-    }, 300);
+        const isFormValid = await form.trigger();
+        setIsValid(isFormValid);
+    }, 500);
     return () => clearTimeout(handler);
-  }, [watchedData]);
+  }, [watchedData, form]);
 
 
   useEffect(() => {
     const generate = async () => {
-        const isValid = await form.trigger();
         const dataString = generateQrData(qrType, debouncedData);
         
         if (!isValid || !dataString.trim()) {
@@ -182,7 +190,7 @@ export function QrCodeGenerator() {
         }
     };
     generate();
-  }, [debouncedData, qrType, size, fgColor, bgColor, errorCorrection, form]);
+  }, [debouncedData, isValid, qrType, size, fgColor, bgColor, errorCorrection]);
 
 
   const handleDownload = () => {
@@ -232,7 +240,7 @@ export function QrCodeGenerator() {
                       </Select>
 
                     <FormProvider {...form}>
-                        <form className="space-y-4 pt-4">
+                        <form className="space-y-4 pt-4" key={qrType}>
                             <QrCodeForm qrType={qrType} />
                         </form>
                     </FormProvider>
@@ -243,7 +251,7 @@ export function QrCodeGenerator() {
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger className="text-lg font-semibold">
+                <AccordionTrigger className="text-lg font-semibold hover:no-underline">
                   <div className="flex items-center gap-2">
                     <Palette />
                     <span>Styling Options</span>
