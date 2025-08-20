@@ -1,4 +1,4 @@
-import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil } from 'lucide-react';
+import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid } from 'lucide-react';
 import React from 'react';
 
 export interface Service {
@@ -72,5 +72,12 @@ export const services: Service[] = [
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
+    },
+     {
+      icon: <LayoutGrid className="w-6 h-6 text-orange-500" />,
+      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      title: 'More Tools',
+      description: 'Explore a variety of other useful utilities to boost your productivity.',
+      href: '/more-tools'
     },
 ];

@@ -35,7 +35,13 @@ const withPWA = withPWAInit({
                 url.pathname.startsWith('/pdf-to-jpg') ||
                 url.pathname.startsWith('/rotate-pdf') ||
                 url.pathname.startsWith('/split-pdf') ||
-                url.pathname.startsWith('/html-to-pdf')
+                url.pathname.startsWith('/html-to-pdf') ||
+                url.pathname.startsWith('/more-tools') ||
+                url.pathname.startsWith('/calculator') ||
+                url.pathname.startsWith('/currency-converter') ||
+                url.pathname.startsWith('/qr-code-generator') ||
+                url.pathname.startsWith('/unit-converter') ||
+                url.pathname.startsWith('/password-generator')
             )
         },
         handler: 'NetworkFirst',
