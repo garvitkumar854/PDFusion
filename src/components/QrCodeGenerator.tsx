@@ -76,7 +76,7 @@ const defaultValues: Record<QrType, any> = {
 };
 
 const generateQrData = (type: QrType, data: any): string => {
-    const cleanPhone = (p: string) => p.replace(/[\s().-]/g, '');
+    const cleanPhone = (p: string) => (p || '').replace(/[\s().-]/g, '');
     switch (type) {
       case 'url':
       case 'text':
@@ -129,8 +129,8 @@ export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [debouncedData, setDebouncedData] = useState<any>(defaultValues.url);
-  const [isValid, setIsValid] = useState(false);
+  const [formData, setFormData] = useState<any>(defaultValues.url);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   // Advanced Options
   const [size, setSize] = useState(300);
@@ -151,24 +151,26 @@ export function QrCodeGenerator() {
   useEffect(() => {
     form.reset(defaultValues[qrType]);
     setQrCodeUrl(null);
-    setIsValid(false);
+    setIsFormValid(false);
+    setFormData(defaultValues[qrType])
   }, [qrType, form]);
 
+
   useEffect(() => {
-    const handler = setTimeout(async () => {
-        setDebouncedData(watchedData);
-        const isFormValid = await form.trigger();
-        setIsValid(isFormValid);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [watchedData, form]);
+    const subscription = form.watch(async (value) => {
+        setFormData(value);
+        const isValid = await form.trigger();
+        setIsFormValid(isValid);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
 
   useEffect(() => {
     const generate = async () => {
-        const dataString = generateQrData(qrType, debouncedData);
+        const dataString = generateQrData(qrType, formData);
         
-        if (!isValid || !dataString.trim()) {
+        if (!isFormValid || !dataString.trim()) {
             setQrCodeUrl(null);
             return;
         }
@@ -189,8 +191,11 @@ export function QrCodeGenerator() {
             setIsLoading(false);
         }
     };
-    generate();
-  }, [debouncedData, isValid, qrType, size, fgColor, bgColor, errorCorrection]);
+    
+    const timeout = setTimeout(generate, 300);
+    return () => clearTimeout(timeout);
+
+  }, [formData, isFormValid, qrType, size, fgColor, bgColor, errorCorrection]);
 
 
   const handleDownload = () => {
