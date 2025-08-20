@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, FileArchive, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,6 +67,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
 export default function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isServicesMenuOpen, setIsServicesMenuOpen] = useState(false);
+  const [isMoreToolsMenuOpen, setIsMoreToolsMenuOpen] = useState(false);
   const pathname = usePathname();
   const scrollDirection = useScrollDirection();
   const [mounted, setMounted] = useState(false);
@@ -86,8 +87,17 @@ export default function Header() {
       { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
       { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
       { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
-  ]
-  const isServicesActive = services.some(s => pathname.startsWith(s.href));
+  ];
+
+  const moreTools = [
+      { href: "/calculator", label: "Calculator", icon: <Calculator /> },
+      { href: "/currency-converter", label: "Currency Converter", icon: <Currency /> },
+      { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
+      { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
+      { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
+  ];
+  
+  const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
 
   const logoSrc = resolvedTheme === 'dark' ? '/logo-dark.svg' : '/logo-light.svg';
 
@@ -146,7 +156,8 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-auto"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-auto flex"
+                    onHoverEnd={() => setIsMoreToolsMenuOpen(false)}
                   >
                     <div className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-2 w-max">
                       {services.map((service) => {
@@ -165,7 +176,49 @@ export default function Header() {
                         </Link>
                         )
                       })}
+                       <Link
+                          href="/more-tools"
+                          className={cn(
+                            "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none col-span-2",
+                            pathname.startsWith('/more-tools') && "bg-accent text-accent-foreground"
+                          )}
+                          onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
+                        >
+                          <LayoutGrid className="mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                          <span className="text-sm font-medium whitespace-nowrap">More Tools</span>
+                          <ChevronRight className="ml-auto h-4 w-4" />
+                        </Link>
                     </div>
+
+                     <AnimatePresence>
+                      {isMoreToolsMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="bg-popover p-4 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-2 w-max ml-2"
+                        >
+                          {moreTools.map((tool) => {
+                            const isActive = pathname.startsWith(tool.href);
+                            return (
+                              <Link
+                                href={tool.href}
+                                key={tool.href}
+                                className={cn(
+                                  "group flex items-center p-3 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                                  isActive && "bg-accent text-accent-foreground"
+                                )}
+                              >
+                                {React.cloneElement(tool.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
+                                <span className="text-sm font-medium whitespace-nowrap">{tool.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -221,6 +274,27 @@ export default function Header() {
                                                 >
                                                     {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
                                                     <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
+                                                </Link>
+                                            )})}
+                                        </div>
+                                    </div>
+                                    <div className="w-full pt-4">
+                                        <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pl-2 border-l-2 ml-1">
+                                            {moreTools.map((tool) => {
+                                                const isActive = pathname.startsWith(tool.href);
+                                                return (
+                                                <Link 
+                                                    key={tool.href} 
+                                                    href={tool.href} 
+                                                    onClick={() => setIsSheetOpen(false)} 
+                                                    className={cn(
+                                                        "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                                        isActive && "bg-accent text-accent-foreground"
+                                                    )}
+                                                >
+                                                    {React.cloneElement(tool.icon, { className: 'mr-2 h-5 w-5' })}
+                                                    <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
                                                 </Link>
                                             )})}
                                         </div>
