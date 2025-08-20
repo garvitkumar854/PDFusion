@@ -98,7 +98,7 @@ export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [debouncedFormData, setDebouncedFormData] = useState({});
+  const [formData, setFormData] = useState({});
 
   // Advanced Options
   const [size, setSize] = useState(300);
@@ -117,21 +117,25 @@ export function QrCodeGenerator() {
   const watchedData = form.watch();
 
   useEffect(() => {
+    form.reset(defaultValues[qrType]);
+  }, [qrType, form]);
+
+  useEffect(() => {
     const handler = setTimeout(() => {
-        setDebouncedFormData(watchedData);
+        setFormData(watchedData);
     }, 300);
 
     return () => {
         clearTimeout(handler);
     };
-}, [watchedData]);
+  }, [watchedData]);
 
 
   useEffect(() => {
     const generate = async () => {
         setIsLoading(true);
         const isValid = await form.trigger();
-        const dataString = generateQrData(qrType, debouncedFormData);
+        const dataString = generateQrData(qrType, formData);
 
         if (!isValid || !dataString.trim()) {
             setQrCodeUrl(null);
@@ -156,13 +160,8 @@ export function QrCodeGenerator() {
         }
     };
     generate();
-  }, [debouncedFormData, qrType, size, fgColor, bgColor, errorCorrection, form, toast]);
+  }, [formData, qrType, size, fgColor, bgColor, errorCorrection, form, toast]);
 
-
-  useEffect(() => {
-    form.reset(defaultValues[qrType]);
-    setQrCodeUrl(null);
-  }, [qrType, form]);
 
   const handleDownload = () => {
     if (!qrCodeUrl) return;
