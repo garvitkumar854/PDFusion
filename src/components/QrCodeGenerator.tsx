@@ -33,7 +33,9 @@ const qrTypeOptions: { value: QrType; label: string; icon: React.ReactNode }[] =
     { value: 'email', label: 'Email', icon: <Mail className="h-4 w-4" /> },
 ];
 
-const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
 
 const urlSchema = z.object({ value: z.string().url({ message: "Please enter a valid URL." }).min(1, "URL cannot be empty.") });
 const textSchema = z.object({ value: z.string().min(1, "Text cannot be empty.") });
@@ -50,7 +52,7 @@ const emailSchema = z.object({
 const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().optional(),
-  phone: z.string().regex(phoneRegex, "Invalid phone number format.").optional().or(z.literal('')),
+  phone: z.string().regex(phoneRegex, { message: "Invalid phone number format." }).optional().or(z.literal('')),
   email: z.string().email("Invalid email address.").optional().or(z.literal('')),
   company: z.string().optional(),
   title: z.string().optional(),
@@ -126,6 +128,43 @@ const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
 QrCodeForm.displayName = 'QrCodeForm';
 
 
+const QrFormControl = ({
+    qrType,
+    onDataChange
+}: {
+    qrType: QrType;
+    onDataChange: (data: string | null) => void;
+}) => {
+    const form = useForm({
+        resolver: zodResolver(formSchemas[qrType]),
+        defaultValues: defaultValues[qrType],
+        mode: 'onBlur',
+    });
+
+    const watchedData = form.watch();
+
+    useEffect(() => {
+        const result = formSchemas[qrType].safeParse(watchedData);
+        let dataString: string | null = null;
+        if (result.success) {
+            const generated = generateQrData(qrType, result.data);
+            if (generated.trim()) {
+                dataString = generated;
+            }
+        }
+        onDataChange(dataString);
+    }, [watchedData, qrType, onDataChange]);
+
+    return (
+        <FormProvider {...form}>
+            <form className="space-y-4 pt-4">
+                <QrCodeForm qrType={qrType} />
+            </form>
+        </FormProvider>
+    );
+};
+
+
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
@@ -138,62 +177,35 @@ export function QrCodeGenerator() {
 
   const { toast } = useToast();
   
-  const form = useForm({
-    resolver: zodResolver(formSchemas[qrType]),
-    defaultValues: defaultValues[qrType],
-    mode: 'onBlur',
-  });
-  
-  useEffect(() => {
-    form.reset(defaultValues[qrType]);
-  }, [qrType, form]);
+  const handleDataChange = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (data: string | null) => {
+        clearTimeout(timeoutId);
+        setIsLoading(true);
+        if (data === null) {
+            setQrCodeUrl(null);
+            setIsLoading(false);
+            return;
+        }
 
-  const formData = form.watch();
-
-  const debouncedQrData = useMemo(() => {
-    const result = formSchemas[qrType].safeParse(formData);
-    if (result.success) {
-      const dataString = generateQrData(qrType, result.data);
-      if(dataString.trim()) {
-         return dataString;
-      }
+        timeoutId = setTimeout(async () => {
+            try {
+                const url = await QRCode.toDataURL(data, {
+                    width: size,
+                    margin: 2,
+                    color: { dark: fgColor, light: bgColor },
+                    errorCorrectionLevel: errorCorrection,
+                });
+                setQrCodeUrl(url);
+            } catch (err) {
+                console.error(err);
+                setQrCodeUrl(null);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 300);
     }
-    return null;
-  }, [formData, qrType]);
-
-
-  useEffect(() => {
-    if (debouncedQrData === null) {
-      setQrCodeUrl(null);
-      return;
-    }
-
-    let isCancelled = false;
-    const generate = async () => {
-      setIsLoading(true);
-      try {
-        const url = await QRCode.toDataURL(debouncedQrData, {
-          width: size,
-          margin: 2,
-          color: { dark: fgColor, light: bgColor },
-          errorCorrectionLevel: errorCorrection,
-        });
-        if (!isCancelled) setQrCodeUrl(url);
-      } catch (err) {
-        console.error(err);
-        if (!isCancelled) setQrCodeUrl(null);
-      } finally {
-        if (!isCancelled) setIsLoading(false);
-      }
-    };
-    
-    const timeout = setTimeout(generate, 300);
-    return () => {
-      isCancelled = true;
-      clearTimeout(timeout);
-    };
-
-  }, [debouncedQrData, size, fgColor, bgColor, errorCorrection]);
+  }, [size, fgColor, bgColor, errorCorrection]);
 
 
   const handleDownload = () => {
@@ -241,13 +253,7 @@ export function QrCodeGenerator() {
                               ))}
                           </SelectContent>
                       </Select>
-
-                    <FormProvider {...form}>
-                        <form className="space-y-4 pt-4" key={qrType}>
-                            <QrCodeForm qrType={qrType} />
-                        </form>
-                    </FormProvider>
-
+                      <QrFormControl key={qrType} qrType={qrType} onDataChange={handleDataChange} />
                    </div>
                 </CardContent>
             </Card>
