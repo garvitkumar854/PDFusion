@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Slider } from "./ui/slider";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -131,8 +131,7 @@ export function QrCodeGenerator() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<any>(defaultValues.url);
-  const [isFormValid, setIsFormValid] = useState(false);
-
+  
   // Advanced Options
   const [size, setSize] = useState(300);
   const [fgColor, setFgColor] = useState("#000000");
@@ -149,26 +148,30 @@ export function QrCodeGenerator() {
 
   useEffect(() => {
     form.reset(defaultValues[qrType]);
+    setFormData(defaultValues[qrType]);
   }, [qrType, form]);
 
-  const watchedData = form.watch();
+  const debouncedQrData = useMemo(() => {
+    const currentValues = form.getValues();
+    const result = formSchemas[qrType].safeParse(currentValues);
+    if (result.success) {
+      const dataString = generateQrData(qrType, result.data);
+      if(dataString.trim()) {
+         return dataString;
+      }
+    }
+    return null;
+  }, [formData, qrType, form]);
+
 
   useEffect(() => {
-    const checkValidity = async () => {
-        const isValid = await form.trigger();
-        setIsFormValid(isValid);
-        setFormData(form.getValues());
+    const handleFormChange = () => {
+      setFormData(form.getValues());
     };
-    checkValidity();
-  }, [watchedData, form]);
+    const subscription = form.watch(handleFormChange);
+    return () => subscription.unsubscribe();
+  }, [form]);
 
-  const debouncedQrData = useMemo(() => {
-    const dataString = generateQrData(qrType, formData);
-    if (!isFormValid || !dataString.trim()) {
-        return null;
-    }
-    return dataString;
-  }, [formData, qrType, isFormValid]);
 
   useEffect(() => {
     if (debouncedQrData === null) {
@@ -247,7 +250,7 @@ export function QrCodeGenerator() {
                       </Select>
 
                     <FormProvider {...form}>
-                        <form className="space-y-4 pt-4">
+                        <form className="space-y-4 pt-4" key={qrType}>
                             <QrCodeForm qrType={qrType} />
                         </form>
                     </FormProvider>
