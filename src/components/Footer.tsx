@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -18,6 +19,7 @@ const exploreLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
+  { href: '/privacy-policy', label: 'Privacy Policy' },
 ];
 
 const FooterLink = ({ href, label }: { href: string; label: string }) => {
