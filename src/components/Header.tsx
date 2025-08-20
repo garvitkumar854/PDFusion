@@ -161,7 +161,7 @@ export default function Header() {
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex"
                   >
-                    <div className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-1 w-max">
+                    <div className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-1 w-max">
                       {services.map((service) => {
                         const isActive = pathname.startsWith(service.href);
                         return (
@@ -182,7 +182,7 @@ export default function Header() {
                        <Link
                           href="/more-tools"
                           className={cn(
-                            "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                            "group col-span-2 flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                             pathname.startsWith('/more-tools') && "bg-accent text-accent-foreground"
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
@@ -200,7 +200,7 @@ export default function Header() {
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           exit={{ opacity: 0, x: -10, scale: 0.95 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-1 w-max ml-2"
+                          className="absolute top-0 left-full ml-2 bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-1 gap-1 w-max"
                            onMouseLeave={() => setIsMoreToolsMenuOpen(false)}
                         >
                           {moreTools.map((tool) => {
