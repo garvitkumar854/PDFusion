@@ -73,28 +73,7 @@ const defaultValues: Record<QrType, any> = {
     contact: { firstName: "", lastName: "", phone: "", email: "", company: "", title: "" },
 }
 
-export function QrCodeGenerator() {
-  const [qrType, setQrType] = useState<QrType>("url");
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Advanced Options
-  const [size, setSize] = useState(300);
-  const [fgColor, setFgColor] = useState("#000000");
-  const [bgColor, setBgColor] = useState("#ffffff");
-  const [errorCorrection, setErrorCorrection] = useState<ErrorCorrectionLevel>('medium');
-
-  const { toast } = useToast();
-  
-  const form = useForm({
-    resolver: zodResolver(formSchemas[qrType]),
-    defaultValues: defaultValues[qrType],
-    mode: 'onBlur'
-  });
-  
-  const formData = form.watch();
-
-  const generateQrData = (type: QrType, data: any): string => {
+const generateQrData = (type: QrType, data: any): string => {
     switch (type) {
       case 'url':
       case 'text':
@@ -114,43 +93,70 @@ export function QrCodeGenerator() {
     }
   }
 
-  const debouncedGenerate = useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
-    return (currentQrType: QrType, currentFormData: any, currentSize: number, currentFgColor: string, currentBgColor: string, currentErrorCorrection: ErrorCorrectionLevel) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(async () => {
-            setIsLoading(true);
-            const isValid = await form.trigger();
-            const qrData = generateQrData(currentQrType, currentFormData);
-            if (!isValid || !qrData.trim()) {
-                setQrCodeUrl(null);
-                setIsLoading(false);
-                return;
-            }
 
-            try {
-                const url = await QRCode.toDataURL(qrData, {
-                    width: currentSize,
-                    margin: 2,
-                    color: { dark: currentFgColor, light: currentBgColor },
-                    errorCorrectionLevel: currentErrorCorrection,
-                });
-                setQrCodeUrl(url);
-            } catch (err) {
-                console.error(err);
-                setQrCodeUrl(null);
-                toast({ variant: 'destructive', title: 'Could not generate QR Code.', description: 'Please check your input values.' })
-            } finally {
-                setIsLoading(false);
-            }
-        }, 300);
+export function QrCodeGenerator() {
+  const [qrType, setQrType] = useState<QrType>("url");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [debouncedFormData, setDebouncedFormData] = useState({});
+
+  // Advanced Options
+  const [size, setSize] = useState(300);
+  const [fgColor, setFgColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [errorCorrection, setErrorCorrection] = useState<ErrorCorrectionLevel>('medium');
+
+  const { toast } = useToast();
+  
+  const form = useForm({
+    resolver: zodResolver(formSchemas[qrType]),
+    defaultValues: defaultValues[qrType],
+    mode: 'onBlur'
+  });
+  
+  const watchedData = form.watch();
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+        setDebouncedFormData(watchedData);
+    }, 300);
+
+    return () => {
+        clearTimeout(handler);
     };
-}, [form, toast]);
+}, [watchedData]);
 
 
   useEffect(() => {
-    debouncedGenerate(qrType, formData, size, fgColor, bgColor, errorCorrection);
-  }, [formData, qrType, size, fgColor, bgColor, errorCorrection, debouncedGenerate]);
+    const generate = async () => {
+        setIsLoading(true);
+        const isValid = await form.trigger();
+        const dataString = generateQrData(qrType, debouncedFormData);
+
+        if (!isValid || !dataString.trim()) {
+            setQrCodeUrl(null);
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const url = await QRCode.toDataURL(dataString, {
+                width: size,
+                margin: 2,
+                color: { dark: fgColor, light: bgColor },
+                errorCorrectionLevel: errorCorrection,
+            });
+            setQrCodeUrl(url);
+        } catch (err) {
+            console.error(err);
+            setQrCodeUrl(null);
+            toast({ variant: 'destructive', title: 'Could not generate QR Code.', description: 'Please check your input values.' })
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    generate();
+  }, [debouncedFormData, qrType, size, fgColor, bgColor, errorCorrection, form, toast]);
 
 
   useEffect(() => {
@@ -321,7 +327,3 @@ export function QrCodeGenerator() {
     </div>
   );
 }
-
-    
-
-    
