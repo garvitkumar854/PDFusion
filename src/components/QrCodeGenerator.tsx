@@ -100,23 +100,24 @@ const generateQrData = (type: QrType, data: any): string => {
 
 const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
     const form = useFormContext();
+    const labelClass = "!text-foreground";
     switch(qrType) {
-        case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Recipient Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
-        case "email": return <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "email": return <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
         case "contact": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Job Title</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Company</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Job Title</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
@@ -130,7 +131,6 @@ export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<any>(defaultValues.url);
   
   // Advanced Options
   const [size, setSize] = useState(300);
@@ -145,15 +145,15 @@ export function QrCodeGenerator() {
     defaultValues: defaultValues[qrType],
     mode: 'onBlur',
   });
-
+  
   useEffect(() => {
     form.reset(defaultValues[qrType]);
-    setFormData(defaultValues[qrType]);
   }, [qrType, form]);
 
+  const formData = form.watch();
+
   const debouncedQrData = useMemo(() => {
-    const currentValues = form.getValues();
-    const result = formSchemas[qrType].safeParse(currentValues);
+    const result = formSchemas[qrType].safeParse(formData);
     if (result.success) {
       const dataString = generateQrData(qrType, result.data);
       if(dataString.trim()) {
@@ -161,16 +161,7 @@ export function QrCodeGenerator() {
       }
     }
     return null;
-  }, [formData, qrType, form]);
-
-
-  useEffect(() => {
-    const handleFormChange = () => {
-      setFormData(form.getValues());
-    };
-    const subscription = form.watch(handleFormChange);
-    return () => subscription.unsubscribe();
-  }, [form]);
+  }, [formData, qrType]);
 
 
   useEffect(() => {
@@ -179,6 +170,7 @@ export function QrCodeGenerator() {
       return;
     }
 
+    let isCancelled = false;
     const generate = async () => {
       setIsLoading(true);
       try {
@@ -188,17 +180,20 @@ export function QrCodeGenerator() {
           color: { dark: fgColor, light: bgColor },
           errorCorrectionLevel: errorCorrection,
         });
-        setQrCodeUrl(url);
+        if (!isCancelled) setQrCodeUrl(url);
       } catch (err) {
         console.error(err);
-        setQrCodeUrl(null);
+        if (!isCancelled) setQrCodeUrl(null);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) setIsLoading(false);
       }
     };
     
     const timeout = setTimeout(generate, 300);
-    return () => clearTimeout(timeout);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeout);
+    };
 
   }, [debouncedQrData, size, fgColor, bgColor, errorCorrection]);
 
