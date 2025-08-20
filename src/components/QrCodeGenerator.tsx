@@ -33,11 +33,11 @@ const qrTypeOptions: { value: QrType; label: string; icon: React.ReactNode }[] =
     { value: 'email', label: 'Email', icon: <Mail className="h-4 w-4" /> },
 ];
 
-const urlSchema = z.object({ value: z.string().url("Please enter a valid URL.") });
+const urlSchema = z.object({ value: z.string().url({ message: "Please enter a valid URL." }) });
 const textSchema = z.object({ value: z.string().min(1, "Text cannot be empty.") });
-const phoneSchema = z.object({ value: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number (e.g., +11234567890).") });
+const phoneSchema = z.object({ value: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format.") });
 const smsSchema = z.object({
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number."),
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format."),
   message: z.string().optional(),
 });
 const emailSchema = z.object({
@@ -49,7 +49,7 @@ const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email("Please enter a valid email.").optional().or(z.literal('')),
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
   company: z.string().optional(),
   title: z.string().optional(),
 });
@@ -71,7 +71,7 @@ const defaultValues: Record<QrType, any> = {
     sms: { phone: "", message: "" },
     email: { email: "", subject: "", body: "" },
     contact: { firstName: "", lastName: "", phone: "", email: "", company: "", title: "" },
-}
+};
 
 const generateQrData = (type: QrType, data: any): string => {
     switch (type) {
@@ -80,25 +80,52 @@ const generateQrData = (type: QrType, data: any): string => {
       case 'phone':
         return type === 'phone' ? `tel:${data.value}` : data.value;
       case 'sms':
-        return `SMSTO:${data.phone}:${data.message || ''}`;
+        return `SMSTO:${data.phone || ''}:${data.message || ''}`;
       case 'email':
         const subject = data.subject ? `subject=${encodeURIComponent(data.subject)}` : '';
         const body = data.body ? `body=${encodeURIComponent(data.body)}` : '';
         const params = [subject, body].filter(Boolean).join('&');
-        return `mailto:${data.email}${params ? `?${params}`: ''}`;
+        return `mailto:${data.email || ''}${params ? `?${params}`: ''}`;
       case 'contact':
-        return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName}\nFN:${data.firstName} ${data.lastName || ''}\n${data.title ? `TITLE:${data.title}\n` : ''}${data.company ? `ORG:${data.company}\n` : ''}${data.phone ? `TEL;TYPE=CELL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
+        return `BEGIN:VCARD\nVERSION:3.0\nN:${data.lastName || ''};${data.firstName || ''}\nFN:${data.firstName || ''} ${data.lastName || ''}\n${data.title ? `TITLE:${data.title}\n` : ''}${data.company ? `ORG:${data.company}\n` : ''}${data.phone ? `TEL;TYPE=CELL:${data.phone}\n` : ''}${data.email ? `EMAIL:${data.email}\n` : ''}END:VCARD`;
       default:
         return "";
     }
-  }
+}
+
+
+const QrCodeForm = ({ qrType }: { qrType: QrType }) => {
+    const form = useFormContext();
+    switch(qrType) {
+        case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "email": return <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "contact": return (
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (optional)</FormLabel><FormControl><Input type="tel" placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (optional)</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (optional)</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Job Title (optional)</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+            </div>
+        );
+        default: return null;
+    }
+}
 
 
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [debouncedData, setDebouncedData] = useState({});
 
   // Advanced Options
   const [size, setSize] = useState(300);
@@ -111,7 +138,7 @@ export function QrCodeGenerator() {
   const form = useForm({
     resolver: zodResolver(formSchemas[qrType]),
     defaultValues: defaultValues[qrType],
-    mode: 'onBlur'
+    mode: 'onBlur',
   });
   
   const watchedData = form.watch();
@@ -122,27 +149,23 @@ export function QrCodeGenerator() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-        setFormData(watchedData);
+        setDebouncedData(watchedData);
     }, 300);
-
-    return () => {
-        clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [watchedData]);
 
 
   useEffect(() => {
     const generate = async () => {
-        setIsLoading(true);
         const isValid = await form.trigger();
-        const dataString = generateQrData(qrType, formData);
-
+        const dataString = generateQrData(qrType, debouncedData);
+        
         if (!isValid || !dataString.trim()) {
             setQrCodeUrl(null);
-            setIsLoading(false);
             return;
         }
 
+        setIsLoading(true);
         try {
             const url = await QRCode.toDataURL(dataString, {
                 width: size,
@@ -154,13 +177,12 @@ export function QrCodeGenerator() {
         } catch (err) {
             console.error(err);
             setQrCodeUrl(null);
-            toast({ variant: 'destructive', title: 'Could not generate QR Code.', description: 'Please check your input values.' })
         } finally {
             setIsLoading(false);
         }
     };
     generate();
-  }, [formData, qrType, size, fgColor, bgColor, errorCorrection, form, toast]);
+  }, [debouncedData, qrType, size, fgColor, bgColor, errorCorrection, form]);
 
 
   const handleDownload = () => {
@@ -181,49 +203,19 @@ export function QrCodeGenerator() {
     setErrorCorrection("medium");
     toast({ title: "Options Reset", description: "Advanced settings have been reset to default."});
   };
-
-  const onTypeChange = (value: string) => {
-    setQrType(value as QrType);
-  };
-  
-  const FormContent = () => (
-    <Form {...form}>
-      <form className="space-y-4 pt-4" key={qrType}>
-        {qrType === "url" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />}
-        {qrType === "text" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />}
-        {qrType === "phone" && <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />}
-        {qrType === "sms" && <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>}
-        {qrType === "email" && <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>}
-        {qrType === "contact" && (
-            <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Phone (optional)</FormLabel><FormControl><Input type="tel" placeholder="+11234567890" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (optional)</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel>Company (optional)</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Job Title (optional)</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-            </div>
-        )}
-      </form>
-    </Form>
-  )
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <div className="lg:col-span-3 space-y-6">
             <Card className="bg-transparent shadow-lg w-full">
                 <CardHeader>
-                    <CardTitle className="text-xl sm:text-2xl">QR Code Generator</CardTitle>
-                    <CardDescription>Select the content type and fill in the details.</CardDescription>
+                    <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
+                    <CardDescription>Select a content type and fill in the details.</CardDescription>
                 </CardHeader>
                 <CardContent>
                    <div className="space-y-4">
                       <Label>Content Type</Label>
-                      <Select value={qrType} onValueChange={onTypeChange}>
+                      <Select value={qrType} onValueChange={(v) => setQrType(v as QrType)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select content type" />
                           </SelectTrigger>
@@ -239,17 +231,22 @@ export function QrCodeGenerator() {
                           </SelectContent>
                       </Select>
 
-                      <FormContent />
+                    <Form {...form}>
+                        <form className="space-y-4 pt-4">
+                            <QrCodeForm qrType={qrType} />
+                        </form>
+                    </Form>
+
                    </div>
                 </CardContent>
             </Card>
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold">
                   <div className="flex items-center gap-2">
                     <Palette />
-                    <span className="font-semibold">Advanced Options</span>
+                    <span>Styling Options</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -293,7 +290,7 @@ export function QrCodeGenerator() {
             </Accordion>
         </div>
 
-        <div className="w-full lg:sticky lg:top-24">
+        <div className="w-full lg:col-span-2 lg:sticky lg:top-24">
              <Card className="bg-transparent shadow-lg w-full">
                 <CardHeader>
                     <CardTitle className="text-xl sm:text-2xl">Preview</CardTitle>
@@ -326,3 +323,5 @@ export function QrCodeGenerator() {
     </div>
   );
 }
+
+    
