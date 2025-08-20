@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare } from "lucide-react";
+import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare, ChevronDown } from "lucide-react";
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Slider } from "./ui/slider";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -231,11 +231,11 @@ export function QrCodeGenerator() {
                           </SelectContent>
                       </Select>
 
-                    <Form {...form}>
+                    <FormProvider {...form}>
                         <form className="space-y-4 pt-4">
                             <QrCodeForm qrType={qrType} />
                         </form>
-                    </Form>
+                    </FormProvider>
 
                    </div>
                 </CardContent>
@@ -323,5 +323,3 @@ export function QrCodeGenerator() {
     </div>
   );
 }
-
-    
