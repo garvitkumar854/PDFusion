@@ -35,34 +35,40 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
         }
     }
 
-    const buttons = [
-        '7', '8', '9',
-        '4', '5', '6',
-        '1', '2', '3',
-        'Swap', '0', '.'
-    ];
+    const ButtonLayout = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
+        <Button 
+            className={cn("h-full w-full text-2xl font-bold rounded-2xl", className)} 
+            variant="secondary"
+            {...props}
+        >
+            {children}
+        </Button>
+    );
 
     return (
         <Card className="bg-transparent shadow-none border-none p-2 h-full">
             <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-                {/* Number Pad */}
-                {buttons.map(btn => (
-                    <Button 
-                        key={btn} 
-                        onClick={() => onInput(btn)} 
-                        className={cn(
-                            "h-full w-full text-2xl font-bold rounded-2xl",
-                            btn === '0' && "col-span-1"
-                         )} 
-                        variant="secondary"
-                    >
-                        {getButtonIcon(btn)}
-                    </Button>
-                ))}
-                
-                {/* Right-side action buttons */}
-                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold rounded-2xl row-span-2" variant="destructive">AC</Button>
-                <Button onClick={() => onInput('Backspace')} className="h-full rounded-2xl row-span-2" variant="secondary">{getButtonIcon('Backspace')}</Button>
+                {/* Row 1 */}
+                <ButtonLayout onClick={() => onInput('7')}>7</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('8')}>8</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('9')}>9</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('C')} className="row-span-2 bg-red-500/80 hover:bg-red-500 text-white">AC</ButtonLayout>
+
+                {/* Row 2 */}
+                <ButtonLayout onClick={() => onInput('4')}>4</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('5')}>5</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('6')}>6</ButtonLayout>
+
+                {/* Row 3 */}
+                <ButtonLayout onClick={() => onInput('1')}>1</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('2')}>2</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('3')}>3</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('Backspace')} className="row-span-2">{getButtonIcon('Backspace')}</ButtonLayout>
+
+                {/* Row 4 */}
+                <ButtonLayout onClick={() => onInput('Swap')}>{getButtonIcon('Swap')}</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('0')}>0</ButtonLayout>
+                <ButtonLayout onClick={() => onInput('.')}>.</ButtonLayout>
             </div>
         </Card>
     );
