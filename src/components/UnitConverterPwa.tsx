@@ -42,15 +42,16 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
              <div className="col-start-4 row-start-1 row-span-full flex flex-col gap-2">
                  {isTemp ? (
                      <>
-                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white flex-grow">AC</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Backspace')} className="flex-grow"><Delete className="h-7 w-7"/></CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('+/-')} className="flex-grow">+/-</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary flex-grow"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white">AC</CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Backspace')}><Delete className="h-7 w-7"/></CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
                      </>
                  ) : (
                      <>
                         <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-span-2">AC</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Backspace')} className="row-span-3"><Delete className="h-7 w-7"/></CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Backspace')} className="row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
                      </>
                  )}
             </div>
@@ -68,8 +69,7 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
             <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
             <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
             
-            {!isTemp && <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>}
-            <CalculatorButton onClick={() => onInput('0')} className={cn(isTemp && "col-span-2")}>0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')} className="col-span-2">0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
         </div>
     );
@@ -80,15 +80,17 @@ const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: {
     const [fontSize, setFontSize] = useState('3rem');
 
     useEffect(() => {
-        if (displayValue.length > 10) setFontSize('2rem');
-        else if (displayValue.length > 7) setFontSize('2.5rem');
+        const len = displayValue.length;
+        if (len > 12) setFontSize('1.8rem');
+        else if (len > 9) setFontSize('2rem');
+        else if (len > 7) setFontSize('2.5rem');
         else setFontSize('3rem');
     }, [displayValue]);
     
     return (
         <div 
             className={cn(
-                "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
+                "relative p-4 rounded-lg bg-muted/50 border-2 transition-all h-24 flex flex-col justify-center",
                 isActive ? 'border-primary shadow-md' : 'border-transparent'
             )}
             onClick={onClick}
@@ -100,7 +102,11 @@ const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {units.map(u => <SelectItem key={u.id} value={u.id}>{u.name} ({u.symbol})</SelectItem>)}
+                        {units.map(u => 
+                          <SelectItem key={u.id} value={u.id}>
+                              {u.name} ({u.symbol})
+                          </SelectItem>
+                        )}
                     </SelectContent>
                 </Select>
             </div>
@@ -221,7 +227,7 @@ export function UnitConverterPwa() {
                     <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
                            <category.icon className="h-5 w-5" />
-                           <span>{category.name} ({category.units.find(u => u.id === category.baseUnit)?.symbol})</span>
+                           <span>{category.name}</span>
                         </div>
                     </SelectItem>
                 ))}
