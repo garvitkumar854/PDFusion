@@ -39,31 +39,36 @@ const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void
             <ButtonLayout onClick={() => onInput('7')}>7</ButtonLayout>
             <ButtonLayout onClick={() => onInput('8')}>8</ButtonLayout>
             <ButtonLayout onClick={() => onInput('9')}>9</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white">AC</ButtonLayout>
             
             {/* Row 2 */}
             <ButtonLayout onClick={() => onInput('4')}>4</ButtonLayout>
             <ButtonLayout onClick={() => onInput('5')}>5</ButtonLayout>
             <ButtonLayout onClick={() => onInput('6')}>6</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('Backspace')} className="row-span-2"><Delete className="h-7 w-7"/></ButtonLayout>
-
+            
             {/* Row 3 */}
             <ButtonLayout onClick={() => onInput('1')}>1</ButtonLayout>
             <ButtonLayout onClick={() => onInput('2')}>2</ButtonLayout>
             <ButtonLayout onClick={() => onInput('3')}>3</ButtonLayout>
             
-            {/* Row 4 */}
-            <ButtonLayout onClick={() => onInput('Swap')} className="row-span-2"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
+             {/* Row 4 */}
             <ButtonLayout onClick={() => onInput('0')} className="col-span-2">0</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('.')}>.</ButtonLayout>
             
-            {/* Row 5 (Conditional) */}
+            {/* Row 5 */}
+            <ButtonLayout onClick={() => onInput('Swap')} className="col-span-3"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
+
+            {/* Action Column */}
             {showPlusMinus ? (
                 <>
-                    <ButtonLayout onClick={() => onInput('.')}>.</ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('+/-')}>+/-</ButtonLayout>
+                  <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-start-1">AC</ButtonLayout>
+                  <ButtonLayout onClick={() => onInput('Backspace')} className="row-start-2"><Delete className="h-7 w-7"/></ButtonLayout>
+                  <ButtonLayout onClick={() => onInput('+/-')} className="row-start-3">+/-</ButtonLayout>
                 </>
             ) : (
-                <ButtonLayout onClick={() => onInput('.')} className="col-span-2">.</ButtonLayout>
+                <>
+                    <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-span-2">AC</ButtonLayout>
+                    <ButtonLayout onClick={() => onInput('Backspace')} className="row-span-3"><Delete className="h-7 w-7"/></ButtonLayout>
+                </>
             )}
         </div>
     );

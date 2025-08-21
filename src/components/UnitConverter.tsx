@@ -94,10 +94,18 @@ export function UnitConverter() {
     const newCategory = categoryId as Category['id'];
     const initial = initialStates[newCategory];
 
-    setActiveCategory(newCategory);
-    setFrom(initial.from);
-    setTo(initial.to);
-    setLastActive('from');
+    const currentUnits = categories.find(c => c.id === newCategory)?.units;
+    if (!currentUnits) return;
+
+    const fromUnitExists = currentUnits.some(u => u.id === initial.from.unit);
+    const toUnitExists = currentUnits.some(u => u.id === initial.to.unit);
+    
+    if (fromUnitExists && toUnitExists) {
+        setActiveCategory(newCategory);
+        setFrom(initial.from);
+        setTo(initial.to);
+        setLastActive('from');
+    }
   };
 
   const handleSwap = () => {
