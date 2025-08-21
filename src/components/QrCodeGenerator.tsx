@@ -164,6 +164,7 @@ const QrCodeFormProvider = ({
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrData, setQrData] = useState<string | null>(null);
+  const [debouncedQrData, setDebouncedQrData] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -174,15 +175,25 @@ export function QrCodeGenerator() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQrData(qrData);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [qrData]);
+
+  useEffect(() => {
     setIsLoading(true);
     const generate = async () => {
-        if (!qrData) {
+        if (!debouncedQrData) {
             setQrCodeUrl(null);
             setIsLoading(false);
             return;
         }
         try {
-            const url = await QRCode.toDataURL(qrData, {
+            const url = await QRCode.toDataURL(debouncedQrData, {
                 width: size,
                 margin: 2,
                 color: { dark: fgColor, light: bgColor },
@@ -197,13 +208,9 @@ export function QrCodeGenerator() {
         }
     };
 
-    const debounceTimeout = setTimeout(() => {
-      generate();
-    }, 300);
-
-    return () => clearTimeout(debounceTimeout);
+    generate();
     
-  }, [qrData, size, fgColor, bgColor, errorCorrection]);
+  }, [debouncedQrData, size, fgColor, bgColor, errorCorrection]);
 
 
   const handleDownload = () => {
@@ -228,13 +235,13 @@ export function QrCodeGenerator() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         <div className="space-y-6 lg:col-span-3">
-            <QrCodeFormProvider qrType={qrType} onDataChange={setQrData} key={qrType}>
-                <Card className="bg-transparent shadow-lg w-full">
-                    <CardHeader>
-                        <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
-                        <CardDescription>Select a content type and fill in the details.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+            <Card className="bg-transparent shadow-lg w-full">
+                <CardHeader>
+                    <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
+                    <CardDescription>Select a content type and fill in the details.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <QrCodeFormProvider qrType={qrType} onDataChange={setQrData} key={qrType}>
                     <div className="space-y-4">
                         <Label>Content Type</Label>
                         <Select value={qrType} onValueChange={(v) => setQrType(v as QrType)}>
@@ -256,9 +263,9 @@ export function QrCodeGenerator() {
                             <QrCodeForm qrType={qrType} />
                         </div>
                     </div>
-                    </CardContent>
-                </Card>
-            </QrCodeFormProvider>
+                 </QrCodeFormProvider>
+                </CardContent>
+            </Card>
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
@@ -342,5 +349,3 @@ export function QrCodeGenerator() {
     </div>
   );
 }
-
-    
