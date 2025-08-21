@@ -13,8 +13,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
+import { Open_Sans } from 'next/font/google';
 
 type PasswordType = "random" | "memorable" | "pin";
+
+const openSans = Open_Sans({ subsets: ['latin'], weight: ['700'] });
 
 const commonWords = [
   "ability", "able", "about", "above", "accept", "according", "account", "across", "action", "activity",
@@ -104,6 +107,29 @@ const commonWords = [
   "with", "within", "without", "woman", "wonder", "word", "work", "worker", "world", "worry", "would", "write",
   "writer", "wrong", "yard", "yeah", "year", "yes", "yet", "you", "young", "your", "yourself"
 ];
+
+const PasswordDisplay = ({ password }: { password: string }) => {
+    const isNumber = (char: string) => !isNaN(parseInt(char, 10));
+    const isSymbol = (char: string) => "!@#$%^&*()_+~`|}{[]:;?><,./-=".includes(char);
+
+    return (
+        <div className={cn("flex items-center flex-wrap h-full", openSans.className)}>
+            {password.split('').map((char, index) => (
+                <span
+                    key={index}
+                    className={cn(
+                        'font-bold',
+                        isNumber(char) && 'text-blue-500 dark:text-blue-400',
+                        isSymbol(char) && 'text-red-500 dark:text-red-400'
+                    )}
+                >
+                    {char}
+                </span>
+            ))}
+        </div>
+    );
+};
+
 
 // Secure random number generator
 function getRandomNumber(max: number) {
@@ -252,12 +278,11 @@ export function PasswordGenerator() {
             </CardHeader>
             <CardContent>
                 <div className="relative">
-                    <Input
-                        readOnly
-                        value={password}
-                        className="pr-24 text-lg h-12 font-bold font-mono tracking-wider"
-                        placeholder="Generating..."
-                    />
+                    <div
+                        className="pr-24 text-lg h-12 w-full flex items-center rounded-md border border-input bg-background px-3 py-2"
+                    >
+                        <PasswordDisplay password={password} />
+                    </div>
                     <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1">
                         <Button variant="ghost" size="icon" onClick={generatePassword} title="Generate new password">
                             <RefreshCw className="w-5 h-5"/>
@@ -287,11 +312,11 @@ export function PasswordGenerator() {
             <CardContent className="space-y-6">
                  <div>
                     <Label className="font-semibold text-base mb-2 block">Password Type</Label>
-                    <Tabs
+                     <Tabs
                         value={passwordType}
                         onValueChange={(v) => setPasswordType(v as PasswordType)}
                     >
-                        <TabsList className="relative grid w-full grid-cols-3 bg-muted p-1 rounded-lg h-11">
+                        <TabsList className="relative grid w-full grid-cols-3 bg-[#F4F4F5] dark:bg-muted p-1 rounded-lg h-11">
                         {passwordTypeOptions.map((opt, i) => (
                           <TabsTrigger
                             key={opt.value}
@@ -309,13 +334,12 @@ export function PasswordGenerator() {
                          {activeTabRect && (
                             <motion.div
                                 layoutId="active-tab-indicator"
-                                className="absolute bg-background rounded-md shadow-sm p-1"
+                                className="absolute bg-background rounded-md shadow-sm h-[calc(100%-0.5rem)] p-1.5"
                                 style={{
                                     width: activeTabRect.width,
-                                    height: 'calc(100% - 0.5rem)',
                                     left: activeTabRect.left,
                                 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                transition={{ type: "tween", ease: "easeOut", duration: 0.3 }}
                             />
                          )}
                         </TabsList>
