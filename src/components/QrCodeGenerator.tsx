@@ -150,12 +150,11 @@ export function QrCodeGenerator() {
 
   useEffect(() => {
     form.reset(defaultValues[qrType]);
-    setQrData(null);
   }, [qrType, form]);
 
-  const debouncedQrData = useMemo(() => {
-    const handler = setTimeout(() => {
-        const checkData = async () => {
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+        const generate = async () => {
             const isValid = await form.trigger();
             if (isValid) {
                 const data = form.getValues();
@@ -165,15 +164,11 @@ export function QrCodeGenerator() {
                 setQrData(null);
             }
         };
-        checkData();
-    }, 300);
+        generate();
+        return () => subscription.unsubscribe();
+    });
+  }, [form, qrType]);
 
-    return () => {
-        clearTimeout(handler);
-    };
-  }, [watchedData, qrType, form]);
-
-  useEffect(debouncedQrData, [debouncedQrData]);
 
   useEffect(() => {
     setIsLoading(true);
