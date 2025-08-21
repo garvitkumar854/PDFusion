@@ -22,8 +22,13 @@ RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
 
 const RadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & { asChild?: boolean }
+>(({ className, asChild, ...props }, ref) => {
+  const Comp = asChild ? "button" : RadioGroupPrimitive.Item
+  if (asChild) {
+     return <Comp ref={ref} data-state={props.checked ? 'checked' : 'unchecked'} {...props} />
+  }
+
   return (
     <RadioGroupPrimitive.Item
       ref={ref}

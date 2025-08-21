@@ -107,9 +107,9 @@ const commonWords = [
 
 // Secure random number generator
 function getRandomNumber(max: number) {
-    const randomValues = new Uint32Array(1);
-    window.crypto.getRandomValues(randomValues);
-    return randomValues[0] % max;
+  const randomValues = new Uint32Array(1);
+  crypto.getRandomValues(randomValues);
+  return randomValues[0] % max;
 }
 
 export function PasswordGenerator() {
@@ -117,13 +117,19 @@ export function PasswordGenerator() {
   const [copied, setCopied] = useState(false);
   const [passwordType, setPasswordType] = useState<PasswordType>("random");
 
-  // Options
+  // Options for random
   const [passwordLength, setPasswordLength] = useState(16);
   const [includeUppercase, setIncludeUppercase] = useState(true);
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeSymbols, setIncludeSymbols] = useState(true);
+
+  // Options for memorable
   const [wordCount, setWordCount] = useState(4);
+  const [capitalize, setCapitalize] = useState(true);
+  const [useSeparator, setUseSeparator] = useState(true);
+
+  // Options for PIN
   const [pinLength, setPinLength] = useState(4);
 
 
@@ -157,12 +163,12 @@ export function PasswordGenerator() {
         for (let i = 0; i < wordCount; i++) {
             const randomIndex = getRandomNumber(commonWords.length);
             let word = commonWords[randomIndex];
-            if (i === 0) { // Always capitalize first letter of first word for consistency
+            if (capitalize) {
               word = word.charAt(0).toUpperCase() + word.slice(1);
             }
             words.push(word);
         }
-        newPassword = words.join('-');
+        newPassword = words.join(useSeparator ? '-' : '');
     } else if (passwordType === 'pin') {
         const numberChars = "0123456789";
         for (let i = 0; i < pinLength; i++) {
@@ -173,7 +179,12 @@ export function PasswordGenerator() {
     
     setPassword(newPassword);
     setCopied(false);
-  }, [passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, wordCount, pinLength, toast]);
+  }, [
+    passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, 
+    wordCount, capitalize, useSeparator, 
+    pinLength, 
+    toast
+  ]);
   
   useEffect(() => {
     generatePassword();
@@ -214,10 +225,9 @@ export function PasswordGenerator() {
 
   useEffect(() => {
     if (radioGroupRef.current) {
-        const selectedRadio = radioGroupRef.current.querySelector<HTMLElement>(`[data-state="checked"]`);
+        const selectedRadio = radioGroupRef.current.querySelector<HTMLElement>(`button[data-state="checked"]`);
         if (selectedRadio) {
-            const parent = radioGroupRef.current;
-            const { offsetLeft, offsetWidth } = selectedRadio.parentElement || selectedRadio;
+            const { offsetLeft, offsetWidth } = selectedRadio;
             setSliderPosition({ left: offsetLeft, width: offsetWidth });
         }
     }
@@ -235,7 +245,7 @@ export function PasswordGenerator() {
                     <Input
                         readOnly
                         value={password}
-                        className="pr-24 text-lg h-12 font-mono font-bold tracking-wider"
+                        className="pr-24 text-lg h-12 font-bold font-mono tracking-wider"
                         placeholder="Generating..."
                     />
                     <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1">
@@ -271,7 +281,7 @@ export function PasswordGenerator() {
                         ref={radioGroupRef}
                         value={passwordType} 
                         onValueChange={(v) => setPasswordType(v as PasswordType)} 
-                        className="relative grid grid-cols-3 gap-2 bg-muted p-1 rounded-lg"
+                        className="relative grid grid-cols-3 gap-1 bg-muted p-1 rounded-lg"
                     >
                         <AnimatePresence>
                              <motion.div
@@ -285,11 +295,12 @@ export function PasswordGenerator() {
                             />
                         </AnimatePresence>
                         {passwordTypeOptions.map(opt => (
-                            <Label key={opt.value} htmlFor={`pt-${opt.value}`} className={cn("relative z-10 flex items-center justify-center gap-2 p-2 cursor-pointer transition-colors text-sm", passwordType !== opt.value && "hover:text-primary")}>
-                                <RadioGroupItem value={opt.value} id={`pt-${opt.value}`} className="sr-only" />
+                            <RadioGroupItem asChild key={opt.value} value={opt.value} id={`pt-${opt.value}`}>
+                               <button className={cn("relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm", passwordType !== opt.value && "hover:text-primary")}>
                                 {opt.icon}
                                 <span>{opt.label}</span>
-                            </Label>
+                               </button>
+                            </RadioGroupItem>
                         ))}
                     </RadioGroup>
                 </div>
@@ -321,26 +332,41 @@ export function PasswordGenerator() {
                         <div className="pt-4 border-t space-y-4">
                             <h3 className="font-semibold text-base">Additional Options</h3>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="uppercase" checked={includeUppercase} onCheckedChange={setIncludeUppercase} />
+                                <div className="flex items-center justify-between">
                                     <Label htmlFor="uppercase" className="cursor-pointer text-sm">Uppercase (A-Z)</Label>
+                                    <Switch id="uppercase" checked={includeUppercase} onCheckedChange={setIncludeUppercase} />
                                 </div>
-                                 <div className="flex items-center space-x-2">
-                                    <Switch id="lowercase" checked={includeLowercase} onCheckedChange={setIncludeLowercase} />
+                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="lowercase" className="cursor-pointer text-sm">Lowercase (a-z)</Label>
+                                    <Switch id="lowercase" checked={includeLowercase} onCheckedChange={setIncludeLowercase} />
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="numbers" checked={includeNumbers} onCheckedChange={setIncludeNumbers} />
+                                <div className="flex items-center justify-between">
                                     <Label htmlFor="numbers" className="cursor-pointer text-sm">Numbers (0-9)</Label>
+                                    <Switch id="numbers" checked={includeNumbers} onCheckedChange={setIncludeNumbers} />
                                 </div>
-                                 <div className="flex items-center space-x-2">
-                                    <Switch id="symbols" checked={includeSymbols} onCheckedChange={setIncludeSymbols} />
+                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="symbols" className="cursor-pointer text-sm">Symbols (!@#)</Label>
+                                    <Switch id="symbols" checked={includeSymbols} onCheckedChange={setIncludeSymbols} />
                                 </div>
                             </div>
                         </div>
                     )}
-                     </motion.div>
+                     {passwordType === 'memorable' && (
+                        <div className="pt-4 border-t space-y-4">
+                            <h3 className="font-semibold text-base">Additional Options</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="capitalize" className="cursor-pointer text-sm">Capitalize Words</Label>
+                                    <Switch id="capitalize" checked={capitalize} onCheckedChange={setCapitalize} />
+                                </div>
+                                 <div className="flex items-center justify-between">
+                                    <Label htmlFor="separator" className="cursor-pointer text-sm">Use a Separator</Label>
+                                    <Switch id="separator" checked={useSeparator} onCheckedChange={setUseSeparator} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    </motion.div>
                 </AnimatePresence>
             </CardContent>
         </Card>
