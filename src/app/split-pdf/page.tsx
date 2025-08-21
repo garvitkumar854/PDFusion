@@ -3,12 +3,10 @@
 
 import PdfSplitterLoader from '@/components/PdfSplitterLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import Adsense from '@/components/Adsense';
 
 export default function SplitPdfPage() {
   return (
     <>
-      <Adsense />
       <div className="flex flex-col flex-1 py-8 sm:py-12">
         <section className="text-center mb-12">
           <AnimateOnScroll

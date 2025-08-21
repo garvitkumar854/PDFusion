@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import Adsense from '@/components/Adsense';
 
 const PdfOrganizerLoader = dynamic(() => import('@/components/PdfOrganizerLoader'), {
   ssr: false,
@@ -30,7 +29,6 @@ export default function OrganizePdfPage() {
 
   return (
     <>
-      <Adsense />
       <div className={cn("flex flex-col flex-1", showHeader ? "py-8 sm:py-12" : "pt-4")}>
         {showHeader && (
            <section className="text-center mb-12">

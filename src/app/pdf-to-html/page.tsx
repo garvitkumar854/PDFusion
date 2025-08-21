@@ -3,7 +3,6 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
-import Adsense from '@/components/Adsense';
 
 const PdfToHtmlLoader = dynamic(() => import('@/components/PdfToHtmlLoader'), {
   ssr: false,
@@ -13,7 +12,6 @@ const PdfToHtmlLoader = dynamic(() => import('@/components/PdfToHtmlLoader'), {
 export default function PdfToHtmlPage() {
   return (
     <>
-      <Adsense />
       <div className="flex flex-col flex-1 py-8 sm:py-12">
         <section className="text-center mb-12">
           <AnimateOnScroll
