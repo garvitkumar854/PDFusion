@@ -222,12 +222,27 @@ export function PasswordGenerator() {
   
   const [activeTab, setActiveTab] = useState(passwordType);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const [activeTabRect, setActiveTabRect] = useState<{ width: number, left: number } | null>(null);
 
   useEffect(() => {
-    // This effect ensures the active tab state is in sync with passwordType
-    // which might change from other interactions in more complex scenarios.
     setActiveTab(passwordType);
   }, [passwordType]);
+
+  useEffect(() => {
+    function calculateRect() {
+      const activeTabIndex = passwordTypeOptions.findIndex(opt => opt.value === activeTab);
+      const activeTabElement = tabsRef.current[activeTabIndex];
+      if (activeTabElement) {
+        setActiveTabRect({
+          width: activeTabElement.clientWidth,
+          left: activeTabElement.offsetLeft
+        });
+      }
+    }
+    calculateRect();
+    window.addEventListener('resize', calculateRect);
+    return () => window.removeEventListener('resize', calculateRect);
+  }, [activeTab]);
 
   return (
     <div className="space-y-6">
@@ -276,14 +291,14 @@ export function PasswordGenerator() {
                         value={passwordType}
                         onValueChange={(v) => setPasswordType(v as PasswordType)}
                     >
-                        <TabsList className="relative grid w-full grid-cols-3 bg-muted p-1 rounded-lg h-auto">
+                        <TabsList className="relative grid w-full grid-cols-3 bg-muted p-1 rounded-lg h-11">
                         {passwordTypeOptions.map((opt, i) => (
                           <TabsTrigger
                             key={opt.value}
                             value={opt.value}
                             ref={(el) => (tabsRef.current[i] = el)}
                             className={cn(
-                              "relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm data-[state=inactive]:bg-transparent",
+                              "relative z-10 flex items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer transition-colors text-xs sm:text-sm data-[state=inactive]:bg-transparent",
                               passwordType !== opt.value && "text-muted-foreground hover:text-primary "
                             )}
                           >
@@ -291,13 +306,14 @@ export function PasswordGenerator() {
                             <span>{opt.label}</span>
                           </TabsTrigger>
                         ))}
-                         {tabsRef.current.find(t => t?.dataset.state === 'active') && (
+                         {activeTabRect && (
                             <motion.div
                                 layoutId="active-tab-indicator"
-                                className="absolute h-full bg-background rounded-md shadow-sm p-1"
+                                className="absolute bg-background rounded-md shadow-sm p-1"
                                 style={{
-                                    width: tabsRef.current.find(t => t?.dataset.state === 'active')?.clientWidth,
-                                    left: tabsRef.current.find(t => t?.dataset.state === 'active')?.offsetLeft,
+                                    width: activeTabRect.width,
+                                    height: 'calc(100% - 0.5rem)',
+                                    left: activeTabRect.left,
                                 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                             />
