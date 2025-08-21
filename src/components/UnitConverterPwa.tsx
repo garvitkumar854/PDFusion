@@ -35,42 +35,46 @@ const CalculatorButton = ({ children, className, ...props }: React.ComponentProp
 
 const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
+    const baseButtons = [
+        { key: '7', label: '7', pos: 'col-start-1 row-start-1' },
+        { key: '8', label: '8', pos: 'col-start-2 row-start-1' },
+        { key: '9', label: '9', pos: 'col-start-3 row-start-1' },
+
+        { key: '4', label: '4', pos: 'col-start-1 row-start-2' },
+        { key: '5', label: '5', pos: 'col-start-2 row-start-2' },
+        { key: '6', label: '6', pos: 'col-start-3 row-start-2' },
+
+        { key: '1', label: '1', pos: 'col-start-1 row-start-3' },
+        { key: '2', label: '2', pos: 'col-start-2 row-start-3' },
+        { key: '3', label: '3', pos: 'col-start-3 row-start-3' },
+
+        { key: 'Swap', label: <ArrowRightLeft className="h-7 w-7"/>, pos: 'col-start-1 row-start-4', className: 'text-primary' },
+        { key: '0', label: '0', pos: 'col-start-2 row-start-4' },
+        { key: '.', label: '.', pos: 'col-start-3 row-start-4' },
+    ];
 
     return (
-        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+        <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
+            {/* Base buttons */}
+            {baseButtons.map(btn => (
+                 <CalculatorButton key={btn.key} onClick={() => onInput(btn.key)} className={cn(btn.pos, btn.className)}>
+                    {btn.label}
+                 </CalculatorButton>
+            ))}
+
             {/* Action Column */}
-             <div className="col-start-4 row-start-1 row-span-full flex flex-col gap-2">
-                 {isTemp ? (
-                     <>
-                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white">AC</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Backspace')}><Delete className="h-7 w-7"/></CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-                     </>
-                 ) : (
-                     <>
-                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-span-2">AC</CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Backspace')} className="row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-                     </>
-                 )}
-            </div>
-
-            {/* Numbers and bottom row */}
-            <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
-            
-            <CalculatorButton onClick={() => onInput('4')}>4</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
-            
-            <CalculatorButton onClick={() => onInput('0')} className="col-span-2">0</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
+            {isTemp ? (
+                <>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-4">+/-</CalculatorButton>
+                </>
+            ) : (
+                <>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                </>
+            )}
         </div>
     );
 }
@@ -104,7 +108,9 @@ const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: {
                     <SelectContent>
                         {units.map(u => 
                           <SelectItem key={u.id} value={u.id}>
-                              {u.name} ({u.symbol})
+                              <div className="flex items-center gap-2">
+                                <span>{u.name} ({u.symbol})</span>
+                              </div>
                           </SelectItem>
                         )}
                     </SelectContent>
@@ -161,10 +167,12 @@ export function UnitConverterPwa() {
 
   const handleFromUnitChange = (unit: string) => {
     setFrom(prev => ({...prev, unit}));
+    setActiveInput('from');
   }
 
   const handleToUnitChange = (unit: string) => {
     setTo(prev => ({...prev, unit}));
+    setActiveInput('to');
   }
 
   const handleCategoryChange = (categoryId: string) => {
