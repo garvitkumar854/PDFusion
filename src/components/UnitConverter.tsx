@@ -21,7 +21,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     length: { from: { value: '1', unit: 'meters' }, to: { value: '', unit: 'feet' } },
     mass: { from: { value: '1', unit: 'kilograms' }, to: { value: '', unit: 'pounds' } },
     temperature: { from: { value: '0', unit: 'celsius' }, to: { value: '', unit: 'fahrenheit' } },
-    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
+    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
