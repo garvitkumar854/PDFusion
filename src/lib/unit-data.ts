@@ -96,7 +96,7 @@ export const categories: Category[] = [
         baseUnit: 'kph',
         units: [
             { id: 'kph', name: 'Kilometers/hour', symbol: 'km/h', toBase: v => v, fromBase: v => v },
-            { id: 'mph', name: 'Miles/hour', symbol: 'mph', toBase: v => v * 1.60934, fromBase: v => v / 1.60934 },
+            { id: 'miles-per-hour', name: 'Miles/hour', symbol: 'mph', toBase: v => v * 1.60934, fromBase: v => v / 1.60934 },
             { id: 'mps', name: 'Meters/second', symbol: 'm/s', toBase: v => v * 3.6, fromBase: v => v / 3.6 },
             { id: 'fps', name: 'Feet/second', symbol: 'ft/s', toBase: v => v * 1.09728, fromBase: v => v / 1.09728 },
             { id: 'knots', name: 'Knots', symbol: 'kn', toBase: v => v * 1.852, fromBase: v => v / 1.852 },
