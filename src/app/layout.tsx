@@ -9,12 +9,7 @@ import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { usePwa } from '@/hooks/use-pwa';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useEffect, useState } from 'react';
 import Script from 'next/script';
-import { usePathname } from 'next/navigation';
-import BottomNavBar from '@/components/BottomNavBar';
-
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -33,25 +28,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   usePwa();
-  const isMobile = useIsMobile();
-  const [isStandalone, setIsStandalone] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    const checkStandalone = () => {
-      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-    };
-    setIsStandalone(checkStandalone());
-  }, []);
-  
-  const showBottomNav = isMobile && isStandalone;
-
-  const isToolPage = [
-    '/merger', '/split-pdf', '/organize-pdf', '/pdf-to-jpg', 
-    '/jpg-to-pdf', '/pdf-to-html', '/html-to-pdf', '/rotate-pdf',
-    '/add-page-numbers', '/password-generator', '/qr-code-generator',
-    '/unit-converter', '/currency-converter', '/calculator'
-  ].some(path => pathname.startsWith(path));
 
   return (
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
@@ -82,14 +58,10 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Header />
-            <main className={cn(
-              "flex-1 container mx-auto px-4 sm:px-6 lg:px-8", 
-              showBottomNav && !isToolPage && "pb-24",
-              showBottomNav && isToolPage && "pb-4"
-            )}>
+            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
             {children}
             </main>
-            {showBottomNav ? <BottomNavBar /> : <FooterLoader />}
+            <FooterLoader />
             <Toaster />
           </ThemeProvider>
       </body>
