@@ -1,6 +1,6 @@
 
 'use client';
-import AnimateOnScroll from "@/components/AnimateOnScroll";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, ShieldCheck, FileLock, BarChart, Cookie, Mail } from "lucide-react";
 import Link from 'next/link';
@@ -33,6 +33,29 @@ const policyPoints = [
     }
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+    },
+  },
+};
+
+
 export default function PrivacyPolicyPage() {
   return (
     <>
@@ -40,11 +63,12 @@ export default function PrivacyPolicyPage() {
         <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.3),rgba(255,255,255,0))]"></div>
         </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <AnimateOnScroll
-              animation="animate-in fade-in-0 slide-in-from-bottom-12"
-              className="duration-500"
-          >
+        <motion.div 
+            className="container mx-auto px-4 text-center relative z-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+        >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
               <Sparkles className="w-4 h-4" />
               Your Privacy Matters
@@ -59,20 +83,20 @@ export default function PrivacyPolicyPage() {
               At PDFusion, we are committed to protecting your privacy. Our philosophy is simple: your files are your business, not ours. This policy outlines our commitment to your privacy.
             </p>
             <p className="text-xs text-muted-foreground mt-4">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </AnimateOnScroll>
-        </div>
+        </motion.div>
       </section>
 
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <motion.div 
+          className="container mx-auto px-4"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
             <div className="max-w-4xl mx-auto space-y-8">
-                {policyPoints.map((point, index) => (
-                    <AnimateOnScroll 
-                        key={index}
-                        animation="animate-in fade-in-0 slide-in-from-bottom-8"
-                        className="duration-500"
-                        delay={100 * index}
-                    >
+                {policyPoints.map((point) => (
+                    <motion.div key={point.title} variants={itemVariants}>
                         <Card className="bg-card/50 backdrop-blur-sm border border-border/20 shadow-lg">
                             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                 <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
@@ -84,14 +108,10 @@ export default function PrivacyPolicyPage() {
                                 <p className="text-muted-foreground text-base">{point.description}</p>
                             </CardContent>
                         </Card>
-                    </AnimateOnScroll>
+                    </motion.div>
                 ))}
 
-                 <AnimateOnScroll 
-                    animation="animate-in fade-in-0 slide-in-from-bottom-8"
-                    className="duration-500"
-                    delay={100 * policyPoints.length}
-                >
+                 <motion.div variants={itemVariants}>
                     <Card className="bg-card/50 backdrop-blur-sm border border-border/20 shadow-lg">
                         <CardHeader>
                             <CardTitle className="text-xl sm:text-2xl font-bold">Questions?</CardTitle>
@@ -106,9 +126,9 @@ export default function PrivacyPolicyPage() {
                             </p>
                         </CardContent>
                     </Card>
-                </AnimateOnScroll>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
       </section>
     </>
   );

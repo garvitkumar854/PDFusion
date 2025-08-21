@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare, ChevronDown } from "lucide-react";
+import { Loader2, Download, Link as LinkIcon, Type, Palette, Check, RefreshCw, Smartphone, Mail, User, MessageSquare } from "lucide-react";
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
@@ -130,7 +130,7 @@ QrCodeForm.displayName = 'QrCodeForm';
 
 const QrFormControl = ({
     qrType,
-    onDataChange
+    onDataChange,
 }: {
     qrType: QrType;
     onDataChange: (data: string | null) => void;
@@ -144,16 +144,23 @@ const QrFormControl = ({
     const watchedData = form.watch();
 
     useEffect(() => {
-        const result = formSchemas[qrType].safeParse(watchedData);
-        let dataString: string | null = null;
-        if (result.success) {
-            const generated = generateQrData(qrType, result.data);
-            if (generated.trim()) {
-                dataString = generated;
+        form.reset(defaultValues[qrType]);
+    }, [qrType, form]);
+
+    useEffect(() => {
+        const checkData = async () => {
+            const isValid = await form.trigger();
+            if (isValid) {
+                const data = form.getValues();
+                const generated = generateQrData(qrType, data);
+                onDataChange(generated.trim() ? generated : null);
+            } else {
+                onDataChange(null);
             }
-        }
-        onDataChange(dataString);
-    }, [watchedData, qrType, onDataChange]);
+        };
+        checkData();
+    }, [watchedData, qrType, onDataChange, form]);
+
 
     return (
         <FormProvider {...form}>
@@ -164,9 +171,9 @@ const QrFormControl = ({
     );
 };
 
-
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
+  const [qrData, setQrData] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -176,36 +183,36 @@ export function QrCodeGenerator() {
   const [errorCorrection, setErrorCorrection] = useState<ErrorCorrectionLevel>('medium');
 
   const { toast } = useToast();
-  
-  const handleDataChange = useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
-    return (data: string | null) => {
-        clearTimeout(timeoutId);
-        setIsLoading(true);
-        if (data === null) {
+
+  useEffect(() => {
+    setIsLoading(true);
+    const generate = async () => {
+        if (!qrData) {
             setQrCodeUrl(null);
             setIsLoading(false);
             return;
         }
 
-        timeoutId = setTimeout(async () => {
-            try {
-                const url = await QRCode.toDataURL(data, {
-                    width: size,
-                    margin: 2,
-                    color: { dark: fgColor, light: bgColor },
-                    errorCorrectionLevel: errorCorrection,
-                });
-                setQrCodeUrl(url);
-            } catch (err) {
-                console.error(err);
-                setQrCodeUrl(null);
-            } finally {
-                setIsLoading(false);
-            }
-        }, 300);
-    }
-  }, [size, fgColor, bgColor, errorCorrection]);
+        try {
+            const url = await QRCode.toDataURL(qrData, {
+                width: size,
+                margin: 2,
+                color: { dark: fgColor, light: bgColor },
+                errorCorrectionLevel: errorCorrection,
+            });
+            setQrCodeUrl(url);
+        } catch (err) {
+            console.error(err);
+            setQrCodeUrl(null);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const timeoutId = setTimeout(generate, 300);
+    return () => clearTimeout(timeoutId);
+
+  }, [qrData, size, fgColor, bgColor, errorCorrection]);
 
 
   const handleDownload = () => {
@@ -253,7 +260,7 @@ export function QrCodeGenerator() {
                               ))}
                           </SelectContent>
                       </Select>
-                      <QrFormControl key={qrType} qrType={qrType} onDataChange={handleDataChange} />
+                      <QrFormControl key={qrType} qrType={qrType} onDataChange={setQrData} />
                    </div>
                 </CardContent>
             </Card>
