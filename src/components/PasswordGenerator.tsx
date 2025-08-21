@@ -105,6 +105,12 @@ const commonWords = [
   "writer", "wrong", "yard", "yeah", "year", "yes", "yet", "you", "young", "your", "yourself"
 ];
 
+// Secure random number generator
+function getRandomNumber(max: number) {
+    const randomValues = new Uint32Array(1);
+    crypto.getRandomValues(randomValues);
+    return randomValues[0] % max;
+}
 
 export function PasswordGenerator() {
   const [password, setPassword] = useState("");
@@ -117,7 +123,7 @@ export function PasswordGenerator() {
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeSymbols, setIncludeSymbols] = useState(true);
-  const [capitalize, setCapitalize] = useState(true);
+  const [capitalizeFirstWord, setCapitalizeFirstWord] = useState(true);
   const [wordCount, setWordCount] = useState(4);
   const [pinLength, setPinLength] = useState(4);
 
@@ -144,15 +150,15 @@ export function PasswordGenerator() {
         }
 
         for (let i = 0; i < passwordLength; i++) {
-            const randomIndex = Math.floor(Math.random() * charPool.length);
+            const randomIndex = getRandomNumber(charPool.length);
             newPassword += charPool[randomIndex];
         }
     } else if (passwordType === 'memorable') {
         const words = [];
         for (let i = 0; i < wordCount; i++) {
-            const randomIndex = Math.floor(Math.random() * commonWords.length);
+            const randomIndex = getRandomNumber(commonWords.length);
             let word = commonWords[randomIndex];
-            if (capitalize && i === 0) {
+            if (capitalizeFirstWord && i === 0) {
               word = word.charAt(0).toUpperCase() + word.slice(1);
             }
             words.push(word);
@@ -161,14 +167,14 @@ export function PasswordGenerator() {
     } else if (passwordType === 'pin') {
         const numberChars = "0123456789";
         for (let i = 0; i < pinLength; i++) {
-            const randomIndex = Math.floor(Math.random() * numberChars.length);
+            const randomIndex = getRandomNumber(numberChars.length);
             newPassword += numberChars[randomIndex];
         }
     }
     
     setPassword(newPassword);
     setCopied(false);
-  }, [passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, wordCount, capitalize, pinLength, toast]);
+  }, [passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, wordCount, capitalizeFirstWord, pinLength, toast]);
   
   useEffect(() => {
     generatePassword();
@@ -199,9 +205,9 @@ export function PasswordGenerator() {
   const lengthConfig = getLengthConfig();
 
   const passwordTypeOptions = [
-    { value: 'random' as PasswordType, label: 'Random', icon: <KeyRound className="w-5 h-5"/> },
-    { value: 'memorable' as PasswordType, label: 'Memorable', icon: <Mic className="w-5 h-5"/> },
-    { value: 'pin' as PasswordType, label: 'PIN', icon: <Pin className="w-5 h-5"/> },
+    { value: 'random' as PasswordType, label: 'Random', icon: <KeyRound className="w-4 h-4"/> },
+    { value: 'memorable' as PasswordType, label: 'Memorable', icon: <Mic className="w-4 h-4"/> },
+    { value: 'pin' as PasswordType, label: 'PIN', icon: <Pin className="w-4 h-4"/> },
   ]
   
 
@@ -250,10 +256,10 @@ export function PasswordGenerator() {
                     <Label className="font-semibold text-base mb-2 block">Password Type</Label>
                     <RadioGroup value={passwordType} onValueChange={(v) => setPasswordType(v as PasswordType)} className="grid grid-cols-3 gap-2">
                         {passwordTypeOptions.map(opt => (
-                            <Label key={opt.value} htmlFor={`pt-${opt.value}`} className={cn("flex flex-col items-center justify-center space-y-2 border rounded-md p-3 cursor-pointer transition-colors", passwordType === opt.value && 'border-primary bg-primary/5')}>
+                            <Label key={opt.value} htmlFor={`pt-${opt.value}`} className={cn("flex flex-col items-center justify-center space-y-1.5 border rounded-md p-2 cursor-pointer transition-colors", passwordType === opt.value && 'border-primary bg-primary/5')}>
                                 <RadioGroupItem value={opt.value} id={`pt-${opt.value}`} className="sr-only" />
                                 {opt.icon}
-                                <span className="text-sm font-medium">{opt.label}</span>
+                                <span className="text-xs sm:text-sm font-medium">{opt.label}</span>
                             </Label>
                         ))}
                     </RadioGroup>
@@ -285,22 +291,22 @@ export function PasswordGenerator() {
                     {passwordType === 'random' && (
                         <div className="pt-4 border-t space-y-4">
                             <h3 className="font-semibold text-base">Additional Options</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                                 <div className="flex items-center space-x-2">
                                     <Switch id="uppercase" checked={includeUppercase} onCheckedChange={setIncludeUppercase} />
-                                    <Label htmlFor="uppercase" className="cursor-pointer">Uppercase (A-Z)</Label>
+                                    <Label htmlFor="uppercase" className="cursor-pointer flex-shrink-0">Uppercase (A-Z)</Label>
                                 </div>
                                  <div className="flex items-center space-x-2">
                                     <Switch id="lowercase" checked={includeLowercase} onCheckedChange={setIncludeLowercase} />
-                                    <Label htmlFor="lowercase" className="cursor-pointer">Lowercase (a-z)</Label>
+                                    <Label htmlFor="lowercase" className="cursor-pointer flex-shrink-0">Lowercase (a-z)</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Switch id="numbers" checked={includeNumbers} onCheckedChange={setIncludeNumbers} />
-                                    <Label htmlFor="numbers" className="cursor-pointer">Numbers (0-9)</Label>
+                                    <Label htmlFor="numbers" className="cursor-pointer flex-shrink-0">Numbers (0-9)</Label>
                                 </div>
                                  <div className="flex items-center space-x-2">
                                     <Switch id="symbols" checked={includeSymbols} onCheckedChange={setIncludeSymbols} />
-                                    <Label htmlFor="symbols" className="cursor-pointer">Symbols (!@#)</Label>
+                                    <Label htmlFor="symbols" className="cursor-pointer flex-shrink-0">Symbols (!@#)</Label>
                                 </div>
                             </div>
                         </div>
@@ -309,10 +315,10 @@ export function PasswordGenerator() {
                     {passwordType === 'memorable' && (
                          <div className="pt-4 border-t space-y-4">
                              <h3 className="font-semibold text-base">Additional Options</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                                 <div className="flex items-center space-x-2">
-                                    <Switch id="capitalize" checked={capitalize} onCheckedChange={setCapitalize} />
-                                    <Label htmlFor="capitalize" className="cursor-pointer">Capitalize first letter</Label>
+                                    <Switch id="capitalize" checked={capitalizeFirstWord} onCheckedChange={setCapitalizeFirstWord} />
+                                    <Label htmlFor="capitalize" className="cursor-pointer">Capitalize first word</Label>
                                 </div>
                             </div>
                         </div>
