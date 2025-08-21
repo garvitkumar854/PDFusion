@@ -1,5 +1,6 @@
 
-import { Ruler, Scale, Thermometer, Beaker, Gauge, LandPlot, Clock } from "lucide-react";
+
+import { Ruler, Scale, Thermometer, Beaker, Gauge, LandPlot, Clock, Database } from "lucide-react";
 import React from 'react';
 
 export type Unit = {
@@ -11,7 +12,7 @@ export type Unit = {
 };
 
 export type Category = {
-    id: 'length' | 'mass' | 'temperature' | 'volume' | 'speed' | 'area' | 'time';
+    id: 'length' | 'mass' | 'temperature' | 'volume' | 'speed' | 'area' | 'time' | 'data';
     name: string;
     icon: React.ComponentType<{ className?: string }>;
     baseUnit: string;
@@ -122,7 +123,7 @@ export const categories: Category[] = [
             { id: 'miles-per-sec', name: 'Miles/second', symbol: 'mi/s', toBase: v => v * 5793.6384, fromBase: v => v / 5793.6384 },
         ]
     },
-     {
+    {
         id: 'area',
         name: 'Area',
         icon: LandPlot,
@@ -138,6 +139,22 @@ export const categories: Category[] = [
             { id: 'hectares', name: 'Hectares', symbol: 'ha', toBase: v => v * 10000, fromBase: v => v / 10000 },
             { id: 'acres', name: 'Acres', symbol: 'ac', toBase: v => v * 4046.86, fromBase: v => v / 4046.86 },
             { id: 'ares', name: 'Ares', symbol: 'a', toBase: v => v * 100, fromBase: v => v / 100 },
+        ]
+    },
+    {
+        id: 'data',
+        name: 'Data',
+        icon: Database,
+        baseUnit: 'bytes',
+        units: [
+            { id: 'bytes', name: 'Bytes', symbol: 'B', toBase: v => v, fromBase: v => v },
+            { id: 'kilobytes', name: 'Kilobytes', symbol: 'KB', toBase: v => v * 1024, fromBase: v => v / 1024 },
+            { id: 'megabytes', name: 'Megabytes', symbol: 'MB', toBase: v => v * Math.pow(1024, 2), fromBase: v => v / Math.pow(1024, 2) },
+            { id: 'gigabytes', name: 'Gigabytes', symbol: 'GB', toBase: v => v * Math.pow(1024, 3), fromBase: v => v / Math.pow(1024, 3) },
+            { id: 'terabytes', name: 'Terabytes', symbol: 'TB', toBase: v => v * Math.pow(1024, 4), fromBase: v => v / Math.pow(1024, 4) },
+            { id: 'petabytes', name: 'Petabytes', symbol: 'PB', toBase: v => v * Math.pow(1024, 5), fromBase: v => v / Math.pow(1024, 5) },
+            { id: 'exabytes', name: 'Exabytes', symbol: 'EB', toBase: v => v * Math.pow(1024, 6), fromBase: v => v / Math.pow(1024, 6) },
+            { id: 'zettabytes', name: 'Zettabytes', symbol: 'ZB', toBase: v => v * Math.pow(1024, 7), fromBase: v => v / Math.pow(1024, 7) },
         ]
     }
 ];

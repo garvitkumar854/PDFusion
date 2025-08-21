@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
@@ -26,6 +27,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
+    data: { from: { value: '1024', unit: 'megabytes' }, to: { value: '', unit: 'gigabytes' } },
 };
 
 const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChange }: { isMobile: boolean, activeCategory: Category['id'], onCategoryChange: (id: string) => void }) => {
@@ -50,7 +52,7 @@ const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChang
     }
     return (
        <Tabs value={activeCategory} onValueChange={onCategoryChange}>
-         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 h-auto flex-wrap">
+         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 h-auto flex-wrap">
             {categories.map((category) => (
                 <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
                     <category.icon className="h-5 w-5" />

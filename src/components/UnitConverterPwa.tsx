@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
@@ -21,6 +22,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
+    data: { from: { value: '1024', unit: 'megabytes' }, to: { value: '', unit: 'gigabytes' } },
 };
 
 const CalculatorButton = React.memo(({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
