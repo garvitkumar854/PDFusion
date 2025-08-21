@@ -36,35 +36,25 @@ const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void
         }
     }
 
-    const baseButtons = [ '7', '8', '9', '4', '5', '6', '1', '2', '3'];
+    const baseButtons = ['7', '8', '9', '4', '5', '6', '1', '2', '3'];
+    const bottomRow = ['Swap', '0', '.'];
 
     return (
         <Card className="bg-transparent shadow-none border-none p-2 h-full">
-            <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+            <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
                 {/* Number Pad */}
                 {baseButtons.map(btn => (
-                    <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold" variant="secondary">{btn}</Button>
+                    <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold rounded-full" variant="secondary">{btn}</Button>
+                ))}
+                
+                {/* Bottom row */}
+                {bottomRow.map(btn => (
+                    <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold rounded-full" variant="secondary">{getButtonIcon(btn)}</Button>
                 ))}
 
-                {/* Bottom row */}
-                {showPlusMinus ? (
-                    <>
-                     <Button onClick={() => onInput('+/-')} className="h-full text-2xl font-bold" variant="secondary">{getButtonIcon('+/-')}</Button>
-                     <Button onClick={() => onInput('0')} className="h-full text-2xl font-bold" variant="secondary">0</Button>
-                     <Button onClick={() => onInput('.')} className="h-full text-2xl font-bold" variant="secondary">.</Button>
-                    </>
-                ) : (
-                    <>
-                     <Button onClick={() => onInput('0')} className="h-full text-2xl font-bold col-span-2" variant="secondary">0</Button>
-                     <Button onClick={() => onInput('.')} className="h-full text-2xl font-bold" variant="secondary">.</Button>
-                    </>
-                )}
-                
-
                 {/* Right-side action buttons */}
-                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold row-span-2" variant="destructive">C</Button>
-                <Button onClick={() => onInput('Backspace')} className="h-full row-span-2" variant="secondary">{getButtonIcon('Backspace')}</Button>
-                <Button onClick={() => onInput('Swap')} className="h-full" variant="default">{getButtonIcon('Swap')}</Button>
+                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold row-span-2 rounded-full" variant="destructive">AC</Button>
+                <Button onClick={() => onInput('Backspace')} className="h-full row-span-2 rounded-full" variant="secondary">{getButtonIcon('Backspace')}</Button>
             </div>
         </Card>
     );
@@ -238,3 +228,5 @@ export function UnitConverterPwa() {
     </div>
   );
 }
+
+    
