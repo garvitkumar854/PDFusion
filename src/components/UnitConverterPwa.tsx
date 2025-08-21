@@ -38,6 +38,23 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
 
     return (
         <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+            {/* Action Column */}
+             <div className="col-start-4 row-start-1 row-span-full flex flex-col gap-2">
+                 {isTemp ? (
+                     <>
+                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white flex-grow">AC</CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Backspace')} className="flex-grow"><Delete className="h-7 w-7"/></CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('+/-')} className="flex-grow">+/-</CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Swap')} className="text-primary flex-grow"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+                     </>
+                 ) : (
+                     <>
+                        <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-span-2">AC</CalculatorButton>
+                        <CalculatorButton onClick={() => onInput('Backspace')} className="row-span-3"><Delete className="h-7 w-7"/></CalculatorButton>
+                     </>
+                 )}
+            </div>
+
             {/* Numbers and bottom row */}
             <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
@@ -47,22 +64,13 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
             <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
             <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
 
-            <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
             <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
             <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('0')} className="col-span-2">0</CalculatorButton>
+            
+            {!isTemp && <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>}
+            <CalculatorButton onClick={() => onInput('0')} className={cn(isTemp && "col-span-2")}>0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
-
-            {/* Action Column */}
-            <div className="col-start-4 row-start-1 row-span-full flex flex-col gap-2">
-                 <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white flex-grow">AC</CalculatorButton>
-                 <CalculatorButton onClick={() => onInput('Backspace')} className="flex-grow"><Delete className="h-7 w-7"/></CalculatorButton>
-                {isTemp && (
-                    <CalculatorButton onClick={() => onInput('+/-')} className="flex-grow">+/-</CalculatorButton>
-                )}
-            </div>
         </div>
     );
 }
@@ -213,7 +221,7 @@ export function UnitConverterPwa() {
                     <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
                            <category.icon className="h-5 w-5" />
-                           <span>{category.name}</span>
+                           <span>{category.name} ({category.units.find(u => u.id === category.baseUnit)?.symbol})</span>
                         </div>
                     </SelectItem>
                 ))}
