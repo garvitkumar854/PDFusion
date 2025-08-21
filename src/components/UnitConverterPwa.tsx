@@ -17,7 +17,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     length: { from: { value: '1', unit: 'meters' }, to: { value: '', unit: 'feet' } },
     mass: { from: { value: '1', unit: 'kilograms' }, to: { value: '', unit: 'pounds' } },
     temperature: { from: { value: '0', unit: 'celsius' }, to: { value: '', unit: 'fahrenheit' } },
-    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons' } },
+    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
@@ -34,37 +34,27 @@ const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void
     );
 
     return (
-        <div className={cn("grid grid-cols-4 gap-2 h-full", showPlusMinus ? "grid-rows-5" : "grid-rows-4")}>
+        <div className={cn("grid grid-cols-4 grid-rows-4 gap-2 h-full")}>
             {/* Numbers and Basic Ops */}
-            <ButtonLayout onClick={() => onInput('7')} className="row-start-1 col-start-1">7</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('8')} className="row-start-1 col-start-2">8</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('9')} className="row-start-1 col-start-3">9</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('7')} className="col-start-1">7</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('8')} className="col-start-2">8</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('9')} className="col-start-3">9</ButtonLayout>
 
-            <ButtonLayout onClick={() => onInput('4')} className="row-start-2 col-start-1">4</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('5')} className="row-start-2 col-start-2">5</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('6')} className="row-start-2 col-start-3">6</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('4')} className="col-start-1">4</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('5')} className="col-start-2">5</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('6')} className="col-start-3">6</ButtonLayout>
 
-            <ButtonLayout onClick={() => onInput('1')} className="row-start-3 col-start-1">1</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('2')} className="row-start-3 col-start-2">2</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('3')} className="row-start-3 col-start-3">3</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('1')} className="col-start-1">1</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('2')} className="col-start-2">2</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('3')} className="col-start-3">3</ButtonLayout>
 
-            <ButtonLayout onClick={() => onInput('0')} className={cn("col-span-2", showPlusMinus ? "row-start-5" : "row-start-4")}>0</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('.')} className={cn(showPlusMinus ? "row-start-5" : "row-start-4")}>.</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('Swap')} className="row-start-4 col-start-1"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
+            <ButtonLayout onClick={() => onInput('0')} className="row-start-4 col-start-2">0</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('.')} className="row-start-4 col-start-3">.</ButtonLayout>
             
             {/* Actions Column */}
-            <ButtonLayout onClick={() => onInput('C')} className={cn("bg-red-500/80 hover:bg-red-500 text-white col-start-4", showPlusMinus ? "row-start-1" : "row-span-2")}>AC</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('Backspace')} className={cn("col-start-4", showPlusMinus ? "row-start-2" : "row-span-2 row-start-3")}><Delete className="h-7 w-7"/></ButtonLayout>
-
-            {showPlusMinus && (
-                 <>
-                    <ButtonLayout onClick={() => onInput('+/-')} className="row-start-3 col-start-4">+/-</ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('Swap')} className="row-start-4 col-start-1 col-span-4"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
-                 </>
-            )}
-
-            {!showPlusMinus && (
-                <ButtonLayout onClick={() => onInput('Swap')} className="row-start-5 col-start-1 col-span-4"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
-            )}
+            <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-span-2">AC</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('Backspace')} className="col-start-4 row-span-2"><Delete className="h-7 w-7"/></ButtonLayout>
         </div>
     );
 }
