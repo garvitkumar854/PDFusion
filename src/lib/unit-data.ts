@@ -80,7 +80,7 @@ export const categories: Category[] = [
             { id: 'liters', name: 'Liters', symbol: 'L', toBase: v => v, fromBase: v => v },
             { id: 'milliliters', name: 'Milliliters', symbol: 'mL', toBase: v => v / 1000, fromBase: v => v * 1000 },
             { id: 'cubic-meters', name: 'Cubic Meters', symbol: 'm³', toBase: v => v * 1000, fromBase: v => v / 1000 },
-            { id: 'gallons-us', name: 'Gallons (US)', symbol: 'gal', toBase: v => v * 3.78541, fromBase: v => v / 3.78541 },
+            { id: 'gallons', name: 'Gallons (US)', symbol: 'gal', toBase: v => v * 3.78541, fromBase: v => v / 3.78541 },
             { id: 'quarts-us', name: 'Quarts (US)', symbol: 'qt', toBase: v => v * 0.946353, fromBase: v => v / 0.946353 },
             { id: 'pints-us', name: 'Pints (US)', symbol: 'pt', toBase: v => v * 0.473176, fromBase: v => v / 0.473176 },
             { id: 'cups-us', name: 'Cups (US)', symbol: 'cup', toBase: v => v * 0.24, fromBase: v => v / 0.24 },
