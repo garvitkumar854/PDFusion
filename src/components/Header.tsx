@@ -261,57 +261,57 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-3 items-start px-2 mb-6">
-                                <div className="flex flex-col gap-1 items-start w-full">
+                            <nav className="flex flex-col gap-4 items-start px-2 mb-6">
+                                <div className="flex flex-row gap-4 items-start w-full">
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                </div>
                                 
-                                    <div className="w-full pt-2">
-                                        <div className="text-base font-semibold text-foreground mb-2">Services</div>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                            {services.map((service) => {
-                                                const isActive = pathname.startsWith(service.href);
-                                                return (
-                                                <Link 
-                                                    key={service.href} 
-                                                    href={service.href} 
-                                                    onClick={() => setIsSheetOpen(false)} 
-                                                    className={cn(
-                                                        "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
-                                                        isActive && "bg-accent text-accent-foreground"
-                                                    )}
-                                                >
-                                                    <div className="flex h-5 w-5 items-center justify-center mr-2 shrink-0">
-                                                        {service.icon}
-                                                    </div>
-                                                    <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
-                                                </Link>
-                                            )})}
-                                        </div>
+                                <div className="w-full pt-2">
+                                    <div className="text-base font-semibold text-foreground mb-2">Services</div>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                        {services.map((service) => {
+                                            const isActive = pathname.startsWith(service.href);
+                                            return (
+                                            <Link 
+                                                key={service.href} 
+                                                href={service.href} 
+                                                onClick={() => setIsSheetOpen(false)} 
+                                                className={cn(
+                                                    "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                                    isActive && "bg-accent text-accent-foreground"
+                                                )}
+                                            >
+                                                <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
+                                                    {service.icon}
+                                                </div>
+                                                <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
+                                            </Link>
+                                        )})}
                                     </div>
-                                    <div className="w-full pt-4">
-                                        <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
-                                            {moreTools.map((tool) => {
-                                                const isActive = pathname.startsWith(tool.href);
-                                                return (
-                                                <Link 
-                                                    key={tool.href} 
-                                                    href={tool.href} 
-                                                    onClick={() => setIsSheetOpen(false)} 
-                                                    className={cn(
-                                                        "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
-                                                        isActive && "bg-accent text-accent-foreground"
-                                                    )}
-                                                >
-                                                    <div className="flex h-5 w-5 items-center justify-center mr-2 shrink-0">
-                                                        {tool.icon}
-                                                    </div>
-                                                    <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
-                                                </Link>
-                                            )})}
-                                        </div>
+                                </div>
+                                <div className="w-full pt-4">
+                                    <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
+                                        {moreTools.map((tool) => {
+                                            const isActive = pathname.startsWith(tool.href);
+                                            return (
+                                            <Link 
+                                                key={tool.href} 
+                                                href={tool.href} 
+                                                onClick={() => setIsSheetOpen(false)} 
+                                                className={cn(
+                                                    "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                                    isActive && "bg-accent text-accent-foreground"
+                                                )}
+                                            >
+                                                <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
+                                                    {tool.icon}
+                                                </div>
+                                                <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
+                                            </Link>
+                                        )})}
                                     </div>
                                 </div>
 
