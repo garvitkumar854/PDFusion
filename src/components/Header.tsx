@@ -276,7 +276,7 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    {React.cloneElement(service.icon, { className: 'mr-2 h-5 w-5' })}
+                                                    {React.cloneElement(service.icon, { className: 'mr-2 !h-5 !w-5' })}
                                                     <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
                                                 </Link>
                                             )})}
@@ -297,7 +297,7 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    {React.cloneElement(tool.icon, { className: 'mr-2 h-5 w-5' })}
+                                                    {React.cloneElement(tool.icon, { className: 'mr-2 !h-5 !w-5' })}
                                                     <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
                                                 </Link>
                                             )})}
