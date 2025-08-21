@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Slider } from "./ui/slider";
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -100,25 +100,26 @@ const generateQrData = (type: QrType, data: any): string => {
 }
 
 const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
-    const form = useFormContext();
-    const labelClass = "text-foreground";
+    const { control } = useFormContext();
+    const labelClass = "text-foreground font-semibold";
+    
     switch(qrType) {
-        case "url": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "text": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "phone": return <FormField control={form.control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
-        case "sms": return <div className="space-y-4"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="message" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
-        case "email": return <div className="space-y-4"><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="subject" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="body" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "url": return <FormField control={control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Website URL</FormLabel><FormControl><Input placeholder="https://example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "text": return <FormField control={control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Your Text</FormLabel><FormControl><Textarea placeholder="Enter any text here" rows={4} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "phone": return <FormField control={control} name="value" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />;
+        case "sms": return <div className="space-y-4"><FormField control={control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Phone Number</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={control} name="message" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Message (optional)</FormLabel><FormControl><Textarea placeholder="Your message here..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
+        case "email": return <div className="space-y-4"><FormField control={control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Recipient Email</FormLabel><FormControl><Input type="email" placeholder="recipient@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={control} name="subject" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Subject (optional)</FormLabel><FormControl><Input placeholder="Email subject" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={control} name="body" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Body (optional)</FormLabel><FormControl><Textarea placeholder="Your email body..." {...field} /></FormControl><FormMessage /></FormItem>)} /></div>;
         case "contact": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="firstName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="lastName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="firstName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="lastName" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={control} name="phone" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Phone</FormLabel><FormControl><Input type="tel" placeholder="+1 123 456 7890" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={control} name="email" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="company" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Company</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Job Title</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="company" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Company</FormLabel><FormControl><Input placeholder="Example Inc." {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name="title" render={({ field }) => (<FormItem><FormLabel className={labelClass}>Job Title</FormLabel><FormControl><Input placeholder="Developer" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
@@ -126,50 +127,6 @@ const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
     }
 });
 QrCodeForm.displayName = 'QrCodeForm';
-
-
-const QrFormControl = ({
-    qrType,
-    onDataChange,
-}: {
-    qrType: QrType;
-    onDataChange: (data: string | null) => void;
-}) => {
-    const form = useForm({
-        resolver: zodResolver(formSchemas[qrType]),
-        defaultValues: defaultValues[qrType],
-        mode: 'onBlur',
-    });
-
-    const watchedData = form.watch();
-
-    useEffect(() => {
-        form.reset(defaultValues[qrType]);
-    }, [qrType, form]);
-
-    useEffect(() => {
-        const checkData = async () => {
-            const isValid = await form.trigger();
-            if (isValid) {
-                const data = form.getValues();
-                const generated = generateQrData(qrType, data);
-                onDataChange(generated.trim() ? generated : null);
-            } else {
-                onDataChange(null);
-            }
-        };
-        checkData();
-    }, [watchedData, qrType, onDataChange, form]);
-
-
-    return (
-        <FormProvider {...form}>
-            <form className="space-y-4 pt-4">
-                <QrCodeForm qrType={qrType} />
-            </form>
-        </FormProvider>
-    );
-};
 
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
@@ -181,8 +138,42 @@ export function QrCodeGenerator() {
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [errorCorrection, setErrorCorrection] = useState<ErrorCorrectionLevel>('medium');
-
   const { toast } = useToast();
+
+  const form = useForm({
+      resolver: zodResolver(formSchemas[qrType]),
+      defaultValues: defaultValues[qrType],
+      mode: 'onBlur',
+  });
+  
+  const watchedData = form.watch();
+
+  useEffect(() => {
+    form.reset(defaultValues[qrType]);
+    setQrData(null);
+  }, [qrType, form]);
+
+  const debouncedQrData = useMemo(() => {
+    const handler = setTimeout(() => {
+        const checkData = async () => {
+            const isValid = await form.trigger();
+            if (isValid) {
+                const data = form.getValues();
+                const generated = generateQrData(qrType, data);
+                setQrData(generated.trim() ? generated : null);
+            } else {
+                setQrData(null);
+            }
+        };
+        checkData();
+    }, 300);
+
+    return () => {
+        clearTimeout(handler);
+    };
+  }, [watchedData, qrType, form]);
+
+  useEffect(debouncedQrData, [debouncedQrData]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -192,7 +183,6 @@ export function QrCodeGenerator() {
             setIsLoading(false);
             return;
         }
-
         try {
             const url = await QRCode.toDataURL(qrData, {
                 width: size,
@@ -208,10 +198,7 @@ export function QrCodeGenerator() {
             setIsLoading(false);
         }
     };
-
-    const timeoutId = setTimeout(generate, 300);
-    return () => clearTimeout(timeoutId);
-
+    generate();
   }, [qrData, size, fgColor, bgColor, errorCorrection]);
 
 
@@ -235,35 +222,39 @@ export function QrCodeGenerator() {
   };
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-6">
-            <Card className="bg-transparent shadow-lg w-full">
-                <CardHeader>
-                    <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
-                    <CardDescription>Select a content type and fill in the details.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <div className="space-y-4">
-                      <Label>Content Type</Label>
-                      <Select value={qrType} onValueChange={(v) => setQrType(v as QrType)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select content type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {qrTypeOptions.map(option => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                      <div className="flex items-center gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <div className="space-y-6 lg:col-span-3">
+            <FormProvider {...form}>
+                <Card className="bg-transparent shadow-lg w-full">
+                    <CardHeader>
+                        <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
+                        <CardDescription>Select a content type and fill in the details.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <div className="space-y-4">
+                        <Label>Content Type</Label>
+                        <Select value={qrType} onValueChange={(v) => setQrType(v as QrType)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select content type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {qrTypeOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        <div className="flex items-center gap-2">
                                         {option.icon}
                                         {option.label}
-                                      </div>
-                                  </SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                      <QrFormControl key={qrType} qrType={qrType} onDataChange={setQrData} />
-                   </div>
-                </CardContent>
-            </Card>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <form className="space-y-4 pt-4">
+                            <QrCodeForm qrType={qrType} />
+                        </form>
+                    </div>
+                    </CardContent>
+                </Card>
+            </FormProvider>
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
@@ -314,7 +305,7 @@ export function QrCodeGenerator() {
             </Accordion>
         </div>
 
-        <div className="w-full lg:sticky lg:top-24">
+        <div className="w-full lg:col-span-2 lg:sticky lg:top-24">
              <Card className="bg-transparent shadow-lg w-full">
                 <CardHeader>
                     <CardTitle className="text-xl sm:text-2xl">Preview</CardTitle>
