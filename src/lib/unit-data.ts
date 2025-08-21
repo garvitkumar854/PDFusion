@@ -29,10 +29,15 @@ export const categories: Category[] = [
             { id: 'kilometers', name: 'Kilometers', symbol: 'km', toBase: v => v * 1000, fromBase: v => v / 1000 },
             { id: 'centimeters', name: 'Centimeters', symbol: 'cm', toBase: v => v / 100, fromBase: v => v * 100 },
             { id: 'millimeters', name: 'Millimeters', symbol: 'mm', toBase: v => v / 1000, fromBase: v => v * 1000 },
+            { id: 'micrometers', name: 'Micrometers', symbol: 'μm', toBase: v => v / 1e6, fromBase: v => v * 1e6 },
+            { id: 'nanometers', name: 'Nanometers', symbol: 'nm', toBase: v => v / 1e9, fromBase: v => v * 1e9 },
             { id: 'miles', name: 'Miles', symbol: 'mi', toBase: v => v * 1609.34, fromBase: v => v / 1609.34 },
             { id: 'yards', name: 'Yards', symbol: 'yd', toBase: v => v * 0.9144, fromBase: v => v / 0.9144 },
             { id: 'feet', name: 'Feet', symbol: 'ft', toBase: v => v * 0.3048, fromBase: v => v / 0.3048 },
             { id: 'inches', name: 'Inches', symbol: 'in', toBase: v => v * 0.0254, fromBase: v => v / 0.0254 },
+            { id: 'nautical-miles', name: 'Nautical Miles', symbol: 'nmi', toBase: v => v * 1852, fromBase: v => v / 1852 },
+            { id: 'furlongs', name: 'Furlongs', symbol: 'fur', toBase: v => v * 201.168, fromBase: v => v / 201.168 },
+            { id: 'fathoms', name: 'Fathoms', symbol: 'fath', toBase: v => v * 1.8288, fromBase: v => v / 1.8288 },
         ]
     },
     {
@@ -44,9 +49,15 @@ export const categories: Category[] = [
             { id: 'kilograms', name: 'Kilograms', symbol: 'kg', toBase: v => v, fromBase: v => v },
             { id: 'grams', name: 'Grams', symbol: 'g', toBase: v => v / 1000, fromBase: v => v * 1000 },
             { id: 'milligrams', name: 'Milligrams', symbol: 'mg', toBase: v => v / 1e6, fromBase: v => v * 1e6 },
-            { id: 'pounds', name: 'Pounds', symbol: 'lb', toBase: v => v * 0.453592, fromBase: v => v / 0.453592 },
-            { id: 'ounces', name: 'Ounces', symbol: 'oz', toBase: v => v * 0.0283495, fromBase: v => v / 0.0283495 },
-            { id: 'tonnes', name: 'Tonnes', symbol: 't', toBase: v => v * 1000, fromBase: v => v / 1000 },
+            { id: 'tonnes', name: 'Metric Tons', symbol: 't', toBase: v => v * 1000, fromBase: v => v / 1000 },
+            { id: 'pounds', name: 'Pounds', symbol: 'lb', toBase: v => v * 0.45359237, fromBase: v => v / 0.45359237 },
+            { id: 'ounces', name: 'Ounces', symbol: 'oz', toBase: v => v * 0.0283495231, fromBase: v => v / 0.0283495231 },
+            { id: 'carats', name: 'Carats', symbol: 'ct', toBase: v => v / 5000, fromBase: v => v * 5000 },
+            { id: 'stone', name: 'Stone', symbol: 'st', toBase: v => v * 6.35029318, fromBase: v => v / 6.35029318 },
+            { id: 'troy-ounce', name: 'Troy Ounces', symbol: 'oz t', toBase: v => v * 0.0311034768, fromBase: v => v / 0.0311034768 },
+            { id: 'slugs', name: 'Slugs', symbol: 'slug', toBase: v => v * 14.59390, fromBase: v => v / 14.59390 },
+            { id: 'drams', name: 'Drams', symbol: 'dr', toBase: v => v * 0.0017718452, fromBase: v => v / 0.0017718452 },
+            { id: 'grains', name: 'Grains', symbol: 'gr', toBase: v => v * 0.00006479891, fromBase: v => v / 0.00006479891 },
         ]
     },
     {
@@ -68,10 +79,14 @@ export const categories: Category[] = [
         units: [
             { id: 'liters', name: 'Liters', symbol: 'L', toBase: v => v, fromBase: v => v },
             { id: 'milliliters', name: 'Milliliters', symbol: 'mL', toBase: v => v / 1000, fromBase: v => v * 1000 },
+            { id: 'cubic-meters', name: 'Cubic Meters', symbol: 'm³', toBase: v => v * 1000, fromBase: v => v / 1000 },
             { id: 'gallons-us', name: 'Gallons (US)', symbol: 'gal', toBase: v => v * 3.78541, fromBase: v => v / 3.78541 },
             { id: 'quarts-us', name: 'Quarts (US)', symbol: 'qt', toBase: v => v * 0.946353, fromBase: v => v / 0.946353 },
             { id: 'pints-us', name: 'Pints (US)', symbol: 'pt', toBase: v => v * 0.473176, fromBase: v => v / 0.473176 },
             { id: 'cups-us', name: 'Cups (US)', symbol: 'cup', toBase: v => v * 0.24, fromBase: v => v / 0.24 },
+            { id: 'gallons-imp', name: 'Gallons (Imp.)', symbol: 'gal', toBase: v => v * 4.54609, fromBase: v => v / 4.54609 },
+            { id: 'pints-imp', name: 'Pints (Imp.)', symbol: 'pt', toBase: v => v * 0.568261, fromBase: v => v / 0.568261 },
+            { id: 'cubic-feet', name: 'Cubic Feet', symbol: 'ft³', toBase: v => v * 28.3168, fromBase: v => v / 28.3168 },
         ]
     },
     {
@@ -83,7 +98,11 @@ export const categories: Category[] = [
             { id: 'kph', name: 'Kilometers/hour', symbol: 'km/h', toBase: v => v, fromBase: v => v },
             { id: 'mph', name: 'Miles/hour', symbol: 'mph', toBase: v => v * 1.60934, fromBase: v => v / 1.60934 },
             { id: 'mps', name: 'Meters/second', symbol: 'm/s', toBase: v => v * 3.6, fromBase: v => v / 3.6 },
+            { id: 'fps', name: 'Feet/second', symbol: 'ft/s', toBase: v => v * 1.09728, fromBase: v => v / 1.09728 },
             { id: 'knots', name: 'Knots', symbol: 'kn', toBase: v => v * 1.852, fromBase: v => v / 1.852 },
+            { id: 'mach', name: 'Mach', symbol: 'M', toBase: v => v * 1234.8, fromBase: v => v / 1234.8 },
+            { id: 'light-speed', name: 'Speed of Light', symbol: 'c', toBase: v => v * 1.079e9, fromBase: v => v / 1.079e9 },
+            { id: 'miles-per-sec', name: 'Miles/second', symbol: 'mi/s', toBase: v => v * 5793.6384, fromBase: v => v / 5793.6384 },
         ]
     },
      {
@@ -97,8 +116,11 @@ export const categories: Category[] = [
             { id: 'sq-miles', name: 'Square Miles', symbol: 'mi²', toBase: v => v * 2.59e6, fromBase: v => v / 2.59e6 },
             { id: 'sq-yards', name: 'Square Yards', symbol: 'yd²', toBase: v => v * 0.836127, fromBase: v => v / 0.836127 },
             { id: 'sq-feet', name: 'Square Feet', symbol: 'ft²', toBase: v => v * 0.092903, fromBase: v => v / 0.092903 },
-            { id: 'acres', name: 'Acres', symbol: 'ac', toBase: v => v * 4046.86, fromBase: v => v / 4046.86 },
+            { id: 'sq-inches', name: 'Square Inches', symbol: 'in²', toBase: v => v * 0.00064516, fromBase: v => v / 0.00064516 },
+            { id: 'sq-cm', name: 'Square Centimeters', symbol: 'cm²', toBase: v => v / 10000, fromBase: v => v * 10000 },
             { id: 'hectares', name: 'Hectares', symbol: 'ha', toBase: v => v * 10000, fromBase: v => v / 10000 },
+            { id: 'acres', name: 'Acres', symbol: 'ac', toBase: v => v * 4046.86, fromBase: v => v / 4046.86 },
+            { id: 'ares', name: 'Ares', symbol: 'a', toBase: v => v * 100, fromBase: v => v / 100 },
         ]
     }
 ];
