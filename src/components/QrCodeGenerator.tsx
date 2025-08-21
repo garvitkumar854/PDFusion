@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Slider } from "./ui/slider";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -248,9 +248,9 @@ export function QrCodeGenerator() {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <form className="space-y-4 pt-4">
+                        <div className="space-y-4 pt-4">
                             <QrCodeForm qrType={qrType} />
-                        </form>
+                        </div>
                     </div>
                     </CardContent>
                 </Card>
