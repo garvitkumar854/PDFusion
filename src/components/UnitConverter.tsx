@@ -11,6 +11,7 @@ import { ArrowRightLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type InputState = {
     value: string;
@@ -31,6 +32,7 @@ export function UnitConverter() {
   const [from, setFrom] = useState<InputState>(initialStates.length.from);
   const [to, setTo] = useState<InputState>(initialStates.length.to);
   const [lastActive, setLastActive] = useState<'from' | 'to'>('from');
+  const isMobile = useIsMobile();
 
   const unitsForCategory = useMemo(() => {
     return categories.find(c => c.id === activeCategory)?.units || [];
@@ -72,7 +74,6 @@ export function UnitConverter() {
     setter: React.Dispatch<React.SetStateAction<InputState>>,
     activeSetter: () => void
   ) => {
-    // Prevent typing '-' if not in temperature category
     if (activeCategory !== 'temperature' && value.includes('-')) {
         return;
     }
@@ -116,19 +117,58 @@ export function UnitConverter() {
     setLastActive(lastActive === 'from' ? 'to' : 'from');
   };
 
+  const CategorySelector = () => {
+    const CurrentCategoryIcon = categories.find(c => c.id === activeCategory)?.icon;
+    if (isMobile) {
+      return (
+         <Select value={activeCategory} onValueChange={handleCategoryChange}>
+             <SelectTrigger className="h-12 text-base">
+                <SelectValue placeholder="Select category" />
+             </SelectTrigger>
+             <SelectContent>
+                {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                           <category.icon className="h-5 w-5" />
+                           <span>{category.name}</span>
+                        </div>
+                    </SelectItem>
+                ))}
+             </SelectContent>
+           </Select>
+      )
+    }
+    return (
+       <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
+         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
+            {categories.map((category) => (
+                <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
+                    <category.icon className="h-5 w-5" />
+                    <span>{category.name}</span>
+                </TabsTrigger>
+            ))}
+         </TabsList>
+       </Tabs>
+    );
+  }
+  
+  const UnitSelector = ({ value, onChange, units }: { value: string, onChange: (unit: string) => void, units: Unit[] }) => (
+    <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+            {units.map(unit => (
+                <SelectItem key={unit.id} value={unit.id}>
+                    {unit.name} ({unit.symbol})
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+  );
+
   return (
     <Card className="bg-transparent shadow-lg w-full">
         <CardHeader>
-           <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
-             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
-                {categories.map((category) => (
-                    <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
-                        <category.icon className="h-5 w-5" />
-                        <span>{category.name}</span>
-                    </TabsTrigger>
-                ))}
-             </TabsList>
-           </Tabs>
+           <CategorySelector />
         </CardHeader>
         <CardContent>
             <div className="space-y-4">
@@ -136,12 +176,7 @@ export function UnitConverter() {
                     <Label htmlFor="from-value">From</Label>
                     <div className="flex flex-col sm:flex-row gap-2">
                         <Input id="from-value" type="number" value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
-                        <Select value={from.unit} onValueChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))}>
-                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <UnitSelector value={from.unit} onChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))} units={unitsForCategory} />
                     </div>
                 </div>
                 
@@ -155,12 +190,7 @@ export function UnitConverter() {
                     <Label htmlFor="to-value">To</Label>
                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input id="to-value" type="number" value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
-                         <Select value={to.unit} onValueChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))}>
-                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                         <UnitSelector value={to.unit} onChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))} units={unitsForCategory} />
                     </div>
                 </div>
             </div>
