@@ -177,7 +177,7 @@ export default function Header() {
                           <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
                             {service.icon}
                           </div>
-                          <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
+                          <span className="text-sm font-medium">{service.label}</span>
                         </Link>
                         )
                       })}
@@ -192,7 +192,7 @@ export default function Header() {
                           <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
                            <LayoutGrid />
                           </div>
-                          <span className="text-sm font-medium whitespace-nowrap">More Tools</span>
+                          <span className="text-sm font-medium">More Tools</span>
                           <ChevronRight className="ml-auto h-4 w-4" />
                         </Link>
                     </div>
@@ -221,7 +221,7 @@ export default function Header() {
                                <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
                                 {tool.icon}
                                </div>
-                                <span className="text-sm font-medium whitespace-nowrap">{tool.label}</span>
+                                <span className="text-sm font-medium">{tool.label}</span>
                               </Link>
                             );
                           })}
@@ -286,7 +286,7 @@ export default function Header() {
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
                                                     {service.icon}
                                                 </div>
-                                                <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
+                                                <span className="text-xs font-medium">{service.label}</span>
                                             </Link>
                                         )})}
                                     </div>
@@ -309,7 +309,7 @@ export default function Header() {
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
                                                     {tool.icon}
                                                 </div>
-                                                <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
+                                                <span className="text-xs font-medium">{tool.label}</span>
                                             </Link>
                                         )})}
                                     </div>
