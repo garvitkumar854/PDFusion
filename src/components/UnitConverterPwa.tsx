@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { categories, Category, convert, formatNumber } from "@/lib/unit-data";
+import { categories, Category, convert, formatNumber, Unit } from "@/lib/unit-data";
 import { ArrowRightLeft, Delete } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
@@ -22,52 +22,43 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const CalculatorButton = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
+const CalculatorButton = React.memo(({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
     <Button 
-        className={cn("h-full w-full text-2xl font-bold rounded-xl shadow-sm", className)} 
+        className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)} 
         variant="secondary"
         {...props}
     >
         {children}
     </Button>
-);
+));
+CalculatorButton.displayName = 'CalculatorButton';
 
-
-const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
+const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
-    const baseButtons = [
-        { key: '7', label: '7', pos: 'col-start-1 row-start-1' },
-        { key: '8', label: '8', pos: 'col-start-2 row-start-1' },
-        { key: '9', label: '9', pos: 'col-start-3 row-start-1' },
-
-        { key: '4', label: '4', pos: 'col-start-1 row-start-2' },
-        { key: '5', label: '5', pos: 'col-start-2 row-start-2' },
-        { key: '6', label: '6', pos: 'col-start-3 row-start-2' },
-
-        { key: '1', label: '1', pos: 'col-start-1 row-start-3' },
-        { key: '2', label: '2', pos: 'col-start-2 row-start-3' },
-        { key: '3', label: '3', pos: 'col-start-3 row-start-3' },
-
-        { key: 'Swap', label: <ArrowRightLeft className="h-7 w-7"/>, pos: 'col-start-1 row-start-4', className: 'text-primary' },
-        { key: '0', label: '0', pos: 'col-start-2 row-start-4' },
-        { key: '.', label: '.', pos: 'col-start-3 row-start-4' },
-    ];
-
+    
     return (
         <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-            {/* Base buttons */}
-            {baseButtons.map(btn => (
-                 <CalculatorButton key={btn.key} onClick={() => onInput(btn.key)} className={cn(btn.pos, btn.className)}>
-                    {btn.label}
-                 </CalculatorButton>
-            ))}
+            <CalculatorButton onClick={() => onInput('7')} className={'col-start-1 row-start-1'}>7</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('8')} className={'col-start-2 row-start-1'}>8</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('9')} className={'col-start-3 row-start-1'}>9</CalculatorButton>
 
-            {/* Action Column */}
+            <CalculatorButton onClick={() => onInput('4')} className={'col-start-1 row-start-2'}>4</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('5')} className={'col-start-2 row-start-2'}>5</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('6')} className={'col-start-3 row-start-2'}>6</CalculatorButton>
+            
+            <CalculatorButton onClick={() => onInput('1')} className={'col-start-1 row-start-3'}>1</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('2')} className={'col-start-2 row-start-3'}>2</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('3')} className={'col-start-3 row-start-3'}>3</CalculatorButton>
+
+            <CalculatorButton onClick={() => onInput('Swap')} className={'col-start-1 row-start-4 text-primary'}><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')} className={'col-start-2 row-start-4'}>0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('.')} className={'col-start-3 row-start-4'}>.</CalculatorButton>
+
             {isTemp ? (
                 <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3"><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-4">+/-</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-3">+/-</CalculatorButton>
                 </>
             ) : (
                 <>
@@ -77,9 +68,11 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
             )}
         </div>
     );
-}
+});
+Calculator.displayName = 'Calculator';
 
-const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: any[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
+
+const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
     const displayValue = value || '0';
     const [fontSize, setFontSize] = useState('3rem');
 
@@ -118,7 +111,8 @@ const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: {
             </div>
         </div>
     );
-};
+});
+DisplayPanel.displayName = 'DisplayPanel';
 
 
 export function UnitConverterPwa() {

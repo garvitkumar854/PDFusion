@@ -27,6 +27,56 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
+const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChange }: { isMobile: boolean, activeCategory: Category['id'], onCategoryChange: (id: string) => void }) => {
+    if (isMobile) {
+      return (
+         <Select value={activeCategory} onValueChange={onCategoryChange}>
+             <SelectTrigger className="h-12 text-base">
+                <SelectValue placeholder="Select category" />
+             </SelectTrigger>
+             <SelectContent>
+                {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                           <category.icon className="h-5 w-5" />
+                           <span>{category.name}</span>
+                        </div>
+                    </SelectItem>
+                ))}
+             </SelectContent>
+           </Select>
+      )
+    }
+    return (
+       <Tabs value={activeCategory} onValueChange={onCategoryChange}>
+         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
+            {categories.map((category) => (
+                <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
+                    <category.icon className="h-5 w-5" />
+                    <span>{category.name}</span>
+                </TabsTrigger>
+            ))}
+         </TabsList>
+       </Tabs>
+    );
+});
+CategorySelector.displayName = 'CategorySelector';
+
+const UnitSelector = React.memo(({ value, onChange, units }: { value: string, onChange: (unit: string) => void, units: Unit[] }) => (
+    <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+            {units.map(unit => (
+                <SelectItem key={unit.id} value={unit.id}>
+                    {unit.name} ({unit.symbol})
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+));
+UnitSelector.displayName = 'UnitSelector';
+
+
 export function UnitConverter() {
   const [activeCategory, setActiveCategory] = useState<Category['id']>('length');
   const [from, setFrom] = useState<InputState>(initialStates.length.from);
@@ -117,58 +167,10 @@ export function UnitConverter() {
     setLastActive(lastActive === 'from' ? 'to' : 'from');
   };
 
-  const CategorySelector = () => {
-    const CurrentCategoryIcon = categories.find(c => c.id === activeCategory)?.icon;
-    if (isMobile) {
-      return (
-         <Select value={activeCategory} onValueChange={handleCategoryChange}>
-             <SelectTrigger className="h-12 text-base">
-                <SelectValue placeholder="Select category" />
-             </SelectTrigger>
-             <SelectContent>
-                {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                        <div className="flex items-center gap-2">
-                           <category.icon className="h-5 w-5" />
-                           <span>{category.name}</span>
-                        </div>
-                    </SelectItem>
-                ))}
-             </SelectContent>
-           </Select>
-      )
-    }
-    return (
-       <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
-         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
-            {categories.map((category) => (
-                <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
-                    <category.icon className="h-5 w-5" />
-                    <span>{category.name}</span>
-                </TabsTrigger>
-            ))}
-         </TabsList>
-       </Tabs>
-    );
-  }
-  
-  const UnitSelector = ({ value, onChange, units }: { value: string, onChange: (unit: string) => void, units: Unit[] }) => (
-    <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
-        <SelectContent>
-            {units.map(unit => (
-                <SelectItem key={unit.id} value={unit.id}>
-                    {unit.name} ({unit.symbol})
-                </SelectItem>
-            ))}
-        </SelectContent>
-    </Select>
-  );
-
   return (
     <Card className="bg-transparent shadow-lg w-full">
         <CardHeader>
-           <CategorySelector />
+           <CategorySelector isMobile={isMobile} activeCategory={activeCategory} onCategoryChange={handleCategoryChange}/>
         </CardHeader>
         <CardContent>
             <div className="space-y-4">
