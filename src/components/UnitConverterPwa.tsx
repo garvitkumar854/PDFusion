@@ -2,14 +2,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { categories, Unit, Category, convert, formatNumber } from "@/lib/unit-data";
-import { ArrowRightLeft, Delete, Sigma } from "lucide-react";
+import { categories, Category, convert, formatNumber } from "@/lib/unit-data";
+import { ArrowRightLeft, Delete } from "lucide-react";
 import { Button } from "./ui/button";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type InputState = {
@@ -26,18 +22,10 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
-    const getButtonIcon = (btn: string) => {
-        switch(btn) {
-            case 'Backspace': return <Delete className="h-7 w-7"/>;
-            case 'Swap': return <ArrowRightLeft className="h-7 w-7"/>;
-            default: return btn;
-        }
-    }
-
+const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void; showPlusMinus: boolean }) => {
     const ButtonLayout = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
         <Button 
-            className={cn("h-full w-full text-2xl font-bold rounded-2xl", className)} 
+            className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)} 
             variant="secondary"
             {...props}
         >
@@ -46,31 +34,38 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
     );
 
     return (
-        <Card className="bg-transparent shadow-none border-none p-2 h-full">
-            <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-                {/* Row 1 */}
-                <ButtonLayout onClick={() => onInput('7')}>7</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('8')}>8</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('9')}>9</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('C')} className="row-span-2 bg-red-500/80 hover:bg-red-500 text-white">AC</ButtonLayout>
+        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+            {/* Row 1 */}
+            <ButtonLayout onClick={() => onInput('7')}>7</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('8')}>8</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('9')}>9</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white">AC</ButtonLayout>
+            
+            {/* Row 2 */}
+            <ButtonLayout onClick={() => onInput('4')}>4</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('5')}>5</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('6')}>6</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('Backspace')} className="row-span-2"><Delete className="h-7 w-7"/></ButtonLayout>
 
-                {/* Row 2 */}
-                <ButtonLayout onClick={() => onInput('4')}>4</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('5')}>5</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('6')}>6</ButtonLayout>
-
-                {/* Row 3 */}
-                <ButtonLayout onClick={() => onInput('1')}>1</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('2')}>2</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('3')}>3</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('Backspace')} className="row-span-2">{getButtonIcon('Backspace')}</ButtonLayout>
-
-                {/* Row 4 */}
-                <ButtonLayout onClick={() => onInput('Swap')}>{getButtonIcon('Swap')}</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('0')}>0</ButtonLayout>
-                <ButtonLayout onClick={() => onInput('.')}>.</ButtonLayout>
-            </div>
-        </Card>
+            {/* Row 3 */}
+            <ButtonLayout onClick={() => onInput('1')}>1</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('2')}>2</ButtonLayout>
+            <ButtonLayout onClick={() => onInput('3')}>3</ButtonLayout>
+            
+            {/* Row 4 */}
+            <ButtonLayout onClick={() => onInput('Swap')} className="row-span-2"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
+            <ButtonLayout onClick={() => onInput('0')} className="col-span-2">0</ButtonLayout>
+            
+            {/* Row 5 (Conditional) */}
+            {showPlusMinus ? (
+                <>
+                    <ButtonLayout onClick={() => onInput('.')}>.</ButtonLayout>
+                    <ButtonLayout onClick={() => onInput('+/-')}>+/-</ButtonLayout>
+                </>
+            ) : (
+                <ButtonLayout onClick={() => onInput('.')} className="col-span-2">.</ButtonLayout>
+            )}
+        </div>
     );
 }
 
@@ -175,7 +170,7 @@ export function UnitConverterPwa() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
         <div className="p-2 shrink-0">
            <Select value={activeCategory} onValueChange={handleCategoryChange}>
              <SelectTrigger className="h-12 text-base">
@@ -198,12 +193,12 @@ export function UnitConverterPwa() {
             <div 
                 className={cn(
                     "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
-                    activeInput === 'from' ? 'border-primary' : 'border-transparent'
+                    activeInput === 'from' ? 'border-primary shadow-md' : 'border-transparent'
                 )}
                 onClick={() => setActiveInput('from')}
             >
                 <div className="flex justify-between items-center">
-                   <div className="text-3xl font-bold">{from.value || '0'}</div>
+                   <div className="text-3xl font-bold truncate">{from.value || '0'}</div>
                    <Select value={from.unit} onValueChange={handleFromUnitChange}>
                         <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold">
                             <SelectValue />
@@ -218,12 +213,12 @@ export function UnitConverterPwa() {
             <div 
                 className={cn(
                     "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
-                    activeInput === 'to' ? 'border-primary' : 'border-transparent'
+                    activeInput === 'to' ? 'border-primary shadow-md' : 'border-transparent'
                 )}
                 onClick={() => setActiveInput('to')}
             >
                  <div className="flex justify-between items-center">
-                    <div className="text-3xl font-bold">{to.value || '0'}</div>
+                    <div className="text-3xl font-bold truncate">{to.value || '0'}</div>
                      <Select value={to.unit} onValueChange={handleToUnitChange}>
                         <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold">
                             <SelectValue />
@@ -237,7 +232,7 @@ export function UnitConverterPwa() {
         </div>
 
         <div className="flex-grow p-2">
-            <Calculator onInput={handleCalculatorInput} />
+            <Calculator onInput={handleCalculatorInput} showPlusMinus={activeCategory === 'temperature'} />
         </div>
     </div>
   );

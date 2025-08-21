@@ -40,6 +40,10 @@ export function UnitConverter() {
       const currentUnits = categories.find(c => c.id === activeCategory)?.units;
       if (!currentUnits) return;
       
+      const fromUnitExists = currentUnits.some(u => u.id === from.unit);
+      const toUnitExists = currentUnits.some(u => u.id === to.unit);
+      if (!fromUnitExists || !toUnitExists) return;
+
       if (lastActive === 'from') {
           const numericValue = parseFloat(from.value);
           if (isNaN(numericValue) || !from.value) {
@@ -63,32 +67,37 @@ export function UnitConverter() {
     performConversion();
   }, [performConversion]);
 
-  const handleFromChange = (value: string, unit?: string) => {
-    setFrom({ value, unit: unit || from.unit });
-    setLastActive('from');
+  const handleValueChange = (
+    value: string, 
+    setter: React.Dispatch<React.SetStateAction<InputState>>,
+    activeSetter: () => void
+  ) => {
+    if (activeCategory !== 'temperature' && parseFloat(value) < 0) {
+        setter(prev => ({ ...prev, value: '0' }));
+    } else {
+        setter(prev => ({ ...prev, value: value }));
+    }
+    activeSetter();
   };
 
-  const handleToChange = (value: string, unit?: string) => {
-    setTo({ value, unit: unit || to.unit });
-    setLastActive('to');
-  };
+  const handleUnitChange = (
+    unit: string,
+    setter: React.Dispatch<React.SetStateAction<InputState>>,
+    activeSetter: () => void
+  ) => {
+    setter(prev => ({...prev, unit}));
+    activeSetter();
+  }
+
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categoryId as Category['id'];
     const initial = initialStates[newCategory];
 
-    const currentUnits = categories.find(c => c.id === newCategory)?.units;
-    if (!currentUnits) return;
-
-    const fromUnitExists = currentUnits.some(u => u.id === initial.from.unit);
-    const toUnitExists = currentUnits.some(u => u.id === initial.to.unit);
-    
-    if (fromUnitExists && toUnitExists) {
-        setActiveCategory(newCategory);
-        setFrom(initial.from);
-        setTo(initial.to);
-        setLastActive('from');
-    }
+    setActiveCategory(newCategory);
+    setFrom(initial.from);
+    setTo(initial.to);
+    setLastActive('from');
   };
 
   const handleSwap = () => {
@@ -118,8 +127,8 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="from-value">From</Label>
                     <div className="flex gap-2">
-                        <Input id="from-value" type="number" value={from.value} onChange={e => handleFromChange(e.target.value)} />
-                        <Select value={from.unit} onValueChange={unit => handleFromChange(from.value, unit)}>
+                        <Input id="from-value" type="number" value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
+                        <Select value={from.unit} onValueChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))}>
                             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
@@ -137,8 +146,8 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="to-value">To</Label>
                      <div className="flex gap-2">
-                        <Input id="to-value" type="number" value={to.value} onChange={e => handleToChange(e.target.value)} />
-                         <Select value={to.unit} onValueChange={unit => handleToChange(to.value, unit)}>
+                        <Input id="to-value" type="number" value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
+                         <Select value={to.unit} onValueChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))}>
                             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
