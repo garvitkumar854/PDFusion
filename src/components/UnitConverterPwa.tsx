@@ -38,10 +38,11 @@ const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: str
     
     return (
         <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
+            {/* Main number pad */}
             <CalculatorButton onClick={() => onInput('7')} className={'col-start-1 row-start-1'}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')} className={'col-start-2 row-start-1'}>8</CalculatorButton>
             <CalculatorButton onClick={() => onInput('9')} className={'col-start-3 row-start-1'}>9</CalculatorButton>
-
+            
             <CalculatorButton onClick={() => onInput('4')} className={'col-start-1 row-start-2'}>4</CalculatorButton>
             <CalculatorButton onClick={() => onInput('5')} className={'col-start-2 row-start-2'}>5</CalculatorButton>
             <CalculatorButton onClick={() => onInput('6')} className={'col-start-3 row-start-2'}>6</CalculatorButton>
@@ -49,22 +50,20 @@ const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: str
             <CalculatorButton onClick={() => onInput('1')} className={'col-start-1 row-start-3'}>1</CalculatorButton>
             <CalculatorButton onClick={() => onInput('2')} className={'col-start-2 row-start-3'}>2</CalculatorButton>
             <CalculatorButton onClick={() => onInput('3')} className={'col-start-3 row-start-3'}>3</CalculatorButton>
-
+            
             <CalculatorButton onClick={() => onInput('Swap')} className={'col-start-1 row-start-4 text-primary'}><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('0')} className={'col-start-2 row-start-4'}>0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')} className={'col-start-3 row-start-4'}>.</CalculatorButton>
 
+            {/* Dynamic 4th column */}
+            <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
                 <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-3">+/-</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-4">+/-</CalculatorButton>
                 </>
             ) : (
-                <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                </>
+                <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             )}
         </div>
     );
@@ -159,15 +158,15 @@ export function UnitConverterPwa() {
     performConversion();
   }, [performConversion]);
 
-  const handleFromUnitChange = (unit: string) => {
+  const handleFromUnitChange = useCallback((unit: string) => {
     setFrom(prev => ({...prev, unit}));
     setActiveInput('from');
-  }
+  }, []);
 
-  const handleToUnitChange = (unit: string) => {
+  const handleToUnitChange = useCallback((unit: string) => {
     setTo(prev => ({...prev, unit}));
     setActiveInput('to');
-  }
+  }, []);
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categoryId as Category['id'];
@@ -187,35 +186,40 @@ export function UnitConverterPwa() {
     }
   };
 
-  const handleSwap = () => {
+  const handleSwap = useCallback(() => {
     const oldFrom = { ...from };
     const oldTo = { ...to };
     setFrom(oldTo);
     setTo(oldFrom);
     setActiveInput(activeInput === 'from' ? 'to' : 'from');
-  };
+  }, [from, to, activeInput]);
 
-  const handleCalculatorInput = (key: string) => {
+  const handleCalculatorInput = useCallback((key: string) => {
     const handler = activeInput === 'from' ? setFrom : setTo;
-    const state = activeInput === 'from' ? from : to;
-
+    
     if (key === 'Swap') {
       handleSwap();
       return;
     }
 
-    if (key === 'C') {
-        handler(prev => ({ ...prev, value: '0' }));
-    } else if (key === 'Backspace') {
-        handler(prev => ({...prev, value: prev.value.length > 1 ? prev.value.slice(0, -1) : '0'}));
-    } else if (key === '+/-') {
-        handler(prev => ({...prev, value: String(parseFloat(prev.value) * -1) }));
-    } else if (key === '.' && state.value.includes('.')) {
-        return; 
-    } else {
-        handler(prev => ({...prev, value: (prev.value === '0' && key !== '.') ? key : prev.value + key}));
-    }
-  }
+    handler(prev => {
+        const currentValue = prev.value;
+        if (key === 'C') {
+            return { ...prev, value: '0' };
+        }
+        if (key === 'Backspace') {
+            return { ...prev, value: currentValue.length > 1 ? currentValue.slice(0, -1) : '0' };
+        }
+        if (key === '+/-') {
+            return { ...prev, value: String(parseFloat(currentValue) * -1) };
+        }
+        if (key === '.' && currentValue.includes('.')) {
+            return prev;
+        }
+        return { ...prev, value: (currentValue === '0' && key !== '.') ? key : currentValue + key };
+    });
+
+  }, [activeInput, handleSwap]);
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -237,7 +241,7 @@ export function UnitConverterPwa() {
            </Select>
         </div>
         
-        <div className="flex flex-col p-2 gap-2 shrink-0">
+        <div className="flex flex-col p-2 gap-2 shrink-0 h-48">
             <DisplayPanel 
                 value={from.value} 
                 unit={from.unit} 
