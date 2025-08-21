@@ -108,29 +108,6 @@ const commonWords = [
   "writer", "wrong", "yard", "yeah", "year", "yes", "yet", "you", "young", "your", "yourself"
 ];
 
-const PasswordDisplay = ({ password }: { password: string }) => {
-    const isNumber = (char: string) => !isNaN(parseInt(char, 10));
-    const isSymbol = (char: string) => "!@#$%^&*()_+~`|}{[]:;?><,./-=".includes(char);
-
-    return (
-        <div className={cn("flex items-center flex-wrap h-full", openSans.className)}>
-            {password.split('').map((char, index) => (
-                <span
-                    key={index}
-                    className={cn(
-                        'font-bold',
-                        isNumber(char) && 'text-blue-500 dark:text-blue-400',
-                        isSymbol(char) && 'text-red-500 dark:text-red-400'
-                    )}
-                >
-                    {char}
-                </span>
-            ))}
-        </div>
-    );
-};
-
-
 // Secure random number generator
 function getRandomNumber(max: number) {
   const randomValues = new Uint32Array(1);
@@ -269,6 +246,10 @@ export function PasswordGenerator() {
     window.addEventListener('resize', calculateRect);
     return () => window.removeEventListener('resize', calculateRect);
   }, [activeTab]);
+  
+  const isNumber = (char: string) => !isNaN(parseInt(char, 10));
+  const isSymbol = (char: string) => "!@#$%^&*()_+~`|}{[]:;?><,./-=".includes(char);
+
 
   return (
     <div className="space-y-6">
@@ -281,7 +262,20 @@ export function PasswordGenerator() {
                     <div
                         className="pr-24 text-lg h-12 w-full flex items-center rounded-md border border-input bg-background px-3 py-2"
                     >
-                        <PasswordDisplay password={password} />
+                        <div className={cn("flex items-center flex-wrap h-full font-mono", openSans.className)}>
+                            {password.split('').map((char, index) => (
+                                <span
+                                    key={index}
+                                    className={cn(
+                                        'font-bold',
+                                        isNumber(char) && 'text-blue-500 dark:text-blue-400',
+                                        isSymbol(char) && 'text-red-500 dark:text-red-400'
+                                    )}
+                                >
+                                    {char}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                     <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1">
                         <Button variant="ghost" size="icon" onClick={generatePassword} title="Generate new password">
@@ -339,7 +333,7 @@ export function PasswordGenerator() {
                                     width: activeTabRect.width,
                                     left: activeTabRect.left,
                                 }}
-                                transition={{ type: "tween", ease: "easeOut", duration: 0.3 }}
+                                transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
                             />
                          )}
                         </TabsList>
