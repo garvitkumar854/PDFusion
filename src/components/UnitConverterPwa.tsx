@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { categories, Unit, Category, convert, formatNumber } from "@/lib/unit-data";
-import { ArrowRightLeft, Delete } from "lucide-react";
+import { ArrowRightLeft, Delete, Sigma } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -21,38 +21,67 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     length: { from: { value: '1', unit: 'meters' }, to: { value: '', unit: 'feet' } },
     mass: { from: { value: '1', unit: 'kilograms' }, to: { value: '', unit: 'pounds' } },
     temperature: { from: { value: '0', unit: 'celsius' }, to: { value: '', unit: 'fahrenheit' } },
-    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
+    volume: { from: { value: '1', unit: 'liters' }, to: { value: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
+const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void, showPlusMinus?: boolean }) => {
     const buttons = [
+        'C', 'Swap', 'Backspace',
         '7', '8', '9',
         '4', '5', '6',
         '1', '2', '3',
     ];
 
+    const finalRow = showPlusMinus
+      ? ['+/-', '0', '.']
+      : ['0', '.'];
+      
+    const getButtonClass = (btn: string) => {
+        switch(btn) {
+            case 'C': return "bg-destructive/80 hover:bg-destructive text-destructive-foreground row-span-2";
+            case 'Backspace': return "bg-secondary row-span-2";
+            case 'Swap': return "col-span-2";
+            case '0': return "col-span-2";
+            default: return "bg-secondary";
+        }
+    }
+    
+    const getButtonIcon = (btn: string) => {
+        switch(btn) {
+            case 'Backspace': return <Delete className="h-7 w-7"/>;
+            case 'Swap': return <ArrowRightLeft className="h-7 w-7"/>;
+            case '+/-': return <Sigma className="h-7 w-7"/>;
+            default: return btn;
+        }
+    }
+
     return (
         <Card className="bg-transparent shadow-none border-none p-2 h-full">
             <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
-                <Button onClick={() => onInput('C')} className="col-span-2 row-span-1 h-full text-2xl font-bold" variant="destructive">C</Button>
-                <Button onClick={() => onInput('Backspace')} className="col-span-2 row-span-1 h-full" variant="secondary"><Delete className="h-8 w-8"/></Button>
+                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold row-span-2" variant="destructive">C</Button>
+                <Button onClick={() => onInput('Backspace')} className="h-full row-span-2" variant="secondary"><Delete className="h-8 w-8"/></Button>
                 
-                {buttons.map(btn => (
-                    <Button 
-                        key={btn} 
+                <div className="col-span-3 row-span-3 grid grid-cols-3 grid-rows-3 gap-2">
+                    {['7','8','9','4','5','6','1','2','3'].map(btn => (
+                        <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold" variant="secondary">{btn}</Button>
+                    ))}
+                </div>
+
+                <div className={cn("col-span-3 grid grid-rows-1 gap-2", showPlusMinus ? "grid-cols-3" : "grid-cols-[2fr_1fr]")}>
+                   {finalRow.map(btn => (
+                      <Button 
+                        key={btn}
                         onClick={() => onInput(btn)} 
-                        className="h-full text-2xl font-bold" 
+                        className={cn("h-full text-2xl font-bold", btn === '0' && !showPlusMinus && 'col-span-2')} 
                         variant="secondary"
-                    >
-                       {btn}
-                    </Button>
-                ))}
-                
-                <Button onClick={() => onInput('0')} className="col-span-2 h-full text-2xl font-bold" variant="secondary">0</Button>
-                <Button onClick={() => onInput('.')} className="h-full text-2xl font-bold" variant="secondary">.</Button>
-                 <Button onClick={() => onInput('Swap')} className="col-span-4 h-full" variant="default"><ArrowRightLeft className="h-8 w-8"/></Button>
+                      >
+                         {getButtonIcon(btn)}
+                      </Button>
+                   ))}
+                </div>
+                 <Button onClick={() => onInput('Swap')} className="h-full" variant="default"><ArrowRightLeft className="h-8 w-8"/></Button>
             </div>
         </Card>
     );
@@ -146,13 +175,15 @@ export function UnitConverterPwa() {
     }
 
     if (key === 'C') {
-        handler(prev => ({ ...prev, value: '' }));
+        handler(prev => ({ ...prev, value: '0' }));
     } else if (key === 'Backspace') {
-        handler(prev => ({...prev, value: prev.value.slice(0, -1)}));
+        handler(prev => ({...prev, value: prev.value.length > 1 ? prev.value.slice(0, -1) : '0'}));
+    } else if (key === '+/-') {
+        handler(prev => ({...prev, value: String(parseFloat(prev.value) * -1) }));
     } else if (key === '.' && state.value.includes('.')) {
         return; 
     } else {
-        handler(prev => ({...prev, value: prev.value + key}));
+        handler(prev => ({...prev, value: (prev.value === '0' && key !== '.') ? key : prev.value + key}));
     }
   }
 
@@ -219,9 +250,8 @@ export function UnitConverterPwa() {
         </div>
 
         <div className="h-[50vh]">
-            <Calculator onInput={handleCalculatorInput} />
+            <Calculator onInput={handleCalculatorInput} showPlusMinus={activeCategory === 'temperature'} />
         </div>
     </div>
   );
 }
-
