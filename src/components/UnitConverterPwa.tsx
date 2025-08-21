@@ -24,7 +24,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
 
 const CalculatorButton = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
     <Button 
-        className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)} 
+        className={cn("h-full w-full text-2xl font-bold rounded-xl shadow-sm", className)} 
         variant="secondary"
         {...props}
     >
@@ -37,41 +37,68 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
     const isTemp = activeCategory === 'temperature';
 
     return (
-        <div className="grid grid-cols-4 gap-2 h-full">
-            {/* Column 1 */}
-            <CalculatorButton onClick={() => onInput('7')} className="row-start-1">7</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('4')} className="row-start-2">4</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('1')} className="row-start-3">1</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('Swap')} className="row-start-4"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-
-            {/* Column 2 */}
-            <CalculatorButton onClick={() => onInput('8')} className="row-start-1">8</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('5')} className="row-start-2">5</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('2')} className="row-start-3">2</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('0')} className="row-start-4">0</CalculatorButton>
+        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+            {/* Numbers and bottom row */}
+            <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
             
-            {/* Column 3 */}
-            <CalculatorButton onClick={() => onInput('9')} className="row-start-1">9</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('6')} className="row-start-2">6</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('3')} className="row-start-3">3</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('.')} className="row-start-4">.</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('4')}>4</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
 
-            {/* Column 4 (Actions) */}
+            <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
+
+            <CalculatorButton onClick={() => onInput('Swap')}><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
+
+            {/* Action Column */}
             {isTemp ? (
-                 <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-start-1">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')} className="row-start-3">+/-</CalculatorButton>
-                 </>
-            ) : (
                 <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-start-1 row-span-2">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-3">+/-</CalculatorButton>
                 </>
+            ) : (
+                 <>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                 </>
             )}
         </div>
     );
 }
+
+const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: any[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
+    const displayValue = value || '0';
+    const fontSize = displayValue.length > 10 ? '2rem' : displayValue.length > 7 ? '2.5rem' : '3rem';
+    
+    return (
+        <div 
+            className={cn(
+                "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
+                isActive ? 'border-primary shadow-md' : 'border-transparent'
+            )}
+            onClick={onClick}
+        >
+            <div className="flex justify-between items-center">
+               <div style={{ fontSize }} className="font-bold truncate transition-all duration-200">{displayValue}</div>
+               <Select value={unit} onValueChange={onUnitChange}>
+                    <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold pr-0">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {units.map(u => <SelectItem key={u.id} value={u.id}>{u.symbol}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    );
+};
+
 
 export function UnitConverterPwa() {
   const [activeCategory, setActiveCategory] = useState<Category['id']>('length');
@@ -194,45 +221,22 @@ export function UnitConverterPwa() {
         </div>
         
         <div className="flex flex-col p-2 gap-2 shrink-0">
-            <div 
-                className={cn(
-                    "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
-                    activeInput === 'from' ? 'border-primary shadow-md' : 'border-transparent'
-                )}
+            <DisplayPanel 
+                value={from.value} 
+                unit={from.unit} 
+                units={unitsForCategory}
+                onUnitChange={handleFromUnitChange}
+                isActive={activeInput === 'from'}
                 onClick={() => setActiveInput('from')}
-            >
-                <div className="flex justify-between items-center">
-                   <div className="text-3xl font-bold truncate">{from.value || '0'}</div>
-                   <Select value={from.unit} onValueChange={handleFromUnitChange}>
-                        <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.symbol}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            <div 
-                className={cn(
-                    "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
-                    activeInput === 'to' ? 'border-primary shadow-md' : 'border-transparent'
-                )}
+            />
+            <DisplayPanel 
+                value={to.value} 
+                unit={to.unit} 
+                units={unitsForCategory}
+                onUnitChange={handleToUnitChange}
+                isActive={activeInput === 'to'}
                 onClick={() => setActiveInput('to')}
-            >
-                 <div className="flex justify-between items-center">
-                    <div className="text-3xl font-bold truncate">{to.value || '0'}</div>
-                     <Select value={to.unit} onValueChange={handleToUnitChange}>
-                        <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.symbol}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+            />
         </div>
 
         <div className="flex-grow p-2">

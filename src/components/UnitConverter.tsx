@@ -72,11 +72,11 @@ export function UnitConverter() {
     setter: React.Dispatch<React.SetStateAction<InputState>>,
     activeSetter: () => void
   ) => {
-    if (activeCategory !== 'temperature' && parseFloat(value) < 0) {
-        setter(prev => ({ ...prev, value: '0' }));
-    } else {
-        setter(prev => ({ ...prev, value: value }));
+    // Prevent typing '-' if not in temperature category
+    if (activeCategory !== 'temperature' && value.includes('-')) {
+        return;
     }
+    setter(prev => ({ ...prev, value: value }));
     activeSetter();
   };
 
@@ -134,10 +134,10 @@ export function UnitConverter() {
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="from-value">From</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <Input id="from-value" type="number" value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
                         <Select value={from.unit} onValueChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))}>
-                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
                             </SelectContent>
@@ -153,10 +153,10 @@ export function UnitConverter() {
 
                 <div className="space-y-2">
                     <Label htmlFor="to-value">To</Label>
-                     <div className="flex gap-2">
+                     <div className="flex flex-col sm:flex-row gap-2">
                         <Input id="to-value" type="number" value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
                          <Select value={to.unit} onValueChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))}>
-                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
                             </SelectContent>
