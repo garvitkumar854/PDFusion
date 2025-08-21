@@ -22,49 +22,51 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
-    const ButtonLayout = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
-        <Button 
-            className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)} 
-            variant="secondary"
-            {...props}
-        >
-            {children}
-        </Button>
-    );
+const CalculatorButton = ({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
+    <Button 
+        className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)} 
+        variant="secondary"
+        {...props}
+    >
+        {children}
+    </Button>
+);
 
+
+const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
 
     return (
-        <div className={cn("grid grid-cols-4 gap-2 h-full", isTemp ? "grid-rows-5" : "grid-rows-4")}>
-            {/* Numbers and Basic Ops */}
-            <ButtonLayout onClick={() => onInput('7')} className="col-start-1">7</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('8')} className="col-start-2">8</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('9')} className="col-start-3">9</ButtonLayout>
+        <div className="grid grid-cols-4 gap-2 h-full">
+            {/* Column 1 */}
+            <CalculatorButton onClick={() => onInput('7')} className="row-start-1">7</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('4')} className="row-start-2">4</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('1')} className="row-start-3">1</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('Swap')} className="row-start-4"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
 
-            <ButtonLayout onClick={() => onInput('4')} className="col-start-1">4</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('5')} className="col-start-2">5</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('6')} className="col-start-3">6</ButtonLayout>
+            {/* Column 2 */}
+            <CalculatorButton onClick={() => onInput('8')} className="row-start-1">8</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('5')} className="row-start-2">5</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('2')} className="row-start-3">2</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')} className="row-start-4">0</CalculatorButton>
+            
+            {/* Column 3 */}
+            <CalculatorButton onClick={() => onInput('9')} className="row-start-1">9</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('6')} className="row-start-2">6</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('3')} className="row-start-3">3</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('.')} className="row-start-4">.</CalculatorButton>
 
-            <ButtonLayout onClick={() => onInput('1')} className="col-start-1">1</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('2')} className="col-start-2">2</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('3')} className="col-start-3">3</ButtonLayout>
-            
-            <ButtonLayout onClick={() => onInput('0')} className={cn("col-start-1", isTemp ? "row-start-5" : "row-start-4", "col-span-2")}>0</ButtonLayout>
-            <ButtonLayout onClick={() => onInput('.')} className={cn("col-start-3", isTemp ? "row-start-5" : "row-start-4")}>.</ButtonLayout>
-            
-            {/* Actions Column */}
+            {/* Column 4 (Actions) */}
             {isTemp ? (
-                <>
-                    <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1">AC</ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('Backspace')} className="col-start-4 row-start-2"><Delete className="h-7 w-7"/></ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('+/-')} className="col-start-4 row-start-3">+/-</ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('Swap')} className="col-start-4 row-start-4 row-span-2"><ArrowRightLeft className="h-7 w-7"/></ButtonLayout>
-                </>
+                 <>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-start-1">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="row-start-3">+/-</CalculatorButton>
+                 </>
             ) : (
                 <>
-                    <ButtonLayout onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</ButtonLayout>
-                    <ButtonLayout onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></ButtonLayout>
+                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white row-start-1 row-span-2">AC</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Backspace')} className="row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
                 </>
             )}
         </div>
