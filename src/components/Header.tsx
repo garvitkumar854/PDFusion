@@ -174,7 +174,9 @@ export default function Header() {
                           )}
                            onMouseEnter={() => setIsMoreToolsMenuOpen(false)}
                         >
-                          {React.cloneElement(service.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
+                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
+                            {service.icon}
+                          </div>
                           <span className="text-sm font-medium whitespace-nowrap">{service.label}</span>
                         </Link>
                         )
@@ -187,7 +189,9 @@ export default function Header() {
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
                         >
-                          <LayoutGrid className="mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
+                           <LayoutGrid />
+                          </div>
                           <span className="text-sm font-medium whitespace-nowrap">More Tools</span>
                           <ChevronRight className="ml-auto h-4 w-4" />
                         </Link>
@@ -214,7 +218,9 @@ export default function Header() {
                                   isActive && "bg-accent text-accent-foreground"
                                 )}
                               >
-                                {React.cloneElement(tool.icon, { className: 'mr-3 h-5 w-5 transition-transform duration-300 group-hover:scale-110' })}
+                               <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
+                                {tool.icon}
+                               </div>
                                 <span className="text-sm font-medium whitespace-nowrap">{tool.label}</span>
                               </Link>
                             );
@@ -276,8 +282,8 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    <div className="h-5 w-5 mr-2 flex items-center justify-center">
-                                                        {React.cloneElement(service.icon, { className: 'h-full w-full' })}
+                                                    <div className="flex h-5 w-5 items-center justify-center mr-2 shrink-0">
+                                                        {service.icon}
                                                     </div>
                                                     <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
                                                 </Link>
@@ -299,8 +305,8 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    <div className="h-5 w-5 mr-2 flex items-center justify-center">
-                                                        {React.cloneElement(tool.icon, { className: 'h-full w-full' })}
+                                                    <div className="flex h-5 w-5 items-center justify-center mr-2 shrink-0">
+                                                        {tool.icon}
                                                     </div>
                                                     <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
                                                 </Link>
