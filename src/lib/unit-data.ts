@@ -125,12 +125,27 @@ export const categories: Category[] = [
     }
 ];
 
+type CategoryMap = {
+    [K in Category['id']]: Omit<Category, 'id' | 'units'> & { units: { [unitId: string]: Unit } }
+};
+
+const categoriesMap = categories.reduce((acc, category) => {
+    const unitsMap = category.units.reduce((unitAcc, unit) => {
+        unitAcc[unit.id] = unit;
+        return unitAcc;
+    }, {} as { [unitId: string]: Unit });
+
+    acc[category.id] = { ...category, units: unitsMap };
+    return acc;
+}, {} as CategoryMap);
+
+
 export function convert(category: Category['id'], value: number, fromUnitId: string, toUnitId: string): number {
-    const cat = categories.find(c => c.id === category);
+    const cat = categoriesMap[category];
     if (!cat) throw new Error('Invalid category');
 
-    const fromUnit = cat.units.find(u => u.id === fromUnitId);
-    const toUnit = cat.units.find(u => u.id === toUnitId);
+    const fromUnit = cat.units[fromUnitId];
+    const toUnit = cat.units[toUnitId];
     if (!fromUnit || !toUnit) throw new Error('Invalid unit');
 
     const valueInBase = fromUnit.toBase(value);
