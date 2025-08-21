@@ -31,13 +31,14 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
         '7', '8', '9',
         '4', '5', '6',
         '1', '2', '3',
-        '.', '0', 'Backspace',
     ];
 
     return (
         <Card className="bg-transparent shadow-none border-none p-2 h-full">
-            <div className="grid grid-cols-3 gap-2 h-full">
-                <Button onClick={() => onInput('C')} className="col-span-3 h-full text-2xl font-bold" variant="destructive">C</Button>
+            <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+                <Button onClick={() => onInput('C')} className="col-span-2 row-span-1 h-full text-2xl font-bold" variant="destructive">C</Button>
+                <Button onClick={() => onInput('Backspace')} className="col-span-2 row-span-1 h-full" variant="secondary"><Delete className="h-8 w-8"/></Button>
+                
                 {buttons.map(btn => (
                     <Button 
                         key={btn} 
@@ -45,9 +46,13 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
                         className="h-full text-2xl font-bold" 
                         variant="secondary"
                     >
-                       {btn === 'Backspace' ? <Delete className="h-8 w-8"/> : btn}
+                       {btn}
                     </Button>
                 ))}
+                
+                <Button onClick={() => onInput('0')} className="col-span-2 h-full text-2xl font-bold" variant="secondary">0</Button>
+                <Button onClick={() => onInput('.')} className="h-full text-2xl font-bold" variant="secondary">.</Button>
+                 <Button onClick={() => onInput('Swap')} className="col-span-4 h-full" variant="default"><ArrowRightLeft className="h-8 w-8"/></Button>
             </div>
         </Card>
     );
@@ -135,6 +140,11 @@ export function UnitConverterPwa() {
     const handler = activeInput === 'from' ? setFrom : setTo;
     const state = activeInput === 'from' ? from : to;
 
+    if (key === 'Swap') {
+      handleSwap();
+      return;
+    }
+
     if (key === 'C') {
         handler(prev => ({ ...prev, value: '' }));
     } else if (key === 'Backspace') {
@@ -214,3 +224,4 @@ export function UnitConverterPwa() {
     </div>
   );
 }
+
