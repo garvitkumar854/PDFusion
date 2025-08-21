@@ -73,15 +73,15 @@ Calculator.displayName = 'Calculator';
 
 const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
     const displayValue = value || '0';
-    const [fontSize, setFontSize] = useState('2.5rem');
+    const [fontSize, setFontSize] = useState('2rem');
 
     useEffect(() => {
         const len = displayValue.length;
-        if (len > 15) setFontSize('1.5rem');
-        else if (len > 12) setFontSize('1.75rem');
-        else if (len > 9) setFontSize('2rem');
-        else if (len > 7) setFontSize('2.25rem');
-        else setFontSize('2.5rem');
+        if (len > 15) setFontSize('1rem');
+        else if (len > 12) setFontSize('1.25rem');
+        else if (len > 9) setFontSize('1.5rem');
+        else if (len > 7) setFontSize('1.75rem');
+        else setFontSize('2rem');
     }, [displayValue]);
     
     return (
@@ -133,8 +133,8 @@ export function UnitConverterPwa() {
     const currentUnits = categories.find(c => c.id === activeCategory)?.units;
     if (!currentUnits) return;
 
-    const fromUnitExists = currentUnits.some(u => u.id === fromUnit);
-    const toUnitExists = currentUnits.some(u => u.id === toUnit);
+    const fromUnitExists = Object.values(currentUnits).some(u => u.id === fromUnit);
+    const toUnitExists = Object.values(currentUnits).some(u => u.id === toUnit);
 
     if (!fromUnitExists || !toUnitExists) return;
 
