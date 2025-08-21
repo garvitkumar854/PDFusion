@@ -169,7 +169,7 @@ export default function Header() {
                           href={service.href}
                           key={service.href}
                           className={cn(
-                            "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                            "group w-full flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                             isActive && "bg-accent text-accent-foreground"
                           )}
                            onMouseEnter={() => setIsMoreToolsMenuOpen(false)}
@@ -184,7 +184,7 @@ export default function Header() {
                        <Link
                           href="/more-tools"
                           className={cn(
-                            "group col-span-2 flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                            "group col-span-2 w-full flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                             pathname.startsWith('/more-tools') && "bg-accent text-accent-foreground"
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
@@ -214,7 +214,7 @@ export default function Header() {
                                 href={tool.href}
                                 key={tool.href}
                                 className={cn(
-                                  "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                                  "group w-full flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
                                   isActive && "bg-accent text-accent-foreground"
                                 )}
                               >
