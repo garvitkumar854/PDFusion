@@ -10,6 +10,7 @@ import { categories, Unit, Category, convert, formatNumber } from "@/lib/unit-da
 import { ArrowRightLeft, Delete } from "lucide-react";
 import { Button } from "./ui/button";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type InputState = {
     value: string;
@@ -121,7 +122,9 @@ export function UnitConverter() {
   }, [activeCategory]);
   
   const performConversion = useCallback((value: string, fromUnitId: string, toUnitId: string, direction: 'from' | 'to') => {
-      const currentUnits = categories.find(c => c.id === activeCategory)?.units || [];
+      const currentUnits = categories.find(c => c.id === activeCategory)?.units;
+      if (!currentUnits) return;
+
       const fromUnitExists = currentUnits.some(u => u.id === fromUnitId);
       const toUnitExists = currentUnits.some(u => u.id === toUnitId);
 
@@ -160,8 +163,6 @@ export function UnitConverter() {
   };
   
   useEffect(() => {
-    // This effect runs when 'to' value changes due to from's conversion, not user input
-    // so we need to re-evaluate the conversion from 'to' back to 'from'
     if (activeInput === 'to') {
         performConversion(to.value, to.unit, from.unit, 'to');
     }
@@ -170,10 +171,20 @@ export function UnitConverter() {
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categoryId as Category['id'];
     const initial = initialStates[newCategory];
-    setActiveCategory(newCategory);
-    setFrom(initial.from);
-    setTo(initial.to);
-    setActiveInput('from');
+
+    const currentUnits = categories.find(c => c.id === newCategory)?.units;
+    if (!currentUnits) return;
+
+    const fromUnitExists = currentUnits.some(u => u.id === initial.from.unit);
+    const toUnitExists = currentUnits.some(u => u.id === initial.to.unit);
+    
+    if (fromUnitExists && toUnitExists) {
+        setActiveCategory(newCategory);
+        setFrom(initial.from);
+        setTo(initial.to);
+        setActiveInput('from');
+        performConversion(initial.from.value, initial.from.unit, initial.to.unit, 'from');
+    }
   };
 
   const handleSwap = () => {
@@ -181,7 +192,6 @@ export function UnitConverter() {
     const oldTo = { ...to };
     setFrom(oldTo);
     setTo(oldFrom);
-    // After swapping, recalculate based on the new 'from' value.
     performConversion(oldTo.value, oldTo.unit, oldFrom.unit, 'from');
   };
 
@@ -194,7 +204,7 @@ export function UnitConverter() {
     } else if (key === 'Backspace') {
         handler(state.value.slice(0, -1));
     } else if (key === '.' && state.value.includes('.')) {
-        return; // Don't add multiple decimals
+        return; 
     } else {
         handler(state.value + key);
     }
@@ -248,4 +258,3 @@ export function UnitConverter() {
     </Card>
   );
 }
-
