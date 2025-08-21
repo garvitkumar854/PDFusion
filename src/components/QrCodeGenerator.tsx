@@ -34,7 +34,7 @@ const qrTypeOptions: { value: QrType; label: string; icon: React.ReactNode }[] =
 ];
 
 const phoneRegex = new RegExp(
-  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-.\s]?[0-9])+$/
 );
 
 const urlSchema = z.object({ value: z.string().url({ message: "Please enter a valid URL." }).min(1, "URL cannot be empty.") });
@@ -128,6 +128,39 @@ const QrCodeForm = React.memo(({ qrType }: { qrType: QrType }) => {
 });
 QrCodeForm.displayName = 'QrCodeForm';
 
+
+const QrCodeFormProvider = ({
+  qrType,
+  onDataChange,
+  children,
+}: {
+  qrType: QrType;
+  onDataChange: (data: string | null) => void;
+  children: React.ReactNode;
+}) => {
+  const form = useForm({
+    resolver: zodResolver(formSchemas[qrType]),
+    defaultValues: defaultValues[qrType],
+    mode: 'onBlur',
+  });
+
+  useEffect(() => {
+    const subscription = form.watch(async (value) => {
+      const isValid = await form.trigger();
+      if (isValid) {
+        const generated = generateQrData(qrType, value);
+        onDataChange(generated.trim() ? generated : null);
+      } else {
+        onDataChange(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, qrType, onDataChange]);
+
+  return <FormProvider {...form}>{children}</FormProvider>;
+};
+
+
 export function QrCodeGenerator() {
   const [qrType, setQrType] = useState<QrType>("url");
   const [qrData, setQrData] = useState<string | null>(null);
@@ -139,36 +172,6 @@ export function QrCodeGenerator() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [errorCorrection, setErrorCorrection] = useState<ErrorCorrectionLevel>('medium');
   const { toast } = useToast();
-
-  const form = useForm({
-      resolver: zodResolver(formSchemas[qrType]),
-      defaultValues: defaultValues[qrType],
-      mode: 'onBlur',
-  });
-  
-  const watchedData = form.watch();
-
-  useEffect(() => {
-    form.reset(defaultValues[qrType]);
-  }, [qrType, form]);
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-        const generate = async () => {
-            const isValid = await form.trigger();
-            if (isValid) {
-                const data = form.getValues();
-                const generated = generateQrData(qrType, data);
-                setQrData(generated.trim() ? generated : null);
-            } else {
-                setQrData(null);
-            }
-        };
-        generate();
-        return () => subscription.unsubscribe();
-    });
-  }, [form, qrType]);
-
 
   useEffect(() => {
     setIsLoading(true);
@@ -193,7 +196,13 @@ export function QrCodeGenerator() {
             setIsLoading(false);
         }
     };
-    generate();
+
+    const debounceTimeout = setTimeout(() => {
+      generate();
+    }, 300);
+
+    return () => clearTimeout(debounceTimeout);
+    
   }, [qrData, size, fgColor, bgColor, errorCorrection]);
 
 
@@ -219,7 +228,7 @@ export function QrCodeGenerator() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         <div className="space-y-6 lg:col-span-3">
-            <FormProvider {...form}>
+            <QrCodeFormProvider qrType={qrType} onDataChange={setQrData} key={qrType}>
                 <Card className="bg-transparent shadow-lg w-full">
                     <CardHeader>
                         <CardTitle className="text-xl sm:text-2xl">Enter Content</CardTitle>
@@ -249,7 +258,7 @@ export function QrCodeGenerator() {
                     </div>
                     </CardContent>
                 </Card>
-            </FormProvider>
+            </QrCodeFormProvider>
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
@@ -333,3 +342,5 @@ export function QrCodeGenerator() {
     </div>
   );
 }
+
+    
