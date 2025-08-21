@@ -284,7 +284,7 @@ export default function Header() {
                                     </div>
                                     <div className="w-full pt-4">
                                         <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 pl-2 border-l-2 ml-1">
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
                                             {moreTools.map((tool) => {
                                                 const isActive = pathname.startsWith(tool.href);
                                                 return (
