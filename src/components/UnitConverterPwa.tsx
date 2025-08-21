@@ -47,34 +47,35 @@ const Calculator = ({ onInput, activeCategory }: { onInput: (key: string) => voi
             <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
             <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
 
+            <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
             <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
             <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
 
-            <CalculatorButton onClick={() => onInput('Swap')}><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-            <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')} className="col-span-2">0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
 
             {/* Action Column */}
-            {isTemp ? (
-                <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-3">+/-</CalculatorButton>
-                </>
-            ) : (
-                 <>
-                    <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
-                 </>
-            )}
+            <div className="col-start-4 row-start-1 row-span-full flex flex-col gap-2">
+                 <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white flex-grow">AC</CalculatorButton>
+                 <CalculatorButton onClick={() => onInput('Backspace')} className="flex-grow"><Delete className="h-7 w-7"/></CalculatorButton>
+                {isTemp && (
+                    <CalculatorButton onClick={() => onInput('+/-')} className="flex-grow">+/-</CalculatorButton>
+                )}
+            </div>
         </div>
     );
 }
 
 const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: any[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
     const displayValue = value || '0';
-    const fontSize = displayValue.length > 10 ? '2rem' : displayValue.length > 7 ? '2.5rem' : '3rem';
+    const [fontSize, setFontSize] = useState('3rem');
+
+    useEffect(() => {
+        if (displayValue.length > 10) setFontSize('2rem');
+        else if (displayValue.length > 7) setFontSize('2.5rem');
+        else setFontSize('3rem');
+    }, [displayValue]);
     
     return (
         <div 
@@ -91,7 +92,7 @@ const DisplayPanel = ({ value, unit, units, onUnitChange, isActive, onClick }: {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {units.map(u => <SelectItem key={u.id} value={u.id}>{u.symbol}</SelectItem>)}
+                        {units.map(u => <SelectItem key={u.id} value={u.id}>{u.name} ({u.symbol})</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
