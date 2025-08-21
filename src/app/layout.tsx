@@ -45,8 +45,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
       <head>
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
-     crossOrigin="anonymous"></script>
         <title>{APP_DEFAULT_TITLE}</title>
         <meta name="description" content={APP_DESCRIPTION} />
         <meta name="application-name" content={APP_NAME} />
