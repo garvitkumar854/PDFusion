@@ -113,7 +113,7 @@ export const categories: Category[] = [
         units: [
             { id: 'sq-meters', name: 'Square Meters', symbol: 'm²', toBase: v => v, fromBase: v => v },
             { id: 'sq-kilometers', name: 'Square Kilometers', symbol: 'km²', toBase: v => v * 1e6, fromBase: v => v / 1e6 },
-            { id: 'sq-miles', name: 'Square Miles', symbol: 'mi²', toBase: v => v * 2590000, fromBase: v => v / 2590000 },
+            { id: 'sq-miles', name: 'Square Miles', symbol: 'mi²', toBase: v => v * 2.59e6, fromBase: v => v / 2.59e6 },
             { id: 'sq-yards', name: 'Square Yards', symbol: 'yd²', toBase: v => v * 0.836127, fromBase: v => v / 0.836127 },
             { id: 'sq-feet', name: 'Square Feet', symbol: 'ft²', toBase: v => v * 0.092903, fromBase: v => v / 0.092903 },
             { id: 'sq-inches', name: 'Square Inches', symbol: 'in²', toBase: v => v * 0.00064516, fromBase: v => v / 0.00064516 },
