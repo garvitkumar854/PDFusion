@@ -22,6 +22,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     length: { from: { value: '1', unit: 'meters' }, to: { value: '', unit: 'feet' } },
     mass: { from: { value: '1', unit: 'kilograms' }, to: { value: '', unit: 'pounds' } },
     temperature: { from: { value: '0', unit: 'celsius' }, to: { value: '', unit: 'fahrenheit' } },
+    time: { from: { value: '1', unit: 'seconds' }, to: { value: '', unit: 'minutes' } },
     volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
@@ -49,7 +50,7 @@ const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChang
     }
     return (
        <Tabs value={activeCategory} onValueChange={onCategoryChange}>
-         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
+         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 h-auto flex-wrap">
             {categories.map((category) => (
                 <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
                     <category.icon className="h-5 w-5" />

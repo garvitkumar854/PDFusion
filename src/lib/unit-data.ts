@@ -1,5 +1,5 @@
 
-import { Ruler, Scale, Thermometer, Beaker, Gauge, LandPlot } from "lucide-react";
+import { Ruler, Scale, Thermometer, Beaker, Gauge, LandPlot, Clock } from "lucide-react";
 import React from 'react';
 
 export type Unit = {
@@ -11,7 +11,7 @@ export type Unit = {
 };
 
 export type Category = {
-    id: 'length' | 'mass' | 'temperature' | 'volume' | 'speed' | 'area';
+    id: 'length' | 'mass' | 'temperature' | 'volume' | 'speed' | 'area' | 'time';
     name: string;
     icon: React.ComponentType<{ className?: string }>;
     baseUnit: string;
@@ -69,6 +69,23 @@ export const categories: Category[] = [
             { id: 'celsius', name: 'Celsius', symbol: '°C', toBase: v => v, fromBase: v => v },
             { id: 'fahrenheit', name: 'Fahrenheit', symbol: '°F', toBase: v => (v - 32) * 5 / 9, fromBase: v => (v * 9 / 5) + 32 },
             { id: 'kelvin', name: 'Kelvin', symbol: 'K', toBase: v => v - 273.15, fromBase: v => v + 273.15 },
+        ]
+    },
+    {
+        id: 'time',
+        name: 'Time',
+        icon: Clock,
+        baseUnit: 'seconds',
+        units: [
+            { id: 'seconds', name: 'Seconds', symbol: 's', toBase: v => v, fromBase: v => v },
+            { id: 'nanoseconds', name: 'Nanoseconds', symbol: 'ns', toBase: v => v / 1e9, fromBase: v => v * 1e9 },
+            { id: 'milliseconds', name: 'Milliseconds', symbol: 'ms', toBase: v => v / 1000, fromBase: v => v * 1000 },
+            { id: 'minutes', name: 'Minutes', symbol: 'min', toBase: v => v * 60, fromBase: v => v / 60 },
+            { id: 'hours', name: 'Hours', symbol: 'h', toBase: v => v * 3600, fromBase: v => v / 3600 },
+            { id: 'days', name: 'Days', symbol: 'd', toBase: v => v * 86400, fromBase: v => v / 86400 },
+            { id: 'weeks', name: 'Weeks', symbol: 'wk', toBase: v => v * 604800, fromBase: v => v / 604800 },
+            { id: 'months', name: 'Months', symbol: 'mo', toBase: v => v * 2.628e+6, fromBase: v => v / 2.628e+6 },
+            { id: 'years', name: 'Years', symbol: 'yr', toBase: v => v * 3.154e+7, fromBase: v => v / 3.154e+7 },
         ]
     },
     {
