@@ -73,20 +73,21 @@ Calculator.displayName = 'Calculator';
 
 const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
     const displayValue = value || '0';
-    const [fontSize, setFontSize] = useState('3rem');
+    const [fontSize, setFontSize] = useState('2.5rem');
 
     useEffect(() => {
         const len = displayValue.length;
-        if (len > 12) setFontSize('1.8rem');
+        if (len > 15) setFontSize('1.5rem');
+        else if (len > 12) setFontSize('1.75rem');
         else if (len > 9) setFontSize('2rem');
-        else if (len > 7) setFontSize('2.5rem');
-        else setFontSize('3rem');
+        else if (len > 7) setFontSize('2.25rem');
+        else setFontSize('2.5rem');
     }, [displayValue]);
     
     return (
         <div 
             className={cn(
-                "relative p-4 rounded-lg bg-muted/50 border-2 transition-all h-24 flex flex-col justify-center",
+                "relative p-4 rounded-lg bg-muted/50 border-2 transition-all h-20 flex flex-col justify-center",
                 isActive ? 'border-primary shadow-md' : 'border-transparent'
             )}
             onClick={onClick}
@@ -241,7 +242,7 @@ export function UnitConverterPwa() {
            </Select>
         </div>
         
-        <div className="flex flex-col p-2 gap-2 shrink-0 h-48">
+        <div className="flex flex-col p-2 gap-2 shrink-0">
             <DisplayPanel 
                 value={from.value} 
                 unit={from.unit} 
