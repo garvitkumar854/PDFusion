@@ -73,15 +73,15 @@ Calculator.displayName = 'Calculator';
 
 const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
     const displayValue = value || '0';
-    const [fontSize, setFontSize] = useState('2rem');
+    const [fontSize, setFontSize] = useState('1.5rem');
 
     useEffect(() => {
         const len = displayValue.length;
-        if (len > 15) setFontSize('1rem');
-        else if (len > 12) setFontSize('1.25rem');
-        else if (len > 9) setFontSize('1.5rem');
-        else if (len > 7) setFontSize('1.75rem');
-        else setFontSize('2rem');
+        if (len > 18) setFontSize('0.75rem');
+        else if (len > 15) setFontSize('1rem');
+        else if (len > 12) setFontSize('1.125rem');
+        else if (len > 9) setFontSize('1.25rem');
+        else setFontSize('1.5rem');
     }, [displayValue]);
     
     return (
@@ -95,7 +95,7 @@ const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, o
             <div className="flex justify-between items-center">
                <div style={{ fontSize }} className="font-bold truncate transition-all duration-200">{displayValue}</div>
                <Select value={unit} onValueChange={onUnitChange}>
-                    <SelectTrigger className="w-auto border-0 bg-transparent text-lg font-semibold pr-0">
+                    <SelectTrigger className="w-auto border-0 bg-transparent text-base font-semibold pr-0 whitespace-nowrap max-w-[50%]">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
