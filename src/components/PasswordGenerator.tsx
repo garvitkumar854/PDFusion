@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,7 @@ const commonWords = [
 // Secure random number generator
 function getRandomNumber(max: number) {
     const randomValues = new Uint32Array(1);
-    crypto.getRandomValues(randomValues);
+    window.crypto.getRandomValues(randomValues);
     return randomValues[0] % max;
 }
 
@@ -123,7 +123,6 @@ export function PasswordGenerator() {
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeSymbols, setIncludeSymbols] = useState(true);
-  const [capitalizeFirstWord, setCapitalizeFirstWord] = useState(true);
   const [wordCount, setWordCount] = useState(4);
   const [pinLength, setPinLength] = useState(4);
 
@@ -158,7 +157,7 @@ export function PasswordGenerator() {
         for (let i = 0; i < wordCount; i++) {
             const randomIndex = getRandomNumber(commonWords.length);
             let word = commonWords[randomIndex];
-            if (capitalizeFirstWord && i === 0) {
+            if (i === 0) { // Always capitalize first letter of first word for consistency
               word = word.charAt(0).toUpperCase() + word.slice(1);
             }
             words.push(word);
@@ -174,7 +173,7 @@ export function PasswordGenerator() {
     
     setPassword(newPassword);
     setCopied(false);
-  }, [passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, wordCount, capitalizeFirstWord, pinLength, toast]);
+  }, [passwordType, passwordLength, includeUppercase, includeLowercase, includeNumbers, includeSymbols, wordCount, pinLength, toast]);
   
   useEffect(() => {
     generatePassword();
@@ -210,6 +209,20 @@ export function PasswordGenerator() {
     { value: 'pin' as PasswordType, label: 'PIN', icon: <Pin className="w-4 h-4"/> },
   ]
   
+  const radioGroupRef = useRef<HTMLDivElement>(null);
+  const [sliderPosition, setSliderPosition] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    if (radioGroupRef.current) {
+        const selectedRadio = radioGroupRef.current.querySelector<HTMLElement>(`[data-state="checked"]`);
+        if (selectedRadio) {
+            const parent = radioGroupRef.current;
+            const { offsetLeft, offsetWidth } = selectedRadio.parentElement || selectedRadio;
+            setSliderPosition({ left: offsetLeft, width: offsetWidth });
+        }
+    }
+  }, [passwordType]);
+  
 
   return (
     <div className="space-y-6">
@@ -222,7 +235,7 @@ export function PasswordGenerator() {
                     <Input
                         readOnly
                         value={password}
-                        className="pr-24 text-lg h-12 font-mono tracking-wider"
+                        className="pr-24 text-lg h-12 font-mono font-bold tracking-wider"
                         placeholder="Generating..."
                     />
                     <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1">
@@ -254,12 +267,28 @@ export function PasswordGenerator() {
             <CardContent className="space-y-6">
                  <div>
                     <Label className="font-semibold text-base mb-2 block">Password Type</Label>
-                    <RadioGroup value={passwordType} onValueChange={(v) => setPasswordType(v as PasswordType)} className="grid grid-cols-3 gap-2">
+                     <RadioGroup 
+                        ref={radioGroupRef}
+                        value={passwordType} 
+                        onValueChange={(v) => setPasswordType(v as PasswordType)} 
+                        className="relative grid grid-cols-3 gap-2 bg-muted p-1 rounded-lg"
+                    >
+                        <AnimatePresence>
+                             <motion.div
+                                className="absolute h-[calc(100%-0.5rem)] bg-background rounded-md shadow-sm"
+                                initial={false}
+                                animate={{
+                                    x: sliderPosition.left,
+                                    width: sliderPosition.width,
+                                }}
+                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            />
+                        </AnimatePresence>
                         {passwordTypeOptions.map(opt => (
-                            <Label key={opt.value} htmlFor={`pt-${opt.value}`} className={cn("flex flex-col items-center justify-center space-y-1.5 border rounded-md p-2 cursor-pointer transition-colors", passwordType === opt.value && 'border-primary bg-primary/5')}>
+                            <Label key={opt.value} htmlFor={`pt-${opt.value}`} className={cn("relative z-10 flex items-center justify-center gap-2 p-2 cursor-pointer transition-colors text-sm", passwordType !== opt.value && "hover:text-primary")}>
                                 <RadioGroupItem value={opt.value} id={`pt-${opt.value}`} className="sr-only" />
                                 {opt.icon}
-                                <span className="text-xs sm:text-sm font-medium">{opt.label}</span>
+                                <span>{opt.label}</span>
                             </Label>
                         ))}
                     </RadioGroup>
@@ -291,34 +320,22 @@ export function PasswordGenerator() {
                     {passwordType === 'random' && (
                         <div className="pt-4 border-t space-y-4">
                             <h3 className="font-semibold text-base">Additional Options</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                                 <div className="flex items-center space-x-2">
                                     <Switch id="uppercase" checked={includeUppercase} onCheckedChange={setIncludeUppercase} />
-                                    <Label htmlFor="uppercase" className="cursor-pointer flex-shrink-0">Uppercase (A-Z)</Label>
+                                    <Label htmlFor="uppercase" className="cursor-pointer text-sm">Uppercase (A-Z)</Label>
                                 </div>
                                  <div className="flex items-center space-x-2">
                                     <Switch id="lowercase" checked={includeLowercase} onCheckedChange={setIncludeLowercase} />
-                                    <Label htmlFor="lowercase" className="cursor-pointer flex-shrink-0">Lowercase (a-z)</Label>
+                                    <Label htmlFor="lowercase" className="cursor-pointer text-sm">Lowercase (a-z)</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Switch id="numbers" checked={includeNumbers} onCheckedChange={setIncludeNumbers} />
-                                    <Label htmlFor="numbers" className="cursor-pointer flex-shrink-0">Numbers (0-9)</Label>
+                                    <Label htmlFor="numbers" className="cursor-pointer text-sm">Numbers (0-9)</Label>
                                 </div>
                                  <div className="flex items-center space-x-2">
                                     <Switch id="symbols" checked={includeSymbols} onCheckedChange={setIncludeSymbols} />
-                                    <Label htmlFor="symbols" className="cursor-pointer flex-shrink-0">Symbols (!@#)</Label>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {passwordType === 'memorable' && (
-                         <div className="pt-4 border-t space-y-4">
-                             <h3 className="font-semibold text-base">Additional Options</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="capitalize" checked={capitalizeFirstWord} onCheckedChange={setCapitalizeFirstWord} />
-                                    <Label htmlFor="capitalize" className="cursor-pointer">Capitalize first word</Label>
+                                    <Label htmlFor="symbols" className="cursor-pointer text-sm">Symbols (!@#)</Label>
                                 </div>
                             </div>
                         </div>
