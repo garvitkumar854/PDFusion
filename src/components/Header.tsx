@@ -276,7 +276,9 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    {React.cloneElement(service.icon, { className: 'mr-2 !h-5 !w-5' })}
+                                                    <div className="h-5 w-5 mr-2 flex items-center justify-center">
+                                                        {React.cloneElement(service.icon, { className: 'h-full w-full' })}
+                                                    </div>
                                                     <span className="text-xs font-medium whitespace-nowrap">{service.label}</span>
                                                 </Link>
                                             )})}
@@ -297,7 +299,9 @@ export default function Header() {
                                                         isActive && "bg-accent text-accent-foreground"
                                                     )}
                                                 >
-                                                    {React.cloneElement(tool.icon, { className: 'mr-2 !h-5 !w-5' })}
+                                                    <div className="h-5 w-5 mr-2 flex items-center justify-center">
+                                                        {React.cloneElement(tool.icon, { className: 'h-full w-full' })}
+                                                    </div>
                                                     <span className="text-xs font-medium whitespace-nowrap">{tool.label}</span>
                                                 </Link>
                                             )})}
