@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, Copy, RefreshCw, KeyRound, Mic, Pin } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 
@@ -220,19 +220,8 @@ export function PasswordGenerator() {
     { value: 'pin' as PasswordType, label: 'PIN', icon: <Pin className="w-4 h-4"/> },
   ]
   
-  const radioGroupRef = useRef<HTMLDivElement>(null);
-  const [sliderPosition, setSliderPosition] = useState({ left: 0, width: 0 });
-
-  useEffect(() => {
-    if (radioGroupRef.current) {
-        const selectedRadio = radioGroupRef.current.querySelector<HTMLElement>(`button[data-state="checked"]`);
-        if (selectedRadio) {
-            const { offsetLeft, offsetWidth } = selectedRadio;
-            setSliderPosition({ left: offsetLeft, width: offsetWidth });
-        }
-    }
-  }, [passwordType]);
-  
+  const [activeTab, setActiveTab] = useState(passwordType);
+  const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
   return (
     <div className="space-y-6">
@@ -277,32 +266,40 @@ export function PasswordGenerator() {
             <CardContent className="space-y-6">
                  <div>
                     <Label className="font-semibold text-base mb-2 block">Password Type</Label>
-                     <RadioGroup 
-                        ref={radioGroupRef}
-                        value={passwordType} 
-                        onValueChange={(v) => setPasswordType(v as PasswordType)} 
-                        className="relative grid grid-cols-3 gap-1 bg-muted p-1 rounded-lg"
+                    <Tabs
+                        value={passwordType}
+                        onValueChange={(v) => setPasswordType(v as PasswordType)}
+                        className="relative"
                     >
-                        <AnimatePresence>
-                             <motion.div
+                        <TabsList className="relative grid w-full grid-cols-3 gap-1 bg-muted p-1 rounded-lg">
+                        {passwordTypeOptions.map((opt, i) => (
+                          <TabsTrigger
+                            key={opt.value}
+                            value={opt.value}
+                            ref={(el) => (tabsRef.current[i] = el)}
+                            onClick={() => setActiveTab(opt.value)}
+                            className={cn(
+                              "relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm",
+                              passwordType !== opt.value && "hover:text-primary data-[state=inactive]:bg-transparent"
+                            )}
+                          >
+                            {opt.icon}
+                            <span>{opt.label}</span>
+                          </TabsTrigger>
+                        ))}
+                         {tabsRef.current.find(t => t?.dataset.state === 'active') && (
+                            <motion.div
+                                layoutId="active-tab-indicator"
                                 className="absolute h-[calc(100%-0.5rem)] bg-background rounded-md shadow-sm"
-                                initial={false}
-                                animate={{
-                                    x: sliderPosition.left,
-                                    width: sliderPosition.width,
+                                style={{
+                                    width: tabsRef.current.find(t => t?.dataset.state === 'active')?.clientWidth,
+                                    left: tabsRef.current.find(t => t?.dataset.state === 'active')?.offsetLeft,
                                 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                             />
-                        </AnimatePresence>
-                        {passwordTypeOptions.map(opt => (
-                            <RadioGroupItem asChild key={opt.value} value={opt.value} id={`pt-${opt.value}`}>
-                               <button className={cn("relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm", passwordType !== opt.value && "hover:text-primary")}>
-                                {opt.icon}
-                                <span>{opt.label}</span>
-                               </button>
-                            </RadioGroupItem>
-                        ))}
-                    </RadioGroup>
+                         )}
+                        </TabsList>
+                    </Tabs>
                 </div>
 
                 <div className="pt-4 border-t">
