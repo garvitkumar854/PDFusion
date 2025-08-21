@@ -26,32 +26,37 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const Calculator = ({ onInput, showPlusMinus }: { onInput: (key: string) => void, showPlusMinus?: boolean }) => {
+const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
     const getButtonIcon = (btn: string) => {
         switch(btn) {
             case 'Backspace': return <Delete className="h-7 w-7"/>;
             case 'Swap': return <ArrowRightLeft className="h-7 w-7"/>;
-            case '+/-': return <Sigma className="h-7 w-7"/>;
             default: return btn;
         }
     }
 
-    const baseButtons = ['7', '8', '9', '4', '5', '6', '1', '2', '3'];
-    const bottomRow = ['Swap', '0', '.'];
+    const buttons = [
+        '7', '8', '9',
+        '4', '5', '6',
+        '1', '2', '3',
+        'Swap', '0', '.'
+    ];
 
     return (
         <Card className="bg-transparent shadow-none border-none p-2 h-full">
             <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
                 {/* Number Pad */}
-                {baseButtons.map(btn => (
-                    <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold rounded-full" variant="secondary">{btn}</Button>
+                {buttons.map(btn => (
+                    <Button 
+                        key={btn} 
+                        onClick={() => onInput(btn)} 
+                        className="h-full w-full text-2xl font-bold rounded-full" 
+                        variant="secondary"
+                    >
+                        {getButtonIcon(btn)}
+                    </Button>
                 ))}
                 
-                {/* Bottom row */}
-                {bottomRow.map(btn => (
-                    <Button key={btn} onClick={() => onInput(btn)} className="h-full w-full text-2xl font-bold rounded-full" variant="secondary">{getButtonIcon(btn)}</Button>
-                ))}
-
                 {/* Right-side action buttons */}
                 <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold row-span-2 rounded-full" variant="destructive">AC</Button>
                 <Button onClick={() => onInput('Backspace')} className="h-full row-span-2 rounded-full" variant="secondary">{getButtonIcon('Backspace')}</Button>
@@ -223,7 +228,7 @@ export function UnitConverterPwa() {
         </div>
 
         <div className="h-[50vh]">
-            <Calculator onInput={handleCalculatorInput} showPlusMinus={activeCategory === 'temperature'} />
+            <Calculator onInput={handleCalculatorInput} />
         </div>
     </div>
   );
