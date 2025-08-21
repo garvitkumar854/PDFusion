@@ -284,11 +284,11 @@ export function PasswordGenerator() {
                         <Button variant="ghost" size="icon" onClick={copyToClipboard} title="Copy to clipboard">
                             <AnimatePresence mode="wait">
                                 {copied ? (
-                                    <motion.div key="check" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                                    <motion.div key="check" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.1 }}>
                                         <Check className="w-5 h-5 text-green-500"/>
                                     </motion.div>
                                 ) : (
-                                    <motion.div key="copy" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                                    <motion.div key="copy" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.1 }}>
                                         <Copy className="w-5 h-5"/>
                                     </motion.div>
                                 )}
