@@ -82,7 +82,7 @@ export function UnitConverter() {
   const performConversion = useCallback((value: string, fromUnit: string, toUnit: string, direction: 'from' | 'to') => {
       const numericValue = parseFloat(value);
       if (isNaN(numericValue) || !value) {
-          const resetState = direction === 'from' ? { value: '' } : { value: '' };
+          const resetState = { value: '' };
           if(direction === 'from') setTo(prev => ({...prev, ...resetState}));
           else setFrom(prev => ({...prev, ...resetState}));
           return;
