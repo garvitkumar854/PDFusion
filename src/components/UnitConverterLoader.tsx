@@ -28,7 +28,7 @@ export default function UnitConverterLoader() {
   }, []);
 
   if (isMobile && isStandalone) {
-    return <UnitConverterPwa />;
+    return <div className="h-full"><UnitConverterPwa /></div>;
   }
 
   return <UnitConverter />;

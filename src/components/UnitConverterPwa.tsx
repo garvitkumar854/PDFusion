@@ -50,7 +50,10 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
                     <Button 
                         key={btn} 
                         onClick={() => onInput(btn)} 
-                        className="h-full w-full text-2xl font-bold rounded-full" 
+                        className={cn(
+                            "h-full w-full text-2xl font-bold rounded-2xl",
+                            btn === '0' && "col-span-1"
+                         )} 
                         variant="secondary"
                     >
                         {getButtonIcon(btn)}
@@ -58,8 +61,8 @@ const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
                 ))}
                 
                 {/* Right-side action buttons */}
-                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold row-span-2 rounded-full" variant="destructive">AC</Button>
-                <Button onClick={() => onInput('Backspace')} className="h-full row-span-2 rounded-full" variant="secondary">{getButtonIcon('Backspace')}</Button>
+                <Button onClick={() => onInput('C')} className="h-full text-2xl font-bold rounded-2xl row-span-2" variant="destructive">AC</Button>
+                <Button onClick={() => onInput('Backspace')} className="h-full rounded-2xl row-span-2" variant="secondary">{getButtonIcon('Backspace')}</Button>
             </div>
         </Card>
     );
@@ -166,8 +169,8 @@ export function UnitConverterPwa() {
   }
 
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col">
-        <div className="p-2">
+    <div className="flex flex-col h-full">
+        <div className="p-2 shrink-0">
            <Select value={activeCategory} onValueChange={handleCategoryChange}>
              <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Select category" />
@@ -185,7 +188,7 @@ export function UnitConverterPwa() {
            </Select>
         </div>
         
-        <div className="flex-grow flex flex-col p-2 gap-2">
+        <div className="flex flex-col p-2 gap-2 shrink-0">
             <div 
                 className={cn(
                     "relative p-4 rounded-lg bg-muted/50 border-2 transition-all",
@@ -227,11 +230,9 @@ export function UnitConverterPwa() {
             </div>
         </div>
 
-        <div className="h-[50vh]">
+        <div className="flex-grow p-2">
             <Calculator onInput={handleCalculatorInput} />
         </div>
     </div>
   );
 }
-
-    
