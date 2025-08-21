@@ -21,7 +21,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     length: { from: { value: '1', unit: 'meters' }, to: { value: '', unit: 'feet' } },
     mass: { from: { value: '1', unit: 'kilograms' }, to: { value: '', unit: 'pounds' } },
     temperature: { from: { value: '0', unit: 'celsius' }, to: { value: '', unit: 'fahrenheit' } },
-    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons' } },
+    volume: { from: { value: '1', unit: 'liters' }, to: { value: '', unit: 'gallons-us' } },
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
@@ -81,7 +81,11 @@ export function UnitConverter() {
   
   const performConversion = useCallback((value: string, fromUnit: string, toUnit: string, direction: 'from' | 'to') => {
       const numericValue = parseFloat(value);
-      if (isNaN(numericValue) || !value) {
+      const currentUnits = categories.find(c => c.id === activeCategory)?.units || [];
+      const fromUnitExists = currentUnits.some(u => u.id === fromUnit);
+      const toUnitExists = currentUnits.some(u => u.id === toUnit);
+
+      if (isNaN(numericValue) || !value || !fromUnitExists || !toUnitExists) {
           const resetState = { value: '' };
           if(direction === 'from') setTo(prev => ({...prev, ...resetState}));
           else setFrom(prev => ({...prev, ...resetState}));
@@ -99,7 +103,7 @@ export function UnitConverter() {
   }, [activeCategory]);
   
   useEffect(() => {
-    // Initial conversion when category changes
+    // Initial conversion or when units change
     performConversion(from.value, from.unit, to.unit, 'from');
   }, [from.value, from.unit, to.unit, performConversion]);
 
@@ -117,10 +121,15 @@ export function UnitConverter() {
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categoryId as Category['id'];
-    setActiveCategory(newCategory);
     const initial = initialStates[newCategory];
+    
+    // Set all state updates together to avoid intermediate renders with inconsistent state
+    setActiveCategory(newCategory);
     setFrom(initial.from);
     setTo(initial.to);
+    
+    // Perform conversion in a subsequent effect or directly if logic is simple
+    // This ensures state is fully updated before attempting conversion
     performConversion(initial.from.value, initial.from.unit, initial.to.unit, 'from');
   };
 
