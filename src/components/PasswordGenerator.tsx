@@ -223,6 +223,12 @@ export function PasswordGenerator() {
   const [activeTab, setActiveTab] = useState(passwordType);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
+  useEffect(() => {
+    // This effect ensures the active tab state is in sync with passwordType
+    // which might change from other interactions in more complex scenarios.
+    setActiveTab(passwordType);
+  }, [passwordType]);
+
   return (
     <div className="space-y-6">
         <Card className="bg-transparent shadow-lg">
@@ -269,18 +275,16 @@ export function PasswordGenerator() {
                     <Tabs
                         value={passwordType}
                         onValueChange={(v) => setPasswordType(v as PasswordType)}
-                        className="relative"
                     >
-                        <TabsList className="relative grid w-full grid-cols-3 gap-1 bg-muted p-1 rounded-lg">
+                        <TabsList className="relative grid w-full grid-cols-3 bg-muted p-1 rounded-lg h-auto">
                         {passwordTypeOptions.map((opt, i) => (
                           <TabsTrigger
                             key={opt.value}
                             value={opt.value}
                             ref={(el) => (tabsRef.current[i] = el)}
-                            onClick={() => setActiveTab(opt.value)}
                             className={cn(
-                              "relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm",
-                              passwordType !== opt.value && "hover:text-primary data-[state=inactive]:bg-transparent"
+                              "relative z-10 flex items-center justify-center gap-2 p-2 rounded-md cursor-pointer transition-colors text-sm data-[state=inactive]:bg-transparent",
+                              passwordType !== opt.value && "text-muted-foreground hover:text-primary "
                             )}
                           >
                             {opt.icon}
@@ -290,7 +294,7 @@ export function PasswordGenerator() {
                          {tabsRef.current.find(t => t?.dataset.state === 'active') && (
                             <motion.div
                                 layoutId="active-tab-indicator"
-                                className="absolute h-[calc(100%-0.5rem)] bg-background rounded-md shadow-sm"
+                                className="absolute h-full bg-background rounded-md shadow-sm p-1"
                                 style={{
                                     width: tabsRef.current.find(t => t?.dataset.state === 'active')?.clientWidth,
                                     left: tabsRef.current.find(t => t?.dataset.state === 'active')?.offsetLeft,
