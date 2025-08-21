@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Copy, RefreshCw, KeyRound, Mic, Pin } from "lucide-react";
+import { Check, Copy, RefreshCw, KeyRound, Lightbulb, Hash } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "./ui/slider";
@@ -218,9 +218,9 @@ export function PasswordGenerator() {
   const lengthConfig = getLengthConfig();
 
   const passwordTypeOptions = [
-    { value: 'random' as PasswordType, label: 'Random', icon: <KeyRound className="w-4 h-4"/> },
-    { value: 'memorable' as PasswordType, label: 'Memorable', icon: <Mic className="w-4 h-4"/> },
-    { value: 'pin' as PasswordType, label: 'PIN', icon: <Pin className="w-4 h-4"/> },
+    { value: 'random' as PasswordType, label: 'Random', icon: <KeyRound /> },
+    { value: 'memorable' as PasswordType, label: 'Memorable', icon: <Lightbulb /> },
+    { value: 'pin' as PasswordType, label: 'PIN', icon: <Hash /> },
   ]
   
   const [activeTab, setActiveTab] = useState(passwordType);
@@ -260,9 +260,9 @@ export function PasswordGenerator() {
             <CardContent>
                 <div className="relative">
                     <div
-                        className="pr-24 text-lg h-12 w-full flex items-center rounded-md border border-input bg-background px-3 py-2"
+                        className="pr-24 text-lg w-full flex items-center rounded-md border border-input bg-background px-3 py-2 min-h-12"
                     >
-                        <div className={cn("flex items-center flex-wrap h-full font-mono", openSans.className)}>
+                        <div className={cn("flex items-center flex-wrap break-all h-full font-mono", openSans.className)}>
                             {password.split('').map((char, index) => (
                                 <span
                                     key={index}
@@ -321,7 +321,7 @@ export function PasswordGenerator() {
                               passwordType !== opt.value && "text-muted-foreground hover:text-primary "
                             )}
                           >
-                            {opt.icon}
+                            <div className="h-4 w-4 flex items-center justify-center">{opt.icon}</div>
                             <span>{opt.label}</span>
                           </TabsTrigger>
                         ))}
