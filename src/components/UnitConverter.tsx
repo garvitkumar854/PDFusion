@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { categories, Unit, Category, convert, formatNumber } from "@/lib/unit-data";
-import { ArrowRightLeft, Delete } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import { Button } from "./ui/button";
-import { motion } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { cn } from "@/lib/utils";
 
 type InputState = {
@@ -26,147 +26,52 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
 };
 
-const ConversionPanel = ({
-  units,
-  state,
-  onChange,
-  label,
-  onFocus,
-  isActive,
-}: {
-  units: Unit[];
-  state: InputState;
-  onChange: (value: string, unit?: string) => void;
-  label: string;
-  onFocus: () => void;
-  isActive: boolean;
-}) => {
-  return (
-    <div className="relative space-y-2">
-      <div 
-        className={cn(
-          "absolute -inset-2 rounded-xl border-2 border-transparent transition-all",
-          isActive && "!border-primary"
-        )}
-      />
-      <Card className="bg-muted/50 p-4" onFocus={onFocus} tabIndex={-1}>
-        <Label htmlFor={label} className="text-sm text-muted-foreground">{label}</Label>
-        <div className="mt-1 flex flex-col gap-2">
-          <Input
-            id={label}
-            type="text"
-            inputMode="decimal"
-            value={state.value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="0"
-            className="h-14 text-2xl font-semibold bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
-            readOnly
-          />
-          <Select value={state.unit} onValueChange={(unit) => onChange(state.value, unit)}>
-            <SelectTrigger className="h-11 text-base border-muted-foreground/20">
-              <SelectValue placeholder="Select unit" />
-            </SelectTrigger>
-            <SelectContent>
-              {units.map((unit) => (
-                <SelectItem key={unit.id} value={unit.id}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{unit.symbol}</span>
-                    <span className="text-muted-foreground">{unit.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-
-const Calculator = ({ onInput }: { onInput: (key: string) => void }) => {
-    const buttons = [
-        '7', '8', '9',
-        '4', '5', '6',
-        '1', '2', '3',
-        '.', '0', 'Backspace',
-    ];
-
-    return (
-        <Card className="bg-transparent shadow-lg w-full p-4">
-            <div className="grid grid-cols-3 gap-2">
-                <Button onClick={() => onInput('C')} className="col-span-3 h-16 text-xl font-bold" variant="destructive">C</Button>
-                {buttons.map(btn => (
-                    <Button 
-                        key={btn} 
-                        onClick={() => onInput(btn)} 
-                        className="h-16 text-xl font-bold" 
-                        variant="secondary"
-                    >
-                       {btn === 'Backspace' ? <Delete className="h-6 w-6"/> : btn}
-                    </Button>
-                ))}
-            </div>
-        </Card>
-    );
-}
-
 export function UnitConverter() {
   const [activeCategory, setActiveCategory] = useState<Category['id']>('length');
   const [from, setFrom] = useState<InputState>(initialStates.length.from);
   const [to, setTo] = useState<InputState>(initialStates.length.to);
-  const [activeInput, setActiveInput] = useState<'from' | 'to'>('from');
+  const [lastActive, setLastActive] = useState<'from' | 'to'>('from');
 
   const unitsForCategory = useMemo(() => {
     return categories.find(c => c.id === activeCategory)?.units || [];
   }, [activeCategory]);
   
-  const performConversion = useCallback((value: string, fromUnitId: string, toUnitId: string, direction: 'from' | 'to') => {
+  const performConversion = useCallback(() => {
       const currentUnits = categories.find(c => c.id === activeCategory)?.units;
       if (!currentUnits) return;
-
-      const fromUnitExists = currentUnits.some(u => u.id === fromUnitId);
-      const toUnitExists = currentUnits.some(u => u.id === toUnitId);
-
-      if (!fromUnitExists || !toUnitExists) return;
-
-      const numericValue = parseFloat(value);
-      if (isNaN(numericValue) || !value) {
-          const resetState = { value: '' };
-          if(direction === 'from') setTo(prev => ({...prev, ...resetState}));
-          else setFrom(prev => ({...prev, ...resetState}));
-          return;
-      }
       
-      const result = convert(activeCategory, numericValue, fromUnitId, toUnitId);
-      const formattedResult = formatNumber(result);
-
-      if (direction === 'from') {
-          setTo(prev => ({ ...prev, value: formattedResult }));
+      if (lastActive === 'from') {
+          const numericValue = parseFloat(from.value);
+          if (isNaN(numericValue) || !from.value) {
+              setTo(prev => ({ ...prev, value: '' }));
+              return;
+          }
+          const result = convert(activeCategory, numericValue, from.unit, to.unit);
+          setTo(prev => ({ ...prev, value: formatNumber(result) }));
       } else {
-          setFrom(prev => ({ ...prev, value: formattedResult }));
+          const numericValue = parseFloat(to.value);
+          if (isNaN(numericValue) || !to.value) {
+              setFrom(prev => ({ ...prev, value: '' }));
+              return;
+          }
+          const result = convert(activeCategory, numericValue, to.unit, from.unit);
+          setFrom(prev => ({ ...prev, value: formatNumber(result) }));
       }
-  }, [activeCategory]);
+  }, [activeCategory, from.value, from.unit, to.value, to.unit, lastActive]);
   
   useEffect(() => {
-    performConversion(from.value, from.unit, to.unit, 'from');
-  }, [from.value, from.unit, to.unit, performConversion]);
+    performConversion();
+  }, [performConversion]);
 
   const handleFromChange = (value: string, unit?: string) => {
-    const newFromUnit = unit || from.unit;
-    setFrom({ value, unit: newFromUnit });
+    setFrom({ value, unit: unit || from.unit });
+    setLastActive('from');
   };
 
   const handleToChange = (value: string, unit?: string) => {
-    const newToUnit = unit || to.unit;
-    setTo({ value, unit: newToUnit });
+    setTo({ value, unit: unit || to.unit });
+    setLastActive('to');
   };
-  
-  useEffect(() => {
-    if (activeInput === 'to') {
-        performConversion(to.value, to.unit, from.unit, 'to');
-    }
-  }, [to.value, to.unit, activeInput, from.unit, performConversion]);
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categoryId as Category['id'];
@@ -182,8 +87,7 @@ export function UnitConverter() {
         setActiveCategory(newCategory);
         setFrom(initial.from);
         setTo(initial.to);
-        setActiveInput('from');
-        performConversion(initial.from.value, initial.from.unit, initial.to.unit, 'from');
+        setLastActive('from');
     }
   };
 
@@ -192,66 +96,55 @@ export function UnitConverter() {
     const oldTo = { ...to };
     setFrom(oldTo);
     setTo(oldFrom);
-    performConversion(oldTo.value, oldTo.unit, oldFrom.unit, 'from');
+    setLastActive(lastActive === 'from' ? 'to' : 'from');
   };
-
-  const handleCalculatorInput = (key: string) => {
-    const handler = activeInput === 'from' ? handleFromChange : handleToChange;
-    const state = activeInput === 'from' ? from : to;
-
-    if (key === 'C') {
-        handler('');
-    } else if (key === 'Backspace') {
-        handler(state.value.slice(0, -1));
-    } else if (key === '.' && state.value.includes('.')) {
-        return; 
-    } else {
-        handler(state.value + key);
-    }
-  }
 
   return (
     <Card className="bg-transparent shadow-lg w-full">
-        <CardHeader className="p-4 sm:p-6">
-           <Label>Category</Label>
-           <Select value={activeCategory} onValueChange={handleCategoryChange}>
-             <SelectTrigger className="h-12 text-base">
-                <SelectValue placeholder="Select category" />
-             </SelectTrigger>
-             <SelectContent>
+        <CardHeader>
+           <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
+             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto flex-wrap">
                 {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                        <div className="flex items-center gap-2">
-                           <category.icon className="h-5 w-5" />
-                           <span>{category.name}</span>
-                        </div>
-                    </SelectItem>
+                    <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
+                        <category.icon className="h-5 w-5" />
+                        <span>{category.name}</span>
+                    </TabsTrigger>
                 ))}
-             </SelectContent>
-           </Select>
+             </TabsList>
+           </Tabs>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-            <div className="grid lg:grid-cols-2 gap-8">
-                <motion.div 
-                    key={activeCategory}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex flex-col gap-4"
-                >
-                    <ConversionPanel units={unitsForCategory} state={from} onChange={handleFromChange} label="From" onFocus={() => setActiveInput('from')} isActive={activeInput === 'from'} />
-                    
-                    <div className="flex justify-center my-2">
-                        <Button variant="ghost" size="icon" onClick={handleSwap} className="rounded-full bg-muted hover:bg-primary/10 group" aria-label="Swap units">
-                            <ArrowRightLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:rotate-180" />
-                        </Button>
+        <CardContent>
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="from-value">From</Label>
+                    <div className="flex gap-2">
+                        <Input id="from-value" type="number" value={from.value} onChange={e => handleFromChange(e.target.value)} />
+                        <Select value={from.unit} onValueChange={unit => handleFromChange(from.value, unit)}>
+                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    
-                    <ConversionPanel units={unitsForCategory} state={to} onChange={handleToChange} label="To" onFocus={() => setActiveInput('to')} isActive={activeInput === 'to'}/>
-                </motion.div>
+                </div>
+                
+                <div className="flex justify-center">
+                    <Button variant="ghost" size="icon" onClick={handleSwap} className="rounded-full bg-muted hover:bg-primary/10 group">
+                        <ArrowRightLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-transform duration-300 group-hover:rotate-180" />
+                    </Button>
+                </div>
 
-                <div>
-                    <Calculator onInput={handleCalculatorInput} />
+                <div className="space-y-2">
+                    <Label htmlFor="to-value">To</Label>
+                     <div className="flex gap-2">
+                        <Input id="to-value" type="number" value={to.value} onChange={e => handleToChange(e.target.value)} />
+                         <Select value={to.unit} onValueChange={unit => handleToChange(to.value, unit)}>
+                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {unitsForCategory.map(unit => <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
         </CardContent>

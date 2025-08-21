@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
+import { usePathname } from 'next/navigation';
+import BottomNavBar from '@/components/BottomNavBar';
 
 
 const poppins = Poppins({ 
@@ -33,6 +35,7 @@ export default function RootLayout({
   usePwa();
   const isMobile = useIsMobile();
   const [isStandalone, setIsStandalone] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -42,6 +45,13 @@ export default function RootLayout({
   }, []);
   
   const showBottomNav = isMobile && isStandalone;
+
+  const isToolPage = [
+    '/merger', '/split-pdf', '/organize-pdf', '/pdf-to-jpg', 
+    '/jpg-to-pdf', '/pdf-to-html', '/html-to-pdf', '/rotate-pdf',
+    '/add-page-numbers', '/password-generator', '/qr-code-generator',
+    '/unit-converter', '/currency-converter', '/calculator'
+  ].some(path => pathname.startsWith(path));
 
   return (
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
@@ -72,10 +82,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Header />
-            <main className={cn("flex-1 container mx-auto px-4 sm:px-6 lg:px-8", showBottomNav && "pb-24")}>
+            <main className={cn(
+              "flex-1 container mx-auto px-4 sm:px-6 lg:px-8", 
+              showBottomNav && !isToolPage && "pb-24",
+              showBottomNav && isToolPage && "pb-4"
+            )}>
             {children}
             </main>
-            <FooterLoader />
+            {showBottomNav ? <BottomNavBar /> : <FooterLoader />}
             <Toaster />
           </ThemeProvider>
       </body>
