@@ -161,7 +161,7 @@ export default function Header() {
                     transition={{ duration: 0.2, ease: "easeOut" }}
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex"
                   >
-                    <div className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-1 w-max">
+                    <div className="bg-popover p-2 rounded-lg border text-popover-foreground shadow-lg grid grid-cols-2 gap-1 w-[500px]">
                       {services.map((service) => {
                         const isActive = pathname.startsWith(service.href);
                         return (
@@ -284,7 +284,7 @@ export default function Header() {
                                                 )}
                                             >
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
-                                                    {service.icon}
+                                                    {React.cloneElement(service.icon, { className: "" })}
                                                 </div>
                                                 <span className="text-xs font-medium">{service.label}</span>
                                             </Link>
@@ -307,7 +307,7 @@ export default function Header() {
                                                 )}
                                             >
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
-                                                    {tool.icon}
+                                                    {React.cloneElement(tool.icon, { className: "" })}
                                                 </div>
                                                 <span className="text-xs font-medium">{tool.label}</span>
                                             </Link>
