@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eraser, Percent, History, X } from 'lucide-react';
+import { Eraser, Percent, History } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type HistoryEntry = {
@@ -38,6 +38,8 @@ const CalculatorButton = ({
     </Button>
   </motion.div>
 );
+CalculatorButton.displayName = "CalculatorButton";
+
 
 export function Calculator() {
   const [expression, setExpression] = useState('0');
@@ -46,7 +48,7 @@ export function Calculator() {
   const [isFinal, setIsFinal] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
 
-  const calculate = (exp: string): string => {
+  const calculate = useCallback((exp: string): string => {
     try {
       const sanitizedExp = exp
         .replace(/×/g, '*')
@@ -68,14 +70,14 @@ export function Calculator() {
     } catch (error) {
       return "Error";
     }
-  };
+  }, []);
   
   useEffect(() => {
     if (!isFinal) {
       const calculatedResult = calculate(expression);
       setResult(calculatedResult);
     }
-  }, [expression, isFinal]);
+  }, [expression, isFinal, calculate]);
 
 
  const handleInput = (value: string) => {
@@ -83,14 +85,18 @@ export function Calculator() {
         setHistory(prev => [{ expression, result }, ...prev]);
         setExpression(value);
         setIsFinal(false);
-    } else {
-        if (expression === '0' && value === '0') return;
-        setExpression(prev => (prev === '0' && value !== '.' ? value : prev + value));
+        return;
     }
+    
+    if (expression === '0' && value === '0') return;
+    setExpression(prev => (prev === '0' && value !== '.' ? value : prev + value));
   };
   
   const handleOperator = (op: string) => {
-    if (result === 'Error') handleClear();
+    if (result === 'Error') {
+        handleClear();
+        return;
+    }
 
     if (isFinal) {
         setHistory(prev => [{ expression, result }, ...prev]);
@@ -167,7 +173,7 @@ export function Calculator() {
 
   const resultVariants = {
     initial: { fontSize: '1.5rem', opacity: 0.7 },
-    animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 },
+    animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7, color: isFinal ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' },
   };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
@@ -178,7 +184,7 @@ export function Calculator() {
       <CardContent className="p-0">
         <div className="relative bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-48 flex flex-col justify-end overflow-hidden">
             <AnimatePresence>
-                {history.length > 0 && (
+              {history.length > 0 && !isFinal && (
                   <motion.div
                       className="text-sm text-muted-foreground break-all text-right"
                       initial={{ opacity: 0, y: -20 }}
@@ -202,10 +208,7 @@ export function Calculator() {
                 {expression}
             </motion.div>
             <motion.div
-                className={cn(
-                    "font-bold break-all",
-                    isFinal ? "text-foreground" : "text-muted-foreground"
-                )}
+                className="font-bold break-all text-muted-foreground"
                 layout
                 variants={resultVariants}
                 initial="initial"
