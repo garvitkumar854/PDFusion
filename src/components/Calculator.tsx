@@ -69,7 +69,7 @@ export function Calculator() {
   }
 
   const handleOperator = (op: string) => {
-    if (result !== null && operator && !isResult) {
+    if (result !== null && operator && !isResult && input !== '0') {
         const currentInput = parseFloat(input);
         const currentResult = parseFloat(result);
         const newResult = calculate(currentResult, currentInput, operator);
@@ -78,9 +78,8 @@ export function Calculator() {
     } else {
        setResult(input);
     }
-    setInput('0');
     setOperator(op);
-    setIsResult(false);
+    setIsResult(true);
   };
   
   const handleEquals = () => {
@@ -104,66 +103,64 @@ export function Calculator() {
   
   const handleBackspace = () => {
     if (isResult) {
-      handleClearAll();
-    } else {
-      setInput(input.length > 1 ? input.slice(0, -1) : '0');
+      // Don't backspace on a result, it should be cleared or used in next operation
+      return;
     }
+    setInput(input.length > 1 ? input.slice(0, -1) : '0');
   };
 
   const handlePercentage = () => {
     const currentValue = parseFloat(input);
     const newValue = currentValue / 100;
     setInput(String(newValue));
-    setIsResult(true); 
   };
 
 
   const getDisplayCalculation = () => {
     if(operator && result !== null) {
-      return `${result} ${operator}`;
+      const displayOp = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
+      return `${result} ${displayOp}`;
     }
     return ' ';
   }
   
   const displayVariants = {
-    initial: { y: 20, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: -20, opacity: 0 },
+    initial: { y: 15, opacity: 0 },
+    animate: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
+    exit: { y: -15, opacity: 0, transition: { duration: 0.2 } },
   };
   
   const resultDisplayVariants = {
-    initial: { y: -20, opacity: 0.5 },
-    animate: { y: 0, opacity: 1, scale: 1, transition: { duration: 0.3 } },
-    exit: { opacity: 0.5, scale: 0.8, transition: { duration: 0.2 } },
+    initial: { y: -15, opacity: 0.5, scale: 0.9 },
+    animate: { y: 0, opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } },
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
   };
+
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
-        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-28 flex flex-col justify-end">
+        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-32 flex flex-col justify-end">
+           <motion.div
+             key={input + (isResult ? '_res' : '')}
+             variants={isResult ? resultDisplayVariants : displayVariants}
+             initial="initial"
+             animate="animate"
+             className="text-4xl font-bold break-all"
+            >
+                {input}
+           </motion.div>
            <AnimatePresence>
             <motion.div
-                key={isResult ? "result" : "calculation"}
+                key={isResult ? getDisplayCalculation() : "calculation"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 exit={{ opacity: 0 }}
                 className="text-lg h-6"
             >
-                {!isResult ? getDisplayCalculation() : ' '}
+                { getDisplayCalculation() }
             </motion.div>
            </AnimatePresence>
-
-           <motion.div
-             key={input}
-             variants={isResult ? resultDisplayVariants : displayVariants}
-             initial="initial"
-             animate="animate"
-             exit="exit"
-             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-             className="text-4xl font-bold break-all"
-            >
-                {input}
-           </motion.div>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
