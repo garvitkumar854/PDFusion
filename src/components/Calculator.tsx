@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eraser } from 'lucide-react';
+import { Eraser, Percent } from 'lucide-react';
 
 const CalculatorButton = ({
   children,
@@ -102,13 +102,6 @@ export function Calculator() {
     setIsResult(false);
   };
   
-  const handleClearEntry = () => {
-    setInput('0');
-    if (isResult) {
-        handleClearAll();
-    }
-  };
-
   const handleBackspace = () => {
     if (isResult) {
       handleClearAll();
@@ -116,6 +109,14 @@ export function Calculator() {
       setInput(input.length > 1 ? input.slice(0, -1) : '0');
     }
   };
+
+  const handlePercentage = () => {
+    const currentValue = parseFloat(input);
+    const newValue = currentValue / 100;
+    setInput(String(newValue));
+    setIsResult(true); 
+  };
+
 
   const getDisplayCalculation = () => {
     if(operator && result !== null) {
@@ -167,8 +168,8 @@ export function Calculator() {
 
         <div className="grid grid-cols-4 gap-2">
           <CalculatorButton onClick={handleClearAll} variant="destructive">C</CalculatorButton>
-          <CalculatorButton onClick={handleClearEntry}>CE</CalculatorButton>
           <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={() => handleOperator('/')} variant="default" className="bg-primary/90">÷</CalculatorButton>
           
           <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
