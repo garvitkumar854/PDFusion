@@ -62,7 +62,7 @@ export function Calculator() {
         sanitizedExp = sanitizedExp.slice(0, -1);
       }
 
-      if (!sanitizedExp || sanitizedExp === 'Error') {
+      if (!sanitizedExp || sanitizedExp === 'Error' || sanitizedExp === '0') {
         return "0";
       }
 
@@ -72,7 +72,7 @@ export function Calculator() {
       }
       return String(parseFloat(calculatedResult.toPrecision(15)));
     } catch (error) {
-      return "Error";
+      return "0";
     }
   }, []);
   
@@ -173,20 +173,20 @@ export function Calculator() {
   const displayVariants = {
     initial: { fontSize: '2.5rem', opacity: 1 },
     animate: { fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 },
-    transition: { type: 'spring', stiffness: 300, damping: 30 }
+    transition: { type: 'spring', stiffness: 350, damping: 35 }
   };
 
   const resultVariants = {
     initial: { fontSize: '1.5rem', opacity: 0.7 },
     animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7, color: isFinal ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' },
-    transition: { type: 'spring', stiffness: 300, damping: 30 }
+    transition: { type: 'spring', stiffness: 350, damping: 35 }
   };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
   const showResult = (expression !== '0' && expression !== result) || isFinal;
   
-  const operatorButtonsClass = "text-primary hover:bg-primary hover:text-primary-foreground";
-  const numberButtonsClass = "hover:bg-primary hover:text-primary-foreground";
+  const operatorButtonsClass = "bg-transparent text-primary hover:bg-primary hover:text-primary-foreground";
+  const numberButtonsClass = "bg-transparent hover:bg-primary hover:text-primary-foreground";
 
 
   return (
@@ -276,7 +276,7 @@ export function Calculator() {
           </Sheet>
           <CalculatorButton onClick={() => handleInput('0')} variant={'ghost'} className={numberButtonsClass}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal} variant={'ghost'} className={numberButtonsClass}>.</CalculatorButton>
-          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary hover:bg-muted")}>=</CalculatorButton>
+          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary", operatorButtonsClass)}>=</CalculatorButton>
         </div>
       </CardContent>
     </Card>
