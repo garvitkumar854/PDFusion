@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://pdfusion.site/sitemap.xml
+Sitemap: https://pdf-fusion.vercel.app/sitemap.xml
