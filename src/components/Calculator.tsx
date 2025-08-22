@@ -124,7 +124,6 @@ export function Calculator() {
     setLastEquation(null);
   };
 
-
   const getDisplayCalculation = () => {
     if (lastEquation) {
         return lastEquation;
@@ -133,30 +132,34 @@ export function Calculator() {
       const displayOp = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
       return `${result} ${displayOp}`;
     }
-    return input;
+    return '';
   }
   
-  const displayVariants = {
+  const mainDisplayVariants = {
     initial: { y: 15, opacity: 0 },
     animate: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
     exit: { y: -15, opacity: 0, transition: { duration: 0.2 } },
   };
-  
-  const resultDisplayVariants = {
-    initial: { y: -15, opacity: 0.5, scale: 0.9 },
-    animate: { y: 0, opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } },
-    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
-  };
-
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
         <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-32 flex flex-col justify-end">
            <AnimatePresence mode="wait">
+            <motion.div
+                key={getDisplayCalculation()}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 0.5, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="text-lg h-6"
+            >
+                { getDisplayCalculation() }
+            </motion.div>
+           </AnimatePresence>
+            <AnimatePresence mode="wait">
              <motion.div
                key={input + (isResult ? '_res' : '')}
-               variants={isResult ? resultDisplayVariants : displayVariants}
+               variants={mainDisplayVariants}
                initial="initial"
                animate="animate"
                exit="exit"
@@ -164,17 +167,6 @@ export function Calculator() {
               >
                   {input}
              </motion.div>
-           </AnimatePresence>
-           <AnimatePresence>
-            <motion.div
-                key={getDisplayCalculation()}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                exit={{ opacity: 0 }}
-                className="text-lg h-6"
-            >
-                { getDisplayCalculation() }
-            </motion.div>
            </AnimatePresence>
         </div>
 
@@ -209,4 +201,3 @@ export function Calculator() {
     </Card>
   );
 }
-
