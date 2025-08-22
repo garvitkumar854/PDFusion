@@ -1,15 +1,14 @@
 
-'use client';
-
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { usePwa } from '@/hooks/use-pwa';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
+import type { Metadata } from 'next';
+import ClientLayout from '@/components/ClientLayout';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -22,27 +21,39 @@ const APP_DEFAULT_TITLE = "PDFusion: Your All-in-One PDF Toolkit";
 const APP_TITLE_TEMPLATE = "%s | PDFusion";
 const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.";
 
+export const metadata: Metadata = {
+  metadataBase: new URL('https://pdfusion.site'),
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: APP_TITLE_TEMPLATE,
+  },
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_DEFAULT_TITLE,
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  themeColor: "#5e4dff",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icons/icon-192x192.png",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  usePwa();
-
   return (
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
       <head>
-        <title>{APP_DEFAULT_TITLE}</title>
-        <meta name="description" content={APP_DESCRIPTION} />
-        <meta name="application-name" content={APP_NAME} />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content={APP_DEFAULT_TITLE} />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="theme-color" content="#5e4dff" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
@@ -57,12 +68,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
-            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8">
-            {children}
-            </main>
-            <FooterLoader />
-            <Toaster />
+            <ClientLayout>
+              {children}
+            </ClientLayout>
           </ThemeProvider>
       </body>
     </html>
