@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,6 @@ CalculatorButton.displayName = "CalculatorButton";
 
 export function Calculator() {
   const [expression, setExpression] = useState('0');
-  const [result, setResult] = useState('0');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isFinal, setIsFinal] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
@@ -66,6 +65,7 @@ export function Calculator() {
         return "0";
       }
 
+      // eslint-disable-next-line no-new-func
       const calculatedResult = new Function('return ' + sanitizedExp)();
       if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
         return "Error";
@@ -76,11 +76,11 @@ export function Calculator() {
     }
   }, []);
   
-  useEffect(() => {
-    if (!isFinal) {
-      const calculatedResult = calculate(expression);
-      setResult(calculatedResult);
+  const result = useMemo(() => {
+    if (isFinal) {
+      return calculate(expression);
     }
+    return calculate(expression);
   }, [expression, isFinal, calculate]);
 
 
@@ -119,7 +119,7 @@ export function Calculator() {
     if (isFinal || result === 'Error') return;
     const finalResult = calculate(expression);
     setHistory(prev => [{ expression: expression, result: finalResult }, ...prev]);
-    setResult(finalResult);
+    setExpression(finalResult);
     setIsFinal(true);
   };
 
@@ -128,7 +128,6 @@ export function Calculator() {
         setHistory([]);
     }
     setExpression('0');
-    setResult('0');
     setIsFinal(false);
   };
   
@@ -219,7 +218,7 @@ export function Calculator() {
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
+           <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
             {clearButtonLabel}
           </CalculatorButton>
           <CalculatorButton onClick={handleBackspace} variant={'ghost'} className={operatorButtonsClass}><Eraser className="w-6 h-6"/></CalculatorButton>
