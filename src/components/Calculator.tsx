@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -86,7 +86,7 @@ export function Calculator() {
 
  const handleInput = (value: string) => {
     if (isFinal) {
-        setHistory(prev => [{ expression, result }, ...prev]);
+        setHistory(prev => [{ expression: expression, result: result }, ...prev]);
         setExpression(value);
         setIsFinal(false);
         return;
@@ -103,7 +103,7 @@ export function Calculator() {
     }
 
     if (isFinal) {
-        setHistory(prev => [{ expression, result }, ...prev]);
+        setHistory(prev => [{ expression: expression, result: result }, ...prev]);
         setExpression(result + op);
         setIsFinal(false);
     } else {
@@ -158,7 +158,7 @@ export function Calculator() {
 
   const handleDecimal = () => {
     if (isFinal) {
-      setHistory(prev => [{ expression, result }, ...prev]);
+      setHistory(prev => [{ expression: expression, result: result }, ...prev]);
       setExpression('0.');
       setIsFinal(false);
       return;
@@ -185,8 +185,8 @@ export function Calculator() {
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
   const showResult = (expression !== '0' && expression !== result) || isFinal;
   
-  const operatorButtonsClass = "text-primary hover:bg-muted";
-  const numberButtonsClass = "hover:bg-primary/10";
+  const operatorButtonsClass = "text-primary hover:bg-primary hover:text-primary-foreground";
+  const numberButtonsClass = "hover:bg-primary hover:text-primary-foreground";
 
 
   return (
@@ -246,7 +246,7 @@ export function Calculator() {
           <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
               <SheetTrigger asChild>
                   <div className="col-span-1">
-                    <CalculatorButton variant={'ghost'} className={operatorButtonsClass}><History className="w-6 h-6"/></CalculatorButton>
+                    <CalculatorButton onClick={() => {}} variant={'ghost'} className={operatorButtonsClass}><History className="w-6 h-6"/></CalculatorButton>
                   </div>
               </SheetTrigger>
               <SheetContent className="flex flex-col p-0">
@@ -276,7 +276,7 @@ export function Calculator() {
           </Sheet>
           <CalculatorButton onClick={() => handleInput('0')} variant={'ghost'} className={numberButtonsClass}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal} variant={'ghost'} className={numberButtonsClass}>.</CalculatorButton>
-          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn(operatorButtonsClass, "bg-primary/80 hover:bg-primary text-primary-foreground")}>=</CalculatorButton>
+          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary hover:bg-muted")}>=</CalculatorButton>
         </div>
       </CardContent>
     </Card>
