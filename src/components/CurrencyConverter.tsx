@@ -12,6 +12,9 @@ import { Check, ChevronsUpDown, Loader2, AlertTriangle, ArrowRightLeft } from "l
 import { currencyList, Currency } from "@/lib/currency-data";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getRates } from "@/ai/flows/currency-flow";
+import type { GetRatesInput } from "@/ai/flows/currency-types";
+
 
 type ExchangeRates = {
     [key: string]: number;
@@ -92,16 +95,12 @@ export function CurrencyConverter() {
             setIsLoading(true);
             setError(null);
             try {
-                // Using a more frequently updated, free API
-                const response = await fetch(`https://open.er-api.com/v6/latest/USD`);
-                if (!response.ok) throw new Error('Failed to fetch rates');
-                
-                const data = await response.json();
-                if (data.result === 'error') {
-                    throw new Error(data['error-type'] || 'An unknown error occurred with the API');
+                const input: GetRatesInput = { baseCurrency: "USD" };
+                const result = await getRates(input);
+                if (!result.rates) {
+                    throw new Error("Could not retrieve exchange rates from the AI.");
                 }
-
-                setRates(data.rates);
+                setRates(result.rates);
             } catch (err: any) {
                 console.error(err);
                 setError("Could not load exchange rates. Please try again later.");
@@ -118,7 +117,6 @@ export function CurrencyConverter() {
         if (!currentRates || !currentRates[from] || !currentRates[to]) {
             return null;
         }
-        // Since rates are based on USD, we can do a simple cross-multiplication
         const amountInUsd = amount / currentRates[from];
         return amountInUsd * currentRates[to];
     }, []);
@@ -171,17 +169,20 @@ export function CurrencyConverter() {
     };
     
     const exchangeRateText = useMemo(() => {
-        if (!rates) return "Loading rates...";
+        if (!rates || isLoading) return "Loading rates...";
+        
         const fromRate = rates[fromCurrency];
         const toRate = rates[toCurrency];
+
         if (!fromRate || !toRate) return "Rate unavailable";
 
         const rate = (1 / fromRate) * toRate;
         const fromSymbol = currencyList.find(c => c.code === fromCurrency)?.symbol || fromCurrency;
         const toSymbol = currencyList.find(c => c.code === toCurrency)?.symbol || toCurrency;
+        
         return `1 ${fromSymbol} = ${formatCurrency(rate)} ${toSymbol}`;
 
-    }, [rates, fromCurrency, toCurrency]);
+    }, [rates, fromCurrency, toCurrency, isLoading]);
 
     return (
         <Card className="bg-transparent shadow-lg w-full">
