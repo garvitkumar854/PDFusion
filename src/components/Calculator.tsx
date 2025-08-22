@@ -50,7 +50,7 @@ export function Calculator() {
 
   const calculate = useCallback((exp: string): string => {
     try {
-      const sanitizedExp = exp
+      let sanitizedExp = exp
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/--/g, '+')
@@ -58,12 +58,11 @@ export function Calculator() {
         .replace(/\+\+/g, '+')
         .replace(/-\+/g, '-');
         
-      if (/[+*/-]$/.test(sanitizedExp)) {
-        return calculate(sanitizedExp.slice(0, -1));
+      if (/[+/*-]$/.test(sanitizedExp)) {
+        sanitizedExp = sanitizedExp.slice(0, -1);
       }
 
-      // If expression is empty after sanitization (e.g. from just a "-"), return "0"
-      if (!sanitizedExp) {
+      if (!sanitizedExp || sanitizedExp === 'Error') {
         return "0";
       }
 
@@ -190,20 +189,6 @@ export function Calculator() {
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
         <div className="relative bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-48 flex flex-col justify-end overflow-hidden">
-            <AnimatePresence>
-              {history.length > 0 && !isFinal && (
-                  <motion.div
-                      className="text-sm text-muted-foreground break-all text-right"
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ duration: 0.3 }}
-                  >
-                      <p>{history[0].expression}</p>
-                      <p>= {history[0].result}</p>
-                  </motion.div>
-              )}
-            </AnimatePresence>
             <motion.div
                 className="font-bold break-all text-foreground"
                 layout
