@@ -79,7 +79,7 @@ CurrencySelector.displayName = 'CurrencySelector';
 export function CurrencyConverter() {
     const [rates, setRates] = useState<ExchangeRates | null>(null);
     const [fromCurrency, setFromCurrency] = useState("USD");
-    const [toCurrency, setToCurrency] = useState("EUR");
+    const [toCurrency, setToCurrency] = useState("INR");
     const [fromAmount, setFromAmount] = useState("1");
     const [toAmount, setToAmount] = useState("");
     const [lastEdited, setLastEdited] = useState<'from' | 'to'>('from');
@@ -92,29 +92,20 @@ export function CurrencyConverter() {
             setIsLoading(true);
             setError(null);
             try {
-                // Using a proxy to avoid CORS issues if run on a different domain.
-                const response = await fetch(`/api/proxy?url=${encodeURIComponent('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml')}`);
+                // Using a more frequently updated, free API
+                const response = await fetch(`https://open.er-api.com/v6/latest/USD`);
                 if (!response.ok) throw new Error('Failed to fetch rates');
                 
-                const xmlText = await response.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "application/xml");
-                
-                const newRates: ExchangeRates = { EUR: 1 };
-                const cubes = xmlDoc.getElementsByTagName('Cube');
-                
-                for (let i = 0; i < cubes.length; i++) {
-                    const currency = cubes[i].getAttribute('currency');
-                    const rate = cubes[i].getAttribute('rate');
-                    if (currency && rate) {
-                        newRates[currency] = parseFloat(rate);
-                    }
+                const data = await response.json();
+                if (data.result === 'error') {
+                    throw new Error(data['error-type'] || 'An unknown error occurred with the API');
                 }
-                setRates(newRates);
-            } catch (err) {
+
+                setRates(data.rates);
+            } catch (err: any) {
                 console.error(err);
                 setError("Could not load exchange rates. Please try again later.");
-                toast({ variant: 'destructive', title: 'Error', description: "Failed to load exchange rates."});
+                toast({ variant: 'destructive', title: 'Error', description: err.message || "Failed to load exchange rates."});
             } finally {
                 setIsLoading(false);
             }
@@ -127,8 +118,9 @@ export function CurrencyConverter() {
         if (!currentRates || !currentRates[from] || !currentRates[to]) {
             return null;
         }
-        const amountInEur = amount / currentRates[from];
-        return amountInEur * currentRates[to];
+        // Since rates are based on USD, we can do a simple cross-multiplication
+        const amountInUsd = amount / currentRates[from];
+        return amountInUsd * currentRates[to];
     }, []);
 
     useEffect(() => {
@@ -173,18 +165,9 @@ export function CurrencyConverter() {
     };
     
     const handleSwap = () => {
-        const tempCurrency = fromCurrency;
         setFromCurrency(toCurrency);
-        setToCurrency(tempCurrency);
-        
-        // Trigger re-calculation based on what was last edited
-        if (lastEdited === 'from') {
-           setLastEdited('from'); // keep it as from, but now the currencies are swapped
-           setFromAmount(fromAmount); // re-trigger the effect
-        } else {
-            setLastEdited('to'); // keep it as to
-            setToAmount(toAmount); // re-trigger effect
-        }
+        setToCurrency(fromCurrency);
+        setLastEdited(prev => prev === 'from' ? 'to' : 'from');
     };
     
     const exchangeRateText = useMemo(() => {
