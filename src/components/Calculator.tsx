@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,7 @@ export function Calculator() {
   const [result, setResult] = useState<string | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
   const [isResult, setIsResult] = useState(false);
+  const [lastEquation, setLastEquation] = useState<string | null>(null);
 
 
   const calculate = (first: number, second: number, op: string): number => {
@@ -57,6 +58,7 @@ export function Calculator() {
      } else {
        setInput(input === '0' ? value : input + value);
      }
+     setLastEquation(null);
   };
 
   const handleDecimal = () => {
@@ -66,6 +68,7 @@ export function Calculator() {
     } else if (!input.includes('.')) {
       setInput(input + '.');
     }
+    setLastEquation(null);
   }
 
   const handleOperator = (op: string) => {
@@ -80,6 +83,7 @@ export function Calculator() {
     }
     setOperator(op);
     setIsResult(true);
+    setLastEquation(null);
   };
   
   const handleEquals = () => {
@@ -87,10 +91,12 @@ export function Calculator() {
         const currentInput = parseFloat(input);
         const currentResult = parseFloat(result);
         const newResult = calculate(currentResult, currentInput, operator);
+        const equation = `${result} ${operator === '*' ? '×' : operator === '/' ? '÷' : operator} ${input} =`
         setResult(null);
         setOperator(null);
         setInput(String(newResult));
         setIsResult(true);
+        setLastEquation(equation);
     }
   };
 
@@ -99,29 +105,35 @@ export function Calculator() {
     setResult(null);
     setOperator(null);
     setIsResult(false);
+    setLastEquation(null);
   };
   
   const handleBackspace = () => {
     if (isResult) {
-      // Don't backspace on a result, it should be cleared or used in next operation
       return;
     }
     setInput(input.length > 1 ? input.slice(0, -1) : '0');
+     setLastEquation(null);
   };
 
   const handlePercentage = () => {
     const currentValue = parseFloat(input);
     const newValue = currentValue / 100;
     setInput(String(newValue));
+    setIsResult(true);
+    setLastEquation(null);
   };
 
 
   const getDisplayCalculation = () => {
-    if(operator && result !== null) {
+    if (lastEquation) {
+        return lastEquation;
+    }
+    if (operator && result !== null) {
       const displayOp = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
       return `${result} ${displayOp}`;
     }
-    return ' ';
+    return input;
   }
   
   const displayVariants = {
@@ -141,18 +153,21 @@ export function Calculator() {
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
         <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-32 flex flex-col justify-end">
-           <motion.div
-             key={input + (isResult ? '_res' : '')}
-             variants={isResult ? resultDisplayVariants : displayVariants}
-             initial="initial"
-             animate="animate"
-             className="text-4xl font-bold break-all"
-            >
-                {input}
-           </motion.div>
+           <AnimatePresence mode="wait">
+             <motion.div
+               key={input + (isResult ? '_res' : '')}
+               variants={isResult ? resultDisplayVariants : displayVariants}
+               initial="initial"
+               animate="animate"
+               exit="exit"
+               className="text-4xl font-bold break-all"
+              >
+                  {input}
+             </motion.div>
+           </AnimatePresence>
            <AnimatePresence>
             <motion.div
-                key={isResult ? getDisplayCalculation() : "calculation"}
+                key={getDisplayCalculation()}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 exit={{ opacity: 0 }}
@@ -194,3 +209,4 @@ export function Calculator() {
     </Card>
   );
 }
+
