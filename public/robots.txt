@@ -1,5 +1,6 @@
-# https://www.robotstxt.org/robotstxt.html
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+
 User-agent: *
 Allow: /
 
-Sitemap: https://pdfusion.vercel.app/sitemap.xml
+Sitemap: https://pdfusion.site/sitemap.xml

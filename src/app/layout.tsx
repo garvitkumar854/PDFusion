@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
+  creator: "Garvit Kumar",
+  keywords: [
+    "PDF", "PDF tools", "Merge PDF", "Split PDF", "Compress PDF", "PDF to JPG", "JPG to PDF", "Rotate PDF", "Add page numbers", "free pdf editor", "online pdf tools"
+  ],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -42,6 +46,39 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
     apple: "/icons/icon-192x192.png",
+  },
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: {
+      default: APP_DEFAULT_TITLE,
+      template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+    url: new URL('https://pdfusion.site'),
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "PDFusion Logo and Title",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: {
+      default: APP_DEFAULT_TITLE,
+      template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+    images: [
+      {
+        url: "/og-image.png",
+        alt: "PDFusion Logo and Title",
+      },
+    ],
+    creator: "@its_garvit__854_",
   },
 };
 
