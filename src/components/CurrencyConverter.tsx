@@ -134,23 +134,26 @@ export function CurrencyConverter() {
     useEffect(() => {
         if (!rates) return;
 
-        const amount = lastEdited === 'from' ? parseFloat(fromAmount) : parseFloat(toAmount);
-        if (isNaN(amount)) {
+        const amountStr = lastEdited === 'from' ? fromAmount : toAmount;
+        const amount = parseFloat(amountStr);
+
+        if (isNaN(amount) || amountStr === "") {
             if (lastEdited === 'from') setToAmount("");
             else setFromAmount("");
             return;
         }
+        
+        const sourceCurrency = lastEdited === 'from' ? fromCurrency : toCurrency;
+        const targetCurrency = lastEdited === 'from' ? toCurrency : fromCurrency;
 
-        const from = lastEdited === 'from' ? fromCurrency : toCurrency;
-        const to = lastEdited === 'from' ? toCurrency : fromCurrency;
-
-        const result = convert(amount, from, to, rates);
+        const result = convert(amount, sourceCurrency, targetCurrency, rates);
         
         if (result !== null) {
+            const formattedResult = formatCurrency(result);
             if (lastEdited === 'from') {
-                setToAmount(formatCurrency(result));
+                setToAmount(formattedResult);
             } else {
-                setFromAmount(formatCurrency(result));
+                setFromAmount(formattedResult);
             }
         } else {
              if (lastEdited === 'from') setToAmount("");
@@ -176,11 +179,11 @@ export function CurrencyConverter() {
         
         // Trigger re-calculation based on what was last edited
         if (lastEdited === 'from') {
-           setLastEdited('to');
-           setToAmount(fromAmount);
+           setLastEdited('from'); // keep it as from, but now the currencies are swapped
+           setFromAmount(fromAmount); // re-trigger the effect
         } else {
-            setLastEdited('from');
-            setFromAmount(toAmount);
+            setLastEdited('to'); // keep it as to
+            setToAmount(toAmount); // re-trigger effect
         }
     };
     
