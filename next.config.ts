@@ -9,6 +9,19 @@ const withPWA = withPWAInit({
   skipWaiting: false,
   disable: process.env.NODE_ENV === 'development',
   scope: '/',
+  swSrc: 'service-worker.js', // Ensure you have a custom service worker file if needed
+  exclude: [
+    ({ asset, compilation }) => {
+      // Exclude files that are not needed for offline caching
+      if (
+        asset.name.startsWith("server/") ||
+        asset.name.match(/^((app-pages-manifest|build-manifest|react-loadable-manifest|middleware-manifest|next-font-manifest)\.js(on)?|sitemap\.xml)$/)
+      ) {
+        return true;
+      }
+      return false;
+    },
+  ],
   runtimeCaching: [
     {
       urlPattern: ({ url, sameOrigin }) => {
