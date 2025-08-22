@@ -22,7 +22,7 @@ const APP_TITLE_TEMPLATE = "%s | PDFusion";
 const APP_DESCRIPTION = "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://pdfusion.site'),
+  metadataBase: new URL('https://pdf-fusion.vercel.app'),
   title: {
     default: APP_DEFAULT_TITLE,
     template: APP_TITLE_TEMPLATE,
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
       template: APP_TITLE_TEMPLATE,
     },
     description: APP_DESCRIPTION,
-    url: new URL('https://pdfusion.site'),
+    url: new URL('https://pdf-fusion.vercel.app'),
     images: [
       {
         url: "/og-image.png",

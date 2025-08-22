@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://pdfusion.site';
+  const baseUrl = 'https://pdf-fusion.vercel.app';
 
   const staticRoutes = [
     { url: `${baseUrl}/`, priority: 1.0 },
