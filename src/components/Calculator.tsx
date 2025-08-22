@@ -183,7 +183,11 @@ export function Calculator() {
   };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
-  const showResult = (expression !== '0' && expression !== result && !isFinal) || (isFinal && expression !== result);
+  const showResult = (expression !== '0' && expression !== result) || isFinal;
+  
+  const operatorButtonsClass = "text-primary bg-primary/10 hover:bg-primary/20";
+  const numberButtonVariant = "ghost" as const;
+
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
@@ -199,45 +203,50 @@ export function Calculator() {
             >
                 {expression}
             </motion.div>
-            <motion.div
-                className="font-bold break-all text-muted-foreground"
-                layout
-                variants={resultVariants}
-                initial="initial"
-                animate="animate"
-                transition={resultVariants.transition}
-            >
-                 {showResult && `= ${result}`}
-            </motion.div>
+            <AnimatePresence>
+              {showResult && (
+                <motion.div
+                    className="font-bold break-all"
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    variants={resultVariants}
+                    transition={resultVariants.transition}
+                >
+                    = {result}
+                </motion.div>
+              )}
+            </AnimatePresence>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
           <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
             {clearButtonLabel}
           </CalculatorButton>
-          <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
+          <CalculatorButton onClick={handleBackspace} variant={numberButtonVariant} className={operatorButtonsClass}><Eraser className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={handlePercentage} variant={numberButtonVariant} className={operatorButtonsClass}><Percent className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('÷')} variant={numberButtonVariant} className={operatorButtonsClass}>÷</CalculatorButton>
           
-          <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('7')} variant={numberButtonVariant}>7</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('8')} variant={numberButtonVariant}>8</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('9')} variant={numberButtonVariant}>9</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('×')} variant={numberButtonVariant} className={operatorButtonsClass}>×</CalculatorButton>
 
-          <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('6')}>6</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('-')} variant="default" className="bg-primary/90">−</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('4')} variant={numberButtonVariant}>4</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('5')} variant={numberButtonVariant}>5</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('6')} variant={numberButtonVariant}>6</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('-')} variant={numberButtonVariant} className={operatorButtonsClass}>−</CalculatorButton>
 
-          <CalculatorButton onClick={() => handleInput('1')}>1</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('2')}>2</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('1')} variant={numberButtonVariant}>1</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('2')} variant={numberButtonVariant}>2</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('3')} variant={numberButtonVariant}>3</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('+')} variant={numberButtonVariant} className={operatorButtonsClass}>+</CalculatorButton>
 
           <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
               <SheetTrigger asChild>
                   <div className="col-span-1">
-                    <CalculatorButton variant="ghost" className="text-primary"><History className="w-6 h-6"/></CalculatorButton>
+                    <CalculatorButton variant={numberButtonVariant} className={operatorButtonsClass}><History className="w-6 h-6"/></CalculatorButton>
                   </div>
               </SheetTrigger>
               <SheetContent className="flex flex-col p-0">
@@ -265,9 +274,9 @@ export function Calculator() {
                   </div>
               </SheetContent>
           </Sheet>
-          <CalculatorButton onClick={() => handleInput('0')}>0</CalculatorButton>
-          <CalculatorButton onClick={handleDecimal}>.</CalculatorButton>
-          <CalculatorButton onClick={handleEquals} variant="default">=</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('0')} variant={numberButtonVariant}>0</CalculatorButton>
+          <CalculatorButton onClick={handleDecimal} variant={numberButtonVariant}>.</CalculatorButton>
+          <CalculatorButton onClick={handleEquals} variant={numberButtonVariant} className={cn(operatorButtonsClass, "bg-primary/80 hover:bg-primary text-primary-foreground")}>=</CalculatorButton>
         </div>
       </CardContent>
     </Card>
