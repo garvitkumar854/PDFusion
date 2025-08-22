@@ -177,7 +177,7 @@ export function Calculator() {
   };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
-  const showResult = expression !== '0' || isFinal;
+  const showResult = (expression !== '0' && expression !== result) || isFinal;
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
