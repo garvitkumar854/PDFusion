@@ -36,18 +36,27 @@ const CalculatorButton = ({
 export function Calculator() {
   const [expression, setExpression] = useState('0');
   const [result, setResult] = useState('0');
+  const [history, setHistory] = useState('');
   const [isFinal, setIsFinal] = useState(false);
 
   const calculate = (exp: string): string => {
     try {
-      // Replace display symbols with JS-compatible ones
-      const sanitizedExp = exp.replace(/×/g, '*').replace(/÷/g, '/');
-      // Use Function to avoid eval security risks
+      const sanitizedExp = exp
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/--/g, '+')
+        .replace(/\+-/g, '-')
+        .replace(/\+\+/g, '+')
+        .replace(/-\+/g, '-');
+        
+      if (/[*÷]$/.test(sanitizedExp)) {
+        return calculate(sanitizedExp.slice(0, -1));
+      }
+
       const calculatedResult = new Function('return ' + sanitizedExp)();
-      // Handle floating point inaccuracies
       return String(parseFloat(calculatedResult.toPrecision(15)));
     } catch (error) {
-      return result; // Return last valid result on error
+      return result; 
     }
   };
   
@@ -58,8 +67,9 @@ export function Calculator() {
   }, [expression, isFinal]);
 
 
-  const handleInput = (value: string) => {
+ const handleInput = (value: string) => {
     if (isFinal) {
+      setHistory(`${expression} = ${result}`);
       setExpression(value);
       setIsFinal(false);
     } else {
@@ -68,9 +78,11 @@ export function Calculator() {
   };
   
   const handleOperator = (op: string) => {
-    setIsFinal(false);
+    if (isFinal) {
+        setHistory('');
+        setIsFinal(false);
+    }
     setExpression(prev => {
-        // Prevent multiple operators in a row
         const lastChar = prev.slice(-1);
         if (['+', '-', '×', '÷'].includes(lastChar)) {
             return prev.slice(0, -1) + op;
@@ -80,11 +92,16 @@ export function Calculator() {
   };
 
   const handleEquals = () => {
+    if (isFinal) return;
+    setResult(calculate(expression));
     setIsFinal(true);
-    setExpression(result);
   };
 
-  const handleClearAll = () => {
+  const handleClear = () => {
+    // If expression is already '0', it's an "All Clear"
+    if (expression === '0') {
+        setHistory('');
+    }
     setExpression('0');
     setResult('0');
     setIsFinal(false);
@@ -92,7 +109,7 @@ export function Calculator() {
   
   const handleBackspace = () => {
     if (isFinal) {
-        handleClearAll();
+        handleClear();
         return;
     }
     setExpression(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
@@ -102,9 +119,7 @@ export function Calculator() {
      if (isFinal) {
         setExpression(prev => String(parseFloat(prev) / 100));
      } else {
-        // More complex logic would be needed for in-expression percentages
-        // For now, it works on the final result or a single number
-        setExpression(prev => String(parseFloat(prev) / 100));
+        setExpression(prev => String(parseFloat(calculate(prev)) / 100));
      }
      setIsFinal(false);
   };
@@ -115,7 +130,6 @@ export function Calculator() {
       setIsFinal(false);
       return;
     }
-    // Logic to prevent multiple decimals in one number segment
     const segments = expression.split(/([+\-×÷])/);
     const lastSegment = segments[segments.length - 1];
     if (!lastSegment.includes('.')) {
@@ -124,20 +138,33 @@ export function Calculator() {
   };
 
   const displayVariants = {
-    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 }),
-    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 }),
+    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem' }),
+    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem' }),
   };
 
   const resultVariants = {
-    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 }),
-    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 }),
+    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem' }),
+    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem' }),
   };
 
+  const clearButtonLabel = expression === '0' && !history ? 'AC' : 'C';
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
-        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-36 flex flex-col justify-end">
+        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-40 flex flex-col justify-end overflow-hidden">
+            <AnimatePresence>
+              {history && (
+                  <motion.div
+                      className="font-mono text-sm text-muted-foreground break-all"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                  >
+                      {history}
+                  </motion.div>
+              )}
+            </AnimatePresence>
             <motion.div
                 className="font-bold break-all text-foreground"
                 custom={isFinal}
@@ -161,7 +188,9 @@ export function Calculator() {
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          <CalculatorButton onClick={handleClearAll} variant="destructive">C</CalculatorButton>
+          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
+            {clearButtonLabel}
+          </CalculatorButton>
           <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
