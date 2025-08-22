@@ -58,8 +58,13 @@ export function Calculator() {
         .replace(/\+\+/g, '+')
         .replace(/-\+/g, '-');
         
-      if (/[*÷]$/.test(sanitizedExp)) {
+      if (/[+*/-]$/.test(sanitizedExp)) {
         return calculate(sanitizedExp.slice(0, -1));
+      }
+
+      // If expression is empty after sanitization (e.g. from just a "-"), return "0"
+      if (!sanitizedExp) {
+        return "0";
       }
 
       const calculatedResult = new Function('return ' + sanitizedExp)();
@@ -169,15 +174,17 @@ export function Calculator() {
   const displayVariants = {
     initial: { fontSize: '2.5rem', opacity: 1 },
     animate: { fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 },
+    transition: { type: 'spring', stiffness: 300, damping: 30 }
   };
 
   const resultVariants = {
     initial: { fontSize: '1.5rem', opacity: 0.7 },
     animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7, color: isFinal ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' },
+    transition: { type: 'spring', stiffness: 300, damping: 30 }
   };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
-  const showResult = (expression !== '0' && expression !== result) || isFinal;
+  const showResult = (expression !== '0' && expression !== result && !isFinal) || (isFinal && expression !== result);
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
@@ -203,7 +210,7 @@ export function Calculator() {
                 variants={displayVariants}
                 initial="initial"
                 animate="animate"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={displayVariants.transition}
             >
                 {expression}
             </motion.div>
@@ -213,35 +220,13 @@ export function Calculator() {
                 variants={resultVariants}
                 initial="initial"
                 animate="animate"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={resultVariants.transition}
             >
-                {showResult && `= ${result}`}
+                 {showResult && `= ${result}`}
             </motion.div>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
-            {clearButtonLabel}
-          </CalculatorButton>
-          <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
-          
-          <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
-
-          <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('6')}>6</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('-')} variant="default" className="bg-primary/90">−</CalculatorButton>
-
-          <CalculatorButton onClick={() => handleInput('1')}>1</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('2')}>2</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
-
            <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
               <SheetTrigger asChild>
                   <div className="col-span-1">
@@ -273,6 +258,28 @@ export function Calculator() {
                   </div>
               </SheetContent>
           </Sheet>
+          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
+            {clearButtonLabel}
+          </CalculatorButton>
+          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
+          
+          <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
+
+          <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('6')}>6</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('-')} variant="default" className="bg-primary/90">−</CalculatorButton>
+
+          <CalculatorButton onClick={() => handleInput('1')}>1</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('2')}>2</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
+
+          <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={() => handleInput('0')}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal}>.</CalculatorButton>
           <CalculatorButton onClick={handleEquals} variant="default">=</CalculatorButton>
