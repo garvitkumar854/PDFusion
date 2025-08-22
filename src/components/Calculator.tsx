@@ -212,7 +212,29 @@ export function Calculator() {
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-           <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
+          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
+            {clearButtonLabel}
+          </CalculatorButton>
+          <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
+          
+          <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
+
+          <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('6')}>6</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('-')} variant="default" className="bg-primary/90">−</CalculatorButton>
+
+          <CalculatorButton onClick={() => handleInput('1')}>1</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('2')}>2</CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
+
+          <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
               <SheetTrigger asChild>
                   <div className="col-span-1">
                     <CalculatorButton variant="ghost" className="text-primary"><History className="w-6 h-6"/></CalculatorButton>
@@ -243,28 +265,6 @@ export function Calculator() {
                   </div>
               </SheetContent>
           </Sheet>
-          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
-            {clearButtonLabel}
-          </CalculatorButton>
-          <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
-          
-          <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
-
-          <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('6')}>6</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('-')} variant="default" className="bg-primary/90">−</CalculatorButton>
-
-          <CalculatorButton onClick={() => handleInput('1')}>1</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('2')}>2</CalculatorButton>
-          <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
-
-          <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={() => handleInput('0')}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal}>.</CalculatorButton>
           <CalculatorButton onClick={handleEquals} variant="default">=</CalculatorButton>
