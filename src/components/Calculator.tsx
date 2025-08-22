@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eraser, Percent } from 'lucide-react';
+import { Eraser, Percent, History, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+
+type HistoryEntry = {
+    expression: string;
+    result: string;
+}
 
 const CalculatorButton = ({
   children,
@@ -36,8 +42,9 @@ const CalculatorButton = ({
 export function Calculator() {
   const [expression, setExpression] = useState('0');
   const [result, setResult] = useState('0');
-  const [history, setHistory] = useState('');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isFinal, setIsFinal] = useState(false);
+  const [showHistorySheet, setShowHistorySheet] = useState(false);
 
   const calculate = (exp: string): string => {
     try {
@@ -54,53 +61,61 @@ export function Calculator() {
       }
 
       const calculatedResult = new Function('return ' + sanitizedExp)();
+      if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
+        return "Error";
+      }
       return String(parseFloat(calculatedResult.toPrecision(15)));
     } catch (error) {
-      return result; 
+      return "Error";
     }
   };
   
   useEffect(() => {
     if (!isFinal) {
-      setResult(calculate(expression));
+      const calculatedResult = calculate(expression);
+      setResult(calculatedResult);
     }
   }, [expression, isFinal]);
 
 
  const handleInput = (value: string) => {
     if (isFinal) {
-      setHistory(`${expression} = ${result}`);
-      setExpression(value);
-      setIsFinal(false);
+        setHistory(prev => [{ expression, result }, ...prev]);
+        setExpression(value);
+        setIsFinal(false);
     } else {
-      setExpression(prev => (prev === '0' ? value : prev + value));
+        setExpression(prev => (prev === '0' && value !== '.' ? value : prev + value));
     }
   };
   
   const handleOperator = (op: string) => {
+    if (result === 'Error') handleClear();
+
     if (isFinal) {
-        setHistory('');
+        setHistory(prev => [{ expression, result }, ...prev]);
+        setExpression(result + op);
         setIsFinal(false);
+    } else {
+        setExpression(prev => {
+            const lastChar = prev.slice(-1);
+            if (['+', '-', '×', '÷'].includes(lastChar)) {
+                return prev.slice(0, -1) + op;
+            }
+            return prev + op;
+        });
     }
-    setExpression(prev => {
-        const lastChar = prev.slice(-1);
-        if (['+', '-', '×', '÷'].includes(lastChar)) {
-            return prev.slice(0, -1) + op;
-        }
-        return prev + op;
-    });
   };
 
   const handleEquals = () => {
-    if (isFinal) return;
+    if (isFinal || result === 'Error') return;
     setResult(calculate(expression));
     setIsFinal(true);
   };
 
   const handleClear = () => {
-    // If expression is already '0', it's an "All Clear"
-    if (expression === '0') {
-        setHistory('');
+    const isAllClear = expression === '0' && history.length === 0;
+    if (expression === '0' && !isAllClear) {
+        setHistory([]);
     }
     setExpression('0');
     setResult('0');
@@ -108,16 +123,22 @@ export function Calculator() {
   };
   
   const handleBackspace = () => {
-    if (isFinal) {
+    if (result === "Error") {
         handleClear();
+        return;
+    }
+    if (isFinal) {
+        setExpression(result);
+        setIsFinal(false);
         return;
     }
     setExpression(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
   };
 
   const handlePercentage = () => {
+     if (result === "Error") return;
      if (isFinal) {
-        setExpression(prev => String(parseFloat(prev) / 100));
+        setExpression(String(parseFloat(result) / 100));
      } else {
         setExpression(prev => String(parseFloat(calculate(prev)) / 100));
      }
@@ -126,6 +147,7 @@ export function Calculator() {
 
   const handleDecimal = () => {
     if (isFinal) {
+      setHistory(prev => [{ expression, result }, ...prev]);
       setExpression('0.');
       setIsFinal(false);
       return;
@@ -138,49 +160,50 @@ export function Calculator() {
   };
 
   const displayVariants = {
-    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem' }),
-    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem' }),
+    initial: { fontSize: '1.5rem', opacity: 0.7 },
+    animate: { fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 },
   };
 
   const resultVariants = {
-    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem' }),
-    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem' }),
+    initial: { fontSize: '2.5rem', opacity: 1 },
+    animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 },
   };
 
-  const clearButtonLabel = expression === '0' && !history ? 'AC' : 'C';
+  const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
-        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-40 flex flex-col justify-end overflow-hidden">
+        <div className="relative bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-44 flex flex-col justify-end overflow-hidden">
             <AnimatePresence>
-              {history && (
+                {history.length > 0 && (
                   <motion.div
-                      className="font-mono text-sm text-muted-foreground break-all"
-                      initial={{ opacity: 0, y: -10 }}
+                      className="text-sm text-muted-foreground break-all text-right"
+                      initial={{ opacity: 0, y: -20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.3 }}
                   >
-                      {history}
+                      <div>{history[0].expression}</div>
+                      <div>= {history[0].result}</div>
                   </motion.div>
               )}
             </AnimatePresence>
             <motion.div
                 className="font-bold break-all text-foreground"
-                custom={isFinal}
+                layout
+                variants={displayVariants}
                 initial="initial"
                 animate="animate"
-                variants={displayVariants}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
                 {expression}
             </motion.div>
             <motion.div
                 className="font-bold break-all text-muted-foreground"
-                custom={isFinal}
+                layout
+                variants={resultVariants}
                 initial="initial"
                 animate="animate"
-                variants={resultVariants}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
                 = {result}
@@ -188,9 +211,35 @@ export function Calculator() {
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all">
-            {clearButtonLabel}
-          </CalculatorButton>
+          <Sheet open={showHistorySheet} onOpenChange={setShowHistorySheet}>
+              <SheetTrigger asChild>
+                  <CalculatorButton variant="ghost" className="text-primary"><History className="w-6 h-6"/></CalculatorButton>
+              </SheetTrigger>
+              <SheetContent className="flex flex-col p-0">
+                  <SheetHeader className="p-6 pb-2 text-left">
+                      <SheetTitle>History</SheetTitle>
+                  </SheetHeader>
+                  {history.length > 0 ? (
+                      <div className="flex-1 overflow-y-auto px-6">
+                        {history.map((entry, index) => (
+                           <div key={index} className="border-b py-3 text-right">
+                               <p className="text-muted-foreground text-sm">{entry.expression}</p>
+                               <p className="font-bold text-lg">= {entry.result}</p>
+                           </div>
+                        ))}
+                      </div>
+                  ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                          <History className="w-12 h-12 mb-4"/>
+                          <p>No history yet.</p>
+                          <p className="text-sm">Your past calculations will appear here.</p>
+                      </div>
+                  )}
+                  <div className="p-4 border-t">
+                      <Button variant="outline" className="w-full" onClick={() => setHistory([])}>Clear History</Button>
+                  </div>
+              </SheetContent>
+          </Sheet>
           <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
@@ -210,9 +259,10 @@ export function Calculator() {
           <CalculatorButton onClick={() => handleInput('3')}>3</CalculatorButton>
           <CalculatorButton onClick={() => handleOperator('+')} variant="default" className="bg-primary/90">+</CalculatorButton>
 
-          <div className="col-span-2">
-            <CalculatorButton onClick={() => handleInput('0')}>0</CalculatorButton>
-          </div>
+          <CalculatorButton onClick={handleClear} variant="destructive" className="transition-all col-span-1">
+            {clearButtonLabel}
+          </CalculatorButton>
+          <CalculatorButton onClick={() => handleInput('0')}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal}>.</CalculatorButton>
           <CalculatorButton onClick={handleEquals} variant="default">=</CalculatorButton>
         </div>
