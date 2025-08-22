@@ -93,7 +93,7 @@ export function CurrencyConverter() {
             setError(null);
             try {
                 // Using a proxy to avoid CORS issues if run on a different domain.
-                const response = await fetch('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml');
+                const response = await fetch(`/api/proxy?url=${encodeURIComponent('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml')}`);
                 if (!response.ok) throw new Error('Failed to fetch rates');
                 
                 const xmlText = await response.text();
