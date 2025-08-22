@@ -183,8 +183,8 @@ export function Calculator() {
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
   const showResult = expression !== '0' || isFinal;
   
-  const operatorButtonsClass = "bg-transparent text-primary hover:bg-primary/10";
-  const numberButtonsClass = "bg-transparent hover:bg-muted";
+  const operatorButtonsClass = "bg-transparent text-primary hover:bg-primary/90 hover:text-primary-foreground";
+  const numberButtonsClass = "bg-transparent hover:bg-primary/90 hover:text-primary-foreground";
   const equalsButtonClass = "bg-primary text-primary-foreground hover:bg-primary/90";
 
   return (
