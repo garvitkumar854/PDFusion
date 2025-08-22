@@ -84,12 +84,12 @@ export function Calculator() {
   }, [expression, isFinal, calculate]);
 
 
- const handleInput = (value: string) => {
+  const handleInput = (value: string) => {
     if (isFinal) {
-        setHistory(prev => [{ expression: expression, result: result }, ...prev]);
-        setExpression(value);
-        setIsFinal(false);
-        return;
+      setHistory(prev => [{ expression: expression, result: result }, ...prev]);
+      setExpression(value);
+      setIsFinal(false);
+      return;
     }
     
     if (expression === '0' && value === '0') return;
@@ -119,7 +119,8 @@ export function Calculator() {
 
   const handleEquals = () => {
     if (isFinal || result === 'Error') return;
-    setResult(calculate(expression));
+    const finalResult = calculate(expression);
+    setResult(finalResult);
     setIsFinal(true);
   };
 
@@ -169,18 +170,18 @@ export function Calculator() {
         setExpression(prev => prev + '.');
     }
   };
-
+  
   const displayVariants = {
     initial: { fontSize: '2.5rem', opacity: 1 },
-    animate: { fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 },
-    transition: { type: 'spring', stiffness: 350, damping: 35 }
+    final: { fontSize: '1.5rem', opacity: 0.7 },
   };
 
   const resultVariants = {
-    initial: { fontSize: '1.5rem', opacity: 0.7 },
-    animate: { fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7, color: isFinal ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' },
-    transition: { type: 'spring', stiffness: 350, damping: 35 }
+    initial: { fontSize: '1.5rem', opacity: 0.7, color: 'hsl(var(--muted-foreground))' },
+    final: { fontSize: '2.5rem', opacity: 1, color: 'hsl(var(--foreground))' },
   };
+
+  const transition = { type: 'spring', stiffness: 350, damping: 30 };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
   const showResult = (expression !== '0' && expression !== result) || isFinal;
@@ -198,8 +199,8 @@ export function Calculator() {
                 layout
                 variants={displayVariants}
                 initial="initial"
-                animate="animate"
-                transition={displayVariants.transition}
+                animate={isFinal ? "final" : "initial"}
+                transition={transition}
             >
                 {expression}
             </motion.div>
@@ -208,11 +209,11 @@ export function Calculator() {
                 <motion.div
                     className="font-bold break-all"
                     layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
                     variants={resultVariants}
-                    transition={resultVariants.transition}
+                    initial="initial"
+                    animate={isFinal ? "final" : "initial"}
+                    exit={{ opacity: 0 }}
+                    transition={transition}
                 >
                     = {result}
                 </motion.div>
@@ -276,7 +277,7 @@ export function Calculator() {
           </Sheet>
           <CalculatorButton onClick={() => handleInput('0')} variant={'ghost'} className={numberButtonsClass}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal} variant={'ghost'} className={numberButtonsClass}>.</CalculatorButton>
-          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary", operatorButtonsClass)}>=</CalculatorButton>
+          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary hover:bg-primary", operatorButtonsClass)}>=</CalculatorButton>
         </div>
       </CardContent>
     </Card>
