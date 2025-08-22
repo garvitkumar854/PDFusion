@@ -34,152 +34,142 @@ const CalculatorButton = ({
 );
 
 export function Calculator() {
-  const [input, setInput] = useState('0');
-  const [result, setResult] = useState<string | null>(null);
-  const [operator, setOperator] = useState<string | null>(null);
-  const [isResult, setIsResult] = useState(false);
-  const [lastEquation, setLastEquation] = useState<string | null>(null);
+  const [expression, setExpression] = useState('0');
+  const [result, setResult] = useState('0');
+  const [isFinal, setIsFinal] = useState(false);
 
-
-  const calculate = (first: number, second: number, op: string): number => {
-    switch (op) {
-      case '+': return first + second;
-      case '-': return first - second;
-      case '*': return first * second;
-      case '/': return first / second;
-      default: return second;
+  const calculate = (exp: string): string => {
+    try {
+      // Replace display symbols with JS-compatible ones
+      const sanitizedExp = exp.replace(/×/g, '*').replace(/÷/g, '/');
+      // Use Function to avoid eval security risks
+      const calculatedResult = new Function('return ' + sanitizedExp)();
+      // Handle floating point inaccuracies
+      return String(parseFloat(calculatedResult.toPrecision(15)));
+    } catch (error) {
+      return result; // Return last valid result on error
     }
-  };
-
-  const handleInput = (value: string) => {
-     if (isResult) {
-       setInput(value);
-       setIsResult(false);
-     } else {
-       setInput(input === '0' ? value : input + value);
-     }
-     setLastEquation(null);
-  };
-
-  const handleDecimal = () => {
-    if (isResult) {
-      setInput('0.');
-      setIsResult(false);
-    } else if (!input.includes('.')) {
-      setInput(input + '.');
-    }
-    setLastEquation(null);
-  }
-
-  const handleOperator = (op: string) => {
-    if (result !== null && operator && !isResult && input !== '0') {
-        const currentInput = parseFloat(input);
-        const currentResult = parseFloat(result);
-        const newResult = calculate(currentResult, currentInput, operator);
-        setResult(String(newResult));
-        setInput(String(newResult));
-    } else {
-       setResult(input);
-    }
-    setOperator(op);
-    setIsResult(true);
-    setLastEquation(null);
   };
   
-  const handleEquals = () => {
-    if (operator && result !== null) {
-        const currentInput = parseFloat(input);
-        const currentResult = parseFloat(result);
-        const newResult = calculate(currentResult, currentInput, operator);
-        const equation = `${result} ${operator === '*' ? '×' : operator === '/' ? '÷' : operator} ${input} =`
-        setResult(null);
-        setOperator(null);
-        setInput(String(newResult));
-        setIsResult(true);
-        setLastEquation(equation);
+  useEffect(() => {
+    if (!isFinal) {
+      setResult(calculate(expression));
     }
+  }, [expression, isFinal]);
+
+
+  const handleInput = (value: string) => {
+    if (isFinal) {
+      setExpression(value);
+      setIsFinal(false);
+    } else {
+      setExpression(prev => (prev === '0' ? value : prev + value));
+    }
+  };
+  
+  const handleOperator = (op: string) => {
+    setIsFinal(false);
+    setExpression(prev => {
+        // Prevent multiple operators in a row
+        const lastChar = prev.slice(-1);
+        if (['+', '-', '×', '÷'].includes(lastChar)) {
+            return prev.slice(0, -1) + op;
+        }
+        return prev + op;
+    });
+  };
+
+  const handleEquals = () => {
+    setIsFinal(true);
+    setExpression(result);
   };
 
   const handleClearAll = () => {
-    setInput('0');
-    setResult(null);
-    setOperator(null);
-    setIsResult(false);
-    setLastEquation(null);
+    setExpression('0');
+    setResult('0');
+    setIsFinal(false);
   };
   
   const handleBackspace = () => {
-    if (isResult) {
-      return;
+    if (isFinal) {
+        handleClearAll();
+        return;
     }
-    setInput(input.length > 1 ? input.slice(0, -1) : '0');
-     setLastEquation(null);
+    setExpression(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
   };
 
   const handlePercentage = () => {
-    const currentValue = parseFloat(input);
-    const newValue = currentValue / 100;
-    setInput(String(newValue));
-    setIsResult(true);
-    setLastEquation(null);
+     if (isFinal) {
+        setExpression(prev => String(parseFloat(prev) / 100));
+     } else {
+        // More complex logic would be needed for in-expression percentages
+        // For now, it works on the final result or a single number
+        setExpression(prev => String(parseFloat(prev) / 100));
+     }
+     setIsFinal(false);
   };
 
-  const getDisplayCalculation = () => {
-    if (lastEquation) {
-        return lastEquation;
+  const handleDecimal = () => {
+    if (isFinal) {
+      setExpression('0.');
+      setIsFinal(false);
+      return;
     }
-    if (operator && result !== null) {
-      const displayOp = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
-      return `${result} ${displayOp}`;
+    // Logic to prevent multiple decimals in one number segment
+    const segments = expression.split(/([+\-×÷])/);
+    const lastSegment = segments[segments.length - 1];
+    if (!lastSegment.includes('.')) {
+        setExpression(prev => prev + '.');
     }
-    return '';
-  }
-  
-  const mainDisplayVariants = {
-    initial: { y: 15, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
-    exit: { y: -15, opacity: 0, transition: { duration: 0.2 } },
   };
+
+  const displayVariants = {
+    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 }),
+    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '1.5rem' : '2.5rem', opacity: isFinal ? 0.7 : 1 }),
+  };
+
+  const resultVariants = {
+    initial: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 }),
+    animate: (isFinal: boolean) => ({ fontSize: isFinal ? '2.5rem' : '1.5rem', opacity: isFinal ? 1 : 0.7 }),
+  };
+
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
       <CardContent className="p-0">
-        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-32 flex flex-col justify-end">
-           <AnimatePresence mode="wait">
+        <div className="bg-muted text-right rounded-lg p-4 mb-4 shadow-inner h-36 flex flex-col justify-end">
             <motion.div
-                key={getDisplayCalculation()}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 0.5, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="text-lg h-6"
+                className="font-bold break-all text-foreground"
+                custom={isFinal}
+                initial="initial"
+                animate="animate"
+                variants={displayVariants}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-                { getDisplayCalculation() }
+                {expression}
             </motion.div>
-           </AnimatePresence>
-            <AnimatePresence mode="wait">
-             <motion.div
-               key={input + (isResult ? '_res' : '')}
-               variants={mainDisplayVariants}
-               initial="initial"
-               animate="animate"
-               exit="exit"
-               className="text-4xl font-bold break-all"
-              >
-                  {input}
-             </motion.div>
-           </AnimatePresence>
+            <motion.div
+                className="font-bold break-all text-muted-foreground"
+                custom={isFinal}
+                initial="initial"
+                animate="animate"
+                variants={resultVariants}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+                = {result}
+            </motion.div>
         </div>
 
         <div className="grid grid-cols-4 gap-2">
           <CalculatorButton onClick={handleClearAll} variant="destructive">C</CalculatorButton>
           <CalculatorButton onClick={handleBackspace}><Eraser className="w-6 h-6"/></CalculatorButton>
           <CalculatorButton onClick={handlePercentage}><Percent className="w-6 h-6"/></CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('/')} variant="default" className="bg-primary/90">÷</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('÷')} variant="default" className="bg-primary/90">÷</CalculatorButton>
           
           <CalculatorButton onClick={() => handleInput('7')}>7</CalculatorButton>
           <CalculatorButton onClick={() => handleInput('8')}>8</CalculatorButton>
           <CalculatorButton onClick={() => handleInput('9')}>9</CalculatorButton>
-          <CalculatorButton onClick={() => handleOperator('*')} variant="default" className="bg-primary/90">×</CalculatorButton>
+          <CalculatorButton onClick={() => handleOperator('×')} variant="default" className="bg-primary/90">×</CalculatorButton>
 
           <CalculatorButton onClick={() => handleInput('4')}>4</CalculatorButton>
           <CalculatorButton onClick={() => handleInput('5')}>5</CalculatorButton>
