@@ -86,7 +86,6 @@ export function Calculator() {
 
   const handleInput = (value: string) => {
     if (isFinal) {
-      setHistory(prev => [{ expression: expression, result: result }, ...prev]);
       setExpression(value);
       setIsFinal(false);
       return;
@@ -103,7 +102,6 @@ export function Calculator() {
     }
 
     if (isFinal) {
-        setHistory(prev => [{ expression: expression, result: result }, ...prev]);
         setExpression(result + op);
         setIsFinal(false);
     } else {
@@ -120,13 +118,13 @@ export function Calculator() {
   const handleEquals = () => {
     if (isFinal || result === 'Error') return;
     const finalResult = calculate(expression);
+    setHistory(prev => [{ expression: expression, result: finalResult }, ...prev]);
     setResult(finalResult);
     setIsFinal(true);
   };
 
   const handleClear = () => {
-    const isAllClear = expression === '0' && history.length === 0;
-    if (expression === '0' && !isAllClear) {
+    if (expression === '0') {
         setHistory([]);
     }
     setExpression('0');
@@ -159,7 +157,6 @@ export function Calculator() {
 
   const handleDecimal = () => {
     if (isFinal) {
-      setHistory(prev => [{ expression: expression, result: result }, ...prev]);
       setExpression('0.');
       setIsFinal(false);
       return;
@@ -184,11 +181,11 @@ export function Calculator() {
   const transition = { type: 'spring', stiffness: 350, damping: 30 };
 
   const clearButtonLabel = expression === '0' && history.length === 0 ? 'AC' : 'C';
-  const showResult = (expression !== '0' && expression !== result) || isFinal;
+  const showResult = expression !== '0' || isFinal;
   
-  const operatorButtonsClass = "bg-transparent text-primary hover:bg-primary hover:text-primary-foreground";
-  const numberButtonsClass = "bg-transparent hover:bg-primary hover:text-primary-foreground";
-
+  const operatorButtonsClass = "bg-transparent text-primary hover:bg-primary/10";
+  const numberButtonsClass = "bg-transparent hover:bg-muted";
+  const equalsButtonClass = "bg-primary text-primary-foreground hover:bg-primary/90";
 
   return (
     <Card className="bg-transparent shadow-lg p-4">
@@ -277,7 +274,7 @@ export function Calculator() {
           </Sheet>
           <CalculatorButton onClick={() => handleInput('0')} variant={'ghost'} className={numberButtonsClass}>0</CalculatorButton>
           <CalculatorButton onClick={handleDecimal} variant={'ghost'} className={numberButtonsClass}>.</CalculatorButton>
-          <CalculatorButton onClick={handleEquals} variant={'ghost'} className={cn("text-primary hover:bg-primary", operatorButtonsClass)}>=</CalculatorButton>
+          <CalculatorButton onClick={handleEquals} variant={'default'} className={cn("hover:bg-primary/90", equalsButtonClass)}>=</CalculatorButton>
         </div>
       </CardContent>
     </Card>
