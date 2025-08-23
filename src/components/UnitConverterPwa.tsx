@@ -68,7 +68,7 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
                 const disabled = isButtonDisabled(key);
                 
                 let buttonStyle = 'text-foreground';
-                if (key === 'AC') buttonStyle = "bg-red-500/80 hover:bg-red-500 text-white";
+                if (key === 'AC') buttonStyle = "text-red-500";
                 else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
                 else if (disabled) buttonStyle = "opacity-40 pointer-events-none";
 
@@ -108,7 +108,7 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
             <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
 
-            <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('AC')} className="text-red-500 col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
                 <>
                     <CalculatorButton onClick={() => onInput('Bksce')}><Delete className="h-7 w-7"/></CalculatorButton>
@@ -258,26 +258,25 @@ export function UnitConverterPwa() {
     }
 
     handler(prev => {
-        let currentValue = prev.value || '0';
+        let currentValue = prev.value || '';
 
-        if (key === 'C' || key === 'AC') {
-            return { ...prev, value: '0' };
+        if (key === 'AC') {
+            return { ...prev, value: '' };
         }
         if (key === 'Bksce') {
-            return { ...prev, value: currentValue.length > 1 ? currentValue.slice(0, -1) : '0' };
+            return { ...prev, value: currentValue.length > 0 ? currentValue.slice(0, -1) : '' };
         }
         if (key === '+/-') {
-            if (currentValue === '0' || !currentValue) return prev;
+            if (!currentValue) return prev;
             return { ...prev, value: currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue };
         }
         if (key === '.') {
-            if (currentValue.includes('.')) return prev;
-            return { ...prev, value: currentValue + '.' };
+            if (currentValue.includes('.') || isNumeralSystem) return prev;
+            return { ...prev, value: currentValue ? currentValue + '.' : '0.' };
         }
-
-
-        const newValue = (currentValue === '0' && key !== '.') ? key : currentValue + key;
-
+        
+        const newValue = currentValue + key;
+        
         if (isNumeralSystem) {
             const selectedUnit = prev.unit;
             let regex = /.*/;
