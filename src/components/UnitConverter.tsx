@@ -118,8 +118,8 @@ export function UnitConverter() {
         if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
         if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/;
         if (!regex.test(value)) return;
-    } else if (activeCategory !== 'temperature' && value.includes('-')) {
-        return;
+    } else {
+        if(value !== "" && value !== "-" && isNaN(Number(value))) return;
     }
     setter(prev => ({ ...prev, value: value }));
     activeSetter();
@@ -173,7 +173,7 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="from-value">From</Label>
                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Input id="from-value" type={isNumeralSystem ? "text" : "number"} value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
+                        <Input id="from-value" type={isNumeralSystem ? "text" : "text"} pattern={isNumeralSystem ? undefined : "[0-9.-]*"} value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
                         <UnitSelector value={from.unit} onChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))} units={unitsForCategory} />
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="to-value">To</Label>
                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input id="to-value" type={isNumeralSystem ? "text" : "number"} value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
+                        <Input id="to-value" type={isNumeralSystem ? "text" : "text"} pattern={isNumeralSystem ? undefined : "[0-9.-]*"} value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
                          <UnitSelector value={to.unit} onChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))} units={unitsForCategory} />
                     </div>
                 </div>

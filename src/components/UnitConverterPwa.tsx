@@ -266,7 +266,7 @@ export function UnitConverterPwa() {
             return { ...prev, value: currentValue.length > 0 ? currentValue.slice(0, -1) : '' };
         }
         if (key === '+/-') {
-            if (!currentValue) return prev;
+            if (!currentValue || isNumeralSystem) return prev;
             return { ...prev, value: currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue };
         }
         if (key === '.') {
@@ -274,7 +274,7 @@ export function UnitConverterPwa() {
              return { ...prev, value: currentValue ? currentValue + '.' : '0.' };
         }
         
-        const newValue = currentValue + key;
+        const newValue = (currentValue === '0' && key !== '.') ? key : currentValue + key;
         
         if (isNumeralSystem) {
             const selectedUnit = prev.unit;
@@ -339,4 +339,3 @@ export function UnitConverterPwa() {
     </div>
   );
 }
-
