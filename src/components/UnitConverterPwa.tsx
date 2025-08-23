@@ -37,12 +37,63 @@ const CalculatorButton = React.memo(({ children, className, ...props }: React.Co
 ));
 CalculatorButton.displayName = 'CalculatorButton';
 
-const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
+const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: string) => void; activeUnit: string }) => {
+    const isButtonDisabled = (key: string) => {
+        if (key === '.') return true;
+        if (['A', 'B', 'C', 'D', 'E', 'F'].includes(key)) {
+            return activeUnit !== 'hexadecimal';
+        }
+        const numKey = parseInt(key, 10);
+        if (isNaN(numKey)) return false; // for 'Bksce' etc.
+
+        if (activeUnit === 'binary') return numKey > 1;
+        if (activeUnit === 'octal') return numKey > 7;
+        
+        return false;
+    };
+
+    const keys: (string | {key:string, icon:React.ReactNode, label: string})[] = [
+        { key: 'C', icon: 'AC', label: 'Clear' }, { key: 'Bksce', icon: <Delete className="h-7 w-7"/>, label: 'Backspace' }, 'F', 'E',
+        '7', '8', '9', 'D',
+        '4', '5', '6', 'C',
+        '1', '2', '3', 'B',
+        { key: 'Swap', icon: <ArrowRightLeft className="h-7 w-7"/>, label: 'Swap' }, '0', '.', 'A',
+    ];
+
+    return (
+        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+            {keys.map((keyInfo) => {
+                const key = typeof keyInfo === 'object' ? keyInfo.key : keyInfo;
+                const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
+                const disabled = isButtonDisabled(key);
+                
+                let buttonStyle = 'bg-muted/60 text-foreground';
+                if (key === 'C') buttonStyle = "bg-red-500/80 hover:bg-red-500 text-white";
+                if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
+                if (disabled) buttonStyle = cn(buttonStyle, "opacity-40 pointer-events-none");
+
+                return (
+                    <CalculatorButton
+                        key={key}
+                        onClick={() => onInput(key)}
+                        className={buttonStyle}
+                        disabled={disabled}
+                        aria-label={typeof keyInfo === 'object' ? keyInfo.label : key}
+                    >
+                        {icon}
+                    </CalculatorButton>
+                )
+            })}
+        </div>
+    );
+});
+NumeralCalculator.displayName = 'NumeralCalculator';
+
+const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
     
     return (
         <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-            {/* Main number pad */}
             <CalculatorButton onClick={() => onInput('7')} className={'col-start-1 row-start-1'}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')} className={'col-start-2 row-start-1'}>8</CalculatorButton>
             <CalculatorButton onClick={() => onInput('9')} className={'col-start-3 row-start-1'}>9</CalculatorButton>
@@ -59,20 +110,19 @@ const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: str
             <CalculatorButton onClick={() => onInput('0')} className={'col-start-2 row-start-4'}>0</CalculatorButton>
             <CalculatorButton onClick={() => onInput('.')} className={'col-start-3 row-start-4'}>.</CalculatorButton>
 
-            {/* Dynamic 4th column */}
             <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
                 <>
-                    <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Bksce')} className="col-start-4 row-start-3"><Delete className="h-7 w-7"/></CalculatorButton>
                     <CalculatorButton onClick={() => onInput('+/-')} className="col-start-4 row-start-4">+/-</CalculatorButton>
                 </>
             ) : (
-                <CalculatorButton onClick={() => onInput('Backspace')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                <CalculatorButton onClick={() => onInput('Bksce')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             )}
         </div>
     );
 });
-Calculator.displayName = 'Calculator';
+StandardCalculator.displayName = 'StandardCalculator';
 
 
 const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick, onValueChange, isNumeralSystem }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void, onValueChange: (value: string) => void, isNumeralSystem: boolean }) => {
@@ -98,11 +148,12 @@ const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, o
         >
             <div className="flex justify-between items-center">
                <input
-                    type={isNumeralSystem ? 'text' : 'number'}
+                    type={'text'}
                     value={displayValue}
                     onChange={(e) => onValueChange(e.target.value)}
                     className="w-full bg-transparent font-bold truncate transition-all duration-200 focus:outline-none"
                     style={{ fontSize }}
+                    readOnly
                 />
                <Select value={unit} onValueChange={onUnitChange}>
                     <SelectTrigger className="w-auto border-0 bg-transparent text-base font-semibold pr-0 whitespace-nowrap max-w-[50%]">
@@ -213,13 +264,13 @@ export function UnitConverterPwa() {
     setter: React.Dispatch<React.SetStateAction<InputState>>,
     activeSetter: () => void
   ) => {
-    if (activeCategory === 'numeral-system') {
+    if (isNumeralSystem) {
         const selectedUnit = activeInput === 'from' ? from.unit : to.unit;
         let regex = /.*/;
         if (selectedUnit === 'binary') regex = /^[01]*$/;
         if (selectedUnit === 'octal') regex = /^[0-7]*$/;
         if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
-        if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/;
+        if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/i;
         if (!regex.test(value)) return;
     } else if (activeCategory !== 'temperature' && value.includes('-')) {
         return;
@@ -237,23 +288,38 @@ export function UnitConverterPwa() {
     }
 
     handler(prev => {
-        const currentValue = prev.value;
+        let currentValue = prev.value || '0';
+
         if (key === 'C') {
             return { ...prev, value: '0' };
         }
-        if (key === 'Backspace') {
+        if (key === 'Bksce') {
             return { ...prev, value: currentValue.length > 1 ? currentValue.slice(0, -1) : '0' };
         }
         if (key === '+/-') {
-            return { ...prev, value: String(parseFloat(currentValue) * -1) };
+            if (currentValue === '0' || !currentValue) return prev;
+            return { ...prev, value: currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue };
         }
         if (key === '.' && currentValue.includes('.')) {
             return prev;
         }
-        return { ...prev, value: (currentValue === '0' && key !== '.') ? key : currentValue + key };
+
+        const newValue = (currentValue === '0' && key !== '.') ? key : currentValue + key;
+
+        if (isNumeralSystem) {
+            const selectedUnit = prev.unit;
+            let regex = /.*/;
+            if (selectedUnit === 'binary') regex = /^[01]*$/;
+            if (selectedUnit === 'octal') regex = /^[0-7]*$/;
+            if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
+            if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/i;
+            if (!regex.test(newValue)) return prev;
+        }
+        
+        return { ...prev, value: newValue };
     });
 
-  }, [activeInput, handleSwap]);
+  }, [activeInput, handleSwap, isNumeralSystem]);
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -297,11 +363,13 @@ export function UnitConverterPwa() {
                 isNumeralSystem={isNumeralSystem}
             />
         </div>
-        { !isNumeralSystem &&
-            <div className="flex-grow p-2">
-                <Calculator onInput={handleCalculatorInput} activeCategory={activeCategory} />
-            </div>
-        }
+        <div className="flex-grow p-2">
+            {isNumeralSystem ? (
+                <NumeralCalculator onInput={handleCalculatorInput} activeUnit={activeInput === 'from' ? from.unit : to.unit} />
+            ) : (
+                <StandardCalculator onInput={handleCalculatorInput} activeCategory={activeCategory} />
+            )}
+        </div>
     </div>
   );
 }
