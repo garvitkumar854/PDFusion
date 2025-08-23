@@ -1,5 +1,4 @@
 
-
 import { Ruler, Scale, Thermometer, Beaker, Gauge, LandPlot, Clock, Database, Binary } from "lucide-react";
 import React from 'react';
 
@@ -18,6 +17,55 @@ export type Category = {
     baseUnit: string;
     units: Unit[];
 };
+
+const handleDecimalToBase = (value: string | number): number => {
+    const num = parseFloat(String(value));
+    return isNaN(num) ? NaN : num;
+};
+
+const handleBaseToDecimal = (value: number): number => {
+    return value;
+};
+
+const handleNonDecimalToBase = (radix: number) => (value: string | number): number => {
+    const strValue = String(value);
+    if (strValue.includes('.')) {
+        const [integerPart, fractionalPart] = strValue.split('.');
+        const integerValue = parseInt(integerPart, radix);
+        let fractionalValue = 0;
+        for (let i = 0; i < fractionalPart.length; i++) {
+            fractionalValue += parseInt(fractionalPart[i], radix) / Math.pow(radix, i + 1);
+        }
+        return integerValue + fractionalValue;
+    }
+    return parseInt(strValue, radix);
+};
+
+const handleBaseToNonDecimal = (radix: number) => (value: number): string => {
+    if (isNaN(value)) return 'NaN';
+    const integerPart = Math.floor(value);
+    const fractionalPart = value - integerPart;
+    
+    const integerStr = integerPart.toString(radix);
+
+    if (fractionalPart === 0) {
+        return integerStr.toUpperCase();
+    }
+
+    let fractionalStr = '';
+    let currentFraction = fractionalPart;
+    const maxPrecision = 12;
+    for (let i = 0; i < maxPrecision; i++) {
+        currentFraction *= radix;
+        const digit = Math.floor(currentFraction);
+        fractionalStr += digit.toString(radix);
+        currentFraction -= digit;
+        if (currentFraction === 0) break;
+    }
+
+    return `${integerStr}.${fractionalStr}`.toUpperCase();
+};
+
 
 export const categories: Category[] = [
     {
@@ -163,10 +211,10 @@ export const categories: Category[] = [
         icon: Binary,
         baseUnit: 'decimal',
         units: [
-            { id: 'decimal', name: 'Decimal', symbol: 'DEC', toBase: v => parseInt(String(v), 10), fromBase: v => v },
-            { id: 'binary', name: 'Binary', symbol: 'BIN', toBase: v => parseInt(String(v), 2), fromBase: v => v.toString(2) },
-            { id: 'octal', name: 'Octal', symbol: 'OCT', toBase: v => parseInt(String(v), 8), fromBase: v => v.toString(8) },
-            { id: 'hexadecimal', name: 'Hexadecimal', symbol: 'HEX', toBase: v => parseInt(String(v), 16), fromBase: v => v.toString(16).toUpperCase() },
+            { id: 'decimal', name: 'Decimal', symbol: 'DEC', toBase: handleDecimalToBase, fromBase: handleBaseToDecimal },
+            { id: 'binary', name: 'Binary', symbol: 'BIN', toBase: handleNonDecimalToBase(2), fromBase: handleBaseToNonDecimal(2) },
+            { id: 'octal', name: 'Octal', symbol: 'OCT', toBase: handleNonDecimalToBase(8), fromBase: handleBaseToNonDecimal(8) },
+            { id: 'hexadecimal', name: 'Hexadecimal', symbol: 'HEX', toBase: handleNonDecimalToBase(16), fromBase: handleBaseToNonDecimal(16) },
         ]
     },
 ];

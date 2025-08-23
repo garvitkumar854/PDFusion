@@ -39,7 +39,7 @@ CalculatorButton.displayName = 'CalculatorButton';
 
 const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: string) => void; activeUnit: string }) => {
     const isButtonDisabled = (key: string) => {
-        if (key === '.') return true;
+        if (key === '.') return activeUnit !== 'decimal';
         if (['A', 'B', 'C', 'D', 'E', 'F'].includes(key)) {
             return activeUnit !== 'hexadecimal';
         }
@@ -67,7 +67,7 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
                 const disabled = isButtonDisabled(key);
                 
-                let buttonStyle = '';
+                 let buttonStyle = 'bg-muted/50 dark:bg-muted/20';
                 if (key === 'AC') buttonStyle = "bg-red-500 text-white hover:bg-red-600";
                 else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
                 else if (disabled) buttonStyle = "opacity-40 pointer-events-none";
@@ -98,23 +98,20 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
             <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
             <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('AC')} className="bg-red-500 text-white hover:bg-red-600 row-span-2">AC</CalculatorButton>
             <CalculatorButton onClick={() => onInput('4')}>4</CalculatorButton>
             <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
             <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
             <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
             <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
             <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('Bksce')} className="text-primary col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('AC')} className="bg-red-500 text-white hover:bg-red-600 col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
-                <>
-                    <CalculatorButton onClick={() => onInput('Bksce')}><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
-                </>
+                <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
             ) : (
-                <CalculatorButton onClick={() => onInput('Bksce')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
             )}
         </div>
     );
@@ -270,7 +267,7 @@ export function UnitConverterPwa() {
             return { ...prev, value: currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue };
         }
         if (key === '.') {
-             if (currentValue.includes('.') || isNumeralSystem) return prev;
+             if (currentValue.includes('.')) return prev;
              return { ...prev, value: currentValue ? currentValue + '.' : '0.' };
         }
         
@@ -281,9 +278,14 @@ export function UnitConverterPwa() {
             let regex = /.*/;
             if (selectedUnit === 'binary') regex = /^[01]*$/;
             if (selectedUnit === 'octal') regex = /^[0-7]*$/;
-            if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
+            if (selectedUnit === 'decimal') regex = /^-?\d*(\.\d*)?$/;
             if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/i;
-            if (!regex.test(newValue)) return prev;
+            
+            if (key === '.') {
+                if (currentValue.includes('.')) return prev;
+                return { ...prev, value: newValue };
+            }
+            if (!regex.test(newValue.replace('.', ''))) return prev;
         }
 
         return { ...prev, value: newValue };
