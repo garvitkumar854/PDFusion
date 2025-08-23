@@ -39,7 +39,7 @@ CalculatorButton.displayName = 'CalculatorButton';
 
 const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: string) => void; activeUnit: string }) => {
     const isButtonDisabled = (key: string) => {
-        if (key === '.') return activeUnit !== 'decimal';
+        if (key === '.') return true;
         if (['A', 'B', 'C', 'D', 'E', 'F'].includes(key)) {
             return activeUnit !== 'hexadecimal';
         }
@@ -61,17 +61,16 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
     ];
 
     return (
-        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
+        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full aspect-[4/5]">
             {keys.map((keyInfo, index) => {
                 const key = typeof keyInfo === 'object' ? keyInfo.key : keyInfo;
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
                 const disabled = isButtonDisabled(key);
                 
-                 let buttonStyle = 'bg-muted/50 dark:bg-muted/20';
+                let buttonStyle = '';
                 if (key === 'AC') buttonStyle = "bg-red-500 text-white hover:bg-red-600";
                 else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
                 else if (disabled) buttonStyle = "opacity-40 pointer-events-none";
-
 
                 return (
                     <CalculatorButton
@@ -92,9 +91,16 @@ NumeralCalculator.displayName = 'NumeralCalculator';
 
 const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
+
+    const isButtonDisabled = (key: string) => {
+        if (key === '.') {
+            return activeCategory === 'numeral-system';
+        }
+        return false;
+    }
     
     return (
-        <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
+        <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full aspect-square">
             <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
             <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
@@ -108,11 +114,7 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
             <CalculatorButton onClick={() => onInput('Bksce')} className="text-primary col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
             <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
-            {isTemp ? (
-                <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
-            ) : (
-                <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
-            )}
+            <CalculatorButton onClick={() => onInput(isTemp ? '+/-' : '.')} disabled={isButtonDisabled('.')}>{isTemp ? '+/-' : '.'}</CalculatorButton>
         </div>
     );
 });
@@ -335,7 +337,7 @@ export function UnitConverterPwa() {
                 onClick={() => setActiveInput('to')}
             />
         </div>
-        <div className="flex-grow p-2">
+        <div className="flex-grow p-2 flex flex-col justify-center">
             {isNumeralSystem ? MemoizedNumeralCalculator : MemoizedStandardCalculator}
         </div>
     </div>
