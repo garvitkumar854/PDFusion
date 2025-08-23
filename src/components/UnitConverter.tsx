@@ -116,16 +116,16 @@ export function UnitConverter() {
 
       switch (selectedUnit) {
         case 'binary':
-          regex = /^[01.]*$/;
+          regex = /^[01.\s]*$/;
           break;
         case 'octal':
-          regex = /^[0-7.]*$/;
+          regex = /^[0-7.\s]*$/;
           break;
         case 'decimal':
           regex = /^-?\d*(\.\d*)?$/;
           break;
         case 'hexadecimal':
-          regex = /^[0-9a-fA-F.]*$/i;
+          regex = /^[0-9a-fA-F.\s]*$/i;
           break;
       }
       

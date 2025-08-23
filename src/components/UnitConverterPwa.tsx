@@ -61,7 +61,7 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
     ];
 
     return (
-        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full aspect-[4/5]">
+        <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full aspect-[4/5] max-h-[50vh]">
             {keys.map((keyInfo, index) => {
                 const key = typeof keyInfo === 'object' ? keyInfo.key : keyInfo;
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
@@ -94,13 +94,14 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
 
     const isButtonDisabled = (key: string) => {
         if (key === '.') {
-            return activeCategory === 'numeral-system';
+             // Allow decimal for numeral system in standard calc since it can be an input type
+            return false;
         }
         return false;
     }
     
     return (
-        <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full aspect-square">
+        <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full aspect-square max-h-[50vh]">
             <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
             <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
             <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
@@ -127,7 +128,8 @@ const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, o
 
     useEffect(() => {
         const len = displayValue.length;
-        if (len > 18) setFontSize('1rem');
+        if (len > 24) setFontSize('0.875rem');
+        else if (len > 18) setFontSize('1rem');
         else if (len > 15) setFontSize('1.125rem');
         else if (len > 12) setFontSize('1.25rem');
         else if (len > 9) setFontSize('1.5rem');
@@ -278,16 +280,17 @@ export function UnitConverterPwa() {
         if (isNumeralSystem) {
             const selectedUnit = prev.unit;
             let regex = /.*/;
-            if (selectedUnit === 'binary') regex = /^[01]*$/;
-            if (selectedUnit === 'octal') regex = /^[0-7]*$/;
+            if (selectedUnit === 'binary') regex = /^[01.]*$/;
+            if (selectedUnit === 'octal') regex = /^[0-7.]*$/;
             if (selectedUnit === 'decimal') regex = /^-?\d*(\.\d*)?$/;
-            if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/i;
+            if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F.]*$/i;
             
             if (key === '.') {
                 if (currentValue.includes('.')) return prev;
                 return { ...prev, value: newValue };
             }
-            if (!regex.test(newValue.replace('.', ''))) return prev;
+
+            if (!regex.test(newValue)) return prev;
         }
 
         return { ...prev, value: newValue };
@@ -337,7 +340,7 @@ export function UnitConverterPwa() {
                 onClick={() => setActiveInput('to')}
             />
         </div>
-        <div className="flex-grow p-2 flex flex-col justify-center">
+        <div className="flex-grow p-2 flex flex-col justify-center items-center">
             {isNumeralSystem ? MemoizedNumeralCalculator : MemoizedStandardCalculator}
         </div>
     </div>

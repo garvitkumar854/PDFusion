@@ -27,34 +27,34 @@ const handleBaseToDecimal = (value: number): number => {
     return value;
 };
 
-const handleNonDecimalToBase = (radix: number) => (value: string | number): number => {
-    const strValue = String(value);
-    if (strValue.includes('.')) {
-        const [integerPart, fractionalPart] = strValue.split('.');
-        const integerValue = parseInt(integerPart, radix);
-        let fractionalValue = 0;
-        for (let i = 0; i < fractionalPart.length; i++) {
-            fractionalValue += parseInt(fractionalPart[i], radix) / Math.pow(radix, i + 1);
+const formatWithGrouping = (str: string, groupSize: number): string => {
+    const chars = str.split('');
+    let result = '';
+    for (let i = 0; i < chars.length; i++) {
+        if (i > 0 && i % groupSize === 0) {
+            result += ' ';
         }
-        return integerValue + fractionalValue;
+        result += chars[i];
     }
-    return parseInt(strValue, radix);
+    return result;
 };
 
-const handleBaseToNonDecimal = (radix: number) => (value: number): string => {
+const handleBaseToNonDecimal = (radix: number, groupSize: number) => (value: number): string => {
     if (isNaN(value)) return 'NaN';
+    
     const integerPart = Math.floor(value);
     const fractionalPart = value - integerPart;
-    
+
     const integerStr = integerPart.toString(radix);
 
     if (fractionalPart === 0) {
-        return integerStr.toUpperCase();
+        return formatWithGrouping(integerStr.toUpperCase().split('').reverse().join(''), groupSize).split('').reverse().join('');
     }
 
     let fractionalStr = '';
     let currentFraction = fractionalPart;
     const maxPrecision = 12;
+
     for (let i = 0; i < maxPrecision; i++) {
         currentFraction *= radix;
         const digit = Math.floor(currentFraction);
@@ -62,8 +62,26 @@ const handleBaseToNonDecimal = (radix: number) => (value: number): string => {
         currentFraction -= digit;
         if (currentFraction === 0) break;
     }
+    
+    const formattedInteger = formatWithGrouping(integerStr.toUpperCase().split('').reverse().join(''), groupSize).split('').reverse().join('');
+    const formattedFractional = formatWithGrouping(fractionalStr.toUpperCase(), groupSize);
 
-    return `${integerStr}.${fractionalStr}`.toUpperCase();
+    return `${formattedInteger}.${formattedFractional}`;
+};
+
+const handleNonDecimalToBase = (radix: number) => (value: string | number): number => {
+    const strValue = String(value).replace(/\s/g, ''); // Remove spaces for parsing
+    if (strValue.includes('.')) {
+        const [integerPart, fractionalPart] = strValue.split('.');
+        const integerValue = parseInt(integerPart, radix);
+        let fractionalValue = 0;
+        for (let i = 0; i < fractionalPart.length; i++) {
+            fractionalValue += parseInt(fractionalPart[i], radix) / Math.pow(radix, i + 1);
+        }
+        return isNaN(integerValue) ? NaN : integerValue + fractionalValue;
+    }
+    const result = parseInt(strValue, radix);
+    return isNaN(result) ? NaN : result;
 };
 
 
@@ -212,9 +230,9 @@ export const categories: Category[] = [
         baseUnit: 'decimal',
         units: [
             { id: 'decimal', name: 'Decimal', symbol: 'DEC', toBase: handleDecimalToBase, fromBase: handleBaseToDecimal },
-            { id: 'binary', name: 'Binary', symbol: 'BIN', toBase: handleNonDecimalToBase(2), fromBase: handleBaseToNonDecimal(2) },
-            { id: 'octal', name: 'Octal', symbol: 'OCT', toBase: handleNonDecimalToBase(8), fromBase: handleBaseToNonDecimal(8) },
-            { id: 'hexadecimal', name: 'Hexadecimal', symbol: 'HEX', toBase: handleNonDecimalToBase(16), fromBase: handleBaseToNonDecimal(16) },
+            { id: 'binary', name: 'Binary', symbol: 'BIN', toBase: handleNonDecimalToBase(2), fromBase: handleBaseToNonDecimal(2, 4) },
+            { id: 'octal', name: 'Octal', symbol: 'OCT', toBase: handleNonDecimalToBase(8), fromBase: handleBaseToNonDecimal(8, 3) },
+            { id: 'hexadecimal', name: 'Hexadecimal', symbol: 'HEX', toBase: handleNonDecimalToBase(16), fromBase: handleBaseToNonDecimal(16, 4) },
         ]
     },
 ];
