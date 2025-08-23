@@ -28,6 +28,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
     data: { from: { value: '1024', unit: 'megabytes' }, to: { value: '', unit: 'gigabytes' } },
+    'numeral-system': { from: { value: '10', unit: 'decimal' }, to: { value: '', unit: 'binary' } },
 };
 
 const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChange }: { isMobile: boolean, activeCategory: Category['id'], onCategoryChange: (id: string) => void }) => {
@@ -52,7 +53,7 @@ const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChang
     }
     return (
        <Tabs value={activeCategory} onValueChange={onCategoryChange}>
-         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 h-auto flex-wrap">
+         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 h-auto flex-wrap">
             {categories.map((category) => (
                 <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
                     <category.icon className="h-5 w-5" />
@@ -100,20 +101,20 @@ export function UnitConverter() {
       if (!fromUnitExists || !toUnitExists) return;
 
       if (lastActive === 'from') {
-          const numericValue = parseFloat(from.value);
-          if (isNaN(numericValue) || !from.value) {
-              setTo(prev => ({ ...prev, value: '' }));
-              return;
+          const valueToConvert = from.value;
+          if (!valueToConvert) {
+            setTo(prev => ({...prev, value: ''}));
+            return;
           }
-          const result = convert(activeCategory, numericValue, from.unit, to.unit);
+          const result = convert(activeCategory, valueToConvert, from.unit, to.unit);
           setTo(prev => ({ ...prev, value: formatNumber(result) }));
       } else {
-          const numericValue = parseFloat(to.value);
-          if (isNaN(numericValue) || !to.value) {
-              setFrom(prev => ({ ...prev, value: '' }));
-              return;
+          const valueToConvert = to.value;
+           if (!valueToConvert) {
+            setFrom(prev => ({...prev, value: ''}));
+            return;
           }
-          const result = convert(activeCategory, numericValue, to.unit, from.unit);
+          const result = convert(activeCategory, valueToConvert, to.unit, from.unit);
           setFrom(prev => ({ ...prev, value: formatNumber(result) }));
       }
   }, [activeCategory, from.value, from.unit, to.value, to.unit, lastActive]);
@@ -127,7 +128,15 @@ export function UnitConverter() {
     setter: React.Dispatch<React.SetStateAction<InputState>>,
     activeSetter: () => void
   ) => {
-    if (activeCategory !== 'temperature' && value.includes('-')) {
+    if (activeCategory === 'numeral-system') {
+        const selectedUnit = activeInput === 'from' ? from.unit : to.unit;
+        let regex = /.*/;
+        if (selectedUnit === 'binary') regex = /^[01]*$/;
+        if (selectedUnit === 'octal') regex = /^[0-7]*$/;
+        if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
+        if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/;
+        if (!regex.test(value)) return;
+    } else if (activeCategory !== 'temperature' && value.includes('-')) {
         return;
     }
     setter(prev => ({ ...prev, value: value }));
@@ -139,7 +148,7 @@ export function UnitConverter() {
     setter: React.Dispatch<React.SetStateAction<InputState>>,
     activeSetter: () => void
   ) => {
-    setter(prev => ({...prev, unit}));
+    setter(prev => ({...prev, unit, value: ''}));
     activeSetter();
   }
 
@@ -170,6 +179,9 @@ export function UnitConverter() {
     setLastActive(lastActive === 'from' ? 'to' : 'from');
   };
 
+  const isNumeralSystem = activeCategory === 'numeral-system';
+  const activeInput = lastActive === 'from' ? from : to;
+
   return (
     <Card className="bg-transparent shadow-lg w-full">
         <CardHeader>
@@ -180,7 +192,7 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="from-value">From</Label>
                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Input id="from-value" type="number" value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
+                        <Input id="from-value" type={isNumeralSystem ? "text" : "number"} value={from.value} onChange={e => handleValueChange(e.target.value, setFrom, () => setLastActive('from'))} />
                         <UnitSelector value={from.unit} onChange={unit => handleUnitChange(unit, setFrom, () => setLastActive('from'))} units={unitsForCategory} />
                     </div>
                 </div>
@@ -194,7 +206,7 @@ export function UnitConverter() {
                 <div className="space-y-2">
                     <Label htmlFor="to-value">To</Label>
                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input id="to-value" type="number" value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
+                        <Input id="to-value" type={isNumeralSystem ? "text" : "number"} value={to.value} onChange={e => handleValueChange(e.target.value, setTo, () => setLastActive('to'))} />
                          <UnitSelector value={to.unit} onChange={unit => handleUnitChange(unit, setTo, () => setLastActive('to'))} units={unitsForCategory} />
                     </div>
                 </div>

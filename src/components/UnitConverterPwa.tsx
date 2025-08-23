@@ -23,6 +23,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     speed: { from: { value: '1', unit: 'kph' }, to: { value: '', unit: 'miles-per-hour' } },
     area: { from: { value: '1', unit: 'sq-meters' }, to: { value: '', unit: 'sq-feet' } },
     data: { from: { value: '1024', unit: 'megabytes' }, to: { value: '', unit: 'gigabytes' } },
+    'numeral-system': { from: { value: '10', unit: 'decimal' }, to: { value: '', unit: 'binary' } },
 };
 
 const CalculatorButton = React.memo(({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
@@ -74,7 +75,7 @@ const Calculator = React.memo(({ onInput, activeCategory }: { onInput: (key: str
 Calculator.displayName = 'Calculator';
 
 
-const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void}) => {
+const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick, onValueChange, isNumeralSystem }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void, onValueChange: (value: string) => void, isNumeralSystem: boolean }) => {
     const displayValue = value || '0';
     const [fontSize, setFontSize] = useState('1.5rem');
 
@@ -96,7 +97,13 @@ const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, o
             onClick={onClick}
         >
             <div className="flex justify-between items-center">
-               <div style={{ fontSize }} className="font-bold truncate transition-all duration-200">{displayValue}</div>
+               <input
+                    type={isNumeralSystem ? 'text' : 'number'}
+                    value={displayValue}
+                    onChange={(e) => onValueChange(e.target.value)}
+                    className="w-full bg-transparent font-bold truncate transition-all duration-200 focus:outline-none"
+                    style={{ fontSize }}
+                />
                <Select value={unit} onValueChange={onUnitChange}>
                     <SelectTrigger className="w-auto border-0 bg-transparent text-base font-semibold pr-0 whitespace-nowrap max-w-[50%]">
                         <SelectValue />
@@ -124,6 +131,8 @@ export function UnitConverterPwa() {
   const [to, setTo] = useState<InputState>(initialStates.length.to);
   const [activeInput, setActiveInput] = useState<'from' | 'to'>('from');
 
+  const isNumeralSystem = activeCategory === 'numeral-system';
+
   const unitsForCategory = useMemo(() => {
     return categories.find(c => c.id === activeCategory)?.units || [];
   }, [activeCategory]);
@@ -141,14 +150,13 @@ export function UnitConverterPwa() {
 
     if (!fromUnitExists || !toUnitExists) return;
 
-    const numericValue = parseFloat(value);
-    if (isNaN(numericValue) || !value) {
+    if (!value) {
       if (activeInput === 'from') setTo(prev => ({...prev, value: ''}));
       else setFrom(prev => ({...prev, value: ''}));
       return;
     }
     
-    const result = convert(activeCategory, numericValue, fromUnit, toUnit);
+    const result = convert(activeCategory, value, fromUnit, toUnit);
     const formattedResult = formatNumber(result);
 
     if (activeInput === 'from') {
@@ -163,12 +171,14 @@ export function UnitConverterPwa() {
   }, [performConversion]);
 
   const handleFromUnitChange = useCallback((unit: string) => {
-    setFrom(prev => ({...prev, unit}));
+    setFrom(prev => ({...prev, unit, value: ''}));
+    setTo(prev => ({...prev, value: ''}));
     setActiveInput('from');
   }, []);
 
   const handleToUnitChange = useCallback((unit: string) => {
-    setTo(prev => ({...prev, unit}));
+    setTo(prev => ({...prev, unit, value: ''}));
+    setFrom(prev => ({...prev, value: ''}));
     setActiveInput('to');
   }, []);
 
@@ -197,6 +207,26 @@ export function UnitConverterPwa() {
     setTo(oldFrom);
     setActiveInput(activeInput === 'from' ? 'to' : 'from');
   }, [from, to, activeInput]);
+
+  const handleValueChange = (
+    value: string, 
+    setter: React.Dispatch<React.SetStateAction<InputState>>,
+    activeSetter: () => void
+  ) => {
+    if (activeCategory === 'numeral-system') {
+        const selectedUnit = activeInput === 'from' ? from.unit : to.unit;
+        let regex = /.*/;
+        if (selectedUnit === 'binary') regex = /^[01]*$/;
+        if (selectedUnit === 'octal') regex = /^[0-7]*$/;
+        if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
+        if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/;
+        if (!regex.test(value)) return;
+    } else if (activeCategory !== 'temperature' && value.includes('-')) {
+        return;
+    }
+    setter(prev => ({ ...prev, value: value }));
+    activeSetter();
+  };
 
   const handleCalculatorInput = useCallback((key: string) => {
     const handler = activeInput === 'from' ? setFrom : setTo;
@@ -253,6 +283,8 @@ export function UnitConverterPwa() {
                 onUnitChange={handleFromUnitChange}
                 isActive={activeInput === 'from'}
                 onClick={() => setActiveInput('from')}
+                onValueChange={(value) => handleValueChange(value, setFrom, () => setActiveInput('from'))}
+                isNumeralSystem={isNumeralSystem}
             />
             <DisplayPanel 
                 value={to.value} 
@@ -261,12 +293,15 @@ export function UnitConverterPwa() {
                 onUnitChange={handleToUnitChange}
                 isActive={activeInput === 'to'}
                 onClick={() => setActiveInput('to')}
+                onValueChange={(value) => handleValueChange(value, setTo, () => setActiveInput('to'))}
+                isNumeralSystem={isNumeralSystem}
             />
         </div>
-
-        <div className="flex-grow p-2">
-            <Calculator onInput={handleCalculatorInput} activeCategory={activeCategory} />
-        </div>
+        { !isNumeralSystem &&
+            <div className="flex-grow p-2">
+                <Calculator onInput={handleCalculatorInput} activeCategory={activeCategory} />
+            </div>
+        }
     </div>
   );
 }
