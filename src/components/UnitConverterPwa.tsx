@@ -29,7 +29,7 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
 const CalculatorButton = React.memo(({ children, className, ...props }: React.ComponentProps<typeof Button>) => (
     <Button
         className={cn("h-full w-full text-2xl font-bold rounded-2xl shadow-sm", className)}
-        variant="secondary"
+        variant="ghost"
         {...props}
     >
         {children}
@@ -66,11 +66,12 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
                 const key = typeof keyInfo === 'object' ? keyInfo.key : keyInfo;
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
                 const disabled = isButtonDisabled(key);
-
-                let buttonStyle = 'bg-muted/60 text-foreground';
+                
+                let buttonStyle = 'text-foreground';
                 if (key === 'AC') buttonStyle = "bg-red-500/80 hover:bg-red-500 text-white";
-                else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'bg-muted/60 text-primary';
-                else if (disabled) buttonStyle = cn(buttonStyle, "opacity-40 pointer-events-none");
+                else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
+                else if (disabled) buttonStyle = "opacity-40 pointer-events-none";
+
 
                 return (
                     <CalculatorButton
@@ -91,34 +92,30 @@ NumeralCalculator.displayName = 'NumeralCalculator';
 
 const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (key: string) => void; activeCategory: Category['id'] }) => {
     const isTemp = activeCategory === 'temperature';
-    const baseBtnClass = 'bg-muted/60 text-foreground hover:bg-muted/80';
-
+    
     return (
         <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-            <CalculatorButton onClick={() => onInput('7')} className={cn(baseBtnClass, 'col-start-1 row-start-1')}>7</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('8')} className={cn(baseBtnClass, 'col-start-2 row-start-1')}>8</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('9')} className={cn(baseBtnClass, 'col-start-3 row-start-1')}>9</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('4')} className={cn(baseBtnClass, 'col-start-1 row-start-2')}>4</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('5')} className={cn(baseBtnClass, 'col-start-2 row-start-2')}>5</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('6')} className={cn(baseBtnClass, 'col-start-3 row-start-2')}>6</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('1')} className={cn(baseBtnClass, 'col-start-1 row-start-3')}>1</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('2')} className={cn(baseBtnClass, 'col-start-2 row-start-3')}>2</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('3')} className={cn(baseBtnClass, 'col-start-3 row-start-3')}>3</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('Swap')} className={cn(baseBtnClass, 'col-start-1 row-start-4 text-primary')}><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-            <CalculatorButton onClick={() => onInput('0')} className={cn(baseBtnClass, 'col-start-2 row-start-4')}>0</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('.')} className={cn(baseBtnClass, 'col-start-3 row-start-4')}>.</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('4')}>4</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
 
             <CalculatorButton onClick={() => onInput('C')} className="bg-red-500/80 hover:bg-red-500 text-white col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
                 <>
-                    <CalculatorButton onClick={() => onInput('Bksce')} className={cn(baseBtnClass, "col-start-4 row-start-3")}><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')} className={cn(baseBtnClass, "col-start-4 row-start-4")}>+/-</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Bksce')}><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
                 </>
             ) : (
-                <CalculatorButton onClick={() => onInput('Bksce')} className={cn(baseBtnClass, "col-start-4 row-start-3 row-span-2")}><Delete className="h-7 w-7"/></CalculatorButton>
+                <CalculatorButton onClick={() => onInput('Bksce')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             )}
         </div>
     );
@@ -126,7 +123,7 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
 StandardCalculator.displayName = 'StandardCalculator';
 
 
-const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick, onValueChange, isNumeralSystem }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void, onValueChange: (value: string) => void, isNumeralSystem: boolean }) => {
+const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, onClick }: { value: string, unit: string, units: Unit[], onUnitChange: (unit:string) => void, isActive: boolean, onClick: () => void }) => {
     const displayValue = value || '0';
     const [fontSize, setFontSize] = useState('1.875rem');
 
@@ -149,9 +146,8 @@ const DisplayPanel = React.memo(({ value, unit, units, onUnitChange, isActive, o
         >
             <div className="flex justify-between items-center">
                <input
-                    type={'text'}
+                    type="text"
                     value={displayValue}
-                    onChange={(e) => onValueChange(e.target.value)}
                     className="w-full bg-transparent font-bold truncate transition-all duration-200 focus:outline-none"
                     style={{ fontSize }}
                     readOnly
@@ -222,16 +218,9 @@ export function UnitConverterPwa() {
     performConversion();
   }, [performConversion]);
 
-  const handleFromUnitChange = useCallback((unit: string) => {
-    setFrom(prev => ({...prev, unit, value: ''}));
-    setTo(prev => ({...prev, value: ''}));
-    setActiveInput('from');
-  }, []);
-
-  const handleToUnitChange = useCallback((unit: string) => {
-    setTo(prev => ({...prev, unit, value: ''}));
-    setFrom(prev => ({...prev, value: ''}));
-    setActiveInput('to');
+  const handleUnitChange = useCallback((setter: React.Dispatch<React.SetStateAction<InputState>>, setActive: () => void) => (unit: string) => {
+    setter(prev => ({...prev, unit, value: ''}));
+    setActive();
   }, []);
 
   const handleCategoryChange = (categoryId: string) => {
@@ -259,26 +248,6 @@ export function UnitConverterPwa() {
     setTo(oldFrom);
     setActiveInput(activeInput === 'from' ? 'to' : 'from');
   }, [from, to, activeInput]);
-
-  const handleValueChange = (
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<InputState>>,
-    activeSetter: () => void
-  ) => {
-    if (isNumeralSystem) {
-        const selectedUnit = activeInput === 'from' ? from.unit : to.unit;
-        let regex = /.*/;
-        if (selectedUnit === 'binary') regex = /^[01]*$/;
-        if (selectedUnit === 'octal') regex = /^[0-7]*$/;
-        if (selectedUnit === 'decimal') regex = /^[0-9]*$/;
-        if (selectedUnit === 'hexadecimal') regex = /^[0-9a-fA-F]*$/i;
-        if (!regex.test(value)) return;
-    } else if (activeCategory !== 'temperature' && value.includes('-')) {
-        return;
-    }
-    setter(prev => ({ ...prev, value: value }));
-    activeSetter();
-  };
 
   const handleCalculatorInput = useCallback((key: string) => {
     const handler = activeInput === 'from' ? setFrom : setTo;
@@ -349,21 +318,17 @@ export function UnitConverterPwa() {
                 value={from.value}
                 unit={from.unit}
                 units={unitsForCategory}
-                onUnitChange={handleFromUnitChange}
+                onUnitChange={handleUnitChange(setFrom, () => setActiveInput('from'))}
                 isActive={activeInput === 'from'}
                 onClick={() => setActiveInput('from')}
-                onValueChange={(value) => handleValueChange(value, setFrom, () => setActiveInput('from'))}
-                isNumeralSystem={isNumeralSystem}
             />
             <DisplayPanel
                 value={to.value}
                 unit={to.unit}
                 units={unitsForCategory}
-                onUnitChange={handleToUnitChange}
+                onUnitChange={handleUnitChange(setTo, () => setActiveInput('to'))}
                 isActive={activeInput === 'to'}
                 onClick={() => setActiveInput('to')}
-                onValueChange={(value) => handleValueChange(value, setTo, () => setActiveInput('to'))}
-                isNumeralSystem={isNumeralSystem}
             />
         </div>
         <div className="flex-grow p-2">

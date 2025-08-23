@@ -10,9 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { categories, Unit, Category, convert, formatNumber } from "@/lib/unit-data";
 import { ArrowRightLeft } from "lucide-react";
 import { Button } from "./ui/button";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 type InputState = {
     value: string;
@@ -31,9 +28,8 @@ const initialStates: Record<Category['id'], { from: InputState, to: InputState }
     'numeral-system': { from: { value: '10', unit: 'decimal' }, to: { value: '', unit: 'binary' } },
 };
 
-const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChange }: { isMobile: boolean, activeCategory: Category['id'], onCategoryChange: (id: string) => void }) => {
-    if (isMobile) {
-      return (
+const CategorySelector = React.memo(({ activeCategory, onCategoryChange }: { activeCategory: Category['id'], onCategoryChange: (id: string) => void }) => {
+    return (
          <Select value={activeCategory} onValueChange={onCategoryChange}>
              <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Select category" />
@@ -50,19 +46,6 @@ const CategorySelector = React.memo(({ isMobile, activeCategory, onCategoryChang
              </SelectContent>
            </Select>
       )
-    }
-    return (
-       <Tabs value={activeCategory} onValueChange={onCategoryChange}>
-         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 h-auto flex-wrap">
-            {categories.map((category) => (
-                <TabsTrigger key={category.id} value={category.id} className="flex-1 gap-2">
-                    <category.icon className="h-5 w-5" />
-                    <span>{category.name}</span>
-                </TabsTrigger>
-            ))}
-         </TabsList>
-       </Tabs>
-    );
 });
 CategorySelector.displayName = 'CategorySelector';
 
@@ -86,7 +69,6 @@ export function UnitConverter() {
   const [from, setFrom] = useState<InputState>(initialStates.length.from);
   const [to, setTo] = useState<InputState>(initialStates.length.to);
   const [lastActive, setLastActive] = useState<'from' | 'to'>('from');
-  const isMobile = useIsMobile();
 
   const unitsForCategory = useMemo(() => {
     return categories.find(c => c.id === activeCategory)?.units || [];
@@ -129,7 +111,7 @@ export function UnitConverter() {
     activeSetter: () => void
   ) => {
     if (activeCategory === 'numeral-system') {
-        const selectedUnit = activeInput === 'from' ? from.unit : to.unit;
+        const selectedUnit = lastActive === 'from' ? from.unit : to.unit;
         let regex = /.*/;
         if (selectedUnit === 'binary') regex = /^[01]*$/;
         if (selectedUnit === 'octal') regex = /^[0-7]*$/;
@@ -180,12 +162,11 @@ export function UnitConverter() {
   };
 
   const isNumeralSystem = activeCategory === 'numeral-system';
-  const activeInput = lastActive === 'from' ? from : to;
 
   return (
     <Card className="bg-transparent shadow-lg w-full">
         <CardHeader>
-           <CategorySelector isMobile={isMobile} activeCategory={activeCategory} onCategoryChange={handleCategoryChange}/>
+           <CategorySelector activeCategory={activeCategory} onCategoryChange={handleCategoryChange}/>
         </CardHeader>
         <CardContent>
             <div className="space-y-4">
