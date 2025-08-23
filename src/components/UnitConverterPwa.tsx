@@ -67,10 +67,10 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
                 const disabled = isButtonDisabled(key);
                 
-                let buttonStyle = 'text-foreground';
-                if (key === 'AC') buttonStyle = "text-red-500";
-                else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
-                else if (disabled) buttonStyle = "opacity-40 pointer-events-none";
+                 let buttonStyle = 'bg-muted/50 hover:bg-muted';
+                if (key === 'AC') buttonStyle = "bg-red-500 text-white hover:bg-red-600";
+                else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary bg-primary/10 hover:bg-primary/20';
+                else if (disabled) buttonStyle = "opacity-40 pointer-events-none bg-muted/30";
 
 
                 return (
@@ -95,27 +95,26 @@ const StandardCalculator = React.memo(({ onInput, activeCategory }: { onInput: (
     
     return (
         <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-            <CalculatorButton onClick={() => onInput('7')}>7</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('8')}>8</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('9')}>9</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('4')}>4</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('5')}>5</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('6')}>6</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('1')}>1</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('2')}>2</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('3')}>3</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('Swap')} className="text-primary"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
-            <CalculatorButton onClick={() => onInput('0')}>0</CalculatorButton>
-            <CalculatorButton onClick={() => onInput('.')}>.</CalculatorButton>
-
-            <CalculatorButton onClick={() => onInput('AC')} className="text-red-500 col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('7')} className="bg-muted/50 hover:bg-muted">7</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('8')} className="bg-muted/50 hover:bg-muted">8</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('9')} className="bg-muted/50 hover:bg-muted">9</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('4')} className="bg-muted/50 hover:bg-muted">4</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('5')} className="bg-muted/50 hover:bg-muted">5</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('6')} className="bg-muted/50 hover:bg-muted">6</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('1')} className="bg-muted/50 hover:bg-muted">1</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('2')} className="bg-muted/50 hover:bg-muted">2</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('3')} className="bg-muted/50 hover:bg-muted">3</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('Swap')} className="text-primary bg-primary/10 hover:bg-primary/20"><ArrowRightLeft className="h-7 w-7"/></CalculatorButton>
+            <CalculatorButton onClick={() => onInput('0')} className="bg-muted/50 hover:bg-muted">0</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('.')} className="bg-muted/50 hover:bg-muted">.</CalculatorButton>
+            <CalculatorButton onClick={() => onInput('AC')} className="bg-red-500 text-white hover:bg-red-600 col-start-4 row-start-1 row-span-2">AC</CalculatorButton>
             {isTemp ? (
                 <>
-                    <CalculatorButton onClick={() => onInput('Bksce')}><Delete className="h-7 w-7"/></CalculatorButton>
-                    <CalculatorButton onClick={() => onInput('+/-')}>+/-</CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('Bksce')} className="bg-muted/50 hover:bg-muted"><Delete className="h-7 w-7"/></CalculatorButton>
+                    <CalculatorButton onClick={() => onInput('+/-')} className="bg-muted/50 hover:bg-muted">+/-</CalculatorButton>
                 </>
             ) : (
-                <CalculatorButton onClick={() => onInput('Bksce')} className="col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
+                <CalculatorButton onClick={() => onInput('Bksce')} className="bg-muted/50 hover:bg-muted col-start-4 row-start-3 row-span-2"><Delete className="h-7 w-7"/></CalculatorButton>
             )}
         </div>
     );
@@ -271,8 +270,8 @@ export function UnitConverterPwa() {
             return { ...prev, value: currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue };
         }
         if (key === '.') {
-            if (currentValue.includes('.') || isNumeralSystem) return prev;
-            return { ...prev, value: currentValue ? currentValue + '.' : '0.' };
+             if (currentValue.includes('.') || isNumeralSystem) return prev;
+             return { ...prev, value: currentValue ? currentValue + '.' : '0.' };
         }
         
         const newValue = currentValue + key;
@@ -291,6 +290,10 @@ export function UnitConverterPwa() {
     });
 
   }, [activeInput, handleSwap, isNumeralSystem]);
+
+  const MemoizedStandardCalculator = useMemo(() => <StandardCalculator onInput={handleCalculatorInput} activeCategory={activeCategory} />, [handleCalculatorInput, activeCategory]);
+  const MemoizedNumeralCalculator = useMemo(() => <NumeralCalculator onInput={handleCalculatorInput} activeUnit={activeInput === 'from' ? from.unit : to.unit} />, [handleCalculatorInput, activeInput, from.unit, to.unit]);
+
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -331,11 +334,7 @@ export function UnitConverterPwa() {
             />
         </div>
         <div className="flex-grow p-2">
-            {isNumeralSystem ? (
-                <NumeralCalculator onInput={handleCalculatorInput} activeUnit={activeInput === 'from' ? from.unit : to.unit} />
-            ) : (
-                <StandardCalculator onInput={handleCalculatorInput} activeCategory={activeCategory} />
-            )}
+            {isNumeralSystem ? MemoizedNumeralCalculator : MemoizedStandardCalculator}
         </div>
     </div>
   );
