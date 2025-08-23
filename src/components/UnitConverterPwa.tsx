@@ -44,7 +44,7 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
             return activeUnit !== 'hexadecimal';
         }
         const numKey = parseInt(key, 10);
-        if (isNaN(numKey)) return false; // for 'Bksce' etc.
+        if (isNaN(numKey)) return false;
 
         if (activeUnit === 'binary') return numKey > 1;
         if (activeUnit === 'octal') return numKey > 7;
@@ -53,7 +53,7 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
     };
 
     const keys: (string | {key:string, icon:React.ReactNode, label: string})[] = [
-        { key: 'C', icon: 'AC', label: 'Clear' }, { key: 'Bksce', icon: <Delete className="h-7 w-7"/>, label: 'Backspace' }, 'F', 'E',
+        { key: 'AC', icon: 'AC', label: 'Clear' }, { key: 'Bksce', icon: <Delete className="h-7 w-7"/>, label: 'Backspace' }, 'F', 'E',
         '7', '8', '9', 'D',
         '4', '5', '6', 'C',
         '1', '2', '3', 'B',
@@ -62,19 +62,19 @@ const NumeralCalculator = React.memo(({ onInput, activeUnit }: { onInput: (key: 
 
     return (
         <div className="grid grid-cols-4 grid-rows-5 gap-2 h-full">
-            {keys.map((keyInfo) => {
+            {keys.map((keyInfo, index) => {
                 const key = typeof keyInfo === 'object' ? keyInfo.key : keyInfo;
                 const icon = typeof keyInfo === 'object' ? keyInfo.icon : key;
                 const disabled = isButtonDisabled(key);
                 
                 let buttonStyle = 'bg-muted/60 text-foreground';
-                if (key === 'C') buttonStyle = "bg-red-500/80 hover:bg-red-500 text-white";
-                if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
-                if (disabled) buttonStyle = cn(buttonStyle, "opacity-40 pointer-events-none");
+                if (key === 'AC') buttonStyle = "bg-red-500/80 hover:bg-red-500 text-white";
+                else if (['Bksce', 'Swap'].includes(key)) buttonStyle = 'text-primary';
+                else if (disabled) buttonStyle = cn(buttonStyle, "opacity-40 pointer-events-none");
 
                 return (
                     <CalculatorButton
-                        key={key}
+                        key={`${key}-${index}`}
                         onClick={() => onInput(key)}
                         className={buttonStyle}
                         disabled={disabled}
@@ -290,7 +290,7 @@ export function UnitConverterPwa() {
     handler(prev => {
         let currentValue = prev.value || '0';
 
-        if (key === 'C') {
+        if (key === 'C' || key === 'AC') {
             return { ...prev, value: '0' };
         }
         if (key === 'Bksce') {
