@@ -30,7 +30,9 @@ const MAX_COLORS = 10;
 
 function generateRandomColor(): ColorInfo {
   const hue = random.int(0, 359);
-  const hex = colord({ h: hue, s: 90, l: 65 }).toHex();
+  const saturation = random.int(70, 100);
+  const lightness = random.int(60, 85);
+  const hex = colord({ h: hue, s: saturation, l: lightness }).toHex();
   return {
     hex,
     name: colord(hex).toName({ closest: true }) || 'Unknown',
@@ -112,12 +114,7 @@ const ColorPanel = ({
   ];
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, flexBasis: '0%' }}
-      animate={{ opacity: 1, flexBasis: '100%' }}
-      exit={{ opacity: 0, flexBasis: '0%' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    <div
       style={{ backgroundColor: color.hex }}
       className={cn(
         "relative h-full w-full flex flex-col justify-end items-center p-6 text-center group",
@@ -164,7 +161,7 @@ const ColorPanel = ({
           </TooltipProvider>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -291,23 +288,21 @@ export default function ColorPaletteGenerator() {
             </Button>
         </div>
         <div className="flex-grow w-full flex flex-col">
-            <AnimatePresence>
-                {palette.map((color, index) => (
-                    <ColorPanel
-                        key={color.id}
-                        color={color}
-                        onToggleLock={() => toggleLock(color.id)}
-                        onCopy={() => copyColor(color.hex)}
-                        onRemove={() => removeColor(color.id)}
-                        canRemove={palette.length > MIN_COLORS}
-                        isMobile={true}
-                        isDragging={false}
-                        onDragStart={()=>{}}
-                        onDragEnter={()=>{}}
-                        onDragEnd={()=>{}}
-                    />
-                ))}
-            </AnimatePresence>
+            {palette.map((color, index) => (
+                <ColorPanel
+                    key={color.id}
+                    color={color}
+                    onToggleLock={() => toggleLock(color.id)}
+                    onCopy={() => copyColor(color.hex)}
+                    onRemove={() => removeColor(color.id)}
+                    canRemove={palette.length > MIN_COLORS}
+                    isMobile={true}
+                    isDragging={false}
+                    onDragStart={()=>{}}
+                    onDragEnter={()=>{}}
+                    onDragEnd={()=>{}}
+                />
+            ))}
         </div>
         <div className="p-4 border-t flex justify-around">
             <Button 
@@ -335,28 +330,25 @@ export default function ColorPaletteGenerator() {
         </div>
       </header>
       <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
-        <AnimatePresence>
-          {palette.map((color, index) => (
-            <React.Fragment key={color.id}>
-                {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
-                <ColorPanel
-                  color={color}
-                  onToggleLock={() => toggleLock(color.id)}
-                  onCopy={() => copyColor(color.hex)}
-                  onRemove={() => removeColor(color.id)}
-                  canRemove={palette.length > MIN_COLORS}
-                  isMobile={false}
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragEnter={(e) => handleDragEnter(e, index)}
-                  onDragEnd={handleDragEnd}
-                  isDragging={isDragging && dragItem.current === index}
-                />
-                <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
-            </React.Fragment>
-          ))}
-        </AnimatePresence>
+        {palette.map((color, index) => (
+          <React.Fragment key={color.id}>
+              {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
+              <ColorPanel
+                color={color}
+                onToggleLock={() => toggleLock(color.id)}
+                onCopy={() => copyColor(color.hex)}
+                onRemove={() => removeColor(color.id)}
+                canRemove={palette.length > MIN_COLORS}
+                isMobile={false}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnter={(e) => handleDragEnter(e, index)}
+                onDragEnd={handleDragEnd}
+                isDragging={isDragging && dragItem.current === index}
+              />
+              <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
 }
-
