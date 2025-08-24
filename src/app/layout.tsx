@@ -91,12 +91,11 @@ export default function RootLayout({
     <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
       <head>
         <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
-        <Script
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
           crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
+        ></script>
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
