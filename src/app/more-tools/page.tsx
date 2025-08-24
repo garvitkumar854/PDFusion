@@ -2,10 +2,11 @@
 'use client';
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, FileArchive } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Button } from "@/components/ui/button";
 
 const tools = [
     {
@@ -42,13 +43,6 @@ const tools = [
       title: 'Password Generator',
       description: 'Generate strong and secure passwords for your accounts.',
       href: '/password-generator',
-    },
-    {
-      icon: <FileArchive className="w-8 h-8 text-yellow-500" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Compress PDF',
-      description: 'Reduce the file size of your PDF while maintaining quality.',
-      href: '/compress-pdf',
     },
 ];
 
@@ -124,6 +118,33 @@ export default function MoreToolsPage() {
           ))}
         </motion.div>
       </main>
+
+      <section className="mt-20">
+         <AnimateOnScroll
+            animation="animate-in fade-in-0 slide-in-from-bottom-12"
+            className="duration-500"
+          >
+            <Card className="max-w-2xl mx-auto text-center p-8 shadow-lg bg-card/80 dark:bg-card/50 backdrop-blur-sm border border-border/20">
+              <CardHeader>
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                     <Lightbulb className="h-6 w-6 text-primary" />
+                  </div>
+                <CardTitle className="text-2xl font-bold">Have an Idea for a New Tool?</CardTitle>
+                <CardDescription>
+                    We are always looking to expand our suite of tools. If you have a suggestion for a new utility that would make your life easier, we'd love to hear from you.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild>
+                  <Link href="/contact">
+                    <Send className="mr-2 h-4 w-4" />
+                    Suggest a Tool
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+        </AnimateOnScroll>
+      </section>
     </div>
   );
 }
