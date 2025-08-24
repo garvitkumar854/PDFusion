@@ -3,6 +3,41 @@
 
 import PdfToJpgLoader from '@/components/PdfToJpgLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Selective Conversion',
+        description: 'Choose to convert all pages or select specific pages to turn into high-quality JPG images.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure & Private',
+        description: 'Your PDF is processed directly in your browser. No files are uploaded, keeping your sensitive documents safe.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant & Free',
+        description: 'No server uploads means no waiting. Your JPG images are generated in seconds and are completely free to download.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your PDF',
+        description: 'Click "Choose File" or drag and drop your PDF document to see all its pages.',
+    },
+    {
+        title: 'Select Pages to Convert',
+        description: 'By default, all pages are selected. You can uncheck the "Select All" box to choose specific pages.',
+    },
+    {
+        title: 'Convert & Download',
+        description: 'Click "Convert to JPG" to instantly generate your images, which will be downloaded as a ZIP file.',
+    },
+];
 
 export default function PdfToJpgPage() {
   return (
@@ -33,6 +68,14 @@ export default function PdfToJpgPage() {
             <PdfToJpgLoader />
           </div>
         </main>
+        
+         <FeatureGrid
+          title="The Best Way to Convert PDF to JPG"
+          description="Our tool provides a fast, secure, and user-friendly solution for converting your PDF pages into images."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Convert PDF to JPG"
+        />
       </div>
     </>
   );

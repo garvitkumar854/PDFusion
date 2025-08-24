@@ -3,6 +3,41 @@
 
 import PdfLoader from '@/components/PdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Simple Drag & Drop',
+        description: 'Easily upload multiple PDF files and reorder them with a simple drag-and-drop interface before merging.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure & Private',
+        description: 'All processing happens in your browser. Your files are never uploaded to a server, ensuring your data remains confidential.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Lightning Fast',
+        description: 'No server uploads means no waiting. Your merged PDF is created in seconds, right on your device.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your PDFs',
+        description: 'Click the "Choose Files" button or drag and drop your PDF documents into the designated area.',
+    },
+    {
+        title: 'Order Your Files',
+        description: 'Drag and drop the uploaded files to arrange them in the desired order for the final merged document.',
+    },
+    {
+        title: 'Merge & Download',
+        description: 'Click the "Merge PDFs" button to instantly combine your files into a single PDF, then download it.',
+    },
+];
 
 export default function MergerPage() {
   return (
@@ -33,6 +68,14 @@ export default function MergerPage() {
             <PdfLoader />
           </div>
         </main>
+
+        <FeatureGrid
+          title="The Ultimate PDF Merging Tool"
+          description="Find out why our PDF merger is the best choice for combining your documents quickly, securely, and with ease."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Merge PDFs"
+        />
       </div>
     </>
   );

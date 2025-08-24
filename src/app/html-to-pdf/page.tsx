@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const HtmlToPdfLoader = dynamic(() => import('@/components/HtmlToPdfLoader'), {
   ssr: false,
@@ -18,6 +20,40 @@ const HtmlToPdfLoader = dynamic(() => import('@/components/HtmlToPdfLoader'), {
     </div>
   )
 });
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Simple & Direct',
+        description: 'Just paste the URL of the webpage you want to convert. Our tool handles the rest, turning it into a clean PDF.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure Conversion',
+        description: 'The webpage content is fetched securely, and the PDF is generated without storing any data, ensuring your privacy.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant & Free',
+        description: 'No server queues or waiting. Your PDF is generated quickly and is available for download immediately, completely free.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Enter the URL',
+        description: 'Paste the full URL of the webpage you wish to convert into the input field.',
+    },
+    {
+        title: 'Click "Convert to PDF"',
+        description: 'Our tool will fetch the content of the webpage and begin the conversion process instantly.',
+    },
+    {
+        title: 'Download Your PDF',
+        description: 'Once the conversion is complete, a download button will appear. Click it to save your new PDF document.',
+    },
+];
+
 
 export default function HtmlToPdfPage() {
   return (
@@ -46,6 +82,15 @@ export default function HtmlToPdfPage() {
             <HtmlToPdfLoader />
           </div>
         </main>
+        
+        <FeatureGrid
+          title="Convert Webpages with Ease"
+          description="Learn why our HTML to PDF converter is the perfect tool for saving online articles, receipts, and reports."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Convert HTML to PDF"
+        />
+
       </div>
     </>
   );

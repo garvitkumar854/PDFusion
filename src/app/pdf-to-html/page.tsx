@@ -3,11 +3,46 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const PdfToHtmlLoader = dynamic(() => import('@/components/PdfToHtmlLoader'), {
   ssr: false,
   loading: () => <div className="flex justify-center items-center h-96"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>
 });
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Quick Extraction',
+        description: 'Our tool rapidly extracts text and basic structural elements from your PDF, creating a simple, clean HTML file.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure & Private',
+        description: 'Your PDF is processed entirely within your browser. No files are uploaded, ensuring your data remains confidential.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant Download',
+        description: 'No server queues or waiting times. Your HTML file is generated and ready for download in just a few seconds.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your PDF',
+        description: 'Click "Choose File" or drag and drop your PDF document into the designated area to begin.',
+    },
+    {
+        title: 'Automatic Conversion',
+        description: 'The tool will automatically start processing the file, extracting the text content from each page.',
+    },
+    {
+        title: 'Download Your HTML',
+        description: 'Once the conversion is complete, click the "Download HTML" button to save the file to your device.',
+    },
+];
 
 export default function PdfToHtmlPage() {
   return (
@@ -36,6 +71,15 @@ export default function PdfToHtmlPage() {
             <PdfToHtmlLoader />
           </div>
         </main>
+        
+        <FeatureGrid
+          title="Why Convert PDF to HTML?"
+          description="Our converter offers a fast, secure, and straightforward way to make your PDF content web-accessible."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Convert PDF to HTML"
+        />
+
       </div>
     </>
   );

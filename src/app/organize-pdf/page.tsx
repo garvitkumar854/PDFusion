@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const PdfOrganizerLoader = dynamic(() => import('@/components/PdfOrganizerLoader'), {
   ssr: false,
@@ -21,6 +23,39 @@ const PdfOrganizerLoader = dynamic(() => import('@/components/PdfOrganizerLoader
     </div>
   )
 });
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Visual Drag & Drop',
+        description: 'Easily reorder pages with a simple drag-and-drop interface. Rotate or delete pages with a single click.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Completely Secure',
+        description: 'Your PDF is processed directly in your browser. No files are uploaded to our servers, ensuring total privacy.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant Organization',
+        description: 'No waiting for uploads or server processing. Organize your PDF and download the new version instantly.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your PDF',
+        description: 'Click "Choose File" or drag and drop your PDF document to load all its pages.',
+    },
+    {
+        title: 'Organize Your Pages',
+        description: 'Drag and drop page thumbnails to reorder them. Use the toolbar to rotate or delete selected pages.',
+    },
+    {
+        title: 'Save Your Changes',
+        description: 'Once you are satisfied with the new order, click "Save" to download your newly organized PDF.',
+    },
+];
 
 export default function OrganizePdfPage() {
   const [isFileUploaded, setIsFileUploaded] = useState(false);
@@ -55,6 +90,15 @@ export default function OrganizePdfPage() {
             <PdfOrganizerLoader onFileChange={setIsFileUploaded} />
           </div>
         </main>
+
+        <FeatureGrid
+            title="The Easiest Way to Organize PDFs"
+            description="Our tool provides a powerful, secure, and user-friendly solution for managing your PDF pages."
+            features={features}
+            steps={howToSteps}
+            stepsTitle="How to Organize a PDF"
+        />
+
       </div>
     </>
   );

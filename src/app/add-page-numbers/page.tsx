@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const PageNumberAdderLoader = dynamic(() => import('@/components/PageNumberAdderLoader'), {
   ssr: false,
@@ -18,6 +20,40 @@ const PageNumberAdderLoader = dynamic(() => import('@/components/PageNumberAdder
     </div>
   )
 });
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Simple & Intuitive',
+        description: 'Just upload your PDF, customize your settings, and see a live preview of the page numbers before you apply them.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure & Private',
+        description: 'Your files are processed entirely in your browser. No data ever leaves your computer, ensuring your privacy is protected.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant Processing',
+        description: 'No server uploads means no waiting. Your numbered PDF is generated in seconds, directly on your device.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your PDF',
+        description: 'Click the "Choose File" button or drag and drop your PDF document into the designated area.',
+    },
+    {
+        title: 'Customize Your Settings',
+        description: 'Choose the position, format, font, and page range for your numbers. The live preview will update instantly.',
+    },
+    {
+        title: 'Add Numbers & Download',
+        description: 'Once you are happy with the preview, click "Add Page Numbers" to generate and download your new PDF.',
+    },
+];
+
 
 export default function AddPageNumbersPage() {
   return (
@@ -48,6 +84,15 @@ export default function AddPageNumbersPage() {
             <PageNumberAdderLoader />
           </div>
         </main>
+
+        <FeatureGrid
+          title="Numbering Made Easy"
+          description="Discover the key features that make our tool the best choice for adding page numbers to your PDFs."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Add Page Numbers to a PDF"
+        />
+
       </div>
     </>
   );

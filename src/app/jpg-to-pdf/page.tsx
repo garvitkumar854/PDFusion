@@ -3,6 +3,41 @@
 
 import JpgToPdfLoader from '@/components/JpgToPdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+
+const features = [
+    {
+        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        title: 'Full Customization',
+        description: 'Control page orientation, size (A4, Letter, Fit), and margins to create the perfect PDF from your images.',
+    },
+    {
+        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        title: 'Secure & Private',
+        description: 'Your images are processed entirely in your browser. No files are ever uploaded, ensuring your data remains confidential.',
+    },
+    {
+        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        title: 'Instant Conversion',
+        description: 'No server uploads means no waiting. Your PDF is generated in seconds, directly on your device, for free.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Upload Your Images',
+        description: 'Click "Choose Files" or drag and drop your JPG or PNG files into the designated area.',
+    },
+    {
+        title: 'Customize Your PDF',
+        description: 'Set your preferred page orientation, size, and margins. Drag and drop to reorder the images as needed.',
+    },
+    {
+        title: 'Convert & Download',
+        description: 'Click "Convert to PDF" to instantly generate your document, then download it directly to your computer.',
+    },
+];
 
 export default function JpgToPdfPage() {
   return (
@@ -33,6 +68,14 @@ export default function JpgToPdfPage() {
             <JpgToPdfLoader />
           </div>
         </main>
+        
+        <FeatureGrid
+          title="Why Convert JPG to PDF with Us?"
+          description="Discover the advantages of using our powerful, private, and customizable image-to-PDF converter."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Convert JPG to PDF"
+        />
       </div>
     </>
   );

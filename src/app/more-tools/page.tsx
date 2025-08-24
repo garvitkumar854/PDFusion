@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, FileArchive } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -42,6 +42,13 @@ const tools = [
       title: 'Password Generator',
       description: 'Generate strong and secure passwords for your accounts.',
       href: '/password-generator',
+    },
+    {
+      icon: <FileArchive className="w-8 h-8 text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Compress PDF',
+      description: 'Reduce the file size of your PDF while maintaining quality.',
+      href: '/compress-pdf',
     },
 ];
 
