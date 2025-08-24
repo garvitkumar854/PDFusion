@@ -33,40 +33,6 @@ function generateRandomColor(): ColorInfo {
   };
 }
 
-function generatePalette(lockedColors: ColorInfo[] = [], size: number = 5): Palette {
-  const newPalette: Palette = [];
-  
-  lockedColors.forEach(color => {
-    if (color.isLocked) {
-      newPalette.push(color);
-    }
-  });
-
-  const needed = size - newPalette.length;
-  for (let i = 0; i < needed; i++) {
-    newPalette.push(generateRandomColor());
-  }
-  
-  // Re-sort based on original locked position if needed, or just append
-  // This simple version just appends, but a more complex one might re-insert
-  const finalPalette = [...palette]; // start with a copy of current palette
-  const lockedHexes = new Set(lockedColors.map(c => c.hex));
-  const unlockedGenerated = newPalette.filter(c => !lockedHexes.has(c.hex));
-
-  let generatedIdx = 0;
-  for (let i = 0; i < finalPalette.length; i++) {
-      if (!finalPalette[i].isLocked) {
-          if (unlockedGenerated[generatedIdx]) {
-              finalPalette[i] = unlockedGenerated[generatedIdx];
-              generatedIdx++;
-          }
-      }
-  }
-
-  return finalPalette;
-}
-
-
 const ColorPanel = ({ color, onToggleLock, onCopy, isMobile }: { color: ColorInfo, onToggleLock: () => void, onCopy: () => void, isMobile: boolean }) => {
   const [copied, setCopied] = useState(false);
   const textColor = colord(color.hex).isDark() ? '#FFFFFF' : '#000000';
