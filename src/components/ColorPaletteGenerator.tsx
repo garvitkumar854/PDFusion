@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
-import randomPlugin from 'colord/plugins/random';
+import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw } from 'lucide-react';
@@ -13,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-extend([namesPlugin, randomPlugin]);
+extend([namesPlugin]);
 
 type ColorInfo = {
   hex: string;
@@ -24,7 +23,8 @@ type ColorInfo = {
 type Palette = ColorInfo[];
 
 function generateRandomColor(): ColorInfo {
-  const hex = colord.random().toHex();
+  const hue = random.int(0, 359);
+  const hex = colord({ h: hue, s: 90, l: 65 }).toHex();
   return {
     hex,
     name: colord(hex).toName({ closest: true }) || 'Unknown',
