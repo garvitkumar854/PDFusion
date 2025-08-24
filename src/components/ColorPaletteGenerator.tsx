@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
+import randomPlugin from 'colord/plugins/random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw } from 'lucide-react';
@@ -11,8 +12,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from '@/lib/utils';
 
-extend([namesPlugin]);
+extend([namesPlugin, randomPlugin]);
 
 type ColorInfo = {
   hex: string;
