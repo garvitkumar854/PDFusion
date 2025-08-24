@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, Plus, X as XIcon } from 'lucide-react';
+import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -39,18 +39,64 @@ function generateRandomColor(): ColorInfo {
   };
 }
 
-const ColorPanel = ({ color, onToggleLock, onCopy, onRemove, canRemove, isMobile }: { color: ColorInfo, onToggleLock: () => void, onCopy: () => void, onRemove: () => void; canRemove: boolean; isMobile: boolean }) => {
+const ColorPanel = ({ 
+  color, 
+  onToggleLock, 
+  onCopy, 
+  onRemove, 
+  canRemove, 
+  isMobile,
+  onDragStart,
+  onDragEnter,
+  onDragEnd,
+  isDragging,
+}: { 
+  color: ColorInfo, 
+  onToggleLock: () => void, 
+  onCopy: () => void, 
+  onRemove: () => void; 
+  canRemove: boolean; 
+  isMobile: boolean,
+  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
+}) => {
   const [copied, setCopied] = useState(false);
   const textColor = colord(color.hex).isDark() ? '#FFFFFF' : '#000000';
-  const ActionButton = isMobile ? 'div' : Button;
 
   const handleCopy = () => {
     onCopy();
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+  
+  const handleViewShades = () => {
+    // Placeholder for viewing shades functionality
+    alert(`Shades for ${color.hex}`);
+  };
+
 
   const actionIcons = [
+    {
+      label: 'Remove Color',
+      onClick: onRemove,
+      icon: <Trash2 className="h-5 w-5"/>,
+      visible: canRemove,
+      className: "hover:text-red-500"
+    },
+    {
+      label: 'View Shades',
+      onClick: handleViewShades,
+      icon: <Palette className="h-5 w-5"/>,
+      visible: true
+    },
+    {
+      label: 'Drag to Reorder',
+      icon: <GripVertical className="h-5 w-5 cursor-grab"/>,
+      visible: !isMobile,
+      isDragHandle: true,
+    },
     {
       label: 'Copy Hex',
       onClick: handleCopy,
@@ -60,16 +106,9 @@ const ColorPanel = ({ color, onToggleLock, onCopy, onRemove, canRemove, isMobile
     {
       label: color.isLocked ? 'Unlock' : 'Lock',
       onClick: onToggleLock,
-      icon: color.isLocked ? <Lock className="h-5 w-5 text-red-500" /> : <Unlock className="h-5 w-5" />,
+      icon: color.isLocked ? <Lock className="h-5 w-5 text-red-400" /> : <Unlock className="h-5 w-5" />,
       visible: true
     },
-    {
-      label: 'Remove Color',
-      onClick: onRemove,
-      icon: <XIcon className="h-5 w-5"/>,
-      visible: canRemove,
-      className: "hover:bg-destructive/80 hover:text-white"
-    }
   ];
 
   return (
@@ -80,7 +119,15 @@ const ColorPanel = ({ color, onToggleLock, onCopy, onRemove, canRemove, isMobile
       exit={{ opacity: 0, flexBasis: '0%' }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{ backgroundColor: color.hex }}
-      className="relative h-full w-full flex flex-col justify-end items-center p-6 text-center group"
+      className={cn(
+        "relative h-full w-full flex flex-col justify-end items-center p-6 text-center group",
+        isDragging ? 'opacity-50' : 'opacity-100'
+      )}
+      draggable={!isMobile}
+      onDragStart={onDragStart}
+      onDragEnter={onDragEnter}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => e.preventDefault()}
     >
       <div className="relative z-10 space-y-1" style={{ color: textColor }}>
         <h2 className="text-xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
@@ -91,23 +138,24 @@ const ColorPanel = ({ color, onToggleLock, onCopy, onRemove, canRemove, isMobile
 
       <div className={cn(
         "absolute z-20 flex transition-opacity duration-300",
-        isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 flex-col gap-4 opacity-0 group-hover:opacity-100'
+        isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 flex-col gap-2 opacity-0 group-hover:opacity-100'
       )}>
-        {actionIcons.filter(a => a.visible).map((action) => (
+        {actionIcons.filter(a => a.visible).map((action, index) => (
           <TooltipProvider key={action.label}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <ActionButton
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => { e.stopPropagation(); action.onClick(); }}
+                <button
+                  onClick={(e) => { e.stopPropagation(); action.onClick?.(); }}
+                  style={{ color: textColor }}
                   className={cn(
-                    "rounded-full bg-white/30 text-black/80 backdrop-blur-sm hover:bg-white/50 w-10 h-10 flex items-center justify-center",
-                    action.className
+                    "rounded-full p-2 transition-transform duration-200 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20 focus-visible:ring-white",
+                     action.isDragHandle ? 'cursor-grab' : 'cursor-pointer',
+                     action.className
                   )}
+                  aria-label={action.label}
                 >
                   {action.icon}
-                </ActionButton>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>{action.label}</p>
@@ -154,6 +202,9 @@ export default function ColorPaletteGenerator() {
   , []);
   
   const [palette, setPalette] = useState<Palette>(() => generatePalette(isMobile ? 3 : 5));
+
+  const dragItem = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleGenerate = useCallback(() => {
     setPalette(currentPalette => {
@@ -207,6 +258,28 @@ export default function ColorPaletteGenerator() {
     toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
   };
   
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    dragItem.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => setIsDragging(true), 0);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    if (dragItem.current === null || dragItem.current === index) return;
+    
+    const paletteCopy = [...palette];
+    const draggedItemContent = paletteCopy.splice(dragItem.current, 1)[0];
+    paletteCopy.splice(index, 0, draggedItemContent);
+    dragItem.current = index;
+    setPalette(paletteCopy);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    dragItem.current = null;
+  };
+  
   if (isMobile) {
     return (
       <div className="h-full w-full flex flex-col">
@@ -228,6 +301,10 @@ export default function ColorPaletteGenerator() {
                         onRemove={() => removeColor(color.id)}
                         canRemove={palette.length > MIN_COLORS}
                         isMobile={true}
+                        isDragging={false}
+                        onDragStart={()=>{}}
+                        onDragEnter={()=>{}}
+                        onDragEnd={()=>{}}
                     />
                 ))}
             </AnimatePresence>
@@ -257,7 +334,7 @@ export default function ColorPaletteGenerator() {
           </Button>
         </div>
       </header>
-      <div className="flex-grow w-full flex">
+      <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
         <AnimatePresence>
           {palette.map((color, index) => (
             <React.Fragment key={color.id}>
@@ -269,6 +346,10 @@ export default function ColorPaletteGenerator() {
                   onRemove={() => removeColor(color.id)}
                   canRemove={palette.length > MIN_COLORS}
                   isMobile={false}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnter={(e) => handleDragEnter(e, index)}
+                  onDragEnd={handleDragEnd}
+                  isDragging={isDragging && dragItem.current === index}
                 />
                 <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
             </React.Fragment>
@@ -278,3 +359,4 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
+
