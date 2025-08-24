@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import randomPlugin from 'colord/plugins/random';
@@ -11,7 +11,6 @@ import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw } from 'lucide
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { cn } from '@/lib/utils';
 
 extend([namesPlugin, randomPlugin]);
@@ -106,9 +105,12 @@ export default function ColorPaletteGenerator() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const paletteSize = isMobile ? 3 : 5;
-  const [palette, setPalette] = useState<Palette>(() => 
-    Array.from({ length: paletteSize }, generateRandomColor)
-  );
+  
+  const generatePalette = useCallback((size: number) => 
+      Array.from({ length: size }, generateRandomColor)
+  , []);
+  
+  const [palette, setPalette] = useState<Palette>(() => generatePalette(paletteSize));
 
   const handleGenerate = useCallback(() => {
     setPalette(currentPalette => {
@@ -143,13 +145,15 @@ export default function ColorPaletteGenerator() {
   
   useEffect(() => {
     setPalette(currentPalette => {
-       const newPalette = [...currentPalette];
-       while (newPalette.length < paletteSize) {
-        newPalette.push(generateRandomColor());
+       const lockedColors = currentPalette.filter(c => c.isLocked);
+       const newColorsCount = paletteSize - lockedColors.length;
+
+       if (newColorsCount > 0) {
+         return [...lockedColors, ...generatePalette(newColorsCount)];
        }
-       return newPalette.slice(0, paletteSize);
+       return lockedColors.slice(0, paletteSize);
     });
-  }, [paletteSize]);
+  }, [paletteSize, generatePalette]);
 
   const toggleLock = (index: number) => {
     setPalette(prev =>
