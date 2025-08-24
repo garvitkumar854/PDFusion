@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
-import hslPlugin from 'colord/plugins/hsl';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
@@ -14,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 
-extend([namesPlugin, hslPlugin]);
+extend([namesPlugin]);
 
 type ColorInfo = {
   hex: string;
@@ -207,12 +206,13 @@ const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: 
 
 const ShadesPanel = ({ color, onCopy, onBack }: { color: ColorInfo, onCopy: (hex: string) => void, onBack: () => void }) => {
     const shades = useMemo(() => {
-        const base = colord(color.hex);
+        const baseHsl = colord(color.hex).toHsl();
         const count = 25;
+        
         return Array.from({ length: count }, (_, i) => {
-          const lightness = 100 - (i * (100 - (base.lightness() - 20))) / (count - 1);
-          const newHex = base.lightness(lightness).toHex();
-          return { hex: newHex, name: colord(newHex).toName({closest: true}) || 'Unknown' };
+            const lightness = 100 - (i * (100 - (baseHsl.l - 20))) / (count - 1);
+            const newHex = colord({ ...baseHsl, l: lightness }).toHex();
+            return { hex: newHex, name: colord(newHex).toName({closest: true}) || 'Unknown' };
         });
     }, [color.hex]);
 
