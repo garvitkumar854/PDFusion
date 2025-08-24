@@ -34,18 +34,38 @@ function generateRandomColor(): ColorInfo {
 }
 
 function generatePalette(lockedColors: ColorInfo[] = [], size: number = 5): Palette {
-  const newPalette: Palette = [...lockedColors];
-  const needed = size - lockedColors.length;
+  const newPalette: Palette = [];
+  
+  lockedColors.forEach(color => {
+    if (color.isLocked) {
+      newPalette.push(color);
+    }
+  });
+
+  const needed = size - newPalette.length;
   for (let i = 0; i < needed; i++) {
     newPalette.push(generateRandomColor());
   }
-  return newPalette;
+  
+  // Re-sort based on original locked position if needed, or just append
+  // This simple version just appends, but a more complex one might re-insert
+  const finalPalette = [...palette]; // start with a copy of current palette
+  const lockedHexes = new Set(lockedColors.map(c => c.hex));
+  const unlockedGenerated = newPalette.filter(c => !lockedHexes.has(c.hex));
+
+  let generatedIdx = 0;
+  for (let i = 0; i < finalPalette.length; i++) {
+      if (!finalPalette[i].isLocked) {
+          if (unlockedGenerated[generatedIdx]) {
+              finalPalette[i] = unlockedGenerated[generatedIdx];
+              generatedIdx++;
+          }
+      }
+  }
+
+  return finalPalette;
 }
 
-const ColorName = ({ hex }: { hex: string }) => {
-    const name = useMemo(() => colord(hex).toName({ closest: true }) || 'Unknown', [hex]);
-    return <p className="text-sm capitalize">{name}</p>
-}
 
 const ColorPanel = ({ color, onToggleLock, onCopy, isMobile }: { color: ColorInfo, onToggleLock: () => void, onCopy: () => void, isMobile: boolean }) => {
   const [copied, setCopied] = useState(false);
@@ -99,8 +119,8 @@ const ColorPanel = ({ color, onToggleLock, onCopy, isMobile }: { color: ColorInf
                 <ActionButton
                   variant="ghost"
                   size="icon"
-                  onClick={action.onClick}
-                  className="rounded-full bg-white/30 text-black/80 backdrop-blur-sm hover:bg-white/50 w-10 h-10"
+                  onClick={(e) => { e.stopPropagation(); action.onClick(); }}
+                  className="rounded-full bg-white/30 text-black/80 backdrop-blur-sm hover:bg-white/50 w-10 h-10 flex items-center justify-center"
                 >
                   {action.icon}
                 </ActionButton>
@@ -117,15 +137,25 @@ const ColorPanel = ({ color, onToggleLock, onCopy, isMobile }: { color: ColorInf
 };
 
 export default function ColorPaletteGenerator() {
-  const [palette, setPalette] = useState<Palette>(() => generatePalette());
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const paletteSize = isMobile ? 3 : 5;
+  const [palette, setPalette] = useState<Palette>(() => Array.from({ length: paletteSize }, generateRandomColor));
 
   const handleGenerate = useCallback(() => {
-    const locked = palette.filter(c => c.isLocked);
-    const newPalette = generatePalette(locked, isMobile ? 3 : 5);
-    setPalette(newPalette);
-  }, [palette, isMobile]);
+    setPalette(currentPalette => {
+      const newPalette: Palette = [];
+      for (let i = 0; i < paletteSize; i++) {
+        if (currentPalette[i] && currentPalette[i].isLocked) {
+          newPalette.push(currentPalette[i]);
+        } else {
+          newPalette.push(generateRandomColor());
+        }
+      }
+      return newPalette;
+    });
+  }, [paletteSize]);
+
 
   useEffect(() => {
     const handleSpacebar = (e: KeyboardEvent) => {
@@ -161,7 +191,7 @@ export default function ColorPaletteGenerator() {
         </div>
         <div className="flex-grow w-full flex flex-col">
             <AnimatePresence>
-                {palette.slice(0, 3).map((color, index) => (
+                {palette.map((color, index) => (
                     <ColorPanel
                         key={color.hex + index}
                         color={color}
