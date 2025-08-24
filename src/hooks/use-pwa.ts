@@ -24,7 +24,7 @@ export function usePwa() {
             console.log('Notification permission granted.');
 
             // Get token
-            const currentToken = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY_HERE' }); // Replace with your VAPID key
+            const currentToken = await getToken(messaging, { vapidKey: process.env.NEXT_PUBLIC_FCM_VAPID_KEY });
             if (currentToken) {
               console.log('FCM Token:', currentToken);
               // Send this token to your server to store it
