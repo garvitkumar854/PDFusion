@@ -31,8 +31,8 @@ const MAX_COLORS = 10;
 
 function generateRandomColor(): ColorInfo {
   const hue = random.int(0, 359);
-  const saturation = random.int(70, 100);
-  const lightness = random.int(60, 85);
+  const saturation = random.int(40, 70);
+  const lightness = random.int(50, 80);
   const hex = colord({ h: hue, s: saturation, l: lightness }).toHex();
   return {
     hex,
@@ -456,5 +456,3 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
-
-    
