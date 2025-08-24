@@ -1,9 +1,10 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
+import hslPlugin from 'colord/plugins/hsl';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
@@ -13,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 
-extend([namesPlugin]);
+extend([namesPlugin, hslPlugin]);
 
 type ColorInfo = {
   hex: string;
@@ -455,3 +456,5 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
+
+    
