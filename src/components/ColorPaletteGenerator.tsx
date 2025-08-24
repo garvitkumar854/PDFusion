@@ -106,19 +106,26 @@ export default function ColorPaletteGenerator() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const paletteSize = isMobile ? 3 : 5;
-  const [palette, setPalette] = useState<Palette>(() => Array.from({ length: paletteSize }, generateRandomColor));
+  const [palette, setPalette] = useState<Palette>(() => 
+    Array.from({ length: paletteSize }, generateRandomColor)
+  );
 
   const handleGenerate = useCallback(() => {
     setPalette(currentPalette => {
       const newPalette: Palette = [];
-      for (let i = 0; i < paletteSize; i++) {
+      const currentLength = currentPalette.length || paletteSize;
+      for (let i = 0; i < currentLength; i++) {
         if (currentPalette[i] && currentPalette[i].isLocked) {
           newPalette.push(currentPalette[i]);
         } else {
           newPalette.push(generateRandomColor());
         }
       }
-      return newPalette;
+      // Ensure the palette size is correct
+      while (newPalette.length < paletteSize) {
+        newPalette.push(generateRandomColor());
+      }
+      return newPalette.slice(0, paletteSize);
     });
   }, [paletteSize]);
 
@@ -133,6 +140,16 @@ export default function ColorPaletteGenerator() {
     window.addEventListener('keydown', handleSpacebar);
     return () => window.removeEventListener('keydown', handleSpacebar);
   }, [handleGenerate]);
+  
+  useEffect(() => {
+    setPalette(currentPalette => {
+       const newPalette = [...currentPalette];
+       while (newPalette.length < paletteSize) {
+        newPalette.push(generateRandomColor());
+       }
+       return newPalette.slice(0, paletteSize);
+    });
+  }, [paletteSize]);
 
   const toggleLock = (index: number) => {
     setPalette(prev =>
