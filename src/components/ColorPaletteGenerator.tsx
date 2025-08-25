@@ -1,20 +1,19 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { colord, extend, HslColor } from 'colord';
 import namesPlugin from 'colord/plugins/names';
-import hslPlugin from 'colord/plugins/hsl';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, Plus, Trash2, GripVertical, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-extend([namesPlugin, hslPlugin]);
+extend([namesPlugin]);
 
 type ColorInfo = {
   hex: string;
@@ -178,8 +177,8 @@ const ColorPanel = ({
         </div>
 
         <div className={cn(
-            "absolute z-20 flex transition-opacity duration-300",
-            isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 flex-col gap-2 opacity-0 group-hover:opacity-100'
+            "absolute z-20 flex transition-opacity duration-300 opacity-0 group-hover:opacity-100",
+            isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 flex-col gap-2'
           )}>
           {actionIcons.filter(a => a.visible).map((action) => (
             <TooltipProvider key={action.label}>
@@ -212,7 +211,7 @@ const ColorPanel = ({
 
 const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: boolean }) => (
     <div className="relative h-full flex-shrink-0 w-0 group/add">
-        <div className="absolute inset-y-0 -left-6 w-12 z-20 flex items-center justify-center">
+        <div className="absolute inset-y-0 -left-8 w-16 z-20 flex items-center justify-center">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
