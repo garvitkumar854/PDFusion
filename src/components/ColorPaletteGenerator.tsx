@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, Plus, Trash2, GripVertical, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 
 extend([namesPlugin]);
@@ -41,50 +41,59 @@ function generateRandomColor(): ColorInfo {
   };
 }
 
-const ShadesPanel = ({ color, onCopy, onBack }: { color: ColorInfo, onCopy: (hex: string) => void, onBack: () => void }) => {
-    const shades = useMemo(() => {
-        const baseHsl = colord(color.hex).toHsl();
-        const count = 25;
-        
-        return Array.from({ length: count }, (_, i) => {
-            const lightness = 100 - (i * (100 - (baseHsl.l - 20))) / (count - 1);
-            const newHex = colord({ ...baseHsl, l: lightness }).toHex();
-            return { hex: newHex, name: colord(newHex).toName({closest: true}) || 'Unknown' };
-        });
-    }, [color.hex]);
+const ShadesPanel = ({
+  baseColor,
+  onShadeSelect,
+}: {
+  baseColor: ColorInfo;
+  onShadeSelect: (hex: string) => void;
+}) => {
+  const shades = useMemo(() => {
+    const baseHsl = colord(baseColor.hex).toHsl();
+    const count = 25;
 
-    return (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="w-full h-full flex flex-col absolute inset-0 z-20"
+    return Array.from({ length: count }, (_, i) => {
+      const lightness = 100 - (i * (100 - (baseHsl.l > 10 ? baseHsl.l - 20 : baseHsl.l))) / (count - 1);
+      const newHex = colord({ ...baseHsl, l: lightness }).toHex();
+      return { hex: newHex, name: colord(newHex).toName({ closest: true }) || 'Unknown' };
+    });
+  }, [baseColor.hex]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full h-full flex flex-col absolute inset-0 z-20"
+    >
+      {shades.map((shade, i) => (
+        <div
+          key={i}
+          style={{ backgroundColor: shade.hex }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onShadeSelect(shade.hex);
+          }}
+          className="flex-grow flex items-center justify-center cursor-pointer group/shade"
         >
-            <button onClick={onBack} className="absolute top-2 left-2 z-30 p-2 rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors">
-                <ArrowLeft className="h-5 w-5"/>
-            </button>
-            {shades.map((shade, i) => (
-                <div
-                    key={i}
-                    style={{ backgroundColor: shade.hex }}
-                    onClick={() => onCopy(shade.hex)}
-                    className="flex-grow flex items-center justify-center cursor-pointer group/shade"
-                >
-                    <div className="opacity-0 group-hover/shade:opacity-100 transition-opacity flex flex-col items-center" style={{ color: colord(shade.hex).isDark() ? '#FFF' : '#000' }}>
-                       <span className="font-bold uppercase">{shade.hex.substring(1)}</span>
-                       <span className="text-xs capitalize">{shade.name}</span>
-                    </div>
-                </div>
-            ))}
-        </motion.div>
-    );
+          <div
+            className="opacity-0 group-hover/shade:opacity-100 transition-opacity flex flex-col items-center"
+            style={{ color: colord(shade.hex).isDark() ? '#FFF' : '#000' }}
+          >
+            <span className="font-bold uppercase">{shade.hex.substring(1)}</span>
+            <span className="text-xs capitalize">{shade.name}</span>
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  );
 };
 
 
 const ColorPanel = ({ 
   color, 
+  onColorChange,
   onToggleLock, 
-  onCopy, 
   onRemove, 
   canRemove, 
   isMobile,
@@ -94,8 +103,8 @@ const ColorPanel = ({
   isDragging,
 }: { 
   color: ColorInfo, 
+  onColorChange: (hex: string) => void;
   onToggleLock: () => void, 
-  onCopy: () => void, 
   onRemove: () => void; 
   canRemove: boolean; 
   isMobile: boolean,
@@ -106,19 +115,25 @@ const ColorPanel = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isShadesViewActive, setIsShadesViewActive] = useState(false);
+  const [shadesBaseColor, setShadesBaseColor] = useState<ColorInfo | null>(null);
+
   const textColor = colord(color.hex).isDark() ? '#FFFFFF' : '#000000';
   const { toast } = useToast();
 
-
   const handleCopy = () => {
-    onCopy();
+    navigator.clipboard.writeText(color.hex);
     setCopied(true);
+    toast({ variant: 'success', title: 'Copied to clipboard!', description: color.hex });
     setTimeout(() => setCopied(false), 1500);
   };
   
-  const handleShadesCopy = (hex: string) => {
-    navigator.clipboard.writeText(hex);
-    toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
+  const handleToggleShades = () => {
+    setIsShadesViewActive(prev => {
+        if (!prev) {
+            setShadesBaseColor(color);
+        }
+        return !prev;
+    });
   }
 
   const actionIcons = [
@@ -131,7 +146,7 @@ const ColorPanel = ({
     },
     {
       label: 'View Shades',
-      onClick: () => setIsShadesViewActive(true),
+      onClick: handleToggleShades,
       icon: <Palette className="h-5 w-5"/>,
       visible: true
     },
@@ -203,7 +218,7 @@ const ColorPanel = ({
           ))}
         </div>
       <AnimatePresence>
-        {isShadesViewActive && <ShadesPanel color={color} onCopy={handleShadesCopy} onBack={() => setIsShadesViewActive(false)} />}
+        {isShadesViewActive && shadesBaseColor && <ShadesPanel baseColor={shadesBaseColor} onShadeSelect={onColorChange} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -292,12 +307,15 @@ export default function ColorPaletteGenerator() {
     }
     setPalette(prev => prev.filter(c => c.id !== id));
   };
-
-  const copyColor = (hex: string) => {
-    navigator.clipboard.writeText(hex);
-    toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
-  };
   
+  const handleColorChange = (id: string, hex: string) => {
+    setPalette(prev =>
+      prev.map(c =>
+        c.id === id ? { ...c, hex, name: colord(hex).toName({ closest: true }) || 'Unknown' } : c
+      )
+    );
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
@@ -336,8 +354,8 @@ export default function ColorPaletteGenerator() {
                 <ColorPanel
                     key={color.id}
                     color={color}
+                    onColorChange={(hex) => handleColorChange(color.id, hex)}
                     onToggleLock={() => toggleLock(color.id)}
-                    onCopy={() => copyColor(color.hex)}
                     onRemove={() => removeColor(color.id)}
                     canRemove={palette.length > MIN_COLORS}
                     isMobile={true}
@@ -386,8 +404,8 @@ export default function ColorPaletteGenerator() {
                   {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
                   <ColorPanel
                     color={color}
+                    onColorChange={(hex) => handleColorChange(color.id, hex)}
                     onToggleLock={() => toggleLock(color.id)}
-                    onCopy={() => copyColor(color.hex)}
                     onRemove={() => removeColor(color.id)}
                     canRemove={palette.length > MIN_COLORS}
                     isMobile={false}
