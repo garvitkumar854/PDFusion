@@ -23,10 +23,8 @@ const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPale
 export default function ColorPaletteGeneratorPage() {
   return (
     <>
-      <div className="flex flex-col flex-1 h-[calc(100vh-100px)]">
-        <main className="flex-1 w-full h-full">
+      <div className="flex-1 w-full h-[calc(100vh-80px)] -mx-4 sm:-mx-6 lg:-mx-8">
             <ColorPaletteGeneratorLoader />
-        </main>
       </div>
     </>
   );
