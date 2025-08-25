@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { colord, extend } from 'colord';
+import { colord, extend, an } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
+import { HslColor } from 'colord';
 
 extend([namesPlugin]);
 
@@ -40,6 +41,43 @@ function generateRandomColor(): ColorInfo {
     id: `${hex}-${Date.now()}-${Math.random()}`
   };
 }
+
+const ShadesPanel = ({ color, onCopy }: { color: ColorInfo, onCopy: (hex: string) => void }) => {
+    const shades = useMemo(() => {
+        const baseHsl = colord(color.hex).toHsl();
+        const count = 25;
+        
+        return Array.from({ length: count }, (_, i) => {
+            const lightness = 100 - (i * (100 - (baseHsl.l - 20))) / (count - 1);
+            const newHex = colord({ ...baseHsl, l: lightness }).toHex();
+            return { hex: newHex, name: colord(newHex).toName({closest: true}) || 'Unknown' };
+        });
+    }, [color.hex]);
+
+    return (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="w-full h-full flex flex-col absolute inset-0 z-10"
+        >
+            {shades.map((shade, i) => (
+                <div
+                    key={i}
+                    style={{ backgroundColor: shade.hex }}
+                    onClick={() => onCopy(shade.hex)}
+                    className="flex-grow flex items-center justify-center cursor-pointer group/shade"
+                >
+                    <div className="opacity-0 group-hover/shade:opacity-100 transition-opacity flex flex-col items-center" style={{ color: colord(shade.hex).isDark() ? '#FFF' : '#000' }}>
+                       <span className="font-bold uppercase">{shade.hex.substring(1)}</span>
+                       <span className="text-xs capitalize">{shade.name}</span>
+                    </div>
+                </div>
+            ))}
+        </motion.div>
+    );
+};
+
 
 const ColorPanel = ({ 
   color, 
@@ -117,7 +155,7 @@ const ColorPanel = ({
       className={cn(
         "relative h-full flex flex-col justify-end items-center p-6 text-center group transition-all duration-300 ease-in-out",
         isDragging ? 'opacity-50' : 'opacity-100',
-        isShadesViewActive ? 'w-24' : 'w-full'
+        isShadesViewActive ? 'flex-grow' : 'w-full'
       )}
       draggable={!isMobile && !isShadesViewActive}
       onDragStart={onDragStart}
@@ -128,7 +166,9 @@ const ColorPanel = ({
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       <AnimatePresence>
-        {!isShadesViewActive && (
+        {isShadesViewActive ? (
+            <ShadesPanel color={color} onCopy={onCopy} />
+        ) : (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -190,11 +230,11 @@ const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: 
                             onClick={onClick}
                             disabled={disabled}
                             className={cn(
-                                "w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 scale-0 group-hover/add:scale-100",
+                                "w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 scale-0 group-hover/add:scale-100",
                                 disabled ? "cursor-not-allowed opacity-50" : "hover:scale-110 hover:bg-gray-100"
                             )}
                         >
-                            <Plus className="h-5 w-5"/>
+                            <Plus className="h-6 w-6"/>
                         </button>
                     </TooltipTrigger>
                     <TooltipContent>Add Color</TooltipContent>
@@ -203,48 +243,6 @@ const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: 
         </div>
     </div>
 )
-
-const ShadesPanel = ({ color, onCopy, onBack }: { color: ColorInfo, onCopy: (hex: string) => void, onBack: () => void }) => {
-    const shades = useMemo(() => {
-        const baseHsl = colord(color.hex).toHsl();
-        const count = 25;
-        
-        return Array.from({ length: count }, (_, i) => {
-            const lightness = 100 - (i * (100 - (baseHsl.l - 20))) / (count - 1);
-            const newHex = colord({ ...baseHsl, l: lightness }).toHex();
-            return { hex: newHex, name: colord(newHex).toName({closest: true}) || 'Unknown' };
-        });
-    }, [color.hex]);
-
-    return (
-        <motion.div 
-          layout="position"
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full h-full flex flex-col relative"
-        >
-            <Button
-              onClick={onBack}
-              className="absolute top-4 left-4 z-20 rounded-full"
-              size="sm"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Palette
-            </Button>
-            {shades.map((shade, i) => (
-                <div
-                    key={i}
-                    style={{ backgroundColor: shade.hex }}
-                    onClick={() => onCopy(shade.hex)}
-                    className="flex-grow flex items-center justify-center cursor-pointer group/shade"
-                >
-                    <div className="opacity-0 group-hover/shade:opacity-100 transition-opacity flex flex-col items-center" style={{ color: colord(shade.hex).isDark() ? '#FFF' : '#000' }}>
-                       <span className="font-bold uppercase">{shade.hex.substring(1)}</span>
-                       <span className="text-xs capitalize">{shade.name}</span>
-                    </div>
-                </div>
-            ))}
-        </motion.div>
-    );
-};
 
 
 export default function ColorPaletteGenerator() {
@@ -388,52 +386,44 @@ export default function ColorPaletteGenerator() {
   return (
     <div className="h-full w-full flex flex-col relative">
       <AnimatePresence>
-      {!shadesView.active && (
-        <motion.header 
+      <motion.header 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="absolute top-0 left-0 right-0 z-30 p-4">
           <div className="flex justify-between items-center">
-            <p className="hidden sm:block text-sm font-medium bg-background/50 backdrop-blur-sm py-1 px-3 rounded-lg">
-              Press the spacebar to generate color palettes!
-            </p>
-            <Button onClick={handleGenerate} className="ml-auto">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate Palette
-            </Button>
+            {shadesView.active ? (
+                <Button onClick={handleBackToPalette}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Palette
+                </Button>
+            ) : (
+                <p className="hidden sm:block text-sm font-medium bg-background/50 backdrop-blur-sm py-1 px-3 rounded-lg">
+                  Press the spacebar to generate color palettes!
+                </p>
+            )}
+            {!shadesView.active && (
+                <Button onClick={handleGenerate} className="ml-auto">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Palette
+                </Button>
+            )}
           </div>
         </motion.header>
-      )}
       </AnimatePresence>
       <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
         {palette.map((color, index) => {
-            if (shadesView.active && shadesView.colorInfo?.id !== color.id) {
-                return (
-                    <ColorPanel
-                      key={color.id}
-                      color={color}
-                      onToggleLock={() => {}}
-                      onCopy={() => {}}
-                      onRemove={() => {}}
-                      onViewShades={() => {}}
-                      canRemove={false}
-                      isMobile={false}
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragEnter={(e) => handleDragEnter(e, index)}
-                      onDragEnd={handleDragEnd}
-                      isDragging={isDragging && dragItem.current === index}
-                      isShadesViewActive={true}
-                    />
+            const isShadesActiveForThis = shadesView.active && shadesView.colorInfo?.id === color.id;
+            const isAnyShadeActive = shadesView.active;
+
+            if (isAnyShadeActive && !isShadesActiveForThis) {
+                 return (
+                    <div key={color.id} className="w-24 h-full" style={{ backgroundColor: color.hex }}></div>
                 )
-            }
-            if (shadesView.active && shadesView.colorInfo?.id === color.id) {
-                return <ShadesPanel key={color.id} color={color} onCopy={copyColor} onBack={handleBackToPalette} />
             }
             
             return (
                 <React.Fragment key={color.id}>
-                  {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
+                  {index === 0 && !isAnyShadeActive && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
                   <ColorPanel
                     color={color}
                     onToggleLock={() => toggleLock(color.id)}
@@ -446,9 +436,9 @@ export default function ColorPaletteGenerator() {
                     onDragEnter={(e) => handleDragEnter(e, index)}
                     onDragEnd={handleDragEnd}
                     isDragging={isDragging && dragItem.current === index}
-                    isShadesViewActive={false}
+                    isShadesViewActive={isShadesActiveForThis}
                   />
-                  <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
+                  {!isAnyShadeActive && <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />}
                 </React.Fragment>
             )
         })}
