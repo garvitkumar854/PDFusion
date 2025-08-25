@@ -218,7 +218,7 @@ const ColorPanel = ({
           ))}
         </div>
       <AnimatePresence>
-        {isShadesViewActive && shadesBaseColor && <ShadesPanel baseColor={shadesBaseColor} onShadeSelect={(hex) => handleColorChange(hex, color)} />}
+        {isShadesViewActive && shadesBaseColor && <ShadesPanel baseColor={shadesBaseColor} onShadeSelect={(hex) => onColorChange(hex)} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -398,7 +398,7 @@ export default function ColorPaletteGenerator() {
         </motion.header>
       </AnimatePresence>
       <div className="flex-grow w-full flex relative" onDragOver={(e) => e.preventDefault()}>
-        <div className="relative h-full">
+        <div className="w-8 shrink-0 h-full relative">
             <AddColorButton position="left" onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />
         </div>
         {palette.map((color, index) => {
@@ -423,7 +423,7 @@ export default function ColorPaletteGenerator() {
               </div>
             )
         })}
-        <div className="relative h-full">
+        <div className="w-8 shrink-0 h-full relative">
             <AddColorButton position="right" onClick={() => addColor(palette.length)} disabled={palette.length >= MAX_COLORS} />
         </div>
       </div>
