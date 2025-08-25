@@ -218,7 +218,7 @@ const ColorPanel = ({
           ))}
         </div>
       <AnimatePresence>
-        {isShadesViewActive && shadesBaseColor && <ShadesPanel baseColor={shadesBaseColor} onShadeSelect={onColorChange} />}
+        {isShadesViewActive && shadesBaseColor && <ShadesPanel baseColor={shadesBaseColor} onShadeSelect={(hex) => handleColorChange(hex, color)} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -226,10 +226,11 @@ const ColorPanel = ({
 
 const AddColorButton = ({ onClick, disabled, position }: { onClick: () => void, disabled: boolean, position?: 'left' | 'middle' | 'right' }) => (
     <div className={cn(
-        "absolute inset-y-0 z-20 flex items-center justify-center transition-opacity group",
-        position === 'left' && "left-4",
-        position === 'right' && "right-4",
-        position === 'middle' && "right-0 translate-x-1/2",
+        "absolute inset-y-0 z-20 flex items-center justify-center transition-opacity",
+        position === 'left' ? "left-4" :
+        position === 'right' ? "right-4" :
+        "right-0 translate-x-1/2",
+        !disabled && "group"
     )}>
        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
         <TooltipProvider>
@@ -344,7 +345,7 @@ export default function ColorPaletteGenerator() {
   };
 
   if (isMobile) {
-    // Simplified Mobile view remains as is
+    // Simplified Mobile view
     return (
       <div className="h-full w-full flex flex-col">
         <div className="p-4 border-b flex justify-between items-center shrink-0">
@@ -356,7 +357,7 @@ export default function ColorPaletteGenerator() {
         </div>
         <div className="flex-grow w-full flex flex-col">
             {palette.map((color, index) => (
-                <div key={color.id} className="flex-grow w-full relative">
+                <div key={color.id} className="flex-grow w-full relative group">
                     <ColorPanel
                         color={color}
                         onColorChange={(hex) => handleColorChange(color.id, hex)}
@@ -397,8 +398,11 @@ export default function ColorPaletteGenerator() {
         </motion.header>
       </AnimatePresence>
       <div className="flex-grow w-full flex relative" onDragOver={(e) => e.preventDefault()}>
-        <AddColorButton position="left" onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />
+        <div className="relative h-full">
+            <AddColorButton position="left" onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />
+        </div>
         {palette.map((color, index) => {
+            const isLast = index === palette.length - 1;
             return (
               <div key={color.id} className="flex-grow w-0 relative flex">
                 <ColorPanel
@@ -413,11 +417,15 @@ export default function ColorPaletteGenerator() {
                     onDragEnd={handleDragEnd}
                     isDragging={isDragging && dragItem.current === index}
                 />
-                <AddColorButton position="middle" onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
+                {!isLast && (
+                  <AddColorButton position="middle" onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
+                )}
               </div>
             )
         })}
-        <AddColorButton position="right" onClick={() => addColor(palette.length)} disabled={palette.length >= MAX_COLORS} />
+        <div className="relative h-full">
+            <AddColorButton position="right" onClick={() => addColor(palette.length)} disabled={palette.length >= MAX_COLORS} />
+        </div>
       </div>
     </div>
   );
