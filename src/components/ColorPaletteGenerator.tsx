@@ -424,3 +424,5 @@ export default function ColorPaletteGenerator() {
 }
 
     
+
+    
