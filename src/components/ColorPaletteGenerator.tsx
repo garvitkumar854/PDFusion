@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { colord, extend, an } from 'colord';
+import { colord, extend, HslColor } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
-import { HslColor } from 'colord';
 
 extend([namesPlugin]);
 
@@ -42,7 +41,7 @@ function generateRandomColor(): ColorInfo {
   };
 }
 
-const ShadesPanel = ({ color, onCopy }: { color: ColorInfo, onCopy: (hex: string) => void }) => {
+const ShadesPanel = ({ color, onCopy, onBack }: { color: ColorInfo, onCopy: (hex: string) => void, onBack: () => void }) => {
     const shades = useMemo(() => {
         const baseHsl = colord(color.hex).toHsl();
         const count = 25;
@@ -59,8 +58,11 @@ const ShadesPanel = ({ color, onCopy }: { color: ColorInfo, onCopy: (hex: string
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="w-full h-full flex flex-col absolute inset-0 z-10"
+          className="w-full h-full flex flex-col absolute inset-0 z-20"
         >
+            <button onClick={onBack} className="absolute top-2 left-2 z-30 p-2 rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors">
+                <ArrowLeft className="h-5 w-5"/>
+            </button>
             {shades.map((shade, i) => (
                 <div
                     key={i}
@@ -84,29 +86,26 @@ const ColorPanel = ({
   onToggleLock, 
   onCopy, 
   onRemove, 
-  onViewShades,
   canRemove, 
   isMobile,
   onDragStart,
   onDragEnter,
   onDragEnd,
   isDragging,
-  isShadesViewActive,
 }: { 
   color: ColorInfo, 
   onToggleLock: () => void, 
   onCopy: () => void, 
   onRemove: () => void; 
-  onViewShades: () => void;
   canRemove: boolean; 
   isMobile: boolean,
   onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
   isDragging: boolean;
-  isShadesViewActive: boolean;
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isShadesViewActive, setIsShadesViewActive] = useState(false);
   const textColor = colord(color.hex).isDark() ? '#FFFFFF' : '#000000';
 
   const handleCopy = () => {
@@ -125,7 +124,7 @@ const ColorPanel = ({
     },
     {
       label: 'View Shades',
-      onClick: onViewShades,
+      onClick: () => setIsShadesViewActive(true),
       icon: <Palette className="h-5 w-5"/>,
       visible: true
     },
@@ -155,40 +154,23 @@ const ColorPanel = ({
       className={cn(
         "relative h-full flex flex-col justify-end items-center p-6 text-center group transition-all duration-300 ease-in-out",
         isDragging ? 'opacity-50' : 'opacity-100',
-        isShadesViewActive ? 'flex-grow' : 'w-full'
       )}
       draggable={!isMobile && !isShadesViewActive}
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
       onDragEnd={onDragEnd}
       onDragOver={(e) => e.preventDefault()}
-      layout="position"
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      layoutId={color.id}
     >
-      <AnimatePresence>
-        {isShadesViewActive ? (
-            <ShadesPanel color={color} onCopy={onCopy} />
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="relative z-10 space-y-1" style={{ color: textColor }}>
-            <h2 className="text-xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
-              {color.hex.substring(1)}
-            </h2>
-            <p className="text-sm capitalize">{color.name}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div 
+          className="relative z-10 space-y-1" style={{ color: textColor }}>
+          <h2 className="text-xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
+            {color.hex.substring(1)}
+          </h2>
+          <p className="text-sm capitalize">{color.name}</p>
+        </div>
 
-      <AnimatePresence>
-      {!isShadesViewActive && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className={cn(
+        <div className={cn(
             "absolute z-20 flex transition-opacity duration-300",
             isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 flex-col gap-2 opacity-0 group-hover:opacity-100'
           )}>
@@ -213,8 +195,9 @@ const ColorPanel = ({
               </Tooltip>
             </TooltipProvider>
           ))}
-        </motion.div>
-      )}
+        </div>
+      <AnimatePresence>
+        {isShadesViewActive && <ShadesPanel color={color} onCopy={onCopy} onBack={() => setIsShadesViewActive(false)} />}
       </AnimatePresence>
     </motion.div>
   );
@@ -254,20 +237,18 @@ export default function ColorPaletteGenerator() {
   , []);
   
   const [palette, setPalette] = useState<Palette>(() => generatePalette(isMobile ? 3 : 5));
-  const [shadesView, setShadesView] = useState<{ active: boolean, colorInfo: ColorInfo | null }>({ active: false, colorInfo: null });
 
   const dragItem = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleGenerate = useCallback(() => {
-    if (shadesView.active) return;
     setPalette(currentPalette => {
         return currentPalette.map(color => {
             if (color.isLocked) return color;
             return generateRandomColor();
         })
     });
-  }, [shadesView.active]);
+  }, []);
 
   useEffect(() => {
     const handleSpacebar = (e: KeyboardEvent) => {
@@ -332,14 +313,6 @@ export default function ColorPaletteGenerator() {
     setIsDragging(false);
     dragItem.current = null;
   };
-  
-  const handleViewShades = (color: ColorInfo) => {
-      setShadesView({ active: true, colorInfo: color });
-  };
-  
-  const handleBackToPalette = () => {
-      setShadesView({ active: false, colorInfo: null });
-  };
 
   if (isMobile) {
     // Simplified Mobile view remains as is
@@ -360,11 +333,9 @@ export default function ColorPaletteGenerator() {
                     onToggleLock={() => toggleLock(color.id)}
                     onCopy={() => copyColor(color.hex)}
                     onRemove={() => removeColor(color.id)}
-                    onViewShades={() => handleViewShades(color)}
                     canRemove={palette.length > MIN_COLORS}
                     isMobile={true}
                     isDragging={false}
-                    isShadesViewActive={false}
                     onDragStart={()=>{}}
                     onDragEnter={()=>{}}
                     onDragEnd={()=>{}}
@@ -392,53 +363,34 @@ export default function ColorPaletteGenerator() {
           exit={{ opacity: 0 }}
           className="absolute top-0 left-0 right-0 z-30 p-4">
           <div className="flex justify-between items-center">
-            {shadesView.active ? (
-                <Button onClick={handleBackToPalette}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Palette
-                </Button>
-            ) : (
                 <p className="hidden sm:block text-sm font-medium bg-background/50 backdrop-blur-sm py-1 px-3 rounded-lg">
                   Press the spacebar to generate color palettes!
                 </p>
-            )}
-            {!shadesView.active && (
                 <Button onClick={handleGenerate} className="ml-auto">
                 <Sparkles className="mr-2 h-4 w-4" />
                 Generate Palette
                 </Button>
-            )}
           </div>
         </motion.header>
       </AnimatePresence>
       <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
         {palette.map((color, index) => {
-            const isShadesActiveForThis = shadesView.active && shadesView.colorInfo?.id === color.id;
-            const isAnyShadeActive = shadesView.active;
-
-            if (isAnyShadeActive && !isShadesActiveForThis) {
-                 return (
-                    <div key={color.id} className="w-24 h-full" style={{ backgroundColor: color.hex }}></div>
-                )
-            }
-            
             return (
                 <React.Fragment key={color.id}>
-                  {index === 0 && !isAnyShadeActive && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
+                  {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
                   <ColorPanel
                     color={color}
                     onToggleLock={() => toggleLock(color.id)}
                     onCopy={() => copyColor(color.hex)}
                     onRemove={() => removeColor(color.id)}
-                    onViewShades={() => handleViewShades(color)}
                     canRemove={palette.length > MIN_COLORS}
                     isMobile={false}
                     onDragStart={(e) => handleDragStart(e, index)}
                     onDragEnter={(e) => handleDragEnter(e, index)}
                     onDragEnd={handleDragEnd}
                     isDragging={isDragging && dragItem.current === index}
-                    isShadesViewActive={isShadesActiveForThis}
                   />
-                  {!isAnyShadeActive && <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />}
+                  <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
                 </React.Fragment>
             )
         })}
