@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { colord, extend, HslColor } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import random from 'random';
@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, Plus, Trash2, GripVertical, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 
 extend([namesPlugin]);
