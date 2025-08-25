@@ -224,9 +224,15 @@ const ColorPanel = ({
   );
 };
 
-const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: boolean }) => (
-    <div className="relative h-full flex-shrink-0 w-0 group/add">
-        <div className="absolute inset-y-0 -left-8 w-16 z-20 flex items-center justify-center">
+const AddColorButton = ({ onClick, disabled, position }: { onClick: () => void, disabled: boolean, position?: 'left' | 'right' }) => (
+    <div className={cn(
+        "relative h-full flex-shrink-0 group/add",
+        position ? "w-8" : "w-0"
+    )}>
+        <div className={cn(
+            "absolute inset-y-0 z-20 flex items-center justify-center w-full h-full",
+            !position && "-left-8 w-16"
+        )}>
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -241,12 +247,12 @@ const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: 
                             <Plus className="h-6 w-6"/>
                         </button>
                     </TooltipTrigger>
-                    <TooltipContent>Add Color</TooltipContent>
+                    <TooltipContent><p>Add Color</p></TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         </div>
     </div>
-)
+);
 
 
 export default function ColorPaletteGenerator() {
@@ -398,10 +404,10 @@ export default function ColorPaletteGenerator() {
         </motion.header>
       </AnimatePresence>
       <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
+        <AddColorButton position="left" onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />
         {palette.map((color, index) => {
             return (
                 <React.Fragment key={color.id}>
-                  {index === 0 && <AddColorButton onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />}
                   <ColorPanel
                     color={color}
                     onColorChange={(hex) => handleColorChange(color.id, hex)}
@@ -414,7 +420,7 @@ export default function ColorPaletteGenerator() {
                     onDragEnd={handleDragEnd}
                     isDragging={isDragging && dragItem.current === index}
                   />
-                  <AddColorButton onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
+                  <AddColorButton position={index === palette.length - 1 ? 'right' : undefined} onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
                 </React.Fragment>
             )
         })}
@@ -422,3 +428,5 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
+
+    
