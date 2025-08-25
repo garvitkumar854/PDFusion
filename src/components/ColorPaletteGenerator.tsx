@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { colord, extend, HslColor } from 'colord';
 import namesPlugin from 'colord/plugins/names';
+import hslPlugin from 'colord/plugins/hsl';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
@@ -13,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 
-extend([namesPlugin]);
+extend([namesPlugin, hslPlugin]);
 
 type ColorInfo = {
   hex: string;
@@ -107,12 +108,19 @@ const ColorPanel = ({
   const [copied, setCopied] = useState(false);
   const [isShadesViewActive, setIsShadesViewActive] = useState(false);
   const textColor = colord(color.hex).isDark() ? '#FFFFFF' : '#000000';
+  const { toast } = useToast();
+
 
   const handleCopy = () => {
     onCopy();
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+  
+  const handleShadesCopy = (hex: string) => {
+    navigator.clipboard.writeText(hex);
+    toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
+  }
 
   const actionIcons = [
     {
@@ -152,7 +160,7 @@ const ColorPanel = ({
     <motion.div
       style={{ backgroundColor: color.hex }}
       className={cn(
-        "relative h-full flex flex-col justify-end items-center p-6 text-center group transition-all duration-300 ease-in-out",
+        "relative h-full flex flex-col flex-grow w-0 justify-end items-center p-6 text-center group transition-all duration-300 ease-in-out",
         isDragging ? 'opacity-50' : 'opacity-100',
       )}
       draggable={!isMobile && !isShadesViewActive}
@@ -160,7 +168,6 @@ const ColorPanel = ({
       onDragEnter={onDragEnter}
       onDragEnd={onDragEnd}
       onDragOver={(e) => e.preventDefault()}
-      layoutId={color.id}
     >
         <div 
           className="relative z-10 space-y-1" style={{ color: textColor }}>
@@ -197,7 +204,7 @@ const ColorPanel = ({
           ))}
         </div>
       <AnimatePresence>
-        {isShadesViewActive && <ShadesPanel color={color} onCopy={onCopy} onBack={() => setIsShadesViewActive(false)} />}
+        {isShadesViewActive && <ShadesPanel color={color} onCopy={handleShadesCopy} onBack={() => setIsShadesViewActive(false)} />}
       </AnimatePresence>
     </motion.div>
   );
