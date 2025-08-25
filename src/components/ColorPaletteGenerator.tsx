@@ -219,7 +219,7 @@ const AddColorButton = ({ onClick, disabled }: { onClick: () => void, disabled: 
                             onClick={onClick}
                             disabled={disabled}
                             className={cn(
-                                "w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 scale-0 group-hover/add:scale-100",
+                                "w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 scale-0 group-hover/add:scale-110",
                                 disabled ? "cursor-not-allowed opacity-50" : "hover:scale-110 hover:bg-gray-100"
                             )}
                         >
