@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPaletteGeneratorLoader'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-[calc(100vh-100px)]">
+    <div className="flex items-center justify-center h-full">
       <div className="grid grid-cols-5 w-full h-full">
         <Skeleton className="h-full w-full" />
         <Skeleton className="h-full w-full" />
