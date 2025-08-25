@@ -193,7 +193,7 @@ const ColorPanel = ({
 
         <div className={cn(
             "absolute z-30 flex transition-opacity duration-300 opacity-0 group-hover:opacity-100",
-            isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 -translate-y-1/2 left-4 flex-col gap-2'
+            isMobile ? 'bottom-6 right-6 flex-col gap-3' : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex-col gap-2'
           )}>
           {actionIcons.filter(a => a.visible).map((action) => (
             <TooltipProvider key={action.label}>
@@ -422,7 +422,3 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
-
-    
-
-    
