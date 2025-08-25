@@ -101,6 +101,10 @@ const ColorPanel = ({
   onDragEnter,
   onDragEnd,
   isDragging,
+  onAddColor,
+  isFirst,
+  isLast,
+  isAddDisabled,
 }: { 
   color: ColorInfo, 
   onColorChange: (hex: string) => void;
@@ -112,6 +116,10 @@ const ColorPanel = ({
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd: () => void;
   isDragging: boolean;
+  onAddColor: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  isAddDisabled: boolean;
 }) => {
   const [copied, setCopied] = useState(false);
   const [isShadesViewActive, setIsShadesViewActive] = useState(false);
@@ -183,6 +191,9 @@ const ColorPanel = ({
       onDragEnd={onDragEnd}
       onDragOver={(e) => e.preventDefault()}
     >
+        <AddColorButton position="middle" onClick={onAddColor} disabled={isAddDisabled} isLast={isLast} />
+        {isFirst && <AddColorButton position="left" onClick={onAddColor} disabled={isAddDisabled} />}
+        
         <div 
           className="relative z-10 space-y-1" style={{ color: textColor }}>
           <h2 className="text-xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
@@ -224,33 +235,30 @@ const ColorPanel = ({
   );
 };
 
-const AddColorButton = ({ onClick, disabled, position }: { onClick: () => void, disabled: boolean, position?: 'left' | 'right' }) => (
+const AddColorButton = ({ onClick, disabled, position, isLast }: { onClick: () => void, disabled: boolean, position?: 'left' | 'middle' | 'right', isLast?: boolean }) => (
     <div className={cn(
-        "relative h-full flex-shrink-0 group/add",
-        position ? "w-8" : "w-0"
+        "absolute inset-y-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity",
+        position === 'left' && "left-4",
+        position === 'middle' && "right-0 translate-x-1/2",
+        isLast && 'hidden'
     )}>
-        <div className={cn(
-            "absolute inset-y-0 z-20 flex items-center justify-center w-full h-full",
-            !position && "-left-8 w-16"
-        )}>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <button
-                            onClick={onClick}
-                            disabled={disabled}
-                            className={cn(
-                                "w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 scale-0 group-hover/add:scale-110",
-                                disabled ? "cursor-not-allowed opacity-50" : "hover:scale-110 hover:bg-gray-100"
-                            )}
-                        >
-                            <Plus className="h-6 w-6"/>
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Add Color</p></TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        </div>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <button
+                        onClick={(e) => { e.stopPropagation(); onClick(); }}
+                        disabled={disabled}
+                        className={cn(
+                            "w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110",
+                            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-100"
+                        )}
+                    >
+                        <Plus className="h-6 w-6"/>
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent><p>Add Color</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     </div>
 );
 
@@ -356,7 +364,7 @@ export default function ColorPaletteGenerator() {
             </Button>
         </div>
         <div className="flex-grow w-full flex flex-col">
-            {palette.map((color) => (
+            {palette.map((color, index) => (
                 <ColorPanel
                     key={color.id}
                     color={color}
@@ -369,6 +377,10 @@ export default function ColorPaletteGenerator() {
                     onDragStart={()=>{}}
                     onDragEnter={()=>{}}
                     onDragEnd={()=>{}}
+                    onAddColor={() => addColor(index + 1)}
+                    isFirst={index === 0}
+                    isLast={index === palette.length - 1}
+                    isAddDisabled={palette.length >= MAX_COLORS}
                 />
             ))}
         </div>
@@ -404,29 +416,28 @@ export default function ColorPaletteGenerator() {
         </motion.header>
       </AnimatePresence>
       <div className="flex-grow w-full flex" onDragOver={(e) => e.preventDefault()}>
-        <AddColorButton position="left" onClick={() => addColor(0)} disabled={palette.length >= MAX_COLORS} />
         {palette.map((color, index) => {
             return (
-                <React.Fragment key={color.id}>
-                  <ColorPanel
-                    color={color}
-                    onColorChange={(hex) => handleColorChange(color.id, hex)}
-                    onToggleLock={() => toggleLock(color.id)}
-                    onRemove={() => removeColor(color.id)}
-                    canRemove={palette.length > MIN_COLORS}
-                    isMobile={false}
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragEnter={(e) => handleDragEnter(e, index)}
-                    onDragEnd={handleDragEnd}
-                    isDragging={isDragging && dragItem.current === index}
-                  />
-                  <AddColorButton position={index === palette.length - 1 ? 'right' : undefined} onClick={() => addColor(index + 1)} disabled={palette.length >= MAX_COLORS} />
-                </React.Fragment>
+              <ColorPanel
+                  key={color.id}
+                  color={color}
+                  onColorChange={(hex) => handleColorChange(color.id, hex)}
+                  onToggleLock={() => toggleLock(color.id)}
+                  onRemove={() => removeColor(color.id)}
+                  canRemove={palette.length > MIN_COLORS}
+                  isMobile={false}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnter={(e) => handleDragEnter(e, index)}
+                  onDragEnd={handleDragEnd}
+                  isDragging={isDragging && dragItem.current === index}
+                  onAddColor={() => addColor(index + 1)}
+                  isFirst={index === 0}
+                  isLast={index === palette.length - 1}
+                  isAddDisabled={palette.length >= MAX_COLORS}
+              />
             )
         })}
       </div>
     </div>
   );
 }
-
-    
