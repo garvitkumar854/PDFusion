@@ -23,16 +23,17 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees, BlendMode, pushOperators, drawText, drawImage, translate, rotate, scale, save, restore } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, BlendMode, pushOperators } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
+
 
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -301,45 +302,53 @@ export function WatermarkAdder() {
       const embeddedFont = watermarkType === 'text' ? await pdfDoc.embedFont(selectedFont) : null;
       const colorRgb = hexToRgb(textColor);
 
-      for (let i = effectiveStart - 1; i < effectiveEnd; i++) {
+      const pageIndices = Array.from({length: (effectiveEnd - effectiveStart) + 1}, (_, i) => effectiveStart + i - 1);
+
+      for (const i of pageIndices) {
         if (operationId.current !== currentOperationId) return;
 
         const page = pages[i];
         const { width: pageWidth, height: pageHeight } = page.getSize();
         
-        const drawWatermark = (target: any, x: number, y: number) => {
+        const drawWatermark = (x: number, y: number) => {
           if (watermarkType === 'text' && embeddedFont) {
             const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-            target.drawText(text, {
+            page.drawText(text, {
               x: x - textWidth / 2, y,
               font: embeddedFont,
               size: fontSize,
               color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
               opacity,
               rotate: degrees(rotation),
-              blendMode: BlendMode.Multiply,
             });
           } else if (watermarkImage) {
             const scale = imageScale / 100;
             const imgWidth = watermarkImage.width * scale;
             const imgHeight = watermarkImage.height * scale;
-            target.drawImage(watermarkImage, {
+            page.drawImage(watermarkImage, {
               x: x - imgWidth / 2, y: y - imgHeight / 2,
               width: imgWidth,
               height: imgHeight,
               opacity,
               rotate: degrees(rotation),
-              blendMode: BlendMode.Multiply,
             });
           }
         };
+
+        const operators = [
+          pushOperators(save(), rotate(degrees(page.getRotation().angle * -1)))
+        ];
+
+        if (layer === 'under') {
+          page.pushOperators(...operators);
+        }
 
         if (position === 'tile') {
             const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
             const gap = textWidth + 100;
             for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
                 for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
-                   drawWatermark(page, x, y);
+                   drawWatermark(x, y);
                 }
             }
         } else {
@@ -356,10 +365,14 @@ export function WatermarkAdder() {
               'bottom-right': { x: pageWidth - margin, y: margin },
             };
             const pos = positions[position];
-            drawWatermark(page, pos.x, pos.y);
+            drawWatermark(pos.x, pos.y);
         }
 
-        setProgress(Math.round(((i + 1) / (effectiveEnd - effectiveStart + 1)) * 100));
+        if (layer === 'under') {
+          page.pushOperators(restore());
+        }
+
+        setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
       }
 
       if (operationId.current !== currentOperationId) return;
@@ -421,13 +434,13 @@ export function WatermarkAdder() {
           </CardContent>
         </Card>
        ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+            <div className="lg:col-span-2 space-y-6">
                 <Card className="bg-transparent shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div className="max-w-full overflow-hidden">
-                            <CardTitle className="text-xl">Uploaded File</CardTitle>
-                            <CardDescription className="truncate" title={file.file.name}>{file.file.name}</CardDescription>
+                            <CardTitle className="text-base sm:text-lg">Uploaded File</CardTitle>
+                            <CardDescription className="truncate text-xs" title={file.file.name}>{file.file.name}</CardDescription>
                         </div>
                          <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive shrink-0" onClick={removeFile} disabled={isProcessing}>
                             <X className="w-4 h-4" />
@@ -443,59 +456,77 @@ export function WatermarkAdder() {
                     )}
                 </Card>
                 <Card className="bg-transparent shadow-lg">
-                    <CardHeader><CardTitle className="text-xl">Watermark Options</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className={cn(isProcessing && "opacity-70 pointer-events-none")}>
-                             <Label className="font-semibold">Type</Label>
-                             <RadioGroup value={watermarkType} onValueChange={(v) => setWatermarkType(v as WatermarkType)} className="mt-2 grid grid-cols-2 gap-2">
-                                <Label htmlFor="type-text" className={cn("flex items-center justify-center space-x-2 border rounded-md p-3 cursor-pointer", watermarkType === "text" && "border-primary bg-primary/5")}><RadioGroupItem value="text" id="type-text" /><Type className="w-4 h-4 mr-2"/><span>Text</span></Label>
-                                <Label htmlFor="type-image" className={cn("flex items-center justify-center space-x-2 border rounded-md p-3 cursor-pointer", watermarkType === "image" && "border-primary bg-primary/5")}><RadioGroupItem value="image" id="type-image" /><FileImage className="w-4 h-4 mr-2"/><span>Image</span></Label>
-                             </RadioGroup>
-                        </div>
-                         <AnimatePresence mode="wait">
-                           <motion.div key={watermarkType} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
-                            {watermarkType === 'text' ? (
-                                <div className="space-y-4 pt-4 border-t">
-                                    <div><Label htmlFor="watermark-text" className="font-semibold">Text</Label><Textarea id="watermark-text" value={text} onChange={(e) => setText(e.target.value)} disabled={isProcessing} className="mt-1" /></div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div><Label htmlFor="font" className="font-semibold">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
-                                        <div><Label className="font-semibold">Style</Label><div className="mt-1 flex items-center gap-2"><Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button><Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button><Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4 h-4" /></Button></div></div>
+                    <CardHeader><CardTitle className="text-base sm:text-lg">Watermark Options</CardTitle></CardHeader>
+                    <CardContent>
+                      <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger className="text-base">Watermark Type</AccordionTrigger>
+                          <AccordionContent className="space-y-4 pt-2">
+                             <Label className="text-sm font-semibold">Type</Label>
+                             <Select value={watermarkType} onValueChange={(v) => setWatermarkType(v as WatermarkType)} disabled={isProcessing}>
+                               <SelectTrigger>
+                                <SelectValue placeholder="Select watermark type" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="text"><div className="flex items-center gap-2"><Type className="w-4 h-4"/>Text</div></SelectItem>
+                                 <SelectItem value="image"><div className="flex items-center gap-2"><FileImage className="w-4 h-4"/>Image</div></SelectItem>
+                               </SelectContent>
+                             </Select>
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="item-2">
+                           <AccordionTrigger className="text-base">{watermarkType === 'text' ? 'Text Options' : 'Image Options'}</AccordionTrigger>
+                           <AccordionContent className="space-y-4 pt-4">
+                             <AnimatePresence mode="wait">
+                               <motion.div key={watermarkType} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+                                {watermarkType === 'text' ? (
+                                    <div className="space-y-4">
+                                        <div><Label htmlFor="watermark-text" className="text-sm font-semibold">Text</Label><Textarea id="watermark-text" value={text} onChange={(e) => setText(e.target.value)} disabled={isProcessing} className="mt-1" /></div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div><Label htmlFor="font" className="text-sm font-semibold">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
+                                            <div><Label className="text-sm font-semibold">Style</Label><div className="mt-1 flex items-center gap-2"><Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button><Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button><Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4-4" /></Button></div></div>
+                                        </div>
+                                        <div><Label htmlFor="textColor" className="text-sm font-semibold">Color</Label><div className="relative mt-1"><Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/><Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-0 cursor-pointer" disabled={isProcessing}/></div></div>
+                                        <div><Label className="text-sm font-semibold">Font Size: <span className="font-bold text-primary">{fontSize}</span></Label><Slider value={[fontSize]} onValueChange={([val]) => setFontSize(val)} min={10} max={200} step={1} disabled={isProcessing} /></div>
                                     </div>
-                                    <div><Label htmlFor="textColor" className="font-semibold">Color</Label><div className="relative mt-1"><Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/><Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-0 cursor-pointer" disabled={isProcessing}/></div></div>
-                                    <div><Label className="font-semibold">Font Size: <span className="font-bold text-primary">{fontSize}</span></Label><Slider value={[fontSize]} onValueChange={([val]) => setFontSize(val)} min={10} max={200} step={1} disabled={isProcessing} /></div>
-                                </div>
-                            ) : (
-                                 <div className="space-y-4 pt-4 border-t">
-                                    <Label className="font-semibold">Image</Label>
-                                    <div {...getImageRootProps()} className={cn("p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer", isImageDragActive && "border-primary")}>
-                                        <input {...getImageInputProps()} />
-                                        {image ? <img src={image.preview} alt="Watermark Preview" className="max-h-24 rounded"/> : <><FileImage className="w-8 h-8 text-muted-foreground"/><p className="text-sm text-muted-foreground mt-2">Drop image here or click</p></>}
+                                ) : (
+                                     <div className="space-y-4">
+                                        <Label className="text-sm font-semibold">Image</Label>
+                                        <div {...getImageRootProps()} className={cn("p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer", isImageDragActive && "border-primary")}>
+                                            <input {...getImageInputProps()} />
+                                            {image ? <img src={image.preview} alt="Watermark Preview" className="max-h-24 rounded"/> : <><FileImage className="w-8 h-8 text-muted-foreground"/><p className="text-xs text-muted-foreground mt-2">Drop image here or click</p></>}
+                                        </div>
+                                        <div><Label className="text-sm font-semibold">Scale: <span className="font-bold text-primary">{imageScale}%</span></Label><Slider value={[imageScale]} onValueChange={([val]) => setImageScale(val)} min={10} max={200} step={1} disabled={isProcessing || !image} /></div>
                                     </div>
-                                    <div><Label className="font-semibold">Scale: <span className="font-bold text-primary">{imageScale}%</span></Label><Slider value={[imageScale]} onValueChange={([val]) => setImageScale(val)} min={10} max={200} step={1} disabled={isProcessing || !image} /></div>
+                                )}
+                             </motion.div>
+                             </AnimatePresence>
+                           </AccordionContent>
+                        </AccordionItem>
+                         <AccordionItem value="item-3">
+                            <AccordionTrigger className="text-base">Style & Placement</AccordionTrigger>
+                            <AccordionContent className="space-y-4 pt-4">
+                                <div><Label className="text-sm font-semibold">Position</Label><Select value={position} onValueChange={v => setPosition(v as Position)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="tile">Tile</SelectItem><SelectItem value="center">Center</SelectItem></SelectContent></Select></div>
+                                {position !== 'tile' && <div><Label className="text-sm font-semibold">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
+                                <div><Label className="text-sm font-semibold">Rotation: <span className="font-bold text-primary">{rotation}°</span></Label><Slider value={[rotation]} onValueChange={([val]) => setRotation(val)} min={-180} max={180} step={5} disabled={isProcessing} /></div>
+                                <div><Label className="text-sm font-semibold">Opacity: <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span></Label><Slider value={[opacity]} onValueChange={([val]) => setOpacity(val)} min={0} max={1} step={0.05} disabled={isProcessing} /></div>
+                            </AccordionContent>
+                         </AccordionItem>
+                         <AccordionItem value="item-4">
+                           <AccordionTrigger className="text-base">Pages & Layering</AccordionTrigger>
+                           <AccordionContent className="space-y-4 pt-4">
+                             <div>
+                                <Label className="text-sm font-semibold">Pages to apply watermark</Label>
+                                <div className="grid grid-cols-2 gap-2 mt-1">
+                                    <Input placeholder="Start" type="number" value={startPage} min="1" max={totalPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} disabled={isProcessing || file.isEncrypted}/>
+                                    <Input placeholder="End" type="number" value={endPage} min={startPage} max={totalPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} disabled={isProcessing || file.isEncrypted}/>
                                 </div>
-                            )}
-                         </motion.div>
-                         </AnimatePresence>
-
-                        <div className="space-y-4 pt-4 border-t">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><Label className="font-semibold">Position</Label><Select value={position} onValueChange={v => setPosition(v as Position)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="tile">Tile</SelectItem><SelectItem value="center">Center</SelectItem></SelectContent></Select></div>
-                                {position !== 'tile' && <div><Label className="font-semibold">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
-                            </div>
-                            <div><Label className="font-semibold">Layer</Label><RadioGroup value={layer} onValueChange={(v) => setLayer(v as Layer)} className="mt-2 grid grid-cols-2 gap-2"><Label htmlFor="layer-over" className={cn("flex items-center justify-center space-x-2 border rounded-md p-3 cursor-pointer", layer === "over" && "border-primary bg-primary/5")}><RadioGroupItem value="over" id="layer-over" /><span>Over Content</span></Label><Label htmlFor="layer-under" className={cn("flex items-center justify-center space-x-2 border rounded-md p-3 cursor-pointer", layer === "under" && "border-primary bg-primary/5")}><RadioGroupItem value="under" id="layer-under" /><span>Under Content</span></Label></RadioGroup></div>
-                            <div><Label className="font-semibold">Rotation: <span className="font-bold text-primary">{rotation}°</span></Label><Slider value={[rotation]} onValueChange={([val]) => setRotation(val)} min={-180} max={180} step={5} disabled={isProcessing} /></div>
-                            <div><Label className="font-semibold">Opacity: <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span></Label><Slider value={[opacity]} onValueChange={([val]) => setOpacity(val)} min={0} max={1} step={0.05} disabled={isProcessing} /></div>
-                        </div>
-
-                         <div className="pt-4 border-t">
-                            <Label className="font-semibold">Pages to apply watermark</Label>
-                            <div className="grid grid-cols-2 gap-2 mt-1">
-                                <Input placeholder="Start" type="number" value={startPage} min="1" max={totalPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} disabled={isProcessing || file.isEncrypted}/>
-                                <Input placeholder="End" type="number" value={endPage} min={startPage} max={totalPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} disabled={isProcessing || file.isEncrypted}/>
-                            </div>
-                        </div>
-                        
-                         <div className="pt-6 border-t h-[104px] flex flex-col justify-center">
+                             </div>
+                              <div><Label className="text-sm font-semibold">Layer</Label><Select value={layer} onValueChange={(v) => setLayer(v as Layer)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="over">Over Content</SelectItem><SelectItem value="under">Under Content</SelectItem></SelectContent></Select></div>
+                           </AccordionContent>
+                         </AccordionItem>
+                      </Accordion>
+                      <div className="pt-6 border-t mt-4 h-[104px] flex flex-col justify-center">
                             <AnimatePresence mode="wait">
                             {isProcessing ? (
                                 <motion.div key="progress" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.2 }} className="space-y-4">
@@ -512,12 +543,12 @@ export function WatermarkAdder() {
                     </CardContent>
                 </Card>
             </div>
-             <div className="lg:col-span-2">
+             <div className="lg:col-span-3">
                 <Card className="bg-transparent shadow-lg h-full">
-                    <CardHeader><CardTitle className="text-xl">Live Preview (First Page)</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base sm:text-lg">Live Preview (First Page)</CardTitle></CardHeader>
                     <CardContent className="h-full flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
-                       <div className="relative" style={{ aspectRatio: previewCanvasRef.current ? previewCanvasRef.current.width / previewCanvasRef.current.height : 1 / Math.sqrt(2) }}>
-                          <canvas ref={previewCanvasRef} className="max-w-full max-h-[calc(100vh-20rem)] border rounded-md shadow-md bg-white"/>
+                       <div className="relative w-full h-full flex items-center justify-center" style={{ minHeight: '50vh' }}>
+                          <canvas ref={previewCanvasRef} className="max-w-full max-h-full object-contain border rounded-md shadow-md bg-white"/>
                           {isLoadingPreview && <div className="absolute inset-0 flex items-center justify-center bg-background/50"><Loader2 className="w-8 h-8 animate-spin text-primary"/></div>}
                        </div>
                     </CardContent>
