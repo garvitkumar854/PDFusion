@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/html-to-pdf',
     '/rotate-pdf',
     '/add-page-numbers',
+    '/add-watermark',
     '/qr-code-generator',
     '/password-generator',
     '/unit-converter',

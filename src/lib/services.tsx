@@ -1,4 +1,5 @@
-import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid } from 'lucide-react';
+
+import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
 
 export interface Service {
@@ -44,6 +45,13 @@ export const services: Service[] = [
       title: 'JPG to PDF',
       description: 'Convert JPG images to a PDF file with orientation and margin options.',
       href: '/jpg-to-pdf'
+    },
+     {
+      icon: <Droplets className="w-6 h-6 text-sky-500" />,
+      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      title: 'Add Watermark',
+      description: 'Stamp a text or image watermark over your PDF pages with custom styling.',
+      href: '/add-watermark'
     },
     {
       icon: <Code className="w-6 h-6 text-lime-500" />,

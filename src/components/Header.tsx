@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -83,6 +83,7 @@ export default function Header() {
       { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
+      { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
       { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
       { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
