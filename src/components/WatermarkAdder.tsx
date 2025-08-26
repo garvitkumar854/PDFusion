@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees, BlendMode } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, BlendMode, pushOperators, drawText, drawImage, translate, rotate, scale, save, restore } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -307,10 +307,10 @@ export function WatermarkAdder() {
         const page = pages[i];
         const { width: pageWidth, height: pageHeight } = page.getSize();
         
-        const drawWatermark = (x: number, y: number) => {
+        const drawWatermark = (target: any, x: number, y: number) => {
           if (watermarkType === 'text' && embeddedFont) {
             const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-            page.drawText(text, {
+            target.drawText(text, {
               x: x - textWidth / 2, y,
               font: embeddedFont,
               size: fontSize,
@@ -319,14 +319,11 @@ export function WatermarkAdder() {
               rotate: degrees(rotation),
               blendMode: BlendMode.Multiply,
             });
-            if(isUnderline) {
-              // This part is tricky with rotation. For simplicity, pdf-lib doesn't support rotated line drawing easily.
-            }
           } else if (watermarkImage) {
             const scale = imageScale / 100;
             const imgWidth = watermarkImage.width * scale;
             const imgHeight = watermarkImage.height * scale;
-            page.drawImage(watermarkImage, {
+            target.drawImage(watermarkImage, {
               x: x - imgWidth / 2, y: y - imgHeight / 2,
               width: imgWidth,
               height: imgHeight,
@@ -337,14 +334,12 @@ export function WatermarkAdder() {
           }
         };
 
-        const pageContent = layer === 'under' ? page.contentStreams[0] : page;
-
         if (position === 'tile') {
             const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
             const gap = textWidth + 100;
             for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
                 for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
-                   drawWatermark(x, y);
+                   drawWatermark(page, x, y);
                 }
             }
         } else {
@@ -361,7 +356,7 @@ export function WatermarkAdder() {
               'bottom-right': { x: pageWidth - margin, y: margin },
             };
             const pos = positions[position];
-            drawWatermark(pos.x, pos.y);
+            drawWatermark(page, pos.x, pos.y);
         }
 
         setProgress(Math.round(((i + 1) / (effectiveEnd - effectiveStart + 1)) * 100));
