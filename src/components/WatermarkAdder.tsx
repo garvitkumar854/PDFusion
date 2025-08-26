@@ -76,6 +76,7 @@ export function WatermarkAdder() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [progress, setProgress] = useState(0);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const renderTask = useRef<pdfjsLib.RenderTask | null>(null);
 
   // Watermark options
   const [watermarkType, setWatermarkType] = useState<WatermarkType>("text");
@@ -101,6 +102,10 @@ export function WatermarkAdder() {
   
   const drawPreview = useCallback(async () => {
     if (!file || !file.pdfjsDoc || !previewCanvasRef.current) return;
+    
+    if (renderTask.current) {
+        renderTask.current.cancel();
+    }
 
     const currentOperationId = ++operationId.current;
     setIsLoadingPreview(true);
@@ -116,7 +121,10 @@ export function WatermarkAdder() {
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       
-      await page.render({ canvasContext: context, viewport }).promise;
+      const task = page.render({ canvasContext: context, viewport });
+      renderTask.current = task;
+      await task.promise;
+      renderTask.current = null;
 
       if (operationId.current !== currentOperationId) return;
 
@@ -164,22 +172,25 @@ export function WatermarkAdder() {
               }
           }
       } else {
+          const margin = 50;
           const positions = {
             'center': { x: canvas.width / 2, y: canvas.height / 2 },
-            'top-left': { x: 50, y: 50 },
-            'top': { x: canvas.width / 2, y: 50 },
-            'top-right': { x: canvas.width - 50, y: 50 },
-            'left': { x: 50, y: canvas.height / 2 },
-            'right': { x: canvas.width - 50, y: canvas.height / 2 },
-            'bottom-left': { x: 50, y: canvas.height - 50 },
-            'bottom': { x: canvas.width / 2, y: canvas.height - 50 },
-            'bottom-right': { x: canvas.width - 50, y: canvas.height - 50 },
+            'top-left': { x: margin, y: margin },
+            'top': { x: canvas.width / 2, y: margin },
+            'top-right': { x: canvas.width - margin, y: margin },
+            'left': { x: margin, y: canvas.height / 2 },
+            'right': { x: canvas.width - margin, y: canvas.height / 2 },
+            'bottom-left': { x: margin, y: canvas.height - margin },
+            'bottom': { x: canvas.width / 2, y: canvas.height - margin },
+            'bottom-right': { x: canvas.width - margin, y: canvas.height - margin },
           };
           drawWatermark(positions[position].x, positions[position].y);
       }
 
-    } catch(e) {
-      console.error(e);
+    } catch(e: any) {
+      if (e.name !== 'RenderingCancelledException') {
+        console.error(e);
+      }
     } finally {
       if(operationId.current === currentOperationId) {
         setIsLoadingPreview(false);
@@ -296,11 +307,11 @@ export function WatermarkAdder() {
         const page = pages[i];
         const { width: pageWidth, height: pageHeight } = page.getSize();
         
-        const drawWatermark = (x: number, y: number, isTiled: boolean) => {
+        const drawWatermark = (x: number, y: number) => {
           if (watermarkType === 'text' && embeddedFont) {
             const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
             page.drawText(text, {
-              x: isTiled ? x : x - textWidth / 2, y,
+              x: x - textWidth / 2, y,
               font: embeddedFont,
               size: fontSize,
               color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
@@ -331,10 +342,9 @@ export function WatermarkAdder() {
         if (position === 'tile') {
             const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
             const gap = textWidth + 100;
-
             for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
                 for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
-                   drawWatermark(x, y, true);
+                   drawWatermark(x, y);
                 }
             }
         } else {
@@ -351,10 +361,7 @@ export function WatermarkAdder() {
               'bottom-right': { x: pageWidth - margin, y: margin },
             };
             const pos = positions[position];
-            let effectiveX = pos.x;
-            if(position.includes('right')) effectiveX -= (embeddedFont?.widthOfTextAtSize(text, fontSize) || 0);
-
-            drawWatermark(effectiveX, pos.y, false);
+            drawWatermark(pos.x, pos.y);
         }
 
         setProgress(Math.round(((i + 1) / (effectiveEnd - effectiveStart + 1)) * 100));
