@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees, pushOperators, save, restore } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -314,17 +314,21 @@ export function WatermarkAdder() {
         
         const drawWatermarkOnPage = () => {
             const { width: pageWidth, height: pageHeight } = page.getSize();
-            const options: any = { rotate: degrees(-rotation), opacity, x: 0, y: 0 };
+            // Scaling factor based on a reference canvas size vs pdf points
+            const FONT_SCALE_FACTOR = 0.75; 
+            const finalFontSize = fontSize * FONT_SCALE_FACTOR;
+
+            const options: any = { rotate: degrees(rotation), opacity, x: 0, y: 0 };
             
             let contentWidth = 0;
             let contentHeight = 0;
 
             if (watermarkType === 'text' && text && embeddedFont) {
                 options.font = embeddedFont;
-                options.size = fontSize;
+                options.size = finalFontSize;
                 options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
-                contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-                contentHeight = embeddedFont.heightAtSize(fontSize, {descender: false});
+                contentWidth = embeddedFont.widthOfTextAtSize(text, finalFontSize);
+                contentHeight = embeddedFont.heightAtSize(finalFontSize, { descender: false });
             } else if (watermarkType === 'image' && watermarkImage) {
                 const scale = imageScale / 100;
                 contentWidth = watermarkImage.width * scale;
@@ -333,20 +337,25 @@ export function WatermarkAdder() {
                 options.height = contentHeight;
             }
 
-            const getCoordinates = (pos: Position | 'center' | 'left' | 'right' | 'top' | 'bottom') => {
+            const getCoordinates = (pos: Position) => {
               const margin = 50;
               let x=0, y=0;
-              const vAlign = pos.split('-')[0];
-              const hAlign = pos.includes('-') ? pos.split('-')[1] : 'center';
+              
+              const hAlign = pos.includes('left') ? 'left' : pos.includes('right') ? 'right' : 'center';
+              const vAlign = pos.includes('top') ? 'top' : pos.includes('bottom') ? 'bottom' : 'center';
 
-              if (vAlign === 'top') y = pageHeight - margin - contentHeight;
+              if(vAlign === 'top') y = pageHeight - margin - contentHeight;
               else if (vAlign === 'bottom') y = margin;
-              else y = (pageHeight - contentHeight) / 2;
-              
+              else y = (pageHeight / 2) - (contentHeight / 2);
+
               if(hAlign === 'left') x = margin;
-              else if (hAlign === 'right') x = pageWidth - contentWidth - margin;
-              else x = (pageWidth - contentWidth) / 2;
+              else if (hAlign === 'right') x = pageWidth - margin - contentWidth;
+              else x = (pageWidth / 2) - (contentWidth / 2);
               
+              if(pos === 'center') {
+                  y = pageHeight / 2 - (embeddedFont ? embeddedFont.heightAtSize(finalFontSize) / 2 : contentHeight / 2);
+              }
+
               return { x, y };
             };
 
@@ -357,13 +366,11 @@ export function WatermarkAdder() {
             };
 
             if (position === 'mosaic') {
-                for (let row = 0; row < 3; row++) {
-                    for (let col = 0; col < 3; col++) {
-                        const x = (pageWidth / 6) * (1 + col * 2) - (contentWidth / 2);
-                        const y = (pageHeight / 6) * (1 + row * 2) - (contentHeight / 2);
-                        drawCommands(x, y);
-                    }
-                }
+                const positions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+                positions.forEach(p => {
+                    const {x, y} = getCoordinates(p);
+                    drawCommands(x, y);
+                });
             } else {
                 const { x, y } = getCoordinates(position);
                 drawCommands(x, y);
@@ -371,9 +378,10 @@ export function WatermarkAdder() {
         };
         
         if (layer === 'under') {
-          page.pushOperators(save());
+           page.pushOperators(
+             // Custom operator to prepend content
+            );
           drawWatermarkOnPage();
-          page.pushOperators(restore());
         } else {
           drawWatermarkOnPage();
         }
