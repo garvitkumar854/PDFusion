@@ -131,28 +131,24 @@ export function WatermarkAdder() {
 
       context.globalAlpha = opacity;
       
-      const drawWatermark = (x: number, y: number, hAlign: CanvasTextAlign, vAlign: CanvasTextBaseline) => {
+      const drawWatermark = (x: number, y: number) => {
         context.save();
         context.translate(x, y);
         context.rotate(rotation * Math.PI / 180);
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
         
         if (watermarkType === 'text' && text) {
             const selectedFont = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${fontSize}px ${font}`;
             context.font = selectedFont;
             context.fillStyle = textColor;
-            context.textAlign = hAlign;
-            context.textBaseline = vAlign;
             context.fillText(text, 0, 0);
 
             if (isUnderline) {
                 const metrics = context.measureText(text);
-                let underlineY = fontSize / 2 * 0.9;
-                if(vAlign === 'top') underlineY = fontSize * 0.9;
-                if(vAlign === 'bottom') underlineY = 0;
-                
                 context.beginPath();
-                context.moveTo(-metrics.width/2, underlineY);
-                context.lineTo(metrics.width/2, underlineY);
+                context.moveTo(-metrics.width / 2, fontSize * 0.4);
+                context.lineTo(metrics.width / 2, fontSize * 0.4);
                 context.strokeStyle = textColor;
                 context.lineWidth = Math.max(1, fontSize / 15);
                 context.stroke();
@@ -162,37 +158,35 @@ export function WatermarkAdder() {
              const img = new Image();
              img.src = image.preview;
              const scale = imageScale / 100;
-             const imgWidth = image.width * scale;
-             const imgHeight = image.height * scale;
+             const imgWidth = image.width * scale * (viewport.width / page.view[2]);
+             const imgHeight = image.height * scale * (viewport.height / page.view[3]);
              context.drawImage(img, -imgWidth/2, -imgHeight/2, imgWidth, imgHeight);
         }
         context.restore();
       };
       
       const margin = 50;
-      const positions: { [key in Position | 'grid-positions']: { x: number, y: number, hAlign: CanvasTextAlign, vAlign: CanvasTextBaseline } } = {
-          'center': { x: canvas.width / 2, y: canvas.height / 2, hAlign: 'center', vAlign: 'middle' },
-          'top-left': { x: margin, y: margin, hAlign: 'left', vAlign: 'top' },
-          'top': { x: canvas.width / 2, y: margin, hAlign: 'center', vAlign: 'top' },
-          'top-right': { x: canvas.width - margin, y: margin, hAlign: 'right', vAlign: 'top' },
-          'left': { x: margin, y: canvas.height / 2, hAlign: 'left', vAlign: 'middle' },
-          'right': { x: canvas.width - margin, y: canvas.height / 2, hAlign: 'right', vAlign: 'middle' },
-          'bottom-left': { x: margin, y: canvas.height - margin, hAlign: 'left', vAlign: 'bottom' },
-          'bottom': { x: canvas.width / 2, y: canvas.height - margin, hAlign: 'center', vAlign: 'bottom' },
-          'bottom-right': { x: canvas.width - margin, y: canvas.height - margin, hAlign: 'right', vAlign: 'bottom' },
-          'mosaic': {x:0,y:0, hAlign: 'center', vAlign: 'middle'}, // Placeholder
-          'grid-positions': {} as any
+      const positions: { [key in Position | 'grid-positions']?: { x: number, y: number } } = {
+          'center': { x: canvas.width / 2, y: canvas.height / 2 },
+          'top-left': { x: margin, y: margin },
+          'top': { x: canvas.width / 2, y: margin },
+          'top-right': { x: canvas.width - margin, y: margin },
+          'left': { x: margin, y: canvas.height / 2 },
+          'right': { x: canvas.width - margin, y: canvas.height / 2 },
+          'bottom-left': { x: margin, y: canvas.height - margin },
+          'bottom': { x: canvas.width / 2, y: canvas.height - margin },
+          'bottom-right': { x: canvas.width - margin, y: canvas.height - margin },
       };
 
       if (position === 'mosaic') {
-          const gridPositions = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
-          gridPositions.forEach(pos => {
-              const p = positions[pos as Position];
-              drawWatermark(p.x, p.y, p.hAlign, p.vAlign);
+          const gridPositions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+          gridPositions.forEach(posKey => {
+              const pos = positions[posKey]!;
+              drawWatermark(pos.x, pos.y);
           });
       } else {
-          const pos = positions[position];
-          drawWatermark(pos.x, pos.y, pos.hAlign, pos.vAlign);
+          const pos = positions[position]!;
+          drawWatermark(pos.x, pos.y);
       }
 
     } catch(e: any) {
@@ -312,83 +306,66 @@ export function WatermarkAdder() {
         
         const drawWatermarkOnPage = (x: number, y: number) => {
             if (watermarkType === 'text' && text && embeddedFont) {
+                const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
+                const textHeight = embeddedFont.heightAtSize(fontSize);
                 page.drawText(text, {
-                    x,
-                    y,
+                    x: x - textWidth / 2,
+                    y: y - textHeight / 2,
                     font: embeddedFont,
                     size: fontSize,
                     color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
                     opacity,
-                    rotate: degrees(-rotation),
+                    rotate: degrees(rotation),
                 });
             } else if (watermarkType === 'image' && watermarkImage) {
                 const scale = imageScale / 100;
+                const imgWidth = watermarkImage.width * scale;
+                const imgHeight = watermarkImage.height * scale;
                 page.drawImage(watermarkImage, {
-                    x,
-                    y,
-                    width: watermarkImage.width * scale,
-                    height: watermarkImage.height * scale,
+                    x: x - imgWidth / 2,
+                    y: y - imgHeight / 2,
+                    width: imgWidth,
+                    height: imgHeight,
                     opacity,
-                    rotate: degrees(-rotation),
+                    rotate: degrees(rotation),
                 });
             }
         };
 
-        const getCoordinates = (pos: Position) => {
-            const { width: pageWidth, height: pageHeight } = page.getSize();
+        const getCoordinatesForPosition = (pos: Position, pageWidth: number, pageHeight: number) => {
             const margin = 50;
-
-            let contentWidth = 0;
-            let contentHeight = 0;
-
-            if (watermarkType === 'text' && text && embeddedFont) {
-                contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-                contentHeight = embeddedFont.heightAtSize(fontSize);
-            } else if (watermarkType === 'image' && watermarkImage) {
-                const scale = imageScale / 100;
-                contentWidth = watermarkImage.width * scale;
-                contentHeight = watermarkImage.height * scale;
-            }
-
             let x: number, y: number;
 
             const hAlign = pos.includes('left') ? 'left' : pos.includes('right') ? 'right' : 'center';
             const vAlign = pos.includes('top') ? 'top' : pos.includes('bottom') ? 'bottom' : 'center';
 
-            if (vAlign === 'top') y = pageHeight - margin - contentHeight;
+            if (vAlign === 'top') y = pageHeight - margin;
             else if (vAlign === 'bottom') y = margin;
-            else y = (pageHeight / 2) - (contentHeight / 2);
+            else y = pageHeight / 2;
 
             if (hAlign === 'left') x = margin;
-            else if (hAlign === 'right') x = pageWidth - margin - contentWidth;
-            else x = (pageWidth / 2) - (contentWidth / 2);
+            else if (hAlign === 'right') x = pageWidth - margin;
+            else x = pageWidth / 2;
 
             return { x, y };
         };
         
         const commandToExecute = () => {
+            const { width, height } = page.getSize();
             if (position === 'mosaic') {
                 const gridPositions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
                 gridPositions.forEach(p => {
-                    const { x, y } = getCoordinates(p);
+                    const { x, y } = getCoordinatesForPosition(p, width, height);
                     drawWatermarkOnPage(x, y);
                 });
             } else {
-                const { x, y } = getCoordinates(position);
+                const { x, y } = getCoordinatesForPosition(position, width, height);
                 drawWatermarkOnPage(x, y);
             }
         };
         
         if (layer === 'under') {
-           page.pushOperators(
-             // Since pdf-lib doesn't have a direct "draw under" SVG-like layers,
-             // prepending operators is the way to do it. However, a simpler
-             // approach for most documents is to just draw first, then re-draw content,
-             // which is complex. So we'll draw on top but with opacity.
-             // For a true "under" effect, one would need to parse and recreate page content streams.
-             // Given the constraints, we draw on top, as `pushOperators` is also complex.
-             // The visual effect is similar for typical watermark use cases.
-           );
+           page.pushOperators();
            commandToExecute();
         } else {
            commandToExecute();
@@ -432,8 +409,7 @@ export function WatermarkAdder() {
   };
   
   const totalPages = file?.pdfjsDoc?.numPages || 0;
-  const singlePositions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
-
+  
   return (
     <div className="space-y-6">
        {!file ? (
@@ -529,7 +505,7 @@ export function WatermarkAdder() {
                             <AccordionTrigger className="text-base font-semibold">Style & Placement</AccordionTrigger>
                             <AccordionContent className="space-y-4 pt-4">
                                 <div><Label className="text-sm font-medium">Position</Label><Select value={position} onValueChange={v => setPosition(v as Position)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="mosaic">Mosaic (3x3 Grid)</SelectItem><SelectItem value="center">Center</SelectItem></SelectContent></Select></div>
-                                {position !== 'mosaic' && <div><Label className="text-sm font-medium">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{singlePositions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
+                                {position !== 'mosaic' && <div><Label className="text-sm font-medium">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'].map(p => ( <button key={p} onClick={() => setPosition(p as Position)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
                                 <div><Label className="text-sm font-medium">Rotation: <span className="font-bold text-primary">{rotation}°</span></Label><Slider value={[rotation]} onValueChange={([val]) => setRotation(val)} min={-180} max={180} step={5} disabled={isProcessing} /></div>
                                 <div><Label className="text-sm font-medium">Opacity: <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span></Label><Slider value={[opacity]} onValueChange={([val]) => setOpacity(val)} min={0} max={1} step={0.05} disabled={isProcessing} /></div>
                             </AccordionContent>
