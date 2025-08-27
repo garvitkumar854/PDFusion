@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees, BlendMode, pushOperators } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, pushOperators, restore, save, rotate } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -310,67 +310,75 @@ export function WatermarkAdder() {
         const page = pages[i];
         const { width: pageWidth, height: pageHeight } = page.getSize();
         
-        const drawWatermark = (x: number, y: number) => {
+        const drawWatermark = () => {
+          const options: any = {
+            x: 0,
+            y: 0,
+            rotate: degrees(rotation),
+            opacity,
+          };
           if (watermarkType === 'text' && embeddedFont) {
+            options.font = embeddedFont;
+            options.size = fontSize;
+            options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
             const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-            page.drawText(text, {
-              x: x - textWidth / 2, y,
-              font: embeddedFont,
-              size: fontSize,
-              color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
-              opacity,
-              rotate: degrees(rotation),
-            });
+            options.x = -textWidth / 2;
           } else if (watermarkImage) {
             const scale = imageScale / 100;
             const imgWidth = watermarkImage.width * scale;
             const imgHeight = watermarkImage.height * scale;
-            page.drawImage(watermarkImage, {
-              x: x - imgWidth / 2, y: y - imgHeight / 2,
-              width: imgWidth,
-              height: imgHeight,
-              opacity,
-              rotate: degrees(rotation),
-            });
+            options.width = imgWidth;
+            options.height = imgHeight;
+            options.x = -imgWidth / 2;
+            options.y = -imgHeight / 2;
+          }
+          
+          if (layer === 'under') {
+            page.pushOperators(
+              pushOperators(
+                save(),
+                rotate(degrees(page.getRotation().angle * -1))
+              )
+            );
+          }
+          
+          const doDraw = (x:number, y:number) => {
+             const drawOptions = {...options, x: options.x + x, y: options.y + y};
+             if (watermarkType === 'text') page.drawText(text, drawOptions);
+             else if (watermarkImage) page.drawImage(watermarkImage, drawOptions);
+          };
+
+          if (position === 'tile') {
+              const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
+              const gap = textWidth + 100;
+              for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
+                  for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
+                     doDraw(x, y);
+                  }
+              }
+          } else {
+              const margin = 50;
+              const positions = {
+                'center': { x: pageWidth / 2, y: pageHeight / 2 },
+                'top-left': { x: margin, y: pageHeight - margin },
+                'top': { x: pageWidth / 2, y: pageHeight - margin },
+                'top-right': { x: pageWidth - margin, y: pageHeight - margin },
+                'left': { x: margin, y: pageHeight / 2 },
+                'right': { x: pageWidth - margin, y: pageHeight / 2 },
+                'bottom-left': { x: margin, y: margin },
+                'bottom': { x: pageWidth / 2, y: margin },
+                'bottom-right': { x: pageWidth - margin, y: margin },
+              };
+              const pos = positions[position];
+              doDraw(pos.x, pos.y);
+          }
+          
+          if (layer === 'under') {
+            page.pushOperators(restore());
           }
         };
 
-        const operators = [
-          pushOperators(save(), rotate(degrees(page.getRotation().angle * -1)))
-        ];
-
-        if (layer === 'under') {
-          page.pushOperators(...operators);
-        }
-
-        if (position === 'tile') {
-            const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
-            const gap = textWidth + 100;
-            for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
-                for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
-                   drawWatermark(x, y);
-                }
-            }
-        } else {
-            const margin = 50;
-            const positions = {
-              'center': { x: pageWidth / 2, y: pageHeight / 2 },
-              'top-left': { x: margin, y: pageHeight - margin },
-              'top': { x: pageWidth / 2, y: pageHeight - margin },
-              'top-right': { x: pageWidth - margin, y: pageHeight - margin },
-              'left': { x: margin, y: pageHeight / 2 },
-              'right': { x: pageWidth - margin, y: pageHeight / 2 },
-              'bottom-left': { x: margin, y: margin },
-              'bottom': { x: pageWidth / 2, y: margin },
-              'bottom-right': { x: pageWidth - margin, y: margin },
-            };
-            const pos = positions[position];
-            drawWatermark(pos.x, pos.y);
-        }
-
-        if (layer === 'under') {
-          page.pushOperators(restore());
-        }
+        drawWatermark();
 
         setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
       }
@@ -434,9 +442,9 @@ export function WatermarkAdder() {
           </CardContent>
         </Card>
        ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-            <div className="lg:col-span-2 space-y-6">
-                <Card className="bg-transparent shadow-lg">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[calc(100vh-12rem)]">
+            <div className="flex flex-col gap-6 overflow-hidden">
+                <Card className="bg-transparent shadow-lg shrink-0">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div className="max-w-full overflow-hidden">
                             <CardTitle className="text-base sm:text-lg">Uploaded File</CardTitle>
@@ -455,9 +463,9 @@ export function WatermarkAdder() {
                        </CardContent>
                     )}
                 </Card>
-                <Card className="bg-transparent shadow-lg">
+                <Card className="bg-transparent shadow-lg flex-grow overflow-hidden flex flex-col">
                     <CardHeader><CardTitle className="text-base sm:text-lg">Watermark Options</CardTitle></CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-grow overflow-y-auto pr-2">
                       <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="text-base">Watermark Type</AccordionTrigger>
@@ -543,11 +551,11 @@ export function WatermarkAdder() {
                     </CardContent>
                 </Card>
             </div>
-             <div className="lg:col-span-3">
-                <Card className="bg-transparent shadow-lg h-full">
+             <div className="lg:col-span-1 h-full flex flex-col">
+                <Card className="bg-transparent shadow-lg h-full flex flex-col">
                     <CardHeader><CardTitle className="text-base sm:text-lg">Live Preview (First Page)</CardTitle></CardHeader>
-                    <CardContent className="h-full flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
-                       <div className="relative w-full h-full flex items-center justify-center" style={{ minHeight: '50vh' }}>
+                    <CardContent className="h-full flex-grow flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
+                       <div className="relative w-full h-full flex items-center justify-center">
                           <canvas ref={previewCanvasRef} className="max-w-full max-h-full object-contain border rounded-md shadow-md bg-white"/>
                           {isLoadingPreview && <div className="absolute inset-0 flex items-center justify-center bg-background/50"><Loader2 className="w-8 h-8 animate-spin text-primary"/></div>}
                        </div>
