@@ -136,7 +136,7 @@ export function WatermarkAdder() {
         context.translate(x, y);
         context.rotate(rotation * Math.PI / 180);
         
-        if (watermarkType === 'text') {
+        if (watermarkType === 'text' && text) {
             const selectedFont = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${fontSize}px ${font}`;
             context.font = selectedFont;
             context.fillStyle = textColor;
@@ -154,7 +154,7 @@ export function WatermarkAdder() {
                 context.stroke();
             }
 
-        } else if (image) {
+        } else if (watermarkType === 'image' && image) {
              const img = new Image();
              img.src = image.preview;
              const scale = imageScale / 100;
@@ -185,7 +185,10 @@ export function WatermarkAdder() {
             'bottom': { x: canvas.width / 2, y: canvas.height - margin },
             'bottom-right': { x: canvas.width - margin, y: canvas.height - margin },
           };
-          drawWatermark(positions[position].x, positions[position].y);
+          const pos = positions[position];
+          context.textAlign = position.includes('left') ? 'left' : position.includes('right') ? 'right' : 'center';
+          context.textBaseline = position.includes('top') ? 'top' : position.includes('bottom') ? 'bottom' : 'middle';
+          drawWatermark(pos.x, pos.y);
       }
 
     } catch(e: any) {
@@ -299,7 +302,7 @@ export function WatermarkAdder() {
       else if(isBold) selectedFont = FONT_MAP[font].bold;
       else if(isItalic) selectedFont = FONT_MAP[font].italic;
 
-      const embeddedFont = watermarkType === 'text' ? await pdfDoc.embedFont(selectedFont) : null;
+      const embeddedFont = watermarkType === 'text' && text ? await pdfDoc.embedFont(selectedFont) : null;
       const colorRgb = hexToRgb(textColor);
 
       const pageIndices = Array.from({length: (effectiveEnd - effectiveStart) + 1}, (_, i) => effectiveStart + i - 1);
@@ -309,7 +312,7 @@ export function WatermarkAdder() {
 
         const page = pages[i];
         
-        const drawWatermark = (target: typeof page) => {
+        const drawWatermarkOnPage = (target: typeof page) => {
             const { width: pageWidth, height: pageHeight } = target.getSize();
             const options: any = {
                 rotate: degrees(rotation),
@@ -319,13 +322,13 @@ export function WatermarkAdder() {
             let contentWidth = 0;
             let contentHeight = 0;
 
-            if (watermarkType === 'text' && embeddedFont) {
+            if (watermarkType === 'text' && text && embeddedFont) {
                 options.font = embeddedFont;
                 options.size = fontSize;
                 options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
                 contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
                 contentHeight = embeddedFont.heightAtSize(fontSize);
-            } else if (watermarkImage) {
+            } else if (watermarkType === 'image' && watermarkImage) {
                 const scale = imageScale / 100;
                 contentWidth = watermarkImage.width * scale;
                 contentHeight = watermarkImage.height * scale;
@@ -335,41 +338,48 @@ export function WatermarkAdder() {
 
             const drawCommands = (x:number, y:number) => {
                 const drawOptions = {...options, x, y };
-                if (watermarkType === 'text') target.drawText(text, drawOptions);
-                else if (watermarkImage) target.drawImage(watermarkImage, drawOptions);
+                if (watermarkType === 'text' && text) target.drawText(text, drawOptions);
+                else if (watermarkType === 'image' && watermarkImage) target.drawImage(watermarkImage, drawOptions);
             };
 
             if (position === 'tile') {
                 const gap = 150;
                 for (let y = 0; y < pageHeight + contentHeight; y += gap) {
                     for (let x = 0; x < pageWidth + contentWidth; x += gap * 2) {
-                        drawCommands(x, y);
+                        drawCommands(x - contentWidth, y - contentHeight);
                     }
                 }
             } else {
                 const margin = 50;
-                const positions = {
-                    'center': { x: (pageWidth - contentWidth) / 2, y: (pageHeight - contentHeight) / 2 },
-                    'top-left': { x: margin, y: pageHeight - contentHeight - margin },
-                    'top': { x: (pageWidth - contentWidth) / 2, y: pageHeight - contentHeight - margin },
-                    'top-right': { x: pageWidth - contentWidth - margin, y: pageHeight - contentHeight - margin },
-                    'left': { x: margin, y: (pageHeight - contentHeight) / 2 },
-                    'right': { x: pageWidth - contentWidth - margin, y: (pageHeight - contentHeight) / 2 },
-                    'bottom-left': { x: margin, y: margin },
-                    'bottom': { x: (pageWidth - contentWidth) / 2, y: margin },
-                    'bottom-right': { x: pageWidth - contentWidth - margin, y: margin },
-                };
-                const pos = positions[position];
-                drawCommands(pos.x, pos.y);
+                let x = 0, y = 0;
+
+                const vAlign = position.split('-')[0];
+                const hAlign = position.split('-').length > 1 ? position.split('-')[1] : 'center';
+
+                if (vAlign === 'top') y = pageHeight - contentHeight - margin;
+                else if (vAlign === 'bottom') y = margin;
+                else y = (pageHeight - contentHeight) / 2;
+
+                if (hAlign === 'left') x = margin;
+                else if (hAlign === 'right') x = pageWidth - contentWidth - margin;
+                else x = (pageWidth - contentWidth) / 2;
+
+                if(position === 'top') x = (pageWidth - contentWidth) / 2;
+                if(position === 'bottom') x = (pageWidth - contentWidth) / 2;
+                if(position === 'left') y = (pageHeight - contentHeight) / 2;
+                if(position === 'right') y = (pageHeight - contentHeight) / 2;
+
+
+                drawCommands(x, y);
             }
         };
 
         if (layer === 'under') {
-          page.pushOperators(save(), rotate(degrees(page.getRotation().angle * -1)));
-          drawWatermark(page);
+          page.pushOperators(save());
+          drawWatermarkOnPage(page);
           page.pushOperators(restore());
         } else {
-          drawWatermark(page);
+          drawWatermarkOnPage(page);
         }
 
         setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
@@ -434,7 +444,7 @@ export function WatermarkAdder() {
           </CardContent>
         </Card>
        ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <div className="flex flex-col gap-6 overflow-hidden">
                 <Card className="bg-transparent shadow-lg shrink-0">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -560,3 +570,5 @@ export function WatermarkAdder() {
     </div>
   );
 }
+
+    
