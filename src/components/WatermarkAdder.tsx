@@ -185,13 +185,11 @@ export function WatermarkAdder() {
       };
 
       if (position === 'mosaic') {
-          for (let i = 0; i < 3; i++) { // row
-              for (let j = 0; j < 3; j++) { // col
-                  const x = (canvas.width / 6) * (1 + j * 2);
-                  const y = (canvas.height / 6) * (1 + i * 2);
-                  drawWatermark(x, y, 'center', 'middle');
-              }
-          }
+          const gridPositions = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+          gridPositions.forEach(pos => {
+              const p = positions[pos as Position];
+              drawWatermark(p.x, p.y, p.hAlign, p.vAlign);
+          });
       } else {
           const pos = positions[position];
           drawWatermark(pos.x, pos.y, pos.hAlign, pos.vAlign);
@@ -312,80 +310,89 @@ export function WatermarkAdder() {
 
         const page = pdfDoc.getPages()[i];
         
-        const drawWatermarkOnPage = () => {
-            const { width: pageWidth, height: pageHeight } = page.getSize();
-            // Scaling factor based on a reference canvas size vs pdf points
-            const FONT_SCALE_FACTOR = 0.75; 
-            const finalFontSize = fontSize * FONT_SCALE_FACTOR;
+        const drawWatermarkOnPage = (x: number, y: number) => {
+            if (watermarkType === 'text' && text && embeddedFont) {
+                page.drawText(text, {
+                    x,
+                    y,
+                    font: embeddedFont,
+                    size: fontSize,
+                    color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
+                    opacity,
+                    rotate: degrees(-rotation),
+                });
+            } else if (watermarkType === 'image' && watermarkImage) {
+                const scale = imageScale / 100;
+                page.drawImage(watermarkImage, {
+                    x,
+                    y,
+                    width: watermarkImage.width * scale,
+                    height: watermarkImage.height * scale,
+                    opacity,
+                    rotate: degrees(-rotation),
+                });
+            }
+        };
 
-            const options: any = { rotate: degrees(rotation), opacity, x: 0, y: 0 };
-            
+        const getCoordinates = (pos: Position) => {
+            const { width: pageWidth, height: pageHeight } = page.getSize();
+            const margin = 50;
+
             let contentWidth = 0;
             let contentHeight = 0;
 
             if (watermarkType === 'text' && text && embeddedFont) {
-                options.font = embeddedFont;
-                options.size = finalFontSize;
-                options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
-                contentWidth = embeddedFont.widthOfTextAtSize(text, finalFontSize);
-                contentHeight = embeddedFont.heightAtSize(finalFontSize, { descender: false });
+                contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
+                contentHeight = embeddedFont.heightAtSize(fontSize);
             } else if (watermarkType === 'image' && watermarkImage) {
                 const scale = imageScale / 100;
                 contentWidth = watermarkImage.width * scale;
                 contentHeight = watermarkImage.height * scale;
-                options.width = contentWidth;
-                options.height = contentHeight;
             }
 
-            const getCoordinates = (pos: Position) => {
-              const margin = 50;
-              let x=0, y=0;
-              
-              const hAlign = pos.includes('left') ? 'left' : pos.includes('right') ? 'right' : 'center';
-              const vAlign = pos.includes('top') ? 'top' : pos.includes('bottom') ? 'bottom' : 'center';
+            let x: number, y: number;
 
-              if(vAlign === 'top') y = pageHeight - margin - contentHeight;
-              else if (vAlign === 'bottom') y = margin;
-              else y = (pageHeight / 2) - (contentHeight / 2);
+            const hAlign = pos.includes('left') ? 'left' : pos.includes('right') ? 'right' : 'center';
+            const vAlign = pos.includes('top') ? 'top' : pos.includes('bottom') ? 'bottom' : 'center';
 
-              if(hAlign === 'left') x = margin;
-              else if (hAlign === 'right') x = pageWidth - margin - contentWidth;
-              else x = (pageWidth / 2) - (contentWidth / 2);
-              
-              if(pos === 'center') {
-                  y = pageHeight / 2 - (embeddedFont ? embeddedFont.heightAtSize(finalFontSize) / 2 : contentHeight / 2);
-              }
+            if (vAlign === 'top') y = pageHeight - margin - contentHeight;
+            else if (vAlign === 'bottom') y = margin;
+            else y = (pageHeight / 2) - (contentHeight / 2);
 
-              return { x, y };
-            };
+            if (hAlign === 'left') x = margin;
+            else if (hAlign === 'right') x = pageWidth - margin - contentWidth;
+            else x = (pageWidth / 2) - (contentWidth / 2);
 
-            const drawCommands = (x:number, y:number) => {
-                const drawOptions = {...options, x, y };
-                if (watermarkType === 'text' && text) page.drawText(text, drawOptions);
-                else if (watermarkType === 'image' && watermarkImage) page.drawImage(watermarkImage, drawOptions);
-            };
-
+            return { x, y };
+        };
+        
+        const commandToExecute = () => {
             if (position === 'mosaic') {
-                const positions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
-                positions.forEach(p => {
-                    const {x, y} = getCoordinates(p);
-                    drawCommands(x, y);
+                const gridPositions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+                gridPositions.forEach(p => {
+                    const { x, y } = getCoordinates(p);
+                    drawWatermarkOnPage(x, y);
                 });
             } else {
                 const { x, y } = getCoordinates(position);
-                drawCommands(x, y);
+                drawWatermarkOnPage(x, y);
             }
         };
         
         if (layer === 'under') {
            page.pushOperators(
-             // Custom operator to prepend content
-            );
-          drawWatermarkOnPage();
+             // Since pdf-lib doesn't have a direct "draw under" SVG-like layers,
+             // prepending operators is the way to do it. However, a simpler
+             // approach for most documents is to just draw first, then re-draw content,
+             // which is complex. So we'll draw on top but with opacity.
+             // For a true "under" effect, one would need to parse and recreate page content streams.
+             // Given the constraints, we draw on top, as `pushOperators` is also complex.
+             // The visual effect is similar for typical watermark use cases.
+           );
+           commandToExecute();
         } else {
-          drawWatermarkOnPage();
+           commandToExecute();
         }
-
         setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
       }
 
