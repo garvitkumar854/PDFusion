@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDocument, rgb, StandardFonts, degrees, pushOperators, restore, save, rotate } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, pushOperators, save, restore } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -308,77 +308,69 @@ export function WatermarkAdder() {
         if (operationId.current !== currentOperationId) return;
 
         const page = pages[i];
-        const { width: pageWidth, height: pageHeight } = page.getSize();
         
-        const drawWatermark = () => {
-          const options: any = {
-            x: 0,
-            y: 0,
-            rotate: degrees(rotation),
-            opacity,
-          };
-          if (watermarkType === 'text' && embeddedFont) {
-            options.font = embeddedFont;
-            options.size = fontSize;
-            options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
-            const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-            options.x = -textWidth / 2;
-          } else if (watermarkImage) {
-            const scale = imageScale / 100;
-            const imgWidth = watermarkImage.width * scale;
-            const imgHeight = watermarkImage.height * scale;
-            options.width = imgWidth;
-            options.height = imgHeight;
-            options.x = -imgWidth / 2;
-            options.y = -imgHeight / 2;
-          }
-          
-          if (layer === 'under') {
-            page.pushOperators(
-              pushOperators(
-                save(),
-                rotate(degrees(page.getRotation().angle * -1))
-              )
-            );
-          }
-          
-          const doDraw = (x:number, y:number) => {
-             const drawOptions = {...options, x: options.x + x, y: options.y + y};
-             if (watermarkType === 'text') page.drawText(text, drawOptions);
-             else if (watermarkImage) page.drawImage(watermarkImage, drawOptions);
-          };
+        const drawWatermark = (target: typeof page) => {
+            const { width: pageWidth, height: pageHeight } = target.getSize();
+            const options: any = {
+                rotate: degrees(rotation),
+                opacity,
+            };
+            
+            let contentWidth = 0;
+            let contentHeight = 0;
 
-          if (position === 'tile') {
-              const textWidth = embeddedFont ? embeddedFont.widthOfTextAtSize(text, fontSize) : 200;
-              const gap = textWidth + 100;
-              for (let y = -pageHeight; y < pageHeight * 2; y += gap) {
-                  for (let x = -pageWidth; x < pageWidth * 2; x += gap * 1.5) {
-                     doDraw(x, y);
-                  }
-              }
-          } else {
-              const margin = 50;
-              const positions = {
-                'center': { x: pageWidth / 2, y: pageHeight / 2 },
-                'top-left': { x: margin, y: pageHeight - margin },
-                'top': { x: pageWidth / 2, y: pageHeight - margin },
-                'top-right': { x: pageWidth - margin, y: pageHeight - margin },
-                'left': { x: margin, y: pageHeight / 2 },
-                'right': { x: pageWidth - margin, y: pageHeight / 2 },
-                'bottom-left': { x: margin, y: margin },
-                'bottom': { x: pageWidth / 2, y: margin },
-                'bottom-right': { x: pageWidth - margin, y: margin },
-              };
-              const pos = positions[position];
-              doDraw(pos.x, pos.y);
-          }
-          
-          if (layer === 'under') {
-            page.pushOperators(restore());
-          }
+            if (watermarkType === 'text' && embeddedFont) {
+                options.font = embeddedFont;
+                options.size = fontSize;
+                options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
+                contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
+                contentHeight = embeddedFont.heightAtSize(fontSize);
+            } else if (watermarkImage) {
+                const scale = imageScale / 100;
+                contentWidth = watermarkImage.width * scale;
+                contentHeight = watermarkImage.height * scale;
+                options.width = contentWidth;
+                options.height = contentHeight;
+            }
+
+            const drawCommands = (x:number, y:number) => {
+                const drawOptions = {...options, x, y };
+                if (watermarkType === 'text') target.drawText(text, drawOptions);
+                else if (watermarkImage) target.drawImage(watermarkImage, drawOptions);
+            };
+
+            if (position === 'tile') {
+                const gap = 150;
+                for (let y = 0; y < pageHeight + contentHeight; y += gap) {
+                    for (let x = 0; x < pageWidth + contentWidth; x += gap * 2) {
+                        drawCommands(x, y);
+                    }
+                }
+            } else {
+                const margin = 50;
+                const positions = {
+                    'center': { x: (pageWidth - contentWidth) / 2, y: (pageHeight - contentHeight) / 2 },
+                    'top-left': { x: margin, y: pageHeight - contentHeight - margin },
+                    'top': { x: (pageWidth - contentWidth) / 2, y: pageHeight - contentHeight - margin },
+                    'top-right': { x: pageWidth - contentWidth - margin, y: pageHeight - contentHeight - margin },
+                    'left': { x: margin, y: (pageHeight - contentHeight) / 2 },
+                    'right': { x: pageWidth - contentWidth - margin, y: (pageHeight - contentHeight) / 2 },
+                    'bottom-left': { x: margin, y: margin },
+                    'bottom': { x: (pageWidth - contentWidth) / 2, y: margin },
+                    'bottom-right': { x: pageWidth - contentWidth - margin, y: margin },
+                };
+                const pos = positions[position];
+                drawCommands(pos.x, pos.y);
+            }
         };
 
-        drawWatermark();
+        if (layer === 'under') {
+          page.pushOperators(save(), rotate(degrees(page.getRotation().angle * -1)));
+          drawWatermark(page);
+          page.pushOperators(restore());
+        } else {
+          drawWatermark(page);
+        }
 
         setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
       }
@@ -442,7 +434,7 @@ export function WatermarkAdder() {
           </CardContent>
         </Card>
        ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[calc(100vh-12rem)]">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-6 overflow-hidden">
                 <Card className="bg-transparent shadow-lg shrink-0">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -502,7 +494,8 @@ export function WatermarkAdder() {
                                         <Label className="text-sm font-semibold">Image</Label>
                                         <div {...getImageRootProps()} className={cn("p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer", isImageDragActive && "border-primary")}>
                                             <input {...getImageInputProps()} />
-                                            {image ? <img src={image.preview} alt="Watermark Preview" className="max-h-24 rounded"/> : <><FileImage className="w-8 h-8 text-muted-foreground"/><p className="text-xs text-muted-foreground mt-2">Drop image here or click</p></>}
+                                            {image ? <img src={image.preview} alt="Watermark Preview" className="max-h-24 rounded"/> : <><FileImage className="w-8 h-8 text-muted-foreground"/><p className="text-xs text-muted-foreground mt-2">Drop image here or click</p></>
+                                            }
                                         </div>
                                         <div><Label className="text-sm font-semibold">Scale: <span className="font-bold text-primary">{imageScale}%</span></Label><Slider value={[imageScale]} onValueChange={([val]) => setImageScale(val)} min={10} max={200} step={1} disabled={isProcessing || !image} /></div>
                                     </div>
