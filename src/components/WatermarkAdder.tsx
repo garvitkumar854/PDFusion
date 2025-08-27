@@ -55,7 +55,7 @@ type PDFFile = {
 
 type WatermarkType = "text" | "image";
 type Font = "Helvetica" | "TimesRoman" | "Courier";
-type Position = 'center' | 'top-left' | 'top' | 'top-right' | 'left' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right' | 'tile';
+type Position = 'center' | 'top-left' | 'top' | 'top-right' | 'left' | 'right' | 'bottom-left' | 'bottom' | 'bottom-right' | 'mosaic';
 type Layer = 'over' | 'under';
 
 const hexToRgb = (hex: string) => {
@@ -87,7 +87,7 @@ export function WatermarkAdder() {
   const [textColor, setTextColor] = useState("#ff0000");
   const [opacity, setOpacity] = useState(0.5);
   const [rotation, setRotation] = useState(-45);
-  const [position, setPosition] = useState<Position>('tile');
+  const [position, setPosition] = useState<Position>('mosaic');
   const [layer, setLayer] = useState<Layer>('over');
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -131,7 +131,7 @@ export function WatermarkAdder() {
 
       context.globalAlpha = opacity;
       
-      const drawWatermark = (x: number, y: number) => {
+      const drawWatermark = (x: number, y: number, hAlign: CanvasTextAlign, vAlign: CanvasTextBaseline) => {
         context.save();
         context.translate(x, y);
         context.rotate(rotation * Math.PI / 180);
@@ -140,15 +140,19 @@ export function WatermarkAdder() {
             const selectedFont = `${isItalic ? 'italic ' : ''}${isBold ? 'bold ' : ''}${fontSize}px ${font}`;
             context.font = selectedFont;
             context.fillStyle = textColor;
-            context.textAlign = "center";
-            context.textBaseline = "middle";
+            context.textAlign = hAlign;
+            context.textBaseline = vAlign;
             context.fillText(text, 0, 0);
 
             if (isUnderline) {
                 const metrics = context.measureText(text);
+                let underlineY = fontSize / 2 * 0.9;
+                if(vAlign === 'top') underlineY = fontSize * 0.9;
+                if(vAlign === 'bottom') underlineY = 0;
+                
                 context.beginPath();
-                context.moveTo(-metrics.width/2, fontSize / 2);
-                context.lineTo(metrics.width/2, fontSize / 2);
+                context.moveTo(-metrics.width/2, underlineY);
+                context.lineTo(metrics.width/2, underlineY);
                 context.strokeStyle = textColor;
                 context.lineWidth = Math.max(1, fontSize / 15);
                 context.stroke();
@@ -165,30 +169,32 @@ export function WatermarkAdder() {
         context.restore();
       };
       
-      if (position === 'tile') {
-          const gap = 150;
-          for (let y = -canvas.height; y < canvas.height * 2; y += gap) {
-              for (let x = -canvas.width; x < canvas.width * 2; x += gap * 2) {
-                  drawWatermark(x, y);
+      const margin = 50;
+      const positions: { [key in Position | 'grid-positions']: { x: number, y: number, hAlign: CanvasTextAlign, vAlign: CanvasTextBaseline } } = {
+          'center': { x: canvas.width / 2, y: canvas.height / 2, hAlign: 'center', vAlign: 'middle' },
+          'top-left': { x: margin, y: margin, hAlign: 'left', vAlign: 'top' },
+          'top': { x: canvas.width / 2, y: margin, hAlign: 'center', vAlign: 'top' },
+          'top-right': { x: canvas.width - margin, y: margin, hAlign: 'right', vAlign: 'top' },
+          'left': { x: margin, y: canvas.height / 2, hAlign: 'left', vAlign: 'middle' },
+          'right': { x: canvas.width - margin, y: canvas.height / 2, hAlign: 'right', vAlign: 'middle' },
+          'bottom-left': { x: margin, y: canvas.height - margin, hAlign: 'left', vAlign: 'bottom' },
+          'bottom': { x: canvas.width / 2, y: canvas.height - margin, hAlign: 'center', vAlign: 'bottom' },
+          'bottom-right': { x: canvas.width - margin, y: canvas.height - margin, hAlign: 'right', vAlign: 'bottom' },
+          'mosaic': {x:0,y:0, hAlign: 'center', vAlign: 'middle'}, // Placeholder
+          'grid-positions': {} as any
+      };
+
+      if (position === 'mosaic') {
+          for (let i = 0; i < 3; i++) { // row
+              for (let j = 0; j < 3; j++) { // col
+                  const x = (canvas.width / 6) * (1 + j * 2);
+                  const y = (canvas.height / 6) * (1 + i * 2);
+                  drawWatermark(x, y, 'center', 'middle');
               }
           }
       } else {
-          const margin = 50;
-          const positions = {
-            'center': { x: canvas.width / 2, y: canvas.height / 2 },
-            'top-left': { x: margin, y: margin },
-            'top': { x: canvas.width / 2, y: margin },
-            'top-right': { x: canvas.width - margin, y: margin },
-            'left': { x: margin, y: canvas.height / 2 },
-            'right': { x: canvas.width - margin, y: canvas.height / 2 },
-            'bottom-left': { x: margin, y: canvas.height - margin },
-            'bottom': { x: canvas.width / 2, y: canvas.height - margin },
-            'bottom-right': { x: canvas.width - margin, y: canvas.height - margin },
-          };
           const pos = positions[position];
-          context.textAlign = position.includes('left') ? 'left' : position.includes('right') ? 'right' : 'center';
-          context.textBaseline = position.includes('top') ? 'top' : position.includes('bottom') ? 'bottom' : 'middle';
-          drawWatermark(pos.x, pos.y);
+          drawWatermark(pos.x, pos.y, pos.hAlign, pos.vAlign);
       }
 
     } catch(e: any) {
@@ -282,42 +288,33 @@ export function WatermarkAdder() {
     try {
       const pdfBytes = await file.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-      const pages = pdfDoc.getPages();
       
       const effectiveStart = Math.max(1, startPage);
-      const effectiveEnd = Math.min(pages.length, endPage);
+      const effectiveEnd = Math.min(pdfDoc.getPageCount(), endPage);
+      const pageIndices = Array.from({length: (effectiveEnd - effectiveStart) + 1}, (_, i) => effectiveStart + i - 1);
 
       let watermarkImage: any = null;
       if (watermarkType === 'image' && image) {
         const imageBytes = await image.file.arrayBuffer();
-        watermarkImage = image.file.type === 'image/png'
-          ? await pdfDoc.embedPng(imageBytes)
-          : await pdfDoc.embedJpg(imageBytes);
-      } else if (watermarkType === 'image' && !image) {
-          throw new Error("Please select an image for the watermark.");
+        watermarkImage = image.file.type === 'image/png' ? await pdfDoc.embedPng(imageBytes) : await pdfDoc.embedJpg(imageBytes);
       }
 
       let selectedFont = FONT_MAP[font].normal;
       if(isBold && isItalic) selectedFont = FONT_MAP[font].boldItalic;
       else if(isBold) selectedFont = FONT_MAP[font].bold;
       else if(isItalic) selectedFont = FONT_MAP[font].italic;
-
       const embeddedFont = watermarkType === 'text' && text ? await pdfDoc.embedFont(selectedFont) : null;
+      
       const colorRgb = hexToRgb(textColor);
-
-      const pageIndices = Array.from({length: (effectiveEnd - effectiveStart) + 1}, (_, i) => effectiveStart + i - 1);
 
       for (const i of pageIndices) {
         if (operationId.current !== currentOperationId) return;
 
-        const page = pages[i];
+        const page = pdfDoc.getPages()[i];
         
-        const drawWatermarkOnPage = (target: typeof page) => {
-            const { width: pageWidth, height: pageHeight } = target.getSize();
-            const options: any = {
-                rotate: degrees(rotation),
-                opacity,
-            };
+        const drawWatermarkOnPage = () => {
+            const { width: pageWidth, height: pageHeight } = page.getSize();
+            const options: any = { rotate: degrees(-rotation), opacity, x: 0, y: 0 };
             
             let contentWidth = 0;
             let contentHeight = 0;
@@ -327,7 +324,7 @@ export function WatermarkAdder() {
                 options.size = fontSize;
                 options.color = rgb(colorRgb.r, colorRgb.g, colorRgb.b);
                 contentWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
-                contentHeight = embeddedFont.heightAtSize(fontSize);
+                contentHeight = embeddedFont.heightAtSize(fontSize, {descender: false});
             } else if (watermarkType === 'image' && watermarkImage) {
                 const scale = imageScale / 100;
                 contentWidth = watermarkImage.width * scale;
@@ -336,50 +333,49 @@ export function WatermarkAdder() {
                 options.height = contentHeight;
             }
 
-            const drawCommands = (x:number, y:number) => {
-                const drawOptions = {...options, x, y };
-                if (watermarkType === 'text' && text) target.drawText(text, drawOptions);
-                else if (watermarkType === 'image' && watermarkImage) target.drawImage(watermarkImage, drawOptions);
+            const getCoordinates = (pos: Position | 'center' | 'left' | 'right' | 'top' | 'bottom') => {
+              const margin = 50;
+              let x=0, y=0;
+              const vAlign = pos.split('-')[0];
+              const hAlign = pos.includes('-') ? pos.split('-')[1] : 'center';
+
+              if (vAlign === 'top') y = pageHeight - margin - contentHeight;
+              else if (vAlign === 'bottom') y = margin;
+              else y = (pageHeight - contentHeight) / 2;
+              
+              if(hAlign === 'left') x = margin;
+              else if (hAlign === 'right') x = pageWidth - contentWidth - margin;
+              else x = (pageWidth - contentWidth) / 2;
+              
+              return { x, y };
             };
 
-            if (position === 'tile') {
-                const gap = 150;
-                for (let y = 0; y < pageHeight + contentHeight; y += gap) {
-                    for (let x = 0; x < pageWidth + contentWidth; x += gap * 2) {
-                        drawCommands(x - contentWidth, y - contentHeight);
+            const drawCommands = (x:number, y:number) => {
+                const drawOptions = {...options, x, y };
+                if (watermarkType === 'text' && text) page.drawText(text, drawOptions);
+                else if (watermarkType === 'image' && watermarkImage) page.drawImage(watermarkImage, drawOptions);
+            };
+
+            if (position === 'mosaic') {
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 3; col++) {
+                        const x = (pageWidth / 6) * (1 + col * 2) - (contentWidth / 2);
+                        const y = (pageHeight / 6) * (1 + row * 2) - (contentHeight / 2);
+                        drawCommands(x, y);
                     }
                 }
             } else {
-                const margin = 50;
-                let x = 0, y = 0;
-
-                const vAlign = position.split('-')[0];
-                const hAlign = position.split('-').length > 1 ? position.split('-')[1] : 'center';
-
-                if (vAlign === 'top') y = pageHeight - contentHeight - margin;
-                else if (vAlign === 'bottom') y = margin;
-                else y = (pageHeight - contentHeight) / 2;
-
-                if (hAlign === 'left') x = margin;
-                else if (hAlign === 'right') x = pageWidth - contentWidth - margin;
-                else x = (pageWidth - contentWidth) / 2;
-
-                if(position === 'top') x = (pageWidth - contentWidth) / 2;
-                if(position === 'bottom') x = (pageWidth - contentWidth) / 2;
-                if(position === 'left') y = (pageHeight - contentHeight) / 2;
-                if(position === 'right') y = (pageHeight - contentHeight) / 2;
-
-
+                const { x, y } = getCoordinates(position);
                 drawCommands(x, y);
             }
         };
-
+        
         if (layer === 'under') {
           page.pushOperators(save());
-          drawWatermarkOnPage(page);
+          drawWatermarkOnPage();
           page.pushOperators(restore());
         } else {
-          drawWatermarkOnPage(page);
+          drawWatermarkOnPage();
         }
 
         setProgress(Math.round(((pageIndices.indexOf(i) + 1) / pageIndices.length) * 100));
@@ -421,7 +417,7 @@ export function WatermarkAdder() {
   };
   
   const totalPages = file?.pdfjsDoc?.numPages || 0;
-  const positions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+  const singlePositions: Position[] = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
   return (
     <div className="space-y-6">
@@ -444,8 +440,8 @@ export function WatermarkAdder() {
           </CardContent>
         </Card>
        ) : (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div className="flex flex-col gap-6 overflow-hidden">
+         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+            <div className="lg:col-span-3 flex flex-col gap-6 overflow-hidden">
                 <Card className="bg-transparent shadow-lg shrink-0">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div className="max-w-full overflow-hidden">
@@ -470,9 +466,9 @@ export function WatermarkAdder() {
                     <CardContent className="flex-grow overflow-y-auto pr-2">
                       <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
                         <AccordionItem value="item-1">
-                          <AccordionTrigger className="text-base">Watermark Type</AccordionTrigger>
+                          <AccordionTrigger className="text-base font-semibold">Watermark Type</AccordionTrigger>
                           <AccordionContent className="space-y-4 pt-2">
-                             <Label className="text-sm font-semibold">Type</Label>
+                             <Label className="text-sm font-medium">Type</Label>
                              <Select value={watermarkType} onValueChange={(v) => setWatermarkType(v as WatermarkType)} disabled={isProcessing}>
                                <SelectTrigger>
                                 <SelectValue placeholder="Select watermark type" />
@@ -485,29 +481,29 @@ export function WatermarkAdder() {
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="item-2">
-                           <AccordionTrigger className="text-base">{watermarkType === 'text' ? 'Text Options' : 'Image Options'}</AccordionTrigger>
+                           <AccordionTrigger className="text-base font-semibold">{watermarkType === 'text' ? 'Text Options' : 'Image Options'}</AccordionTrigger>
                            <AccordionContent className="space-y-4 pt-4">
                              <AnimatePresence mode="wait">
                                <motion.div key={watermarkType} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
                                 {watermarkType === 'text' ? (
                                     <div className="space-y-4">
-                                        <div><Label htmlFor="watermark-text" className="text-sm font-semibold">Text</Label><Textarea id="watermark-text" value={text} onChange={(e) => setText(e.target.value)} disabled={isProcessing} className="mt-1" /></div>
+                                        <div><Label htmlFor="watermark-text" className="text-sm font-medium">Text</Label><Textarea id="watermark-text" value={text} onChange={(e) => setText(e.target.value)} disabled={isProcessing} className="mt-1" /></div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div><Label htmlFor="font" className="text-sm font-semibold">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
-                                            <div><Label className="text-sm font-semibold">Style</Label><div className="mt-1 flex items-center gap-2"><Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button><Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button><Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4-4" /></Button></div></div>
+                                            <div><Label htmlFor="font" className="text-sm font-medium">Font</Label><Select value={font} onValueChange={v => setFont(v as Font)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Helvetica">Helvetica</SelectItem><SelectItem value="TimesRoman">Times New Roman</SelectItem><SelectItem value="Courier">Courier</SelectItem></SelectContent></Select></div>
+                                            <div><Label className="text-sm font-medium">Style</Label><div className="mt-1 flex items-center gap-2"><Button variant={isBold ? "secondary" : "outline"} size="icon" onClick={() => setIsBold(!isBold)} disabled={isProcessing}><Bold className="w-4 h-4" /></Button><Button variant={isItalic ? "secondary" : "outline"} size="icon" onClick={() => setIsItalic(!isItalic)} disabled={isProcessing}><Italic className="w-4 h-4" /></Button><Button variant={isUnderline ? "secondary" : "outline"} size="icon" onClick={() => setIsUnderline(!isUnderline)} disabled={isProcessing}><Underline className="w-4-4" /></Button></div></div>
                                         </div>
-                                        <div><Label htmlFor="textColor" className="text-sm font-semibold">Color</Label><div className="relative mt-1"><Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/><Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-0 cursor-pointer" disabled={isProcessing}/></div></div>
-                                        <div><Label className="text-sm font-semibold">Font Size: <span className="font-bold text-primary">{fontSize}</span></Label><Slider value={[fontSize]} onValueChange={([val]) => setFontSize(val)} min={10} max={200} step={1} disabled={isProcessing} /></div>
+                                        <div><Label htmlFor="textColor" className="text-sm font-medium">Color</Label><div className="relative mt-1"><Input id="textColor" type="text" value={textColor} onChange={e => setTextColor(e.target.value)} className="w-full pr-12" disabled={isProcessing}/><Input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-0 cursor-pointer" disabled={isProcessing}/></div></div>
+                                        <div><Label className="text-sm font-medium">Font Size: <span className="font-bold text-primary">{fontSize}</span></Label><Slider value={[fontSize]} onValueChange={([val]) => setFontSize(val)} min={10} max={200} step={1} disabled={isProcessing} /></div>
                                     </div>
                                 ) : (
                                      <div className="space-y-4">
-                                        <Label className="text-sm font-semibold">Image</Label>
+                                        <Label className="text-sm font-medium">Image</Label>
                                         <div {...getImageRootProps()} className={cn("p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer", isImageDragActive && "border-primary")}>
                                             <input {...getImageInputProps()} />
                                             {image ? <img src={image.preview} alt="Watermark Preview" className="max-h-24 rounded"/> : <><FileImage className="w-8 h-8 text-muted-foreground"/><p className="text-xs text-muted-foreground mt-2">Drop image here or click</p></>
                                             }
                                         </div>
-                                        <div><Label className="text-sm font-semibold">Scale: <span className="font-bold text-primary">{imageScale}%</span></Label><Slider value={[imageScale]} onValueChange={([val]) => setImageScale(val)} min={10} max={200} step={1} disabled={isProcessing || !image} /></div>
+                                        <div><Label className="text-sm font-medium">Scale: <span className="font-bold text-primary">{imageScale}%</span></Label><Slider value={[imageScale]} onValueChange={([val]) => setImageScale(val)} min={10} max={200} step={1} disabled={isProcessing || !image} /></div>
                                     </div>
                                 )}
                              </motion.div>
@@ -515,25 +511,25 @@ export function WatermarkAdder() {
                            </AccordionContent>
                         </AccordionItem>
                          <AccordionItem value="item-3">
-                            <AccordionTrigger className="text-base">Style & Placement</AccordionTrigger>
+                            <AccordionTrigger className="text-base font-semibold">Style & Placement</AccordionTrigger>
                             <AccordionContent className="space-y-4 pt-4">
-                                <div><Label className="text-sm font-semibold">Position</Label><Select value={position} onValueChange={v => setPosition(v as Position)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="tile">Tile</SelectItem><SelectItem value="center">Center</SelectItem></SelectContent></Select></div>
-                                {position !== 'tile' && <div><Label className="text-sm font-semibold">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{positions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
-                                <div><Label className="text-sm font-semibold">Rotation: <span className="font-bold text-primary">{rotation}°</span></Label><Slider value={[rotation]} onValueChange={([val]) => setRotation(val)} min={-180} max={180} step={5} disabled={isProcessing} /></div>
-                                <div><Label className="text-sm font-semibold">Opacity: <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span></Label><Slider value={[opacity]} onValueChange={([val]) => setOpacity(val)} min={0} max={1} step={0.05} disabled={isProcessing} /></div>
+                                <div><Label className="text-sm font-medium">Position</Label><Select value={position} onValueChange={v => setPosition(v as Position)} disabled={isProcessing}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="mosaic">Mosaic (3x3 Grid)</SelectItem><SelectItem value="center">Center</SelectItem></SelectContent></Select></div>
+                                {position !== 'mosaic' && <div><Label className="text-sm font-medium">Grid</Label><div className="mt-1 grid grid-cols-3 grid-rows-3 gap-1 p-1 rounded-lg bg-muted aspect-square w-[78px]">{singlePositions.map(p => ( <button key={p} onClick={() => setPosition(p)} disabled={isProcessing} className="rounded-md transition-colors relative flex items-center justify-center group"><span className={cn("absolute inset-0.5 rounded-[5px] transition-colors", position === p ? "bg-primary" : "group-hover:bg-muted-foreground/20")}></span></button> ))}</div></div>}
+                                <div><Label className="text-sm font-medium">Rotation: <span className="font-bold text-primary">{rotation}°</span></Label><Slider value={[rotation]} onValueChange={([val]) => setRotation(val)} min={-180} max={180} step={5} disabled={isProcessing} /></div>
+                                <div><Label className="text-sm font-medium">Opacity: <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span></Label><Slider value={[opacity]} onValueChange={([val]) => setOpacity(val)} min={0} max={1} step={0.05} disabled={isProcessing} /></div>
                             </AccordionContent>
                          </AccordionItem>
                          <AccordionItem value="item-4">
-                           <AccordionTrigger className="text-base">Pages & Layering</AccordionTrigger>
+                           <AccordionTrigger className="text-base font-semibold">Pages & Layering</AccordionTrigger>
                            <AccordionContent className="space-y-4 pt-4">
                              <div>
-                                <Label className="text-sm font-semibold">Pages to apply watermark</Label>
+                                <Label className="text-sm font-medium">Pages to apply watermark</Label>
                                 <div className="grid grid-cols-2 gap-2 mt-1">
                                     <Input placeholder="Start" type="number" value={startPage} min="1" max={totalPages || 1} onChange={e => setStartPage(Math.max(1, parseInt(e.target.value)) || 1)} disabled={isProcessing || file.isEncrypted}/>
                                     <Input placeholder="End" type="number" value={endPage} min={startPage} max={totalPages || 1} onChange={e => setEndPage(Math.max(startPage, parseInt(e.target.value)) || startPage)} disabled={isProcessing || file.isEncrypted}/>
                                 </div>
                              </div>
-                              <div><Label className="text-sm font-semibold">Layer</Label><Select value={layer} onValueChange={(v) => setLayer(v as Layer)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="over">Over Content</SelectItem><SelectItem value="under">Under Content</SelectItem></SelectContent></Select></div>
+                              <div><Label className="text-sm font-medium">Layer</Label><Select value={layer} onValueChange={(v) => setLayer(v as Layer)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="over">Over Content</SelectItem><SelectItem value="under">Under Content</SelectItem></SelectContent></Select></div>
                            </AccordionContent>
                          </AccordionItem>
                       </Accordion>
@@ -554,7 +550,7 @@ export function WatermarkAdder() {
                     </CardContent>
                 </Card>
             </div>
-             <div className="lg:col-span-1 h-full flex flex-col">
+             <div className="lg:col-span-2 h-full flex flex-col">
                 <Card className="bg-transparent shadow-lg h-full flex flex-col">
                     <CardHeader><CardTitle className="text-base sm:text-lg">Live Preview (First Page)</CardTitle></CardHeader>
                     <CardContent className="h-full flex-grow flex items-center justify-center p-4 bg-muted/50 rounded-b-lg overflow-hidden">
@@ -570,5 +566,3 @@ export function WatermarkAdder() {
     </div>
   );
 }
-
-    
