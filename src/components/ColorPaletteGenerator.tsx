@@ -7,7 +7,7 @@ import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, GripVertical, Trash2, Library, Link as LinkIcon, Plus } from 'lucide-react';
+import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, GripVertical, Trash2, Library, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-is-mobile';

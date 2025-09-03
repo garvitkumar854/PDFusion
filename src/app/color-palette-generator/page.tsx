@@ -4,7 +4,7 @@
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPaletteGenerator'), {
+const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPaletteGeneratorLoader'), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex flex-col md:flex-row">
