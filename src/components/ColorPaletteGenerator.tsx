@@ -9,8 +9,8 @@ import { Button } from './ui/button';
 import { Lock, Unlock, Copy, Check, Sparkles, Plus, Minus, Download } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { AnimatePresence } from 'framer-motion';
 
 extend([namesPlugin]);
 
@@ -53,7 +53,7 @@ const ColorPanel = React.memo(({ color, onToggleLock, onCopy }: { color: ColorIn
   return (
     <div
       style={{ backgroundColor: color.hex, color: getTextColor(color.hex) }}
-      className="relative flex-1 flex flex-col justify-center items-center p-4 text-center group min-h-[12rem] md:min-h-0 transition-all duration-300 first:rounded-t-2xl last:rounded-b-2xl md:first:rounded-l-2xl md:last:rounded-r-2xl md:first:rounded-t-none md:last:rounded-b-none"
+      className="relative flex flex-col justify-center items-center p-4 text-center group min-h-[16rem] md:min-h-0 transition-all duration-300 first:rounded-t-2xl last:rounded-b-2xl md:first:rounded-l-2xl md:last:rounded-r-2xl md:first:rounded-t-none md:last:rounded-b-none"
     >
       <div className="space-y-1 cursor-pointer" onClick={handleCopy}>
         <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider">
@@ -252,7 +252,8 @@ export default function ColorPaletteGenerator() {
   
   return (
     <div className="w-full h-full flex flex-col">
-        <div className="flex-1 flex flex-col md:flex-row shadow-lg rounded-2xl overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row shadow-lg rounded-2xl overflow-hidden">
+        <AnimatePresence>
             {palette.map((color) => (
                 <ColorPanel
                     key={color.id}
@@ -261,7 +262,8 @@ export default function ColorPaletteGenerator() {
                     onCopy={() => handleCopy(color.hex)}
                 />
             ))}
-        </div>
+        </AnimatePresence>
+      </div>
       
         <FloatingActions 
             onGenerate={handleGenerate}
