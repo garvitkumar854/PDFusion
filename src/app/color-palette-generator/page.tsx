@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPaletteGenerator'), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full flex flex-col md:flex-row bg-background">
+    <div className="h-full w-full flex flex-col md:flex-row">
       {Array.from({ length: 5 }).map((_, i) => (
         <Skeleton key={i} className="flex-1 w-full h-full rounded-none" />
       ))}
@@ -17,7 +17,7 @@ const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPale
 
 export default function ColorPaletteGeneratorPage() {
   return (
-    <div className="flex-1 w-full">
+    <div className="flex-1 w-full h-full">
           <ColorPaletteGeneratorLoader />
     </div>
   );
