@@ -8,15 +8,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPaletteGeneratorLoader'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full">
-      <Skeleton className="h-full w-full" />
+    <div className="w-full">
+      <Skeleton className="h-48 w-full" />
     </div>
   )
 });
 
 export default function ColorPaletteGeneratorPage() {
   return (
-    <div className="flex flex-col flex-1 py-8 sm:py-12 h-full">
+    <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-8">
         <AnimateOnScroll
           animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -35,7 +35,7 @@ export default function ColorPaletteGeneratorPage() {
         </AnimateOnScroll>
       </section>
 
-      <main className="flex-1 w-full flex flex-col">
+      <main className="flex-1 w-full flex flex-col items-center justify-start pt-8">
         <ColorPaletteGeneratorLoader />
       </main>
     </div>
