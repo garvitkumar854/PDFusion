@@ -7,7 +7,7 @@ import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Lock, Unlock, Copy, Check, Palette, Sparkles, Plus, Library, RefreshCcw, Minus } from 'lucide-react';
+import { Lock, Unlock, Copy, Check, Palette, Sparkles, Plus, Library, RefreshCcw, Minus, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -42,26 +42,19 @@ function generateRandomColor(): ColorInfo {
 
 const getTextColor = (hex: string) => colord(hex).isDark() ? '#FFFFFF' : '#000000';
 
-const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onToggleLock: () => void; }) => {
-  const { toast } = useToast();
+const ColorPanel = React.memo(({ color, onToggleLock, onRemove, onCopy }: { color: ColorInfo; onToggleLock: () => void; onRemove: () => void; onCopy: () => void; }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(color.hex);
+    onCopy();
     setCopied(true);
-    toast({ variant: 'success', title: 'Copied to clipboard!', description: color.hex });
     setTimeout(() => setCopied(false), 2000);
-  }, [color.hex, toast]);
-  
+  }, [onCopy]);
+
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    <div
       style={{ backgroundColor: color.hex, color: getTextColor(color.hex) }}
-      className="relative flex-1 flex flex-col justify-end items-center p-4 text-center group h-48 sm:h-56 md:h-full"
+      className="relative flex-1 flex flex-col justify-end items-center p-4 text-center group min-h-[100px] md:min-h-0"
     >
       <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
@@ -69,7 +62,6 @@ const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onTo
         </h2>
         <p className="text-sm sm:text-base capitalize">{color.name}</p>
       </div>
-
       <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <TooltipProvider>
           <Tooltip>
@@ -91,13 +83,23 @@ const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onTo
             <TooltipContent><p>{color.isLocked ? 'Unlock' : 'Lock'}</p></TooltipContent>
           </Tooltip>
         </TooltipProvider>
+         <TooltipProvider>
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20" onClick={onRemove}>
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Remove</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-    </motion.div>
+    </div>
   );
 });
 ColorPanel.displayName = 'ColorPanel';
 
-const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, palette, onRemove }: { onGenerate: () => void; onAdd: () => void; onLockAll: () => void; canAdd: boolean, palette: Palette, onRemove: () => void }) => {
+const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, palette, onRemove, canRemove }: { onGenerate: () => void; onAdd: () => void; onLockAll: () => void; canAdd: boolean, palette: Palette, onRemove: () => void, canRemove: boolean }) => {
   const { toast } = useToast();
   
   const copyPalette = (format: 'css' | 'json' | 'url') => {
@@ -115,71 +117,84 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
   }
 
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="flex items-center gap-2 p-2 bg-background/80 backdrop-blur-md border rounded-full shadow-lg">
-        <Button onClick={onGenerate} className="font-semibold" size="sm">
-          <Sparkles className="h-4 w-4 mr-2" />
-          Generate
-        </Button>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button onClick={onAdd} variant="outline" size="icon" className="h-9 w-9" disabled={!canAdd}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Add Color</p></TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button onClick={onRemove} variant="outline" size="icon" className="h-9 w-9" disabled={palette.length <= MIN_COLORS}>
-                        <Minus className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Remove Color</p></TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button onClick={onLockAll} variant="outline" size="icon" className="h-9 w-9">
-                        <Lock className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Lock All</p></TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-        <Popover>
-          <PopoverTrigger asChild>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                            <Library className="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Export Palette</p></TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-1 mt-2">
-            <div className="flex flex-col">
-              <Button variant="ghost" onClick={() => copyPalette('css')} className="justify-start">CSS Variables</Button>
-              <Button variant="ghost" onClick={() => copyPalette('json')} className="justify-start">JSON Array</Button>
-              <Button variant="ghost" onClick={() => copyPalette('url')} className="justify-start">Share URL</Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+    <>
+      <div className="flex items-center justify-center p-4">
+        <div className="flex items-center gap-2 p-2 bg-card/80 dark:bg-card/50 backdrop-blur-md border rounded-full shadow-lg">
+          <Button onClick={onGenerate} className="font-semibold" size="sm">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate
+          </Button>
+          <TooltipProvider>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button onClick={onAdd} variant="outline" size="icon" className="h-9 w-9" disabled={!canAdd}>
+                          <Plus className="h-4 w-4" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Add Color</p></TooltipContent>
+              </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button onClick={onRemove} variant="outline" size="icon" className="h-9 w-9" disabled={!canRemove}>
+                          <Minus className="h-4 w-4" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Remove Color</p></TooltipContent>
+              </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button onClick={onLockAll} variant="outline" size="icon" className="h-9 w-9">
+                          <Lock className="h-4 w-4" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Lock All</p></TooltipContent>
+              </Tooltip>
+          </TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-9 w-9">
+                              <Library className="h-4 w-4" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>Export Palette</p></TooltipContent>
+                  </Tooltip>
+              </TooltipProvider>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1 mt-2">
+              <div className="flex flex-col">
+                <Button variant="ghost" onClick={() => copyPalette('css')} className="justify-start">CSS Variables</Button>
+                <Button variant="ghost" onClick={() => copyPalette('json')} className="justify-start">JSON Array</Button>
+                <Button variant="ghost" onClick={() => copyPalette('url')} className="justify-start">Share URL</Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
-    </div>
+      <div className="hidden sm:flex items-center justify-center gap-2 text-sm font-medium pb-4 text-muted-foreground">
+          <RefreshCcw className="w-4 h-4"/>
+          <p>Press the <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Spacebar</kbd> to generate new palettes!</p>
+      </div>
+    </>
   );
 });
 FloatingActions.displayName = 'FloatingActions';
 
 export default function ColorPaletteGenerator() {
-  const [palette, setPalette] = useState<Palette>(() => Array.from({ length: 5 }, generateRandomColor));
+  const [palette, setPalette] = useState<Palette>([]);
+  const { toast } = useToast();
+
+  const handleGenerate = useCallback(() => {
+    setPalette(currentPalette => 
+      currentPalette.map(color => color.isLocked ? color : generateRandomColor())
+    );
+  }, []);
 
   useEffect(() => {
     const colorsFromUrl = new URLSearchParams(window.location.search).get('colors');
@@ -196,14 +211,11 @@ export default function ColorPaletteGenerator() {
           };
         });
         setPalette(newPalette);
+        return;
       }
     }
-  }, []);
-
-  const handleGenerate = useCallback(() => {
-    setPalette(currentPalette => 
-      currentPalette.map(color => color.isLocked ? color : generateRandomColor())
-    );
+    // Generate initial palette if no valid URL params
+    setPalette(Array.from({ length: 5 }, generateRandomColor));
   }, []);
 
   useEffect(() => {
@@ -228,47 +240,51 @@ export default function ColorPaletteGenerator() {
     setPalette(prev => [...prev, generateRandomColor()]);
   }, [palette.length]);
 
-  const removeColor = useCallback(() => {
+  const removeColor = useCallback((id: string) => {
     if (palette.length <= MIN_COLORS) return;
-    const unlockedIndex = palette.findLastIndex(c => !c.isLocked);
-    if(unlockedIndex !== -1) {
-        setPalette(prev => prev.filter((_, i) => i !== unlockedIndex));
-    } else {
-        setPalette(prev => prev.slice(0, prev.length - 1));
-    }
-  }, [palette]);
+    setPalette(prev => prev.filter(c => c.id !== id));
+  }, [palette.length]);
 
   const lockAll = useCallback(() => {
     setPalette(prev => prev.map(c => ({...c, isLocked: true})));
   }, []);
+
+  const handleCopy = useCallback((hex: string) => {
+    navigator.clipboard.writeText(hex);
+    toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
+  }, [toast]);
   
   return (
-    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden shadow-lg border">
-      <div className="flex-1 flex flex-col md:flex-row relative">
-        <AnimatePresence>
-            {palette.map((color) => (
-                <ColorPanel
-                key={color.id}
-                color={color}
-                onToggleLock={() => toggleLock(color.id)}
-                />
-            ))}
-        </AnimatePresence>
+    <div className="w-full flex-1 flex flex-col rounded-lg overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row">
+        {palette.map((color) => (
+            <ColorPanel
+            key={color.id}
+            color={color}
+            onToggleLock={() => toggleLock(color.id)}
+            onRemove={() => removeColor(color.id)}
+            onCopy={() => handleCopy(color.hex)}
+            />
+        ))}
       </div>
       
       <div className="shrink-0">
         <FloatingActions 
             onGenerate={handleGenerate}
             onAdd={addColor}
-            onRemove={removeColor}
             onLockAll={lockAll}
             canAdd={palette.length < MAX_COLORS}
             palette={palette}
+            onRemove={() => {
+                const unlockedIndex = palette.findLastIndex(c => !c.isLocked);
+                if(unlockedIndex !== -1) {
+                    removeColor(palette[unlockedIndex].id);
+                } else {
+                    removeColor(palette[palette.length - 1].id);
+                }
+            }}
+            canRemove={palette.length > MIN_COLORS}
         />
-        <div className="hidden sm:flex items-center justify-center gap-2 text-sm font-medium pb-4 text-muted-foreground">
-            <RefreshCcw className="w-4 h-4"/>
-            <p>Press the <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Spacebar</kbd> to generate new palettes!</p>
-        </div>
       </div>
     </div>
   );
