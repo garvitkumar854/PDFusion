@@ -16,6 +16,7 @@ import { Switch } from './ui/switch';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import ColorActions from './ColorActions';
+import { cn } from '@/lib/utils';
 
 extend([namesPlugin, cmykPlugin, labPlugin]);
 
@@ -280,8 +281,10 @@ export default function ColorPaletteGenerator() {
     }, [generatePalette]);
     
     useEffect(() => {
-        // Generate initial palette on client-side mount
-        setPalette(Array.from({ length: 5 }, () => generateRandomColor()));
+        // Generate initial palette on client-side mount only
+        if (typeof window !== 'undefined') {
+            setPalette(Array.from({ length: 5 }, () => generateRandomColor()));
+        }
     }, []);
 
     return (
