@@ -7,7 +7,7 @@ import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Lock, Unlock, Copy, Check, Palette, Sparkles, Plus, Library, RefreshCcw } from 'lucide-react';
+import { Lock, Unlock, Copy, Check, Palette, Sparkles, Plus, Library, RefreshCcw, Minus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -61,7 +61,7 @@ const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onTo
       exit={{ opacity: 0, y: -50 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{ backgroundColor: color.hex, color: getTextColor(color.hex) }}
-      className="relative h-48 sm:h-56 md:h-64 flex-1 flex flex-col justify-end items-center p-4 text-center group"
+      className="relative flex-1 flex flex-col justify-end items-center p-4 text-center group h-48 sm:h-56 md:h-full"
     >
       <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
@@ -70,7 +70,7 @@ const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onTo
         <p className="text-sm sm:text-base capitalize">{color.name}</p>
       </div>
 
-      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -108,33 +108,61 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
     } else if (format === 'json') {
       textToCopy = JSON.stringify(colors, null, 2);
     } else if (format === 'url') {
-      textToCopy = `${window.location.origin}${window.location.pathname}?colors=${colors.map(c => c.substring(1)).join('-')}`;
+      textToCopy = `${window.location.origin}${window.location.pathname}?colors=${colors.map(c => c.hex.substring(1)).join('-')}`;
     }
     navigator.clipboard.writeText(textToCopy);
     toast({ variant: 'success', title: `Copied as ${format.toUpperCase()}!` });
   }
 
   return (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
       <div className="flex items-center gap-2 p-2 bg-background/80 backdrop-blur-md border rounded-full shadow-lg">
         <Button onClick={onGenerate} className="font-semibold" size="sm">
           <Sparkles className="h-4 w-4 mr-2" />
           Generate
         </Button>
-        <Button onClick={onAdd} variant="outline" size="icon" className="h-9 w-9" disabled={!canAdd}>
-          <Plus className="h-4 w-4" />
-        </Button>
-         <Button onClick={onRemove} variant="outline" size="icon" className="h-9 w-9" disabled={palette.length <= MIN_COLORS}>
-          <Palette className="h-4 w-4" />
-        </Button>
-         <Button onClick={onLockAll} variant="outline" size="icon" className="h-9 w-9">
-          <Lock className="h-4 w-4" />
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={onAdd} variant="outline" size="icon" className="h-9 w-9" disabled={!canAdd}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Add Color</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+         <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={onRemove} variant="outline" size="icon" className="h-9 w-9" disabled={palette.length <= MIN_COLORS}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Remove Color</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={onLockAll} variant="outline" size="icon" className="h-9 w-9">
+                        <Lock className="h-4 w-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Lock All</p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
         <Popover>
           <PopoverTrigger asChild>
-             <Button variant="outline" size="icon" className="h-9 w-9">
-              <Library className="h-4 w-4" />
-            </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                            <Library className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Export Palette</p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-1 mt-2">
             <div className="flex flex-col">
@@ -182,7 +210,7 @@ export default function ColorPaletteGenerator() {
 
   useEffect(() => {
     const handleSpacebar = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && (e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'BUTTON') {
+      if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'BUTTON'].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         handleGenerate();
       }
@@ -217,14 +245,14 @@ export default function ColorPaletteGenerator() {
   }, []);
   
   return (
-    <div className="relative w-full rounded-lg overflow-hidden shadow-lg border">
+    <div className="relative w-full h-full rounded-lg overflow-hidden shadow-lg border">
       <AnimatePresence>
         {showHelper && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20"
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20"
           >
             <div className="hidden sm:flex items-center gap-2 text-sm font-medium bg-background/50 backdrop-blur-sm py-2 px-4 rounded-lg border shadow-sm">
                 <RefreshCcw className="w-4 h-4"/>
@@ -234,7 +262,7 @@ export default function ColorPaletteGenerator() {
         )}
       </AnimatePresence>
       
-      <div className="flex flex-col sm:flex-row relative">
+      <div className="flex flex-col md:flex-row relative h-full">
         <AnimatePresence>
             {palette.map((color) => (
                 <ColorPanel
@@ -257,3 +285,5 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
+
+    
