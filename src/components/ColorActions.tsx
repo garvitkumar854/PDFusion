@@ -1,16 +1,19 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from './ui/button';
-import { Wand2, Plus, Minus, Lock, Unlock, FileDown, Check, Copy } from 'lucide-react';
+import { Wand2, Plus, Minus, Lock, Unlock, FileDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { type Palette } from './ColorPaletteGenerator';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { Copy } from 'lucide-react';
+import { colord } from 'colord';
+
 
 type ColorActionsProps = {
     palette: Palette;
@@ -55,15 +58,14 @@ const ExportDialog = ({ palette }: { palette: Palette }) => {
         const rectHeight = height / palette.length;
 
         palette.forEach((color, i) => {
-            const { r, g, b } = color.isLocked ? {r:1,g:1,b:1} : {r:0,g:0,b:0}; // This is a placeholder. A better implementation would be needed.
+            const { r, g, b } = colord(color.hex).toRgb();
             page.drawRectangle({
                 x: 0,
                 y: height - (i + 1) * rectHeight,
                 width,
                 height: rectHeight,
-                color: rgb(r, g, b)
+                color: rgb(r / 255, g / 255, b / 255)
             });
-            // This is simplified. You'd need to embed fonts to draw text.
         });
         
         const pdfBytes = await pdfDoc.save();
@@ -73,6 +75,7 @@ const ExportDialog = ({ palette }: { palette: Palette }) => {
         link.href = url;
         link.download = 'color-palette.pdf';
         link.click();
+        URL.revokeObjectURL(url);
     };
 
     return (
@@ -113,14 +116,14 @@ export default function ColorActions({
             </Button>
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm"><Plus className="h-4 w-4" /><Minus className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="sm" className="w-[70px]"><Plus className="h-4 w-4" /><Minus className="h-4 w-4" /></Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-1 flex gap-1">
                     <Button variant="ghost" size="sm" onClick={onAddColor}>Add</Button>
                     <Button variant="ghost" size="sm" onClick={onRemoveColor}>Remove</Button>
                 </PopoverContent>
             </Popover>
-             <Button variant="outline" size="sm" onClick={toggleLockAll}>
+             <Button variant="outline" size="sm" onClick={toggleLockAll} className="w-[100px]">
                 {areAllLocked ? <Unlock className="h-4 w-4 mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
                 {areAllLocked ? "Unlock All" : "Lock All"}
             </Button>
