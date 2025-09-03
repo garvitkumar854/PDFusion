@@ -1,16 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { colord, extend } from 'colord';
 import namesPlugin from 'colord/plugins/names';
 import random from 'random';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Lock, Unlock, Copy, Check, Palette, Sparkles, RefreshCcw, GripVertical, Trash2, Library, Plus } from 'lucide-react';
+import { Lock, Unlock, Copy, Check, Palette, Sparkles, Plus, Library, RefreshCcw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
@@ -28,7 +27,6 @@ type Palette = ColorInfo[];
 const MIN_COLORS = 2;
 const MAX_COLORS = 7;
 
-// --- Helper Functions ---
 function generateRandomColor(): ColorInfo {
   const hue = random.int(0, 359);
   const saturation = random.int(40, 70);
@@ -44,84 +42,9 @@ function generateRandomColor(): ColorInfo {
 
 const getTextColor = (hex: string) => colord(hex).isDark() ? '#FFFFFF' : '#000000';
 
-// --- Sub-Components ---
-const ShadesPanel = React.memo(({
-  baseColor,
-  onClose,
-}: {
-  baseColor: ColorInfo;
-  onClose: () => void;
-}) => {
+const ColorPanel = React.memo(({ color, onToggleLock }: { color: ColorInfo; onToggleLock: () => void; }) => {
   const { toast } = useToast();
-  const shades = useMemo(() => {
-    const baseHsl = colord(baseColor.hex).toHsl();
-    const count = 11; 
-    return Array.from({ length: count }, (_, i) => {
-      const lightness = 100 - (i * 100) / (count - 1);
-      const newHex = colord({ ...baseHsl, l: lightness }).toHex();
-      return { hex: newHex, name: colord(newHex).toName({ closest: true }) || 'Unknown' };
-    });
-  }, [baseColor.hex]);
-
-  const handleCopy = (hex: string) => {
-    navigator.clipboard.writeText(hex);
-    toast({ variant: 'success', title: 'Copied to clipboard!', description: hex });
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex flex-col backdrop-blur-sm"
-      onClick={onClose}
-    >
-      {shades.map((shade) => (
-        <div
-          key={shade.hex}
-          style={{ backgroundColor: shade.hex }}
-          onClick={(e) => { e.stopPropagation(); handleCopy(shade.hex); }}
-          className="flex-grow flex items-center justify-center cursor-pointer group/shade"
-        >
-          <div
-            className="opacity-0 group-hover/shade:opacity-100 transition-opacity flex items-center gap-4 font-mono"
-            style={{ color: getTextColor(shade.hex) }}
-          >
-            <span className="font-bold uppercase">{shade.hex}</span>
-            <span className="text-xs capitalize hidden sm:inline">{shade.name}</span>
-          </div>
-        </div>
-      ))}
-    </motion.div>
-  );
-});
-ShadesPanel.displayName = 'ShadesPanel';
-
-
-const ColorPanel = React.memo(({ 
-  color,
-  onToggleLock, 
-  onRemove,
-  onDragStart,
-  onDragEnter,
-  onDragEnd,
-  isDragging,
-  canRemove,
-}: { 
-  color: ColorInfo,
-  onToggleLock: () => void,
-  onRemove: () => void,
-  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd: () => void;
-  isDragging: boolean;
-  canRemove: boolean;
-}) => {
   const [copied, setCopied] = useState(false);
-  const [showShades, setShowShades] = useState(false);
-  const isMobile = useIsMobile();
-  const textColor = getTextColor(color.hex);
-  const { toast } = useToast();
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(color.hex);
@@ -130,81 +53,58 @@ const ColorPanel = React.memo(({
     setTimeout(() => setCopied(false), 2000);
   }, [color.hex, toast]);
   
-  const actionIcons = [
-    { label: 'Copy Hex', onClick: handleCopy, icon: copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />, visible: true },
-    { label: color.isLocked ? 'Unlock' : 'Lock', onClick: onToggleLock, icon: color.isLocked ? <Lock className="h-5 w-5 text-amber-400" /> : <Unlock className="h-5 w-5" />, visible: true },
-    { label: 'View Shades', onClick: () => setShowShades(s => !s), icon: <Palette className="h-5 w-5" />, visible: true },
-    { label: 'Drag to Reorder', icon: <GripVertical className="h-5 w-5 cursor-grab"/>, visible: !isMobile, isDragHandle: true },
-    { label: 'Remove Color', onClick: onRemove, icon: <Trash2 className="h-5 w-5"/>, visible: canRemove, className: "hover:text-red-500" },
-  ];
-
   return (
     <motion.div
       layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      style={{ backgroundColor: color.hex }}
-      className={cn(
-        "relative h-full flex-1 w-full md:w-0 flex flex-col justify-end items-center p-6 text-center transition-all duration-300 ease-in-out group",
-        isDragging && 'opacity-50 scale-95'
-      )}
-      draggable={!isMobile && !showShades}
-      onDragStart={onDragStart}
-      onDragEnter={onDragEnter}
-      onDragEnd={onDragEnd}
-      onDragOver={(e) => e.preventDefault()}
+      style={{ backgroundColor: color.hex, color: getTextColor(color.hex) }}
+      className="relative h-48 sm:h-56 md:h-64 flex-1 flex flex-col justify-end items-center p-4 text-center group"
     >
-      <div 
-        className="relative z-10 space-y-1" style={{ color: textColor }}>
+      <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-bold uppercase cursor-pointer" onClick={handleCopy}>
           {color.hex.substring(1)}
         </h2>
         <p className="text-sm sm:text-base capitalize">{color.name}</p>
       </div>
-      
-      <div className={cn(
-        "absolute z-30 flex items-center transition-all duration-300 opacity-0 group-hover:opacity-100",
-        isMobile ? 'bottom-6 right-6 flex-col gap-3 p-2 bg-black/10 backdrop-blur-sm rounded-full' : 'top-6 right-6 gap-2'
-      )}>
-        {actionIcons.filter(a => a.visible).map((action) => (
-          <TooltipProvider key={action.label}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.stopPropagation(); action.onClick?.(); }}
-                  style={{ color: textColor }}
-                  className={cn(
-                    "rounded-full p-2.5 transition-transform duration-200 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20 focus-visible:ring-white",
-                    action.isDragHandle && 'cursor-grab',
-                    action.className
-                  )}
-                  aria-label={action.label}
-                >
-                  {action.icon}
-                </button>
-              </TooltipTrigger>
-              {!isMobile && <TooltipContent side="left" className="bg-background/80 backdrop-blur-sm"><p>{action.label}</p></TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
-        ))}
+
+      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20" onClick={handleCopy}>
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Copy Hex</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+           <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20" onClick={onToggleLock}>
+                {color.isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>{color.isLocked ? 'Unlock' : 'Lock'}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <AnimatePresence>
-        {showShades && <ShadesPanel baseColor={color} onClose={() => setShowShades(false)} />}
-      </AnimatePresence>
     </motion.div>
   );
 });
 ColorPanel.displayName = 'ColorPanel';
 
-const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, palette }: { onGenerate: () => void; onAdd: () => void; onLockAll: () => void; canAdd: boolean, palette: Palette }) => {
+const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, palette, onRemove }: { onGenerate: () => void; onAdd: () => void; onLockAll: () => void; canAdd: boolean, palette: Palette, onRemove: () => void }) => {
   const { toast } = useToast();
+  
   const copyPalette = (format: 'css' | 'json' | 'url') => {
     const colors = palette.map(c => c.hex);
     let textToCopy = '';
     if (format === 'css') {
-      textToCopy = colors.map((c, i) => `--color-${i+1}: ${c};`).join('\\n');
+      textToCopy = colors.map((c, i) => `--color-${i+1}: ${c};`).join('\n');
     } else if (format === 'json') {
       textToCopy = JSON.stringify(colors, null, 2);
     } else if (format === 'url') {
@@ -215,20 +115,17 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
   }
 
   return (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }}
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40"
-    >
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
       <div className="flex items-center gap-2 p-2 bg-background/80 backdrop-blur-md border rounded-full shadow-lg">
         <Button onClick={onGenerate} className="font-semibold" size="sm">
           <Sparkles className="h-4 w-4 mr-2" />
           Generate
         </Button>
-        <Button onClick={onAdd} variant="outline" size="sm" disabled={!canAdd}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add
+        <Button onClick={onAdd} variant="outline" size="icon" className="h-9 w-9" disabled={!canAdd}>
+          <Plus className="h-4 w-4" />
+        </Button>
+         <Button onClick={onRemove} variant="outline" size="icon" className="h-9 w-9" disabled={palette.length <= MIN_COLORS}>
+          <Palette className="h-4 w-4" />
         </Button>
          <Button onClick={onLockAll} variant="outline" size="icon" className="h-9 w-9">
           <Lock className="h-4 w-4" />
@@ -239,7 +136,7 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
               <Library className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-1 mb-2">
+          <PopoverContent className="w-auto p-1 mt-2">
             <div className="flex flex-col">
               <Button variant="ghost" onClick={() => copyPalette('css')} className="justify-start">CSS Variables</Button>
               <Button variant="ghost" onClick={() => copyPalette('json')} className="justify-start">JSON Array</Button>
@@ -248,20 +145,14 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
           </PopoverContent>
         </Popover>
       </div>
-    </motion.div>
+    </div>
   );
 });
 FloatingActions.displayName = 'FloatingActions';
 
-
-// --- Main Component ---
 export default function ColorPaletteGenerator() {
-  const isMobile = useIsMobile();
-  const [palette, setPalette] = useState<Palette>(() => Array.from({ length: isMobile ? 3 : 5 }, generateRandomColor));
+  const [palette, setPalette] = useState<Palette>(() => Array.from({ length: 5 }, generateRandomColor));
   const [showHelper, setShowHelper] = useState(true);
-
-  const dragItem = useRef<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const colorsFromUrl = new URLSearchParams(window.location.search).get('colors');
@@ -291,7 +182,7 @@ export default function ColorPaletteGenerator() {
 
   useEffect(() => {
     const handleSpacebar = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && (e.target as HTMLElement).tagName !== 'INPUT' && document.activeElement?.tagName !== 'BUTTON') {
+      if (e.code === 'Space' && (e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'BUTTON') {
         e.preventDefault();
         handleGenerate();
       }
@@ -311,48 +202,29 @@ export default function ColorPaletteGenerator() {
     setPalette(prev => [...prev, generateRandomColor()]);
   }, [palette.length]);
 
-  const removeColor = useCallback((id: string) => {
+  const removeColor = useCallback(() => {
     if (palette.length <= MIN_COLORS) return;
-    setPalette(prev => prev.filter(c => c.id !== id));
-  }, [palette.length]);
+    const unlockedIndex = palette.findLastIndex(c => !c.isLocked);
+    if(unlockedIndex !== -1) {
+        setPalette(prev => prev.filter((_, i) => i !== unlockedIndex));
+    } else {
+        setPalette(prev => prev.slice(0, prev.length - 1));
+    }
+  }, [palette]);
 
   const lockAll = useCallback(() => {
     setPalette(prev => prev.map(c => ({...c, isLocked: true})));
   }, []);
   
-  const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, index: number) => {
-    dragItem.current = index;
-    e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => setIsDragging(true), 0);
-  }, []);
-
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault();
-    if (dragItem.current === null || dragItem.current === index) return;
-    
-    setPalette(currentPalette => {
-        const paletteCopy = [...currentPalette];
-        const draggedItemContent = paletteCopy.splice(dragItem.current!, 1)[0];
-        paletteCopy.splice(index, 0, draggedItemContent);
-        dragItem.current = index;
-        return paletteCopy;
-    });
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setIsDragging(false);
-    dragItem.current = null;
-  }, []);
-  
   return (
-    <div className="h-full w-full flex flex-col md:flex-row relative overflow-hidden">
+    <div className="relative w-full rounded-lg overflow-hidden shadow-lg border">
       <AnimatePresence>
         {showHelper && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute top-6 left-1/2 -translate-x-1/2 z-40"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20"
           >
             <div className="hidden sm:flex items-center gap-2 text-sm font-medium bg-background/50 backdrop-blur-sm py-2 px-4 rounded-lg border shadow-sm">
                 <RefreshCcw className="w-4 h-4"/>
@@ -361,30 +233,27 @@ export default function ColorPaletteGenerator() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <AnimatePresence>
-        {palette.map((color, index) => (
-            <ColorPanel
-              key={color.id}
-              color={color}
-              onToggleLock={() => toggleLock(color.id)}
-              onRemove={() => removeColor(color.id)}
-              canRemove={palette.length > MIN_COLORS}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnter={(e) => handleDragEnter(e, index)}
-              onDragEnd={handleDragEnd}
-              isDragging={isDragging && dragItem.current === index}
-            />
-        ))}
-      </AnimatePresence>
       
-      <FloatingActions 
-        onGenerate={handleGenerate}
-        onAdd={addColor}
-        onLockAll={lockAll}
-        canAdd={palette.length < MAX_COLORS}
-        palette={palette}
-      />
+      <div className="flex flex-col sm:flex-row relative">
+        <AnimatePresence>
+            {palette.map((color) => (
+                <ColorPanel
+                key={color.id}
+                color={color}
+                onToggleLock={() => toggleLock(color.id)}
+                />
+            ))}
+        </AnimatePresence>
+        
+        <FloatingActions 
+            onGenerate={handleGenerate}
+            onAdd={addColor}
+            onRemove={removeColor}
+            onLockAll={lockAll}
+            canAdd={palette.length < MAX_COLORS}
+            palette={palette}
+        />
+      </div>
     </div>
   );
 }

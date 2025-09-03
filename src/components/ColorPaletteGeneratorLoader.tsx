@@ -6,15 +6,7 @@ import { Skeleton } from './ui/skeleton';
 
 const ColorPaletteGenerator = dynamic(() => import('@/components/ColorPaletteGenerator'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-full">
-    <div className="grid grid-cols-5 w-full h-full">
-      <Skeleton className="h-full w-full rounded-none" />
-      <Skeleton className="h-full w-full rounded-none" />
-      <Skeleton className="h-full w-full rounded-none" />
-      <Skeleton className="h-full w-full rounded-none" />
-      <Skeleton className="h-full w-full rounded-none" />
-    </div>
-  </div>
+  loading: () => <div className="flex items-center justify-center h-64 rounded-lg border"><Skeleton className="h-full w-full" /></div>
 });
 
 export default function ColorPaletteGeneratorLoader() {
