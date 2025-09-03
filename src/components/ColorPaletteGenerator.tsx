@@ -204,7 +204,7 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
     const colors = palette.map(c => c.hex);
     let textToCopy = '';
     if (format === 'css') {
-      textToCopy = colors.map((c, i) => `--color-${i+1}: ${c};`).join('\n');
+      textToCopy = colors.map((c, i) => `--color-${i+1}: ${c};`).join('\\n');
     } else if (format === 'json') {
       textToCopy = JSON.stringify(colors, null, 2);
     } else if (format === 'url') {
@@ -345,7 +345,7 @@ export default function ColorPaletteGenerator() {
   }, []);
   
   return (
-    <div className="h-full w-full flex flex-col md:flex-row relative bg-background overflow-hidden">
+    <div className="h-full w-full flex flex-col md:flex-row relative overflow-hidden">
       <AnimatePresence>
         {showHelper && (
           <motion.div 

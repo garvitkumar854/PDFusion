@@ -17,7 +17,7 @@ const ColorPaletteGeneratorLoader = dynamic(() => import('@/components/ColorPale
 
 export default function ColorPaletteGeneratorPage() {
   return (
-    <div className="flex-1 w-full h-full">
+    <div className="flex-1 w-full">
           <ColorPaletteGeneratorLoader />
     </div>
   );
