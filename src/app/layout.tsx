@@ -1,7 +1,7 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { Poppins } from 'next/font/google'
+import { Poppins, Inter } from 'next/font/google'
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -15,6 +15,12 @@ const poppins = Poppins({
   variable: '--font-sans',
   weight: ['400', '500', '600', '700', '800']
 })
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
+
 
 const APP_NAME = "PDFusion";
 const APP_DEFAULT_TITLE = "PDFusion: Your All-in-One PDF Toolkit";
@@ -88,7 +94,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(poppins.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn(poppins.variable, inter.variable)} suppressHydrationWarning>
       <head>
         <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
         <script
