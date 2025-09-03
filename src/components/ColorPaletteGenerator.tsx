@@ -115,7 +115,7 @@ const FloatingActions = React.memo(({ onGenerate, onAdd, onLockAll, canAdd, pale
   }
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+    <div className="flex items-center justify-center p-4">
       <div className="flex items-center gap-2 p-2 bg-background/80 backdrop-blur-md border rounded-full shadow-lg">
         <Button onClick={onGenerate} className="font-semibold" size="sm">
           <Sparkles className="h-4 w-4 mr-2" />
@@ -180,7 +180,6 @@ FloatingActions.displayName = 'FloatingActions';
 
 export default function ColorPaletteGenerator() {
   const [palette, setPalette] = useState<Palette>(() => Array.from({ length: 5 }, generateRandomColor));
-  const [showHelper, setShowHelper] = useState(true);
 
   useEffect(() => {
     const colorsFromUrl = new URLSearchParams(window.location.search).get('colors');
@@ -202,7 +201,6 @@ export default function ColorPaletteGenerator() {
   }, []);
 
   const handleGenerate = useCallback(() => {
-    setShowHelper(false);
     setPalette(currentPalette => 
       currentPalette.map(color => color.isLocked ? color : generateRandomColor())
     );
@@ -245,24 +243,8 @@ export default function ColorPaletteGenerator() {
   }, []);
   
   return (
-    <div className="relative w-full h-full rounded-lg overflow-hidden shadow-lg border">
-      <AnimatePresence>
-        {showHelper && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20"
-          >
-            <div className="hidden sm:flex items-center gap-2 text-sm font-medium bg-background/50 backdrop-blur-sm py-2 px-4 rounded-lg border shadow-sm">
-                <RefreshCcw className="w-4 h-4"/>
-                <p>Press the <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Spacebar</kbd> to generate new palettes!</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <div className="flex flex-col md:flex-row relative h-full">
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden shadow-lg border">
+      <div className="flex-1 flex flex-col md:flex-row relative">
         <AnimatePresence>
             {palette.map((color) => (
                 <ColorPanel
@@ -272,7 +254,9 @@ export default function ColorPaletteGenerator() {
                 />
             ))}
         </AnimatePresence>
-        
+      </div>
+      
+      <div className="shrink-0">
         <FloatingActions 
             onGenerate={handleGenerate}
             onAdd={addColor}
@@ -281,9 +265,11 @@ export default function ColorPaletteGenerator() {
             canAdd={palette.length < MAX_COLORS}
             palette={palette}
         />
+        <div className="hidden sm:flex items-center justify-center gap-2 text-sm font-medium pb-4 text-muted-foreground">
+            <RefreshCcw className="w-4 h-4"/>
+            <p>Press the <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-md">Spacebar</kbd> to generate new palettes!</p>
+        </div>
       </div>
     </div>
   );
 }
-
-    

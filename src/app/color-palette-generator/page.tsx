@@ -35,11 +35,9 @@ export default function ColorPaletteGeneratorPage() {
         </AnimateOnScroll>
       </section>
 
-      <main className="flex-1 w-full relative min-h-[500px] md:min-h-0">
+      <main className="flex-1 w-full flex flex-col">
         <ColorPaletteGeneratorLoader />
       </main>
     </div>
   );
 }
-
-    
