@@ -13,7 +13,6 @@ import { useEffect, useState } from 'react';
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   usePwa();
   const pathname = usePathname();
-  const isColorPage = pathname === '/color-palette-generator';
   const isMobile = useIsMobile();
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -31,7 +30,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <Header />
       <main className={cn(
         "flex-1", 
-        !isColorPage && !isUnitConverterPwa && "container mx-auto px-4 sm:px-6 lg:px-8"
+        !isUnitConverterPwa && "container mx-auto px-4 sm:px-6 lg:px-8"
       )}>
         {children}
       </main>

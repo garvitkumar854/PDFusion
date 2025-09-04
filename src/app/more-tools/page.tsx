@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Palette } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -43,13 +43,6 @@ const tools = [
       title: 'Password Generator',
       description: 'Generate strong and secure passwords for your accounts.',
       href: '/password-generator',
-    },
-    {
-      icon: <Palette className="w-8 h-8 text-teal-500" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
-      title: 'Color Palette Generator',
-      description: 'Create beautiful color schemes and explore palettes.',
-      href: '/color-palette-generator',
     },
 ];
 
