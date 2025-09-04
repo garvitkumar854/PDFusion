@@ -12,13 +12,34 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Wand2, Plus, Undo, Redo, GripVertical, Lock, Unlock, Pencil, Trash2, Link } from 'lucide-react';
-import { Inter } from 'next/font/google';
 
 extend([namesPlugin, cmykPlugin, labPlugin]);
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+// --- Helper Functions ---
+const getTextColor = (hex: string) => colord(hex).isDark() ? '#FFFFFF' : '#000000';
 
-// Types
+let idCounter = 0;
+const generateUniqueId = () => `${Date.now()}-${idCounter++}`;
+
+const generateRandomColor = (palette?: Palette): ColorInfo => {
+    const existingHues = palette ? palette.filter(c => c.isLocked).map(c => colord(c.hex).toHsv().h) : [];
+    let hue = Math.floor(Math.random() * 360);
+    
+    // Attempt to find a hue that's not too close to locked colors
+    for (let i=0; i<10; i++) {
+        const isTooClose = existingHues.some(h => Math.abs(h - hue) < 25 || Math.abs(h - hue) > 335);
+        if (!isTooClose) break;
+        hue = Math.floor(Math.random() * 360);
+    }
+
+    const saturation = 50 + Math.floor(Math.random() * 40);
+    const value = 65 + Math.floor(Math.random() * 25);
+    const hex = colord({ h: hue, s: saturation, v: value }).toHex();
+    return { hex, isLocked: false, id: generateUniqueId() };
+};
+
+
+// --- Types ---
 type ColorInfo = {
   hex: string;
   isLocked: boolean;
@@ -33,7 +54,7 @@ type HistoryState = {
   future: Palette[];
 };
 
-// Reducer for history management
+// --- Reducer for history management ---
 type HistoryAction =
   | { type: 'SET'; newPresent: Palette }
   | { type: 'UNDO' }
@@ -82,29 +103,12 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
 };
 
 
-// Constants
+// --- Constants ---
 const MIN_COLORS = 2;
 const MAX_COLORS = 10;
 
-// Helper Functions
-const getTextColor = (hex: string) => colord(hex).isDark() ? '#FFFFFF' : '#000000';
 
-const generateRandomColor = (palette?: Palette): ColorInfo => {
-    const existingHues = palette ? palette.filter(c => c.isLocked).map(c => colord(c.hex).toHsv().h) : [];
-    let hue = Math.floor(Math.random() * 360);
-    
-    for (let i=0; i<10; i++) {
-        const isTooClose = existingHues.some(h => Math.abs(h - hue) < 25 || Math.abs(h - hue) > 335);
-        if (!isTooClose) break;
-        hue = Math.floor(Math.random() * 360);
-    }
-
-    const saturation = 50 + Math.floor(Math.random() * 40);
-    const value = 65 + Math.floor(Math.random() * 25);
-    const hex = colord({ h: hue, s: saturation, v: value }).toHex();
-    return { hex, isLocked: false, id: self.crypto.randomUUID() };
-};
-
+// --- Sub-components ---
 const ColorPanel = React.memo(({ color, onUpdate, onRemove, onDragStart, onDragEnd, onDragEnter, isDragging }: { 
     color: ColorInfo,
     onUpdate: (id: string, newColor: Partial<ColorInfo>) => void,
@@ -132,7 +136,7 @@ const ColorPanel = React.memo(({ color, onUpdate, onRemove, onDragStart, onDragE
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             style={{ backgroundColor: color.hex, color: textColor }}
             className={cn(
-                "relative h-full group font-inter rounded-lg",
+                "relative h-full group font-sans rounded-lg", // Use sans-serif as base
                 isDragging ? 'cursor-grabbing' : 'cursor-default'
             )}
         >
@@ -159,7 +163,7 @@ const ColorPanel = React.memo(({ color, onUpdate, onRemove, onDragStart, onDragE
 });
 ColorPanel.displayName = 'ColorPanel';
 
-// Main Component
+// --- Main Component ---
 export default function ColorPaletteGenerator() {
     const [state, dispatch] = useReducer(historyReducer, {
         past: [],
@@ -170,6 +174,7 @@ export default function ColorPaletteGenerator() {
     const { toast } = useToast();
     const dragItem = React.useRef<string | null>(null);
 
+    // Client-side only initialization
     useEffect(() => {
         const initialPalette = Array.from({ length: 5 }, () => generateRandomColor());
         dispatch({ type: 'SET', newPresent: initialPalette});
@@ -259,11 +264,11 @@ export default function ColorPaletteGenerator() {
     };
 
     if (palette.length === 0) {
-        return <div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>
+        return <div className="flex-1 flex items-center justify-center min-h-[16rem]"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>
     }
 
     return (
-        <div className={cn("flex flex-col flex-1 h-full p-4 gap-4 bg-background", inter.variable)}>
+        <div className={cn("flex flex-col flex-1 h-full p-4 gap-4 bg-background")}>
             <header className="flex justify-between items-center h-12 shrink-0">
                 <div className="flex items-center gap-2 sm:gap-4">
                     <Button variant="outline" onClick={generatePalette}><Wand2 className="h-4 w-4 mr-2" />Random palette</Button>
@@ -275,21 +280,19 @@ export default function ColorPaletteGenerator() {
                 </div>
             </header>
 
-            <main className="flex-1 min-h-0">
-                <div className="flex flex-col md:flex-row gap-2 w-full h-full min-h-[16rem]">
-                    {palette.map((color) => (
-                         <ColorPanel
-                            key={color.id}
-                            color={color}
-                            onUpdate={handleUpdateColor}
-                            onRemove={handleRemoveColor}
-                            onDragStart={(e) => onDragStart(e, color.id)}
-                            onDragEnter={() => onDragEnter(color.id)}
-                            onDragEnd={onDragEnd}
-                            isDragging={dragItem.current === color.id}
-                        />
-                    ))}
-                </div>
+            <main className="flex-1 flex flex-col md:flex-row gap-2 w-full min-h-[16rem]">
+                 {palette.map((color) => (
+                     <ColorPanel
+                        key={color.id}
+                        color={color}
+                        onUpdate={handleUpdateColor}
+                        onRemove={handleRemoveColor}
+                        onDragStart={(e) => onDragStart(e, color.id)}
+                        onDragEnter={() => onDragEnter(color.id)}
+                        onDragEnd={onDragEnd}
+                        isDragging={dragItem.current === color.id}
+                    />
+                ))}
             </main>
 
             <footer className="flex justify-between items-center h-12 shrink-0">
