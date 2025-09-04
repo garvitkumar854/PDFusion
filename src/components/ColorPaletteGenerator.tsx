@@ -263,7 +263,7 @@ export default function ColorPaletteGenerator() {
     }
 
     return (
-        <div className={cn("flex flex-col h-full p-4 gap-4 bg-background", inter.variable)}>
+        <div className={cn("flex flex-col flex-1 h-full p-4 gap-4 bg-background", inter.variable)}>
             <header className="flex justify-between items-center h-12 shrink-0">
                 <div className="flex items-center gap-2 sm:gap-4">
                     <Button variant="outline" onClick={generatePalette}><Wand2 className="h-4 w-4 mr-2" />Random palette</Button>
@@ -276,8 +276,7 @@ export default function ColorPaletteGenerator() {
             </header>
 
             <main className="flex-1 min-h-0">
-                <div className="flex flex-col md:flex-row gap-2 w-full h-full">
-                  <AnimatePresence>
+                <div className="flex flex-col md:flex-row gap-2 w-full h-full min-h-[16rem]">
                     {palette.map((color) => (
                          <ColorPanel
                             key={color.id}
@@ -290,7 +289,6 @@ export default function ColorPaletteGenerator() {
                             isDragging={dragItem.current === color.id}
                         />
                     ))}
-                  </AnimatePresence>
                 </div>
             </main>
 
