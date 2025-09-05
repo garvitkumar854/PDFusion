@@ -73,8 +73,8 @@ export default function MarkdownToHtmlPage() {
           </AnimateOnScroll>
         </section>
         
-        <main className="flex-1 w-full">
-          <div className="max-w-7xl mx-auto h-full">
+        <main className="flex-1 w-full flex flex-col">
+          <div className="max-w-7xl mx-auto h-full flex-1 w-full flex flex-col">
             <MarkdownToHtmlLoader />
           </div>
         </main>
