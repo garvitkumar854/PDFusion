@@ -45,21 +45,22 @@ Happy converting!
 `;
 
 const Toolbar = ({ onUpload, onCopy, onDownload, isCopied, className }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean, className?: string }) => (
-  <div className={cn("flex items-center gap-1 sm:gap-2", className)}>
-    <Button variant="ghost" size="sm" onClick={onUpload} className="h-8 px-2 sm:px-3">
-        <Upload className="w-4 h-4 sm:mr-2" />
-        <span className="hidden sm:inline">Upload</span>
-    </Button>
-    <Button variant="ghost" size="sm" onClick={onCopy} className="h-8 px-2 sm:px-3">
-      {isCopied ? <Check className="w-4 h-4 sm:mr-2 text-green-500" /> : <Copy className="w-4 h-4 sm:mr-2" />}
-      <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
-    </Button>
-    <Button variant="ghost" size="sm" onClick={onDownload} className="h-8 px-2 sm:px-3">
-      <Download className="w-4 h-4 sm:mr-2" />
-      <span className="hidden sm:inline">Download</span>
-    </Button>
-  </div>
+    <div className={cn("flex items-center gap-1", className)}>
+        <Button variant="ghost" size="sm" onClick={onUpload} className="h-8 px-2 md:px-3">
+            <Upload className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Upload</span>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onCopy} className="h-8 px-2 md:px-3">
+            {isCopied ? <Check className="w-4 h-4 md:mr-2 text-green-500" /> : <Copy className="w-4 h-4 md:mr-2" />}
+            <span className="hidden md:inline">{isCopied ? "Copied!" : "Copy"}</span>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDownload} className="h-8 px-2 md:px-3">
+            <Download className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Download</span>
+        </Button>
+    </div>
 );
+
 
 export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
@@ -229,22 +230,6 @@ export function MarkdownToHtmlConverter() {
           </TabsContent>
     );
     
-    const markdownHeader = (
-        <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
-            <span className="px-2">MARKDOWN</span>
-        </div>
-    );
-
-    const resultHeader = (
-        <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
-            <TabsList className="bg-transparent p-0 m-0 h-auto">
-                <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
-                <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
-            </TabsList>
-            <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-        </div>
-    );
-
     const renderLayout = () => {
       if (isMobile) {
         return (
@@ -283,16 +268,24 @@ export function MarkdownToHtmlConverter() {
       return (
         <ResizablePanelGroup direction={direction} className="flex-1">
             <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            {markdownHeader}
-            {editorPanel}
+                <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
+                    <span className="px-2">MARKDOWN</span>
+                </div>
+                {editorPanel}
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <Tabs defaultValue="preview" className="flex flex-col h-full">
-                {resultHeader}
-                {htmlResultPanel}
-                {htmlRawPanel}
-            </Tabs>
+                <Tabs defaultValue="preview" className="flex flex-col h-full">
+                    <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
+                        <TabsList className="bg-transparent p-0 m-0 h-auto">
+                            <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
+                            <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
+                        </TabsList>
+                        <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+                    </div>
+                    {htmlResultPanel}
+                    {htmlRawPanel}
+                </Tabs>
             </ResizablePanel>
         </ResizablePanelGroup>
       );
