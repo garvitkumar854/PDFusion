@@ -81,7 +81,7 @@ export function MarkdownToHtmlConverter() {
         editorTextArea.addEventListener('scroll', syncScroll);
         return () => editorTextArea.removeEventListener('scroll', syncScroll);
       }
-    }, [markdown]);
+    }, []);
 
     useEffect(() => {
         if(htmlScrollRef.current && htmlLineNumbersRef.current) {
@@ -97,7 +97,7 @@ export function MarkdownToHtmlConverter() {
                 return () => viewport.removeEventListener('scroll', syncScroll);
             }
         }
-    }, [html]);
+    }, []);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
@@ -142,7 +142,7 @@ export function MarkdownToHtmlConverter() {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
 
-        if (e.key === "Tab") {
+        if (e.key === "Tab" && !e.shiftKey) {
             e.preventDefault();
             const indentation = "  ";
             const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
@@ -155,17 +155,21 @@ export function MarkdownToHtmlConverter() {
         if (e.ctrlKey && e.key === 'd') {
             e.preventDefault();
             const lines = value.split('\n');
-            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
-            const lineToDuplicate = lines[currentLineIndex];
+            let currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
             
-            lines.splice(currentLineIndex + 1, 0, lineToDuplicate);
+            // Check if cursor is at the end of the line, which can sometimes be interpreted as start of next line
+            if (selectionStart > 0 && value[selectionStart-1] === '\n') {
+                currentLineIndex--;
+            }
+
+            const lineToDuplicate = lines[currentLineIndex];
+            lines.splice(currentLineIndex, 0, lineToDuplicate);
             
             const newValue = lines.join('\n');
-            
-            // Calculate new cursor position
-            const newCursorPos = value.substring(0, selectionStart).length + lineToDuplicate.length + 1;
+            const newCursorPos = selectionStart + lineToDuplicate.length + 1;
             
             setMarkdown(newValue);
+
             setTimeout(() => {
                  textarea.selectionStart = textarea.selectionEnd = newCursorPos;
             }, 0);
