@@ -11,7 +11,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
-import "prismjs/themes/prism-okaidia.css"; 
+import "prismjs/themes/prism-okaidia.css";
 import { cn } from "@/lib/utils";
 
 
@@ -93,18 +93,18 @@ export function MarkdownToHtmlConverter() {
         URL.revokeObjectURL(url);
     };
     
-     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Tab") {
+     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === "Tab" && e.target instanceof HTMLTextAreaElement) {
             e.preventDefault();
-            const { selectionStart, selectionEnd, value } = e.currentTarget;
+            const { selectionStart, selectionEnd, value } = e.target;
             
-            // Insert 2 spaces for tab
             const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
             setMarkdown(newValue);
             
-            // Move cursor after inserted spaces
             setTimeout(() => {
-                e.currentTarget.selectionStart = e.currentTarget.selectionEnd = selectionStart + 2;
+                if(e.target instanceof HTMLTextAreaElement) {
+                    e.target.selectionStart = e.target.selectionEnd = selectionStart + 2;
+                }
             }, 0);
         }
     };
@@ -117,17 +117,18 @@ export function MarkdownToHtmlConverter() {
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
               MARKDOWN
             </div>
-            <div className="flex-1 overflow-y-auto relative bg-[#272822]">
-               <Editor
-                 value={markdown}
-                 onValueChange={code => setMarkdown(code)}
-                 highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
-                 padding={16}
-                 onKeyDown={handleKeyDown}
-                 className="font-mono text-sm caret-white text-white absolute inset-0 w-full h-full"
-                 textareaClassName="outline-none"
-               />
-            </div>
+            <ScrollArea className="flex-1">
+                <Editor
+                    value={markdown}
+                    onValueChange={code => setMarkdown(code)}
+                    highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
+                    padding={16}
+                    onKeyDown={handleKeyDown}
+                    className="language-markdown h-full font-mono text-sm caret-white"
+                    textareaClassName="outline-none w-full"
+                    preClassName="h-full"
+                />
+            </ScrollArea>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col">

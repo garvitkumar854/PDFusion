@@ -63,6 +63,23 @@
   }
 }
 
+@layer components {
+    /* Style for react-simple-code-editor */
+    .language-markdown {
+        background: #272822 !important; /* Okaidia theme background */
+        color: #f8f8f2; /* Default text color */
+        border-radius: 0.5rem;
+    }
+    .dark .language-markdown {
+        background: #272822 !important;
+    }
+    .language-markdown > textarea,
+    .language-markdown > pre {
+        outline: none !important;
+        background: none !important;
+    }
+}
+
 @layer utilities {
     .btn-animated-gradient {
       background: linear-gradient(120deg, hsl(var(--primary)) 0%, #a855f7 50%, hsl(var(--primary)) 100%);
