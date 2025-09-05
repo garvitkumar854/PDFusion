@@ -74,7 +74,7 @@ export default function MarkdownToHtmlPage() {
         </section>
         
         <main className="flex-1 w-full">
-          <div className="max-w-7xl mx-auto h-[70vh]">
+          <div className="max-w-7xl mx-auto h-full">
             <MarkdownToHtmlLoader />
           </div>
         </main>

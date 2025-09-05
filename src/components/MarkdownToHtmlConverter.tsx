@@ -50,6 +50,8 @@ export function MarkdownToHtmlConverter() {
 
     const editorRef = useRef<any>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
+    const editorContainerRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         const convertedHtml = marked.parse(markdown);
@@ -77,7 +79,7 @@ export function MarkdownToHtmlConverter() {
                 <title>Converted Markdown</title>
                 <style>
                     body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
-                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
                     code { font-family: monospace; }
                 </style>
             </head>
@@ -97,33 +99,36 @@ export function MarkdownToHtmlConverter() {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Tab" && e.target instanceof HTMLTextAreaElement) {
-            e.preventDefault();
-            const { selectionStart, selectionEnd, value } = e.target;
-            const indentation = "  ";
+        const textarea = e.target as HTMLTextAreaElement;
+        const { selectionStart, selectionEnd, value } = textarea;
 
-            if (e.shiftKey) {
-                // Outdent
-                const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
-                if (value.substring(lineStart, lineStart + indentation.length) === indentation) {
-                    const newValue = value.substring(0, lineStart) + value.substring(lineStart + indentation.length);
-                    setMarkdown(newValue);
-                    setTimeout(() => {
-                        if (editorRef.current?._input) {
-                            editorRef.current._input.selectionStart = editorRef.current._input.selectionEnd = Math.max(selectionStart - indentation.length, lineStart);
-                        }
-                    }, 0);
-                }
-            } else {
-                // Indent
-                const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
-                setMarkdown(newValue);
-                setTimeout(() => {
-                    if (editorRef.current?._input) {
-                        editorRef.current._input.selectionStart = editorRef.current._input.selectionEnd = selectionStart + indentation.length;
-                    }
-                }, 0);
-            }
+        // Handle Tab and Shift+Tab for indentation
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const indentation = "  ";
+            const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
+            setMarkdown(newValue);
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = selectionStart + indentation.length;
+            }, 0);
+        }
+        
+        // Handle Ctrl+D for line duplication
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            const lines = value.split('\n');
+            const startLine = value.substring(0, selectionStart).split('\n').length - 1;
+            const lineToDuplicate = lines[startLine];
+            
+            lines.splice(startLine, 0, lineToDuplicate);
+            
+            const newValue = lines.join('\n');
+            const newCursorPos = value.substring(0, selectionStart).length + lineToDuplicate.length + 1;
+            
+            setMarkdown(newValue);
+            setTimeout(() => {
+                 textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+            }, 0);
         }
     };
     
@@ -134,13 +139,13 @@ export function MarkdownToHtmlConverter() {
     };
 
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-full min-h-[500px] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-full min-h-[70vh] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
-          <ResizablePanel defaultSize={50} className="flex flex-col">
+          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
               MARKDOWN
             </div>
-             <div className="flex-1 flex overflow-hidden code-editor-container">
+             <div ref={editorContainerRef} className="flex-1 flex overflow-hidden code-editor-container">
                 <ScrollArea className="h-full">
                     <div ref={lineNumbersRef} className="line-numbers">
                         {Array.from({ length: lineCount }, (_, i) => i + 1).map(num => (
@@ -163,14 +168,14 @@ export function MarkdownToHtmlConverter() {
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50} className="flex flex-col">
+          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
             <div className="flex flex-col h-full">
               <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
                 HTML PREVIEW
               </div>
               <ScrollArea className="flex-1 p-4">
                 <div
-                  className="prose prose-sm dark:prose-invert max-w-none"
+                  className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
               </ScrollArea>
@@ -190,3 +195,4 @@ export function MarkdownToHtmlConverter() {
       </div>
     );
 }
+
