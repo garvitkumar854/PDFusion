@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Check } from "lucide-react";
@@ -92,70 +92,84 @@ export function MarkdownToHtmlConverter() {
         URL.revokeObjectURL(url);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLDivElement>) => {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
         const lines = value.split('\n');
-        const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
-
-        if (e.key === "Tab") {
-            e.preventDefault();
-            const indentation = "  ";
-            const start = selectionStart;
-            
-            const newValue = value.substring(0, start) + indentation + value.substring(selectionEnd);
+        
+        const updateState = (newValue: string, newCursorPos: number) => {
             setMarkdown(newValue);
             setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + indentation.length;
+                textarea.selectionStart = textarea.selectionEnd = newCursorPos;
             }, 0);
+        };
+
+        if (e.key === "Tab" && !e.shiftKey) {
+            e.preventDefault();
+            const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
+            updateState(newValue, selectionStart + 2);
         }
-        
+
         if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
             e.preventDefault();
+            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
             const line = lines[currentLineIndex];
-            lines.splice(currentLineIndex, 0, line);
+            lines.splice(currentLineIndex + 1, 0, line);
             const newValue = lines.join('\n');
-            const newCursorPos = selectionStart + line.length + 1;
-            
-            setMarkdown(newValue);
-
-            setTimeout(() => {
-                 textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-            }, 0);
+            updateState(newValue, selectionStart + line.length + 1);
         }
 
         if (e.altKey) {
+            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (currentLineIndex > 0) {
                     const newLines = [...lines];
                     [newLines[currentLineIndex - 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex - 1]];
-                    const lineLength = lines[currentLineIndex].length;
                     const prevLineLength = lines[currentLineIndex - 1].length;
-                    const newCursorPos = selectionStart - prevLineLength - 1;
-                    
-                    setMarkdown(newLines.join('\n'));
-                    setTimeout(() => {
-                        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-                    }, 0);
+                    updateState(newLines.join('\n'), selectionStart - prevLineLength - 1);
                 }
             } else if (e.key === 'ArrowDown') {
                  e.preventDefault();
                  if (currentLineIndex < lines.length - 1) {
                     const newLines = [...lines];
                     [newLines[currentLineIndex + 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex + 1]];
-                    const lineLength = lines[currentLineIndex].length;
                     const nextLineLength = lines[currentLineIndex + 1].length;
-                    const newCursorPos = selectionStart + nextLineLength + 1;
-
-                    setMarkdown(newLines.join('\n'));
-                     setTimeout(() => {
-                        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-                    }, 0);
+                    updateState(newLines.join('\n'), selectionStart + nextLineLength + 1);
                  }
             }
         }
+
+         if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            const startLine = value.substring(0, selectionStart).split('\n').length - 1;
+            const endLine = value.substring(0, selectionEnd).split('\n').length - 1;
+            const newLines = [...lines];
+            let cursorOffset = 0;
+
+            const isAlreadyCommented = newLines.slice(startLine, endLine + 1).every(line =>
+                line.trim().startsWith('<!--') && line.trim().endsWith('-->')
+            );
+            
+            for (let i = startLine; i <= endLine; i++) {
+                if (isAlreadyCommented) {
+                    newLines[i] = newLines[i].replace(/<!--\s?/, '').replace(/\s?-->/, '');
+                     if (i === startLine) cursorOffset -= 5;
+                } else {
+                     newLines[i] = `<!-- ${newLines[i]} -->`;
+                     if (i === startLine) cursorOffset += 5;
+                }
+            }
+
+            const newValue = newLines.join('\n');
+            setMarkdown(newValue);
+            setTimeout(() => {
+                const newSelectionEnd = selectionEnd + cursorOffset * (endLine - startLine + 1);
+                textarea.setSelectionRange(selectionStart + cursorOffset, newSelectionEnd);
+            }, 0);
+        }
     };
+
 
     return (
       <div className="border rounded-xl bg-card shadow-sm h-[80vh] flex flex-col">
