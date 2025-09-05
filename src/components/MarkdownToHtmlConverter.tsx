@@ -1,14 +1,19 @@
+
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { Textarea } from "./ui/textarea";
+import Editor from "react-simple-code-editor";
+import Prism from "prismjs";
+import "prismjs/components/prism-markdown";
+import "prismjs/themes/prism-okaidia.css"; 
 import { cn } from "@/lib/utils";
+
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -42,17 +47,13 @@ export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
-    const [lineCount, setLineCount] = useState(defaultMarkdown.split('\n').length);
     const { toast } = useToast();
-    const lineCounterRef = useRef<HTMLDivElement>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+    
     useEffect(() => {
         const convertedHtml = marked.parse(markdown);
         setHtml(convertedHtml as string);
-        setLineCount(markdown.split('\n').length);
     }, [markdown]);
-    
+
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
         setIsCopied(true);
@@ -91,35 +92,42 @@ export function MarkdownToHtmlConverter() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
-
-    const handleScroll = () => {
-        if (lineCounterRef.current && textareaRef.current) {
-            lineCounterRef.current.scrollTop = textareaRef.current.scrollTop;
+    
+     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const { selectionStart, selectionEnd, value } = e.currentTarget;
+            
+            // Insert 2 spaces for tab
+            const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
+            setMarkdown(newValue);
+            
+            // Move cursor after inserted spaces
+            setTimeout(() => {
+                e.currentTarget.selectionStart = e.currentTarget.selectionEnd = selectionStart + 2;
+            }, 0);
         }
     };
 
+
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-[70vh] min-h-[500px] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
           <ResizablePanel defaultSize={50} className="flex flex-col">
-              <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-                MARKDOWN
-              </div>
-              <div className="flex flex-1 min-h-0">
-                <div ref={lineCounterRef} className="text-right pr-2 py-4 bg-muted/30 text-muted-foreground font-mono text-sm select-none overflow-y-hidden">
-                    {Array.from({ length: lineCount }, (_, i) => (
-                        <div key={i}>{i + 1}</div>
-                    ))}
-                </div>
-                <Textarea
-                  ref={textareaRef}
-                  value={markdown}
-                  onScroll={handleScroll}
-                  onChange={(e) => setMarkdown(e.target.value)}
-                  className="w-full flex-1 resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent min-h-full"
-                  placeholder="Type your Markdown here..."
-                />
-              </div>
+            <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
+              MARKDOWN
+            </div>
+            <div className="flex-1 overflow-y-auto relative bg-[#272822]">
+               <Editor
+                 value={markdown}
+                 onValueChange={code => setMarkdown(code)}
+                 highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
+                 padding={16}
+                 onKeyDown={handleKeyDown}
+                 className="font-mono text-sm caret-white text-white absolute inset-0 w-full h-full"
+                 textareaClassName="outline-none"
+               />
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col">

@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -28,7 +29,10 @@
         "./src/*"
       ]
     },
-    "types": ["node"]
+    "types": [
+      "node",
+      "prismjs"
+    ]
   },
   "include": [
     "next-env.d.ts",
