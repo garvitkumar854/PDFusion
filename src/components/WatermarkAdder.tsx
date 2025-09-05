@@ -308,9 +308,9 @@ export function WatermarkAdder() {
             if (watermarkType === 'text' && text && embeddedFont) {
                 const textWidth = embeddedFont.widthOfTextAtSize(text, fontSize);
                 const textHeight = embeddedFont.heightAtSize(fontSize);
-                page.drawText(text, {
+                 page.drawText(text, {
                     x: x - textWidth / 2,
-                    y: y - textHeight / 2,
+                    y: y - textHeight / 4,
                     font: embeddedFont,
                     size: fontSize,
                     color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
@@ -321,7 +321,7 @@ export function WatermarkAdder() {
                 const scale = imageScale / 100;
                 const imgWidth = watermarkImage.width * scale;
                 const imgHeight = watermarkImage.height * scale;
-                page.drawImage(watermarkImage, {
+                 page.drawImage(watermarkImage, {
                     x: x - imgWidth / 2,
                     y: y - imgHeight / 2,
                     width: imgWidth,
