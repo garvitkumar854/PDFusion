@@ -3,13 +3,12 @@
 
 import React, { useState, useEffect } from "react";
 import { marked } from "marked";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check } from "lucide-react";
+import { Copy, Download, Check, SeparatorHorizontal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
-import { Separator } from "./ui/separator";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Textarea } from "./ui/textarea";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -62,7 +61,23 @@ export function MarkdownToHtmlConverter() {
     };
 
     const handleDownload = () => {
-        const blob = new Blob([html], { type: 'text/html' });
+        const blob = new Blob([`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Converted Markdown</title>
+                <style>
+                    body { font-family: sans-serif; line-height: 1.6; }
+                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; }
+                    code { font-family: monospace; }
+                </style>
+            </head>
+            <body>
+                ${html}
+            </body>
+            </html>
+        `], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -74,44 +89,48 @@ export function MarkdownToHtmlConverter() {
     };
 
     return (
-        <Card className="bg-transparent shadow-lg border-0 md:border">
-            <CardContent className="p-0 md:p-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-[75vh] md:h-[65vh]">
-                    {/* Markdown Editor */}
-                    <div className="flex flex-col h-full">
-                        <div className="p-2 border-b font-semibold text-sm text-center text-muted-foreground">MARKDOWN</div>
-                        <ScrollArea className="flex-1 rounded-bl-lg">
-                           <Textarea
-                                value={markdown}
-                                onChange={(e) => setMarkdown(e.target.value)}
-                                className="w-full h-full resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                placeholder="Type your Markdown here..."
-                            />
-                        </ScrollArea>
-                    </div>
-                    
-                     {/* HTML Preview */}
-                    <div className="flex flex-col h-full">
-                        <div className="p-2 border-b font-semibold text-sm text-center text-muted-foreground">HTML</div>
-                        <ScrollArea className="flex-1 bg-muted/30 rounded-br-lg p-4">
-                             <div
-                                className="prose prose-sm dark:prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{ __html: html }}
-                            />
-                        </ScrollArea>
-                    </div>
-                </div>
-                 <div className="flex items-center justify-end p-2 border-t gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                        {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-                        {isCopied ? "Copied!" : "Copy HTML"}
-                    </Button>
-                    <Button size="sm" onClick={handleDownload}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download .html
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+      <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
+        <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
+          <ResizablePanel defaultSize={50}>
+            <div className="flex flex-col h-full">
+              <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
+                MARKDOWN
+              </div>
+              <ScrollArea className="flex-1">
+                <Textarea
+                  value={markdown}
+                  onChange={(e) => setMarkdown(e.target.value)}
+                  className="w-full h-full resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  placeholder="Type your Markdown here..."
+                />
+              </ScrollArea>
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={50}>
+            <div className="flex flex-col h-full">
+              <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
+                HTML
+              </div>
+              <ScrollArea className="flex-1 p-4">
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+              </ScrollArea>
+              <div className="flex items-center justify-end p-2 border-t gap-2">
+                <Button variant="outline" size="sm" onClick={handleCopy}>
+                  {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {isCopied ? "Copied!" : "Copy HTML"}
+                </Button>
+                <Button size="sm" onClick={handleDownload}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download .html
+                </Button>
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     );
 }
