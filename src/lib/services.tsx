@@ -47,7 +47,7 @@ export const services: Service[] = [
       href: '/jpg-to-pdf'
     },
      {
-      icon: <FileArchive className="text-sky-500" />,
+      icon: <Droplets className="text-sky-500" />,
       bgColor: 'bg-sky-100 dark:bg-sky-900/20',
       title: 'Add Watermark',
       description: 'Stamp a text or image watermark over your PDF pages with custom styling.',
