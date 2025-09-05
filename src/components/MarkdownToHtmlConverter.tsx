@@ -45,19 +45,30 @@ export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
-    const [lineCount, setLineCount] = useState(defaultMarkdown.split('\n').length);
+    const [markdownLineCount, setMarkdownLineCount] = useState(defaultMarkdown.split('\n').length);
+    const [htmlLineCount, setHtmlLineCount] = useState(0);
+
     const { toast } = useToast();
 
     const editorRef = useRef<any>(null);
-    const lineNumbersRef = useRef<HTMLDivElement>(null);
-    const editorContainerRef = useRef<HTMLDivElement>(null);
+    const markdownLineNumbersRef = useRef<HTMLDivElement>(null);
+    const htmlPreviewRef = useRef<HTMLDivElement>(null);
+    const htmlLineNumbersRef = useRef<HTMLDivElement>(null);
+    const htmlScrollRef = useRef<HTMLDivElement>(null);
 
 
     useEffect(() => {
         const convertedHtml = marked.parse(markdown);
         setHtml(convertedHtml as string);
-        setLineCount(markdown.split('\n').length);
+        setMarkdownLineCount(markdown.split('\n').length);
     }, [markdown]);
+    
+    useEffect(() => {
+        if (htmlPreviewRef.current) {
+            const lines = htmlPreviewRef.current.offsetHeight / 24; // Assuming line-height of 1.5rem (24px)
+            setHtmlLineCount(Math.ceil(lines));
+        }
+    }, [html]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
@@ -79,7 +90,7 @@ export function MarkdownToHtmlConverter() {
                 <title>Converted Markdown</title>
                 <style>
                     body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
-                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-wrap: break-word; }
                     code { font-family: monospace; }
                 </style>
             </head>
@@ -102,7 +113,6 @@ export function MarkdownToHtmlConverter() {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
 
-        // Handle Tab and Shift+Tab for indentation
         if (e.key === "Tab") {
             e.preventDefault();
             const indentation = "  ";
@@ -113,7 +123,6 @@ export function MarkdownToHtmlConverter() {
             }, 0);
         }
         
-        // Handle Ctrl+D for line duplication
         if (e.ctrlKey && e.key === 'd') {
             e.preventDefault();
             const lines = value.split('\n');
@@ -132,28 +141,36 @@ export function MarkdownToHtmlConverter() {
         }
     };
     
-    const syncScroll = () => {
-        if (editorRef.current?._input && lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = editorRef.current._input.scrollTop;
+    const syncScroll = (refToSync: React.RefObject<HTMLDivElement>) => (e: React.UIEvent<HTMLElement>) => {
+        if (refToSync.current) {
+            refToSync.current.scrollTop = (e.target as HTMLElement).scrollTop;
         }
     };
+    
+    useEffect(() => {
+        if(htmlScrollRef.current && htmlLineNumbersRef.current) {
+            htmlScrollRef.current.addEventListener('scroll', (e) => {
+                if(htmlLineNumbersRef.current) {
+                     htmlLineNumbersRef.current.scrollTop = (e.target as HTMLElement).scrollTop;
+                }
+            });
+        }
+    }, [html]);
 
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-full min-h-[70vh] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
               MARKDOWN
             </div>
-             <div ref={editorContainerRef} className="flex-1 flex overflow-hidden code-editor-container">
-                <ScrollArea className="h-full">
-                    <div ref={lineNumbersRef} className="line-numbers">
-                        {Array.from({ length: lineCount }, (_, i) => i + 1).map(num => (
-                            <div key={num}>{num}</div>
-                        ))}
-                    </div>
-                </ScrollArea>
-                <ScrollArea className="h-full flex-1">
+             <div className="flex-1 flex overflow-hidden code-editor-container">
+                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117]">
+                    {Array.from({ length: markdownLineCount }, (_, i) => i + 1).map(num => (
+                        <div key={num} className="h-[21px]">{num}</div>
+                    ))}
+                </div>
+                <ScrollArea className="h-full flex-1" onScroll={syncScroll(markdownLineNumbersRef)}>
                   <Editor
                       ref={editorRef}
                       value={markdown}
@@ -161,8 +178,8 @@ export function MarkdownToHtmlConverter() {
                       highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
                       padding={16}
                       onKeyDown={handleKeyDown}
-                      onScroll={syncScroll}
                       className="code-editor h-full"
+                      style={{ minHeight: '100%' }}
                   />
                 </ScrollArea>
             </div>
@@ -173,13 +190,21 @@ export function MarkdownToHtmlConverter() {
               <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
                 HTML PREVIEW
               </div>
-              <ScrollArea className="flex-1 p-4">
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: html }}
-                />
-              </ScrollArea>
-              <div className="flex items-center justify-end p-2 border-t gap-2">
+              <div className="flex-1 flex overflow-hidden">
+                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background">
+                    {Array.from({ length: htmlLineCount }, (_, i) => i + 1).map(num => (
+                        <div key={num} className="h-[24px]">{num}</div>
+                    ))}
+                  </div>
+                  <ScrollArea className="flex-1 p-4" onScroll={syncScroll(htmlLineNumbersRef)}>
+                    <div
+                      ref={htmlPreviewRef}
+                      className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6"
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                  </ScrollArea>
+              </div>
+              <div className="flex items-center justify-end p-2 border-t gap-2 bg-background">
                 <Button variant="outline" size="sm" onClick={handleCopy}>
                   {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
                   {isCopied ? "Copied!" : "Copy HTML"}
@@ -195,4 +220,3 @@ export function MarkdownToHtmlConverter() {
       </div>
     );
 }
-

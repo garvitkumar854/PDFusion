@@ -65,7 +65,7 @@
     /* Styles for react-simple-code-editor with PrismJS */
     .code-editor-container {
         position: relative;
-        background-color: transparent; /* No background in light mode */
+        background-color: hsl(var(--background)); /* No background in light mode */
     }
 
     .dark .code-editor-container {
@@ -75,24 +75,22 @@
     .code-editor {
         font-family: 'Fira Code', 'Dank Mono', 'Operator Mono', monospace;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 21px !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
     }
 
     .code-editor > textarea,
     .code-editor > pre {
         outline: none !important;
         background: none !important;
-        white-space: pre-wrap !important;
-        word-wrap: break-word !important;
     }
 
     .line-numbers {
         width: 40px;
-        padding-top: 1rem;
-        padding-right: 1rem;
         font-family: 'Fira Code', 'Dank Mono', 'Operator Mono', monospace;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 21px;
         text-align: right;
         color: hsl(var(--muted-foreground));
         user-select: none;
@@ -150,10 +148,10 @@ pre[class*="language-"] {
   font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   font-size: 1em;
   text-align: left;
-  white-space: pre;
+  white-space: pre-wrap;
   word-spacing: normal;
   word-break: normal;
-  word-wrap: normal;
+  word-wrap: break-word;
   line-height: 1.5;
   -moz-tab-size: 4;
   -o-tab-size: 4;
@@ -242,7 +240,7 @@ pre[class*="language-"] {
 }
 .dark .token.operator,
 .dark .token.entity,
-.dark .token.url,
+.dark .toke-url,
 .dark .language-css .token.string,
 .dark .style .token.string {
   color: #ff7b72;
