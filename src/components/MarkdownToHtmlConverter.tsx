@@ -236,7 +236,7 @@ export function MarkdownToHtmlConverter() {
     );
 
     const resultHeader = (
-        <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap">
+        <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
             <TabsList className="bg-transparent p-0 m-0 h-auto">
                 <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
                 <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
@@ -277,25 +277,25 @@ export function MarkdownToHtmlConverter() {
             </TabsContent>
           </Tabs>
         );
-      } else {
-         const direction = "horizontal";
-         return (
-            <ResizablePanelGroup direction={direction} className="flex-1">
-              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                {markdownHeader}
-                {editorPanel}
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                <Tabs defaultValue="preview" className="flex flex-col h-full">
-                    {resultHeader}
-                    {htmlResultPanel}
-                    {htmlRawPanel}
-                </Tabs>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-        );
       }
+      
+      const direction = "horizontal";
+      return (
+        <ResizablePanelGroup direction={direction} className="flex-1">
+            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+            {markdownHeader}
+            {editorPanel}
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+            <Tabs defaultValue="preview" className="flex flex-col h-full">
+                {resultHeader}
+                {htmlResultPanel}
+                {htmlRawPanel}
+            </Tabs>
+            </ResizablePanel>
+        </ResizablePanelGroup>
+      );
     }
     
     return (
