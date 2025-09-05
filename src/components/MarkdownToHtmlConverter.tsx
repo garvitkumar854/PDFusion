@@ -61,6 +61,13 @@ const Toolbar = ({ onUpload, onCopy, onDownload, isCopied, className }: { onUplo
   </div>
 );
 
+const MobileToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
+    <div className="flex justify-center items-center p-1 border-t flex-shrink-0">
+        <Toolbar onUpload={onUpload} onCopy={onCopy} onDownload={onDownload} isCopied={isCopied} />
+    </div>
+);
+
+
 export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
@@ -205,6 +212,46 @@ export function MarkdownToHtmlConverter() {
         });
       }
     };
+    
+    const editorPanel = (
+        <div className="flex-1 flex overflow-hidden code-editor-container">
+            <ScrollArea className="w-full h-full">
+                <Editor value={markdown} onValueChange={setMarkdown} highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')} padding={16} onKeyDown={handleKeyDown} className="code-editor flex-1 min-h-full" />
+            </ScrollArea>
+        </div>
+    );
+    
+    const htmlResultPanel = (
+        <Tabs defaultValue="preview" className="flex flex-col h-full">
+          <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+            <ScrollArea className="h-full">
+              <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+            <ScrollArea className="h-full w-full">
+              <Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" />
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+    );
+    
+    const htmlResultHeader = (
+        <div className="flex justify-between items-center border-b p-1.5 pl-2 flex-shrink-0 flex-wrap">
+            <TabsList className="bg-transparent p-0 m-0 h-auto">
+                <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
+                <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
+            </TabsList>
+            <Toolbar onUpload={() => {}} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+        </div>
+    );
+    
+    const markdownHeader = (
+        <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
+            <span>MARKDOWN</span>
+            <Toolbar onUpload={handleUploadClick} onCopy={() => {}} onDownload={() => {}} isCopied={false} className="opacity-0 pointer-events-none" />
+        </div>
+    );
 
     const renderLayout = () => {
       if (isMobile) {
@@ -217,97 +264,59 @@ export function MarkdownToHtmlConverter() {
                   <TabsTrigger value="result">Result</TabsTrigger>
                 </TabsList>
               </div>
-              <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} className="justify-center p-1 border-t" />
+              <MobileToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
             </div>
             <TabsContent value="markdown" className="flex-1 min-h-0">
-              <div className="flex-1 flex overflow-hidden code-editor-container">
-                <ScrollArea className="w-full h-full">
-                  <Editor value={markdown} onValueChange={setMarkdown} highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')} padding={16} onKeyDown={handleKeyDown} className="code-editor flex-1 min-h-full" />
-                </ScrollArea>
-              </div>
+              {editorPanel}
             </TabsContent>
             <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
-              <Tabs defaultValue="preview" className="flex flex-col h-full">
-                <div className="flex justify-between items-center border-b pr-2 flex-shrink-0">
-                  <TabsList className="bg-transparent p-0 m-1">
-                    <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
-                    <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
-                  <ScrollArea className="h-full">
-                    <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
-                  </ScrollArea>
-                </TabsContent>
-                <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
-                  <ScrollArea className="h-full w-full">
-                    <Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" />
-                  </ScrollArea>
-                </TabsContent>
+               <Tabs defaultValue="preview" className="flex flex-col h-full">
+                  <div className="flex justify-between items-center border-b pr-2 flex-shrink-0">
+                    <TabsList className="bg-transparent p-0 m-1">
+                      <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
+                      <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+                    </TabsList>
+                  </div>
+                  {htmlResultPanel}
               </Tabs>
             </TabsContent>
           </Tabs>
         );
       }
 
-      if (isTablet) {
-        return (
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="p-1 border-b flex justify-end items-center flex-shrink-0">
-              <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-            </div>
-            <ResizablePanelGroup direction="vertical" className="flex-1">
-              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                <div className="p-3 border-b text-sm font-medium text-muted-foreground">MARKDOWN</div>
-                <div className="flex-1 flex overflow-hidden code-editor-container">
-                    <ScrollArea className="w-full h-full"><Editor value={markdown} onValueChange={setMarkdown} highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')} padding={16} onKeyDown={handleKeyDown} className="code-editor flex-1 min-h-full" /></ScrollArea>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                <Tabs defaultValue="preview" className="flex flex-col h-full">
-                  <div className="flex justify-between items-center border-b pr-2 flex-shrink-0">
-                    <TabsList className="bg-transparent p-0 m-1"><TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger><TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger></TabsList>
-                  </div>
-                  <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0"><ScrollArea className="h-full"><div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} /></ScrollArea></TabsContent>
-                  <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container"><ScrollArea className="h-full w-full"><Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" /></ScrollArea></TabsContent>
-                </Tabs>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </div>
-        );
-      }
+      const TabletAndDesktopToolbar = () => (
+        <div className="p-1 border-b flex justify-end items-center flex-shrink-0">
+          <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+        </div>
+      );
+      
+      const direction = isTablet ? "vertical" : "horizontal";
 
       return (
-        <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
+        <>
+        {isTablet && <TabletAndDesktopToolbar />}
+        <ResizablePanelGroup direction={direction} className="flex-1">
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground">
-              <span>MARKDOWN</span>
-              <Toolbar onUpload={handleUploadClick} onCopy={() => {}} onDownload={() => {}} isCopied={false} className="opacity-0 pointer-events-none" />
-            </div>
-            <div className="flex-1 flex overflow-hidden code-editor-container">
-              <ScrollArea className="w-full h-full"><Editor value={markdown} onValueChange={setMarkdown} highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')} padding={16} onKeyDown={handleKeyDown} className="code-editor flex-1 min-h-full" /></ScrollArea>
-            </div>
+             {!isTablet && markdownHeader}
+             {editorPanel}
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <Tabs defaultValue="preview" className="flex flex-col h-full">
-              <div className="flex justify-between items-center border-b p-1.5 pl-2 flex-shrink-0">
-                <TabsList className="bg-transparent p-0 m-0 h-auto">
-                  <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
-                  <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
-                </TabsList>
-                <Toolbar onUpload={() => {}} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-              </div>
-              <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
-                <ScrollArea className="h-full"><div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} /></ScrollArea>
-              </TabsContent>
-              <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
-                <ScrollArea className="h-full w-full"><Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" /></ScrollArea>
-              </TabsContent>
-            </Tabs>
+             <Tabs defaultValue="preview" className="flex flex-col h-full">
+                {!isTablet && htmlResultHeader}
+                {isTablet && (
+                    <div className="flex justify-between items-center border-b pr-2 flex-shrink-0">
+                        <TabsList className="bg-transparent p-0 m-1">
+                            <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
+                            <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+                        </TabsList>
+                    </div>
+                )}
+                {htmlResultPanel}
+             </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>
+        </>
       );
     }
     
