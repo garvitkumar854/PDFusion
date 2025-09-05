@@ -73,10 +73,8 @@ export default function MarkdownToHtmlPage() {
           </AnimateOnScroll>
         </section>
         
-        <main className="flex-1 w-full flex flex-col">
-          <div className="max-w-7xl mx-auto h-full flex-1 w-full flex flex-col">
-            <MarkdownToHtmlLoader />
-          </div>
+        <main className="flex-1 w-full flex flex-col max-w-7xl mx-auto">
+          <MarkdownToHtmlLoader />
         </main>
         
         <FeatureGrid
