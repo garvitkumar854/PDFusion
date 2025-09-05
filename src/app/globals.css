@@ -86,15 +86,76 @@
         background: none !important;
     }
 
-    .line-numbers {
-        width: 40px;
+     .html-preview {
+        padding: 1rem 1.5rem;
+        line-height: 1.7;
+    }
+    .html-preview h1, .html-preview h2, .html-preview h3, .html-preview h4 {
+        font-weight: 700;
+        margin-bottom: 1rem;
+        margin-top: 1.5rem;
+        color: hsl(var(--foreground));
+    }
+    .html-preview h1 { font-size: 2em; }
+    .html-preview h2 { font-size: 1.5em; }
+    .html-preview h3 { font-size: 1.25em; }
+    .html-preview h4 { font-size: 1em; }
+    .html-preview p {
+        margin-bottom: 1rem;
+    }
+    .html-preview ul, .html-preview ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .html-preview ul { list-style-type: disc; }
+    .html-preview ol { list-style-type: decimal; }
+    .html-preview li { margin-bottom: 0.5rem; }
+    .html-preview a {
+        color: hsl(var(--primary));
+        text-decoration: underline;
+    }
+    .html-preview code {
         font-family: 'Fira Code', 'Dank Mono', 'Operator Mono', monospace;
-        font-size: 14px;
-        line-height: 21px;
-        text-align: right;
+        background-color: hsl(var(--muted));
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+    }
+    .html-preview pre {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: hsl(var(--muted));
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+     .html-preview pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+    }
+    .html-preview blockquote {
+        border-left: 4px solid hsl(var(--border));
+        padding-left: 1rem;
+        margin-left: 0;
         color: hsl(var(--muted-foreground));
-        user-select: none;
-        border-right: 1px solid hsl(var(--border));
+    }
+    .html-preview table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    .html-preview th, .html-preview td {
+        border: 1px solid hsl(var(--border));
+        padding: 0.5rem 1rem;
+    }
+    .html-preview th {
+        font-weight: 600;
+        background-color: hsl(var(--muted));
+    }
+    .html-preview hr {
+        border-top: 1px solid hsl(var(--border));
+        margin: 2rem 0;
     }
 }
 

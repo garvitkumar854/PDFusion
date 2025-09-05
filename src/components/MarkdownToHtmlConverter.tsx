@@ -167,7 +167,7 @@ export function MarkdownToHtmlConverter() {
                 <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
                    <ScrollArea className="h-full">
                     <div
-                        className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6 p-4"
+                        className="html-preview"
                         dangerouslySetInnerHTML={{ __html: html }}
                     />
                    </ScrollArea>
