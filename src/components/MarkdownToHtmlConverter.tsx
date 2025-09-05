@@ -69,7 +69,11 @@ const MobileToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: (
         </Button>
         <Button variant="ghost" size="sm" onClick={onCopy}>
             {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-            Copy HTML
+            Copy
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDownload}>
+            <Download className="w-4 h-4 mr-2" />
+            Download
         </Button>
     </div>
 );
@@ -147,17 +151,17 @@ export function MarkdownToHtmlConverter() {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        const textarea = e.currentTarget as unknown as HTMLTextAreaElement;
-        const { selectionStart, selectionEnd, value } = textarea;
+      const textarea = e.target as HTMLTextAreaElement;
+      const { selectionStart, selectionEnd, value } = textarea;
 
-        if (e.key === "Tab") {
-            e.preventDefault();
-            const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
-            setMarkdown(newValue);
-            setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
-            }, 0);
-        }
+      if (e.key === 'Tab' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        const newValue = `${value.substring(0, selectionStart)}  ${value.substring(selectionEnd)}`;
+        setMarkdown(newValue);
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
+        }, 0);
+      }
     };
 
     const editorPanel = (
@@ -186,7 +190,7 @@ export function MarkdownToHtmlConverter() {
             </div>
             <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
                 <ScrollArea className="h-full">
-                    <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
+                    <div className="html-preview prose-pre:whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: html }} />
                 </ScrollArea>
             </TabsContent>
             <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
@@ -205,7 +209,7 @@ export function MarkdownToHtmlConverter() {
     );
     
     return (
-        <div className="border rounded-xl bg-card shadow-sm flex flex-col h-full md:h-[80vh]">
+        <div className={cn("border rounded-xl bg-card shadow-sm flex flex-col", isMobile ? "h-full" : "h-[80vh]")}>
             <input
                 type="file"
                 ref={fileInputRef}
