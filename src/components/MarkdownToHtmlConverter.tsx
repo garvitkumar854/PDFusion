@@ -45,59 +45,51 @@ export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
-    const [markdownLineCount, setMarkdownLineCount] = useState(defaultMarkdown.split('\n').length);
-    const [htmlLineCount, setHtmlLineCount] = useState(0);
-
-    const { toast } = useToast();
-
+    
     const editorRef = useRef<any>(null);
     const markdownLineNumbersRef = useRef<HTMLDivElement>(null);
     const htmlPreviewRef = useRef<HTMLDivElement>(null);
     const htmlLineNumbersRef = useRef<HTMLDivElement>(null);
     const htmlScrollRef = useRef<HTMLDivElement>(null);
-
+    const { toast } = useToast();
 
     useEffect(() => {
-        const convertedHtml = marked.parse(markdown);
-        setHtml(convertedHtml as string);
-        setMarkdownLineCount(markdown.split('\n').length);
+        setHtml(marked.parse(markdown) as string);
     }, [markdown]);
-    
-    useEffect(() => {
-        if (htmlPreviewRef.current) {
-            const lines = htmlPreviewRef.current.offsetHeight / 24; // Assuming line-height of 1.5rem (24px)
-            setHtmlLineCount(Math.ceil(lines));
-        }
-    }, [html]);
 
     useEffect(() => {
-      const editorTextArea = editorRef.current?._input;
-      if (editorTextArea && markdownLineNumbersRef.current) {
-        const syncScroll = () => {
-          if (markdownLineNumbersRef.current) {
-            markdownLineNumbersRef.current.scrollTop = editorTextArea.scrollTop;
-          }
-        };
-        editorTextArea.addEventListener('scroll', syncScroll);
-        return () => editorTextArea.removeEventListener('scroll', syncScroll);
-      }
-    }, []);
-
-    useEffect(() => {
-        if(htmlScrollRef.current && htmlLineNumbersRef.current) {
+        const editorTextArea = editorRef.current?._input;
+        if (editorTextArea && markdownLineNumbersRef.current) {
             const syncScroll = () => {
-                if(htmlLineNumbersRef.current && htmlScrollRef.current) {
-                     htmlLineNumbersRef.current.scrollTop = htmlScrollRef.current.scrollTop;
+                if (markdownLineNumbersRef.current) {
+                    markdownLineNumbersRef.current.scrollTop = editorTextArea.scrollTop;
                 }
             };
-            
-            const viewport = htmlScrollRef.current.querySelector(':scope > div:first-child');
-            if (viewport) {
-                viewport.addEventListener('scroll', syncScroll);
-                return () => viewport.removeEventListener('scroll', syncScroll);
-            }
+            editorTextArea.addEventListener('scroll', syncScroll);
+            syncScroll(); // Initial sync
+            return () => editorTextArea.removeEventListener('scroll', syncScroll);
         }
-    }, []);
+    }, [markdown]); // Rerun when editor re-renders due to new content
+
+    useEffect(() => {
+      if (!htmlScrollRef.current) return;
+      
+      const viewport = htmlScrollRef.current.querySelector(':scope > div:first-child');
+      if (viewport && htmlLineNumbersRef.current) {
+        const syncScroll = () => {
+          if (htmlLineNumbersRef.current) {
+            htmlLineNumbersRef.current.scrollTop = viewport.scrollTop;
+          }
+        };
+        viewport.addEventListener('scroll', syncScroll);
+        syncScroll(); // Initial sync
+        return () => viewport.removeEventListener('scroll', syncScroll);
+      }
+    }, [html]); // Rerun when HTML content changes
+
+    const markdownLineCount = markdown.split('\n').length;
+    const htmlLineCount = html.split('\n').length;
+
 
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
@@ -142,31 +134,44 @@ export function MarkdownToHtmlConverter() {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
 
-        if (e.key === "Tab" && !e.shiftKey) {
+        if (e.key === "Tab") {
             e.preventDefault();
             const indentation = "  ";
-            const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
-            setMarkdown(newValue);
-            setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = selectionStart + indentation.length;
-            }, 0);
+            const start = selectionStart;
+            const end = selectionEnd;
+            const selected = value.substring(start, end);
+
+            if (e.shiftKey) { // Outdent
+                const lines = value.substring(0, start).split('\n');
+                const currentLineStart = lines.slice(0, -1).join('\n').length + (lines.length > 1 ? 1 : 0);
+                const line = value.substring(currentLineStart);
+
+                if (line.startsWith(indentation)) {
+                    const newValue = value.substring(0, currentLineStart) + line.substring(indentation.length);
+                    setMarkdown(newValue);
+                    setTimeout(() => {
+                        textarea.selectionStart = textarea.selectionEnd = start - indentation.length;
+                    }, 0);
+                }
+
+            } else { // Indent
+                const newValue = value.substring(0, start) + indentation + value.substring(end);
+                setMarkdown(newValue);
+                setTimeout(() => {
+                    textarea.selectionStart = textarea.selectionEnd = start + indentation.length;
+                }, 0);
+            }
         }
         
         if (e.ctrlKey && e.key === 'd') {
             e.preventDefault();
             const lines = value.split('\n');
-            let currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
+            const lineNo = value.substring(0, selectionStart).split('\n').length - 1;
+            const line = lines[lineNo];
             
-            // Check if cursor is at the end of the line, which can sometimes be interpreted as start of next line
-            if (selectionStart > 0 && value[selectionStart-1] === '\n') {
-                currentLineIndex--;
-            }
-
-            const lineToDuplicate = lines[currentLineIndex];
-            lines.splice(currentLineIndex, 0, lineToDuplicate);
-            
+            lines.splice(lineNo + 1, 0, line);
             const newValue = lines.join('\n');
-            const newCursorPos = selectionStart + lineToDuplicate.length + 1;
+            const newCursorPos = selectionStart + line.length + 1;
             
             setMarkdown(newValue);
 
@@ -184,12 +189,12 @@ export function MarkdownToHtmlConverter() {
               MARKDOWN
             </div>
              <div className="flex-1 flex overflow-hidden code-editor-container">
-                <ScrollArea ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-auto">
+                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-hidden">
                     {Array.from({ length: markdownLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[21px]">{num}</div>
                     ))}
-                </ScrollArea>
-                <ScrollArea className="flex-1">
+                </div>
+                <div className="flex-1 overflow-y-auto">
                   <Editor
                       ref={editorRef}
                       value={markdown}
@@ -197,10 +202,10 @@ export function MarkdownToHtmlConverter() {
                       highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
                       padding={16}
                       onKeyDown={handleKeyDown}
-                      className="code-editor h-full prose-pre:whitespace-pre-wrap prose-pre:break-words"
+                      className="code-editor h-full"
                       style={{ minHeight: '100%' }}
                   />
-                </ScrollArea>
+                </div>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -210,11 +215,11 @@ export function MarkdownToHtmlConverter() {
                 HTML PREVIEW
               </div>
               <div className="flex-1 flex overflow-hidden">
-                  <ScrollArea ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-auto">
+                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-hidden">
                     {Array.from({ length: htmlLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[24px]">{num}</div>
                     ))}
-                  </ScrollArea>
+                  </div>
                   <ScrollArea ref={htmlScrollRef} className="flex-1">
                     <div
                       ref={htmlPreviewRef}
