@@ -11,7 +11,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -46,50 +47,10 @@ export function MarkdownToHtmlConverter() {
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
     
-    const editorRef = useRef<any>(null);
-    const markdownLineNumbersRef = useRef<HTMLDivElement>(null);
-    const htmlPreviewRef = useRef<HTMLDivElement>(null);
-    const htmlLineNumbersRef = useRef<HTMLDivElement>(null);
-    const htmlScrollRef = useRef<HTMLDivElement>(null);
-    const { toast } = useToast();
-
     useEffect(() => {
-        setHtml(marked.parse(markdown) as string);
+        const parsedHtml = marked.parse(markdown) as string;
+        setHtml(parsedHtml);
     }, [markdown]);
-
-    useEffect(() => {
-        const editorTextArea = editorRef.current?._input;
-        if (editorTextArea && markdownLineNumbersRef.current) {
-            const syncScroll = () => {
-                if (markdownLineNumbersRef.current) {
-                    markdownLineNumbersRef.current.scrollTop = editorTextArea.scrollTop;
-                }
-            };
-            editorTextArea.addEventListener('scroll', syncScroll);
-            syncScroll(); // Initial sync
-            return () => editorTextArea.removeEventListener('scroll', syncScroll);
-        }
-    }, [markdown]); // Rerun when editor re-renders due to new content
-
-    useEffect(() => {
-      if (!htmlScrollRef.current) return;
-      
-      const viewport = htmlScrollRef.current.querySelector(':scope > div:first-child');
-      if (viewport && htmlLineNumbersRef.current) {
-        const syncScroll = () => {
-          if (htmlLineNumbersRef.current) {
-            htmlLineNumbersRef.current.scrollTop = viewport.scrollTop;
-          }
-        };
-        viewport.addEventListener('scroll', syncScroll);
-        syncScroll(); // Initial sync
-        return () => viewport.removeEventListener('scroll', syncScroll);
-      }
-    }, [html]); // Rerun when HTML content changes
-
-    const markdownLineCount = markdown.split('\n').length;
-    const htmlLineCount = html.split('\n').length;
-
 
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
@@ -138,32 +99,15 @@ export function MarkdownToHtmlConverter() {
             e.preventDefault();
             const indentation = "  ";
             const start = selectionStart;
-            const end = selectionEnd;
-            const selected = value.substring(start, end);
-
-            if (e.shiftKey) { // Outdent
-                const lines = value.substring(0, start).split('\n');
-                const currentLineStart = lines.slice(0, -1).join('\n').length + (lines.length > 1 ? 1 : 0);
-                const line = value.substring(currentLineStart);
-
-                if (line.startsWith(indentation)) {
-                    const newValue = value.substring(0, currentLineStart) + line.substring(indentation.length);
-                    setMarkdown(newValue);
-                    setTimeout(() => {
-                        textarea.selectionStart = textarea.selectionEnd = start - indentation.length;
-                    }, 0);
-                }
-
-            } else { // Indent
-                const newValue = value.substring(0, start) + indentation + value.substring(end);
-                setMarkdown(newValue);
-                setTimeout(() => {
-                    textarea.selectionStart = textarea.selectionEnd = start + indentation.length;
-                }, 0);
-            }
+            
+            const newValue = value.substring(0, start) + indentation + value.substring(selectionEnd);
+            setMarkdown(newValue);
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + indentation.length;
+            }, 0);
         }
         
-        if (e.ctrlKey && e.key === 'd') {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
             e.preventDefault();
             const lines = value.split('\n');
             const lineNo = value.substring(0, selectionStart).split('\n').length - 1;
@@ -189,56 +133,58 @@ export function MarkdownToHtmlConverter() {
               MARKDOWN
             </div>
              <div className="flex-1 flex overflow-hidden code-editor-container">
-                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-hidden">
-                    {Array.from({ length: markdownLineCount }, (_, i) => i + 1).map(num => (
-                        <div key={num} className="h-[21px]">{num}</div>
-                    ))}
-                </div>
-                <div className="flex-1 overflow-y-auto">
+                <ScrollArea className="w-full h-full">
                   <Editor
-                      ref={editorRef}
                       value={markdown}
                       onValueChange={setMarkdown}
                       highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
                       padding={16}
                       onKeyDown={handleKeyDown}
-                      className="code-editor h-full"
-                      style={{ minHeight: '100%' }}
+                      className="code-editor flex-1 min-h-full"
                   />
-                </div>
+                </ScrollArea>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <div className="flex flex-col h-full">
-              <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-                HTML PREVIEW
-              </div>
-              <div className="flex-1 flex overflow-hidden">
-                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-hidden">
-                    {Array.from({ length: htmlLineCount }, (_, i) => i + 1).map(num => (
-                        <div key={num} className="h-[24px]">{num}</div>
-                    ))}
-                  </div>
-                  <ScrollArea ref={htmlScrollRef} className="flex-1">
+            <Tabs defaultValue="preview" className="flex flex-col h-full">
+                <div className="flex justify-between items-center border-b pr-2">
+                    <TabsList className="bg-transparent p-0 m-1">
+                        <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
+                        <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+                    </TabsList>
+                    <div className="flex items-center gap-2">
+                         <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8">
+                            {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
+                            {isCopied ? "Copied!" : "Copy"}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={handleDownload} className="h-8">
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                        </Button>
+                    </div>
+                </div>
+                <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+                   <ScrollArea className="h-full">
                     <div
-                      ref={htmlPreviewRef}
-                      className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6 p-4"
-                      dangerouslySetInnerHTML={{ __html: html }}
+                        className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6 p-4"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                   </ScrollArea>
+                </TabsContent>
+                <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+                  <ScrollArea className="h-full w-full">
+                     <Editor
+                      value={html}
+                      onValueChange={() => {}} // Read-only
+                      highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
+                      padding={16}
+                      readOnly
+                      className="code-editor flex-1 min-h-full"
                     />
                   </ScrollArea>
-              </div>
-              <div className="flex items-center justify-end p-2 border-t gap-2 bg-background">
-                <Button variant="outline" size="sm" onClick={handleCopy}>
-                  {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {isCopied ? "Copied!" : "Copy HTML"}
-                </Button>
-                <Button size="sm" onClick={handleDownload}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download .html
-                </Button>
-              </div>
-            </div>
+                </TabsContent>
+            </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
