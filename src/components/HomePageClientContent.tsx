@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { ArrowUpRight, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
