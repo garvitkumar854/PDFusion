@@ -135,93 +135,95 @@ export function HtmlToPdfConverter() {
     toast({ variant: "info", title: "Ready for new URL" });
   };
 
-  if (status === "done" && resultUrl) {
-    return (
-      <div className="text-center flex flex-col items-center justify-center py-12 animate-in fade-in duration-500 bg-transparent p-4 sm:p-8 rounded-xl">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
-            <Check className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
-        </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Complete!</h2>
-        <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your PDF is ready for download.</p>
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-            <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
-              <Download className="mr-2 h-5 w-5" /> Download PDF
-            </Button>
-          <Button size="lg" variant="outline" onClick={handleConvertAgain} className="w-full sm:w-auto text-base">
-            Convert Another URL
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Card className="bg-transparent shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl">Enter Website URL</CardTitle>
-        <CardDescription>
-          Provide the URL of the webpage you want to convert to a PDF.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="url-input">Website URL</Label>
-            <div className="relative">
-                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                 <Input
-                    id="url-input"
-                    value={url}
-                    onChange={(e) => {
-                        setUrl(e.target.value);
-                        if (error) setError(null);
-                    }}
-                    placeholder="https://example.com"
-                    disabled={isBusy}
-                    className={cn("pl-10", error && "border-destructive")}
-                 />
+      {status === 'done' && resultUrl ? (
+        <CardContent className="pt-6">
+          <div className="text-center flex flex-col items-center justify-center py-6 animate-in fade-in duration-500">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
+                <Check className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            {error && (
-              <p className="text-destructive text-sm flex items-center gap-2 pt-1">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
-              </p>
-            )}
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Conversion Complete!</h2>
+            <p className="text-muted-foreground mb-8 text-sm sm:text-base">Your PDF is ready for download.</p>
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto text-base font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload}>
+                  <Download className="mr-2 h-5 w-5" /> Download PDF
+                </Button>
+              <Button size="lg" variant="outline" onClick={handleConvertAgain} className="w-full sm:w-auto text-base">
+                Convert Another URL
+              </Button>
+            </div>
           </div>
-          <div className="h-10">
-            <AnimatePresence mode="wait">
-              {isBusy ? (
-                <motion.div
-                  key="progress"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                    <div className="p-4 border rounded-lg bg-primary/5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                        <p className="text-sm font-medium text-primary">{getStatusLabel()}</p>
-                      </div>
-                    </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="button"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                    <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={!url}>
-                      Convert to PDF
-                    </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      ) : (
+        <>
+          <CardHeader>
+            <CardTitle className="text-xl sm:text-2xl">Enter Website URL</CardTitle>
+            <CardDescription>
+              Provide the URL of the webpage you want to convert to a PDF.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="url-input">Website URL</Label>
+                <div className="relative">
+                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                     <Input
+                        id="url-input"
+                        value={url}
+                        onChange={(e) => {
+                            setUrl(e.target.value);
+                            if (error) setError(null);
+                        }}
+                        placeholder="https://example.com"
+                        disabled={isBusy}
+                        className={cn("pl-10", error && "border-destructive")}
+                     />
+                </div>
+                {error && (
+                  <p className="text-destructive text-sm flex items-center gap-2 pt-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    {error}
+                  </p>
+                )}
+              </div>
+              <div className="h-20 pt-2">
+                <AnimatePresence mode="wait">
+                  {isBusy ? (
+                    <motion.div
+                      key="progress"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                        <div className="p-4 border rounded-lg bg-primary/5 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                            <p className="text-sm font-medium text-primary">{getStatusLabel()}</p>
+                          </div>
+                        </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="button"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                        <Button size="lg" className="w-full text-base font-bold" onClick={handleConvert} disabled={!url}>
+                          Convert to PDF
+                        </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </CardContent>
+        </>
+      )}
     </Card>
   );
 }
