@@ -138,6 +138,7 @@ export function MarkdownToHtmlConverter() {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
       const textarea = e.target as HTMLTextAreaElement;
       const { selectionStart, selectionEnd, value } = textarea;
+      
       const currentLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
       const currentLineEnd = value.indexOf('\n', selectionStart);
       const currentLine = value.substring(currentLineStart, currentLineEnd === -1 ? value.length : currentLineEnd);
@@ -152,10 +153,13 @@ export function MarkdownToHtmlConverter() {
       } else if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         const lineToDuplicate = currentLine + (currentLineEnd === -1 ? '' : '\n');
-        const newValue = value.substring(0, currentLineEnd === -1 ? value.length : currentLineEnd) + '\n' + lineToDuplicate + value.substring(currentLineEnd === -1 ? value.length : currentLineEnd);
+        const nextLineStart = currentLineEnd === -1 ? value.length : currentLineEnd + 1;
+        const newValue = value.substring(0, nextLineStart) + lineToDuplicate + value.substring(nextLineStart);
+        
         setMarkdown(newValue);
         setTimeout(() => {
-           textarea.selectionStart = textarea.selectionEnd = currentLineEnd + lineToDuplicate.length + 1;
+           const newCursorPos = nextLineStart + lineToDuplicate.length;
+           textarea.selectionStart = textarea.selectionEnd = newCursorPos;
         }, 0);
       } else if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
         e.preventDefault();
@@ -229,7 +233,7 @@ export function MarkdownToHtmlConverter() {
             </div>
             <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
                 <ScrollArea className="h-full">
-                    <div className="html-preview prose-pre:whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: html }} />
+                    <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
                 </ScrollArea>
             </TabsContent>
             <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
@@ -262,7 +266,29 @@ export function MarkdownToHtmlConverter() {
                     {editorPanel}
                 </TabsContent>
                 <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
-                    {htmlResultPanel}
+                    <Tabs defaultValue="preview" className="flex flex-col h-full">
+                        <TabsList className="bg-transparent p-0 m-1 justify-start border-b">
+                            <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
+                            <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+                            <ScrollArea className="h-full">
+                                <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
+                            </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+                            <ScrollArea className="h-full w-full">
+                                <Editor
+                                    value={html}
+                                    onValueChange={() => {}}
+                                    highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
+                                    padding={16}
+                                    readOnly
+                                    className="code-editor flex-1 min-h-full"
+                                />
+                            </ScrollArea>
+                        </TabsContent>
+                    </Tabs>
                 </TabsContent>
             </Tabs>
         )
