@@ -229,7 +229,6 @@ export function MarkdownToHtmlConverter() {
                     <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
                     <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
                 </TabsList>
-                <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
             </div>
             <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
                 <ScrollArea className="h-full">
@@ -266,29 +265,7 @@ export function MarkdownToHtmlConverter() {
                     {editorPanel}
                 </TabsContent>
                 <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
-                    <Tabs defaultValue="preview" className="flex flex-col h-full">
-                        <TabsList className="bg-transparent p-0 m-1 justify-start border-b">
-                            <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
-                            <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
-                            <ScrollArea className="h-full">
-                                <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
-                            </ScrollArea>
-                        </TabsContent>
-                        <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
-                            <ScrollArea className="h-full w-full">
-                                <Editor
-                                    value={html}
-                                    onValueChange={() => {}}
-                                    highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
-                                    padding={16}
-                                    readOnly
-                                    className="code-editor flex-1 min-h-full"
-                                />
-                            </ScrollArea>
-                        </TabsContent>
-                    </Tabs>
+                    {htmlResultPanel}
                 </TabsContent>
             </Tabs>
         )
@@ -297,11 +274,11 @@ export function MarkdownToHtmlConverter() {
       if (isTablet) {
         return (
             <ResizablePanelGroup direction="vertical" className="flex-1 rounded-t-xl overflow-hidden">
+                <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground">
+                    <span>MARKDOWN</span>
+                    <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+                </div>
                 <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                     <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground">
-                        <span>MARKDOWN</span>
-                        <ArrowLeftRight className="w-4 h-4"/>
-                    </div>
                     {editorPanel}
                 </ResizablePanel>
                 <ResizableHandle withHandle />
@@ -315,14 +292,38 @@ export function MarkdownToHtmlConverter() {
       return (
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
             <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-                    MARKDOWN
+                <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground">
+                    <span>MARKDOWN</span>
+                    <Toolbar onUpload={handleUploadClick} onCopy={()=>{}} onDownload={()=>{}} isCopied={false} className="opacity-0 pointer-events-none" />
                 </div>
                 {editorPanel}
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                {htmlResultPanel}
+                 <div className="flex justify-between items-center border-b p-1.5 pl-2">
+                    <TabsList className="bg-transparent p-0 m-0 h-auto">
+                        <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
+                        <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
+                    </TabsList>
+                    <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+                 </div>
+                 <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+                    <ScrollArea className="h-full">
+                        <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
+                    </ScrollArea>
+                </TabsContent>
+                <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+                    <ScrollArea className="h-full w-full">
+                        <Editor
+                            value={html}
+                            onValueChange={() => { }}
+                            highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
+                            padding={16}
+                            readOnly
+                            className="code-editor flex-1 min-h-full"
+                        />
+                    </ScrollArea>
+                </TabsContent>
             </ResizablePanel>
         </ResizablePanelGroup>
       );
@@ -337,7 +338,13 @@ export function MarkdownToHtmlConverter() {
                 accept=".md,.markdown"
                 className="hidden"
             />
-            {renderLayout()}
+            {isTablet ? (
+                renderLayout()
+            ) : (
+                <Tabs defaultValue="preview" className="flex flex-col h-full">
+                    {renderLayout()}
+                </Tabs>
+            )}
         </div>
     );
 }
