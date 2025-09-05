@@ -97,6 +97,7 @@ export default function Header() {
       { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
       { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
       { href: "/markdown-to-html", label: "Markdown to HTML", icon: <Code /> },
+      { href: "/text-summarizer", label: "Text Summarizer", icon: <Pencil /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
