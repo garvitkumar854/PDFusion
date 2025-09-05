@@ -158,7 +158,7 @@ export function MarkdownToHtmlConverter() {
     };
 
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-[75vh] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-[80vh] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
