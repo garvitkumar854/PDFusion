@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check } from "lucide-react";
+import { Copy, Download, Check, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -13,7 +13,8 @@ import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-markup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import { cn } from "@/lib/utils";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -43,17 +44,50 @@ function greet() {
 Happy converting!
 `;
 
+const DesktopToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
+  <div className="flex items-center gap-2">
+    <Button variant="ghost" size="sm" onClick={onUpload} className="h-8">
+        <Upload className="w-4 h-4 mr-2" />
+        Upload
+    </Button>
+    <Button variant="ghost" size="sm" onClick={onCopy} className="h-8">
+      {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
+      {isCopied ? "Copied!" : "Copy"}
+    </Button>
+    <Button variant="ghost" size="sm" onClick={onDownload} className="h-8">
+      <Download className="w-4 h-4 mr-2" />
+      Download
+    </Button>
+  </div>
+);
+
+const MobileToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
+    <div className="flex justify-end items-center gap-2 p-2 border-b">
+        <Button variant="ghost" size="sm" onClick={onUpload}>
+            <Upload className="w-4 h-4 mr-2" />
+            Upload
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onCopy}>
+            {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
+            Copy HTML
+        </Button>
+    </div>
+);
+
 export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
-    
+    const { toast } = useToast();
+    const isMobile = useIsMobile();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         const parsedHtml = marked.parse(markdown) as string;
         setHtml(parsedHtml);
     }, [markdown]);
 
-    const handleCopy = () => {
+    const handleCopy = useCallback(() => {
         navigator.clipboard.writeText(html);
         toast({
             variant: "success",
@@ -62,9 +96,9 @@ export function MarkdownToHtmlConverter() {
         });
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-    };
+    }, [html, toast]);
 
-    const handleDownload = () => {
+    const handleDownload = useCallback(() => {
         const blob = new Blob([`
             <!DOCTYPE html>
             <html lang="en">
@@ -72,7 +106,7 @@ export function MarkdownToHtmlConverter() {
                 <meta charset="UTF-8">
                 <title>Converted Markdown</title>
                 <style>
-                    body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
+                    body { font-family: sans-serif; line-height: 1.6; padding: 2rem; max-width: 800px; margin: 0 auto; }
                     pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-wrap: break-word; }
                     code { font-family: monospace; }
                 </style>
@@ -90,149 +124,123 @@ export function MarkdownToHtmlConverter() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    }, [html]);
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLDivElement>) => {
-        const textarea = e.target as HTMLTextAreaElement;
-        const { selectionStart, selectionEnd, value } = textarea;
-        const lines = value.split('\n');
-        
-        const updateState = (newValue: string, newCursorPos: number) => {
-            setMarkdown(newValue);
-            setTimeout(() => {
-                textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-            }, 0);
-        };
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result as string;
+                setMarkdown(content);
+                toast({ title: "File Uploaded", description: `"${file.name}" has been loaded.` });
+            };
+            reader.onerror = () => {
+                toast({ variant: "destructive", title: "Error", description: "Failed to read the file." });
+            };
+            reader.readAsText(file);
+        }
+    };
 
-        if (e.key === "Tab" && !e.shiftKey) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const textarea = e.currentTarget as unknown as HTMLTextAreaElement;
+        const { selectionStart, selectionEnd, value } = textarea;
+
+        if (e.key === "Tab") {
             e.preventDefault();
             const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
-            updateState(newValue, selectionStart + 2);
-        }
-
-        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-            e.preventDefault();
-            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
-            const line = lines[currentLineIndex];
-            lines.splice(currentLineIndex + 1, 0, line);
-            const newValue = lines.join('\n');
-            updateState(newValue, selectionStart + line.length + 1);
-        }
-
-        if (e.altKey) {
-            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (currentLineIndex > 0) {
-                    const newLines = [...lines];
-                    [newLines[currentLineIndex - 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex - 1]];
-                    const prevLineLength = lines[currentLineIndex - 1].length;
-                    updateState(newLines.join('\n'), selectionStart - prevLineLength - 1);
-                }
-            } else if (e.key === 'ArrowDown') {
-                 e.preventDefault();
-                 if (currentLineIndex < lines.length - 1) {
-                    const newLines = [...lines];
-                    [newLines[currentLineIndex + 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex + 1]];
-                    const nextLineLength = lines[currentLineIndex + 1].length;
-                    updateState(newLines.join('\n'), selectionStart + nextLineLength + 1);
-                 }
-            }
-        }
-
-         if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-            e.preventDefault();
-            const startLine = value.substring(0, selectionStart).split('\n').length - 1;
-            const endLine = value.substring(0, selectionEnd).split('\n').length - 1;
-            const newLines = [...lines];
-            let cursorOffset = 0;
-
-            const isAlreadyCommented = newLines.slice(startLine, endLine + 1).every(line =>
-                line.trim().startsWith('<!--') && line.trim().endsWith('-->')
-            );
-            
-            for (let i = startLine; i <= endLine; i++) {
-                if (isAlreadyCommented) {
-                    newLines[i] = newLines[i].replace(/<!--\s?/, '').replace(/\s?-->/, '');
-                     if (i === startLine) cursorOffset -= 5;
-                } else {
-                     newLines[i] = `<!-- ${newLines[i]} -->`;
-                     if (i === startLine) cursorOffset += 5;
-                }
-            }
-
-            const newValue = newLines.join('\n');
             setMarkdown(newValue);
             setTimeout(() => {
-                const newSelectionEnd = selectionEnd + cursorOffset * (endLine - startLine + 1);
-                textarea.setSelectionRange(selectionStart + cursorOffset, newSelectionEnd);
+                textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
             }, 0);
         }
     };
 
+    const editorPanel = (
+        <div className="flex-1 flex overflow-hidden code-editor-container">
+            <ScrollArea className="w-full h-full">
+                <Editor
+                    value={markdown}
+                    onValueChange={setMarkdown}
+                    highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
+                    padding={16}
+                    onKeyDown={handleKeyDown}
+                    className="code-editor flex-1 min-h-full"
+                />
+            </ScrollArea>
+        </div>
+    );
 
-    return (
-      <div className="border rounded-xl bg-card shadow-sm h-[80vh] flex flex-col">
-        <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
-          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-              MARKDOWN
+    const htmlResultPanel = (
+        <Tabs defaultValue="preview" className="flex flex-col h-full">
+            <div className="flex justify-between items-center border-b pr-2">
+                <TabsList className="bg-transparent p-0 m-1">
+                    <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
+                    <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+                </TabsList>
+                {!isMobile && <DesktopToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />}
             </div>
-             <div className="flex-1 flex overflow-hidden code-editor-container">
-                <ScrollArea className="w-full h-full">
-                  <Editor
-                      value={markdown}
-                      onValueChange={setMarkdown}
-                      highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
-                      padding={16}
-                      onKeyDown={handleKeyDown}
-                      className="code-editor flex-1 min-h-full"
-                  />
+            <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+                <ScrollArea className="h-full">
+                    <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
                 </ScrollArea>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-            <Tabs defaultValue="preview" className="flex flex-col h-full">
-                <div className="flex justify-between items-center border-b pr-2">
-                    <TabsList className="bg-transparent p-0 m-1">
-                        <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
-                        <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
+            </TabsContent>
+            <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+                <ScrollArea className="h-full w-full">
+                    <Editor
+                        value={html}
+                        onValueChange={() => { }}
+                        highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
+                        padding={16}
+                        readOnly
+                        className="code-editor flex-1 min-h-full"
+                    />
+                </ScrollArea>
+            </TabsContent>
+        </Tabs>
+    );
+    
+    return (
+        <div className="border rounded-xl bg-card shadow-sm flex flex-col h-full md:h-[80vh]">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".md,.markdown"
+                className="hidden"
+            />
+            {isMobile ? (
+                <Tabs defaultValue="markdown" className="w-full h-full flex flex-col">
+                    <MobileToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                        <TabsTrigger value="result">Result</TabsTrigger>
                     </TabsList>
-                    <div className="flex items-center gap-2">
-                         <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8">
-                            {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-                            {isCopied ? "Copied!" : "Copy"}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={handleDownload} className="h-8">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                        </Button>
-                    </div>
-                </div>
-                <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
-                   <ScrollArea className="h-full">
-                    <div
-                        className="html-preview"
-                        dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                   </ScrollArea>
-                </TabsContent>
-                <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
-                  <ScrollArea className="h-full w-full">
-                     <Editor
-                      value={html}
-                      onValueChange={() => {}} // Read-only
-                      highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')}
-                      padding={16}
-                      readOnly
-                      className="code-editor flex-1 min-h-full"
-                    />
-                  </ScrollArea>
-                </TabsContent>
-            </Tabs>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
+                    <TabsContent value="markdown" className="flex-1 flex flex-col min-h-0">
+                        {editorPanel}
+                    </TabsContent>
+                    <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
+                        {htmlResultPanel}
+                    </TabsContent>
+                </Tabs>
+            ) : (
+                <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
+                    <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                        <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
+                            MARKDOWN
+                        </div>
+                        {editorPanel}
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                        {htmlResultPanel}
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            )}
+        </div>
     );
 }
