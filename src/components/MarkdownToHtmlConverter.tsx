@@ -13,7 +13,7 @@ import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-markup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBreakpoint } from "@/hooks/use-breakpoint";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
@@ -66,9 +66,8 @@ export function MarkdownToHtmlConverter() {
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
     const { toast } = useToast();
-    const isMobile = useBreakpoint('sm');
-    const isTablet = useBreakpoint('md');
-
+    const isMobile = useIsMobile();
+    
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -278,29 +277,6 @@ export function MarkdownToHtmlConverter() {
             </TabsContent>
           </Tabs>
         );
-      } else if (isTablet) {
-          const direction = "vertical";
-          return (
-            <>
-              <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
-                <span className="px-2">MARKDOWN</span>
-                 <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-              </div>
-              <ResizablePanelGroup direction={direction} className="flex-1">
-                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                  {editorPanel}
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                  <Tabs defaultValue="preview" className="flex flex-col h-full">
-                      {resultHeader}
-                      {htmlResultPanel}
-                      {htmlRawPanel}
-                  </Tabs>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </>
-          )
       } else {
          const direction = "horizontal";
          return (
