@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check, Upload, ArrowLeftRight } from "lucide-react";
+import { Copy, Download, Check, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -60,13 +60,6 @@ const Toolbar = ({ onUpload, onCopy, onDownload, isCopied, className }: { onUplo
     </Button>
   </div>
 );
-
-const MobileToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
-    <div className="flex justify-center items-center p-1 border-t flex-shrink-0">
-        <Toolbar onUpload={onUpload} onCopy={onCopy} onDownload={onDownload} isCopied={isCopied} />
-    </div>
-);
-
 
 export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
@@ -240,7 +233,6 @@ export function MarkdownToHtmlConverter() {
     const markdownHeader = (
         <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
             <span className="px-2">MARKDOWN</span>
-             <Toolbar onUpload={handleUploadClick} onCopy={()=>{}} onDownload={()=>{}} isCopied={false} className="opacity-0 pointer-events-none" />
         </div>
     );
 
@@ -265,7 +257,9 @@ export function MarkdownToHtmlConverter() {
                   <TabsTrigger value="result">Result</TabsTrigger>
                 </TabsList>
               </div>
-              <MobileToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+              <div className="flex justify-center items-center p-1 border-t flex-shrink-0">
+                  <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+              </div>
             </div>
             <TabsContent value="markdown" className="flex-1 min-h-0">
               {editorPanel}
@@ -284,28 +278,48 @@ export function MarkdownToHtmlConverter() {
             </TabsContent>
           </Tabs>
         );
+      } else if (isTablet) {
+          const direction = "vertical";
+          return (
+            <>
+              <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
+                <span className="px-2">MARKDOWN</span>
+                 <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
+              </div>
+              <ResizablePanelGroup direction={direction} className="flex-1">
+                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                  {editorPanel}
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                  <Tabs defaultValue="preview" className="flex flex-col h-full">
+                      {resultHeader}
+                      {htmlResultPanel}
+                      {htmlRawPanel}
+                  </Tabs>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </>
+          )
+      } else {
+         const direction = "horizontal";
+         return (
+            <ResizablePanelGroup direction={direction} className="flex-1">
+              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                {markdownHeader}
+                {editorPanel}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                <Tabs defaultValue="preview" className="flex flex-col h-full">
+                    {resultHeader}
+                    {htmlResultPanel}
+                    {htmlRawPanel}
+                </Tabs>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+        );
       }
-
-      const direction = isTablet ? "vertical" : "horizontal";
-
-      return (
-        <>
-        <ResizablePanelGroup direction={direction} className="flex-1">
-          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-             {markdownHeader}
-             {editorPanel}
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-             <Tabs defaultValue="preview" className="flex flex-col h-full">
-                {resultHeader}
-                {htmlResultPanel}
-                {htmlRawPanel}
-             </Tabs>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-        </>
-      );
     }
     
     return (
