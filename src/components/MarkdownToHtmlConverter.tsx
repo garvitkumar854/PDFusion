@@ -100,7 +100,7 @@ export function MarkdownToHtmlConverter() {
                 <Textarea
                   value={markdown}
                   onChange={(e) => setMarkdown(e.target.value)}
-                  className="w-full h-full resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  className="w-full min-h-full flex-1 resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
                   placeholder="Type your Markdown here..."
                 />
               </ScrollArea>
