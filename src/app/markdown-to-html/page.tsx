@@ -10,7 +10,7 @@ import { ListChecks, ShieldCheck, Zap, Code, FileDown, Pencil } from 'lucide-rea
 const MarkdownToHtmlLoader = dynamic(() => import('@/components/MarkdownToHtmlLoader'), {
   ssr: false,
   loading: () => (
-    <div className="grid md:grid-cols-2 gap-4 h-[60vh]">
+    <div className="grid md:grid-cols-2 gap-4 h-[70vh]">
         <Skeleton className="w-full h-full" />
         <Skeleton className="w-full h-full" />
     </div>
@@ -74,7 +74,7 @@ export default function MarkdownToHtmlPage() {
         </section>
         
         <main className="flex-1 w-full">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto h-[70vh]">
             <MarkdownToHtmlLoader />
           </div>
         </main>

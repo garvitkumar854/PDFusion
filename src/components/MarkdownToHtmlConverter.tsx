@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Check } from "lucide-react";
@@ -11,9 +11,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
-import "prismjs/themes/prism-okaidia.css";
 import { cn } from "@/lib/utils";
-
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -22,7 +20,7 @@ This is a **live editor**. Start typing in the Markdown panel on the left, and y
 ## Features
 
 - **Live Preview**: See your changes as you type.
-- **Syntax Highlighting**: The HTML output is styled for readability.
+- **Syntax Highlighting**: The editor is themed for readability.
 - **Copy & Download**: Easily grab your HTML code.
 
 ### Example List
@@ -47,11 +45,16 @@ export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
+    const [lineCount, setLineCount] = useState(defaultMarkdown.split('\n').length);
     const { toast } = useToast();
-    
+
+    const editorRef = useRef<any>(null);
+    const lineNumbersRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         const convertedHtml = marked.parse(markdown);
         setHtml(convertedHtml as string);
+        setLineCount(markdown.split('\n').length);
     }, [markdown]);
 
     const handleCopy = () => {
@@ -74,7 +77,7 @@ export function MarkdownToHtmlConverter() {
                 <title>Converted Markdown</title>
                 <style>
                     body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
-                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; }
+                    pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
                     code { font-family: monospace; }
                 </style>
             </head>
@@ -92,49 +95,78 @@ export function MarkdownToHtmlConverter() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
-    
-     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Tab" && e.target instanceof HTMLTextAreaElement) {
             e.preventDefault();
             const { selectionStart, selectionEnd, value } = e.target;
-            
-            const newValue = value.substring(0, selectionStart) + "  " + value.substring(selectionEnd);
-            setMarkdown(newValue);
-            
-            setTimeout(() => {
-                if(e.target instanceof HTMLTextAreaElement) {
-                    e.target.selectionStart = e.target.selectionEnd = selectionStart + 2;
+            const indentation = "  ";
+
+            if (e.shiftKey) {
+                // Outdent
+                const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+                if (value.substring(lineStart, lineStart + indentation.length) === indentation) {
+                    const newValue = value.substring(0, lineStart) + value.substring(lineStart + indentation.length);
+                    setMarkdown(newValue);
+                    setTimeout(() => {
+                        if (editorRef.current?._input) {
+                            editorRef.current._input.selectionStart = editorRef.current._input.selectionEnd = Math.max(selectionStart - indentation.length, lineStart);
+                        }
+                    }, 0);
                 }
-            }, 0);
+            } else {
+                // Indent
+                const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
+                setMarkdown(newValue);
+                setTimeout(() => {
+                    if (editorRef.current?._input) {
+                        editorRef.current._input.selectionStart = editorRef.current._input.selectionEnd = selectionStart + indentation.length;
+                    }
+                }, 0);
+            }
+        }
+    };
+    
+    const syncScroll = () => {
+        if (editorRef.current?._input && lineNumbersRef.current) {
+            lineNumbersRef.current.scrollTop = editorRef.current._input.scrollTop;
         }
     };
 
-
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-[70vh] min-h-[500px] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-full min-h-[500px] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
           <ResizablePanel defaultSize={50} className="flex flex-col">
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
               MARKDOWN
             </div>
-            <ScrollArea className="flex-1">
-                <Editor
-                    value={markdown}
-                    onValueChange={code => setMarkdown(code)}
-                    highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
-                    padding={16}
-                    onKeyDown={handleKeyDown}
-                    className="language-markdown h-full font-mono text-sm caret-white"
-                    textareaClassName="outline-none w-full"
-                    preClassName="h-full"
-                />
-            </ScrollArea>
+             <div className="flex-1 flex overflow-hidden code-editor-container">
+                <ScrollArea className="h-full">
+                    <div ref={lineNumbersRef} className="line-numbers">
+                        {Array.from({ length: lineCount }, (_, i) => i + 1).map(num => (
+                            <div key={num}>{num}</div>
+                        ))}
+                    </div>
+                </ScrollArea>
+                <ScrollArea className="h-full flex-1">
+                  <Editor
+                      ref={editorRef}
+                      value={markdown}
+                      onValueChange={setMarkdown}
+                      highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
+                      padding={16}
+                      onKeyDown={handleKeyDown}
+                      onScroll={syncScroll}
+                      className="code-editor h-full"
+                  />
+                </ScrollArea>
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col">
             <div className="flex flex-col h-full">
               <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-                HTML
+                HTML PREVIEW
               </div>
               <ScrollArea className="flex-1 p-4">
                 <div
