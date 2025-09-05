@@ -1,7 +1,11 @@
 
 {
   "name": "pdfusion",
+<<<<<<< HEAD
   "version": "2.0.0",
+=======
+  "version": "2.0",
+>>>>>>> 4b0ae9a154dbd2c711e58ff2011722e1a469680f
   "private": true,
   "scripts": {
     "dev": "next dev",
