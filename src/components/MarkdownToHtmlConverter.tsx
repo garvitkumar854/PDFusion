@@ -222,34 +222,35 @@ export function MarkdownToHtmlConverter() {
     );
     
     const htmlResultPanel = (
-        <Tabs defaultValue="preview" className="flex flex-col h-full">
-          <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
-            <ScrollArea className="h-full">
-              <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
-            </ScrollArea>
-          </TabsContent>
-          <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+        <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+          <ScrollArea className="h-full">
+            <div className="html-preview" dangerouslySetInnerHTML={{ __html: html }} />
+          </ScrollArea>
+        </TabsContent>
+    );
+
+    const htmlRawPanel = (
+         <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
             <ScrollArea className="h-full w-full">
               <Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" />
             </ScrollArea>
           </TabsContent>
-        </Tabs>
     );
     
-    const htmlResultHeader = (
-        <div className="flex justify-between items-center border-b p-1.5 pl-2 flex-shrink-0 flex-wrap">
+    const markdownHeader = (
+        <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
+            <span className="px-2">MARKDOWN</span>
+             <Toolbar onUpload={handleUploadClick} onCopy={()=>{}} onDownload={()=>{}} isCopied={false} className="opacity-0 pointer-events-none" />
+        </div>
+    );
+
+    const resultHeader = (
+        <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap">
             <TabsList className="bg-transparent p-0 m-0 h-auto">
                 <TabsTrigger value="preview" className="text-sm h-8">Preview</TabsTrigger>
                 <TabsTrigger value="raw" className="text-sm h-8">Raw HTML</TabsTrigger>
             </TabsList>
-            <Toolbar onUpload={() => {}} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-        </div>
-    );
-    
-    const markdownHeader = (
-        <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
-            <span>MARKDOWN</span>
-            <Toolbar onUpload={handleUploadClick} onCopy={() => {}} onDownload={() => {}} isCopied={false} className="opacity-0 pointer-events-none" />
+            <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
         </div>
     );
 
@@ -278,41 +279,28 @@ export function MarkdownToHtmlConverter() {
                     </TabsList>
                   </div>
                   {htmlResultPanel}
+                  {htmlRawPanel}
               </Tabs>
             </TabsContent>
           </Tabs>
         );
       }
 
-      const TabletAndDesktopToolbar = () => (
-        <div className="p-1 border-b flex justify-end items-center flex-shrink-0">
-          <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-        </div>
-      );
-      
       const direction = isTablet ? "vertical" : "horizontal";
 
       return (
         <>
-        {isTablet && <TabletAndDesktopToolbar />}
         <ResizablePanelGroup direction={direction} className="flex-1">
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-             {!isTablet && markdownHeader}
+             {markdownHeader}
              {editorPanel}
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
              <Tabs defaultValue="preview" className="flex flex-col h-full">
-                {!isTablet && htmlResultHeader}
-                {isTablet && (
-                    <div className="flex justify-between items-center border-b pr-2 flex-shrink-0">
-                        <TabsList className="bg-transparent p-0 m-1">
-                            <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
-                            <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
-                        </TabsList>
-                    </div>
-                )}
+                {resultHeader}
                 {htmlResultPanel}
+                {htmlRawPanel}
              </Tabs>
           </ResizablePanel>
         </ResizablePanelGroup>
