@@ -142,7 +142,7 @@ export function MarkdownToHtmlConverter() {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
 
-        if (e.key === "Tab" && !e.shiftKey) {
+        if (e.key === "Tab") {
             e.preventDefault();
             const indentation = "  ";
             const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
@@ -155,12 +155,14 @@ export function MarkdownToHtmlConverter() {
         if (e.ctrlKey && e.key === 'd') {
             e.preventDefault();
             const lines = value.split('\n');
-            const startLine = value.substring(0, selectionStart).split('\n').length - 1;
-            const lineToDuplicate = lines[startLine];
+            const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
+            const lineToDuplicate = lines[currentLineIndex];
             
-            lines.splice(startLine, 0, lineToDuplicate);
+            lines.splice(currentLineIndex + 1, 0, lineToDuplicate);
             
             const newValue = lines.join('\n');
+            
+            // Calculate new cursor position
             const newCursorPos = value.substring(0, selectionStart).length + lineToDuplicate.length + 1;
             
             setMarkdown(newValue);
@@ -178,12 +180,12 @@ export function MarkdownToHtmlConverter() {
               MARKDOWN
             </div>
              <div className="flex-1 flex overflow-hidden code-editor-container">
-                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-hidden">
+                <ScrollArea ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-auto">
                     {Array.from({ length: markdownLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[21px]">{num}</div>
                     ))}
-                </div>
-                <div className="flex-1 h-full overflow-y-auto">
+                </ScrollArea>
+                <ScrollArea className="flex-1">
                   <Editor
                       ref={editorRef}
                       value={markdown}
@@ -191,10 +193,10 @@ export function MarkdownToHtmlConverter() {
                       highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')}
                       padding={16}
                       onKeyDown={handleKeyDown}
-                      className="code-editor h-full"
+                      className="code-editor h-full prose-pre:whitespace-pre-wrap prose-pre:break-words"
                       style={{ minHeight: '100%' }}
                   />
-                </div>
+                </ScrollArea>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -204,11 +206,11 @@ export function MarkdownToHtmlConverter() {
                 HTML PREVIEW
               </div>
               <div className="flex-1 flex overflow-hidden">
-                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-hidden">
+                  <ScrollArea ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-auto">
                     {Array.from({ length: htmlLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[24px]">{num}</div>
                     ))}
-                  </div>
+                  </ScrollArea>
                   <ScrollArea ref={htmlScrollRef} className="flex-1">
                     <div
                       ref={htmlPreviewRef}
