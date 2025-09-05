@@ -70,6 +70,35 @@ export function MarkdownToHtmlConverter() {
         }
     }, [html]);
 
+    useEffect(() => {
+      const editorTextArea = editorRef.current?._input;
+      if (editorTextArea && markdownLineNumbersRef.current) {
+        const syncScroll = () => {
+          if (markdownLineNumbersRef.current) {
+            markdownLineNumbersRef.current.scrollTop = editorTextArea.scrollTop;
+          }
+        };
+        editorTextArea.addEventListener('scroll', syncScroll);
+        return () => editorTextArea.removeEventListener('scroll', syncScroll);
+      }
+    }, [markdown]);
+
+    useEffect(() => {
+        if(htmlScrollRef.current && htmlLineNumbersRef.current) {
+            const syncScroll = () => {
+                if(htmlLineNumbersRef.current && htmlScrollRef.current) {
+                     htmlLineNumbersRef.current.scrollTop = htmlScrollRef.current.scrollTop;
+                }
+            };
+            
+            const viewport = htmlScrollRef.current.querySelector(':scope > div:first-child');
+            if (viewport) {
+                viewport.addEventListener('scroll', syncScroll);
+                return () => viewport.removeEventListener('scroll', syncScroll);
+            }
+        }
+    }, [html]);
+
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
         setIsCopied(true);
@@ -113,7 +142,7 @@ export function MarkdownToHtmlConverter() {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
 
-        if (e.key === "Tab") {
+        if (e.key === "Tab" && !e.shiftKey) {
             e.preventDefault();
             const indentation = "  ";
             const newValue = value.substring(0, selectionStart) + indentation + value.substring(selectionEnd);
@@ -140,22 +169,6 @@ export function MarkdownToHtmlConverter() {
             }, 0);
         }
     };
-    
-    const syncScroll = (refToSync: React.RefObject<HTMLDivElement>) => (e: React.UIEvent<HTMLElement>) => {
-        if (refToSync.current) {
-            refToSync.current.scrollTop = (e.target as HTMLElement).scrollTop;
-        }
-    };
-    
-    useEffect(() => {
-        if(htmlScrollRef.current && htmlLineNumbersRef.current) {
-            htmlScrollRef.current.addEventListener('scroll', (e) => {
-                if(htmlLineNumbersRef.current) {
-                     htmlLineNumbersRef.current.scrollTop = (e.target as HTMLElement).scrollTop;
-                }
-            });
-        }
-    }, [html]);
 
     return (
       <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
@@ -165,12 +178,12 @@ export function MarkdownToHtmlConverter() {
               MARKDOWN
             </div>
              <div className="flex-1 flex overflow-hidden code-editor-container">
-                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117]">
+                <div ref={markdownLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background dark:bg-[#0d1117] h-full overflow-y-hidden">
                     {Array.from({ length: markdownLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[21px]">{num}</div>
                     ))}
                 </div>
-                <ScrollArea className="h-full flex-1" onScroll={syncScroll(markdownLineNumbersRef)}>
+                <div className="flex-1 h-full overflow-y-auto">
                   <Editor
                       ref={editorRef}
                       value={markdown}
@@ -181,7 +194,7 @@ export function MarkdownToHtmlConverter() {
                       className="code-editor h-full"
                       style={{ minHeight: '100%' }}
                   />
-                </ScrollArea>
+                </div>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
@@ -191,15 +204,15 @@ export function MarkdownToHtmlConverter() {
                 HTML PREVIEW
               </div>
               <div className="flex-1 flex overflow-hidden">
-                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background">
+                  <div ref={htmlLineNumbersRef} className="line-numbers pt-4 pr-4 text-right select-none text-muted-foreground bg-background h-full overflow-y-hidden">
                     {Array.from({ length: htmlLineCount }, (_, i) => i + 1).map(num => (
                         <div key={num} className="h-[24px]">{num}</div>
                     ))}
                   </div>
-                  <ScrollArea className="flex-1 p-4" onScroll={syncScroll(htmlLineNumbersRef)}>
+                  <ScrollArea ref={htmlScrollRef} className="flex-1">
                     <div
                       ref={htmlPreviewRef}
-                      className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6"
+                      className="prose prose-sm dark:prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words leading-6 p-4"
                       dangerouslySetInnerHTML={{ __html: html }}
                     />
                   </ScrollArea>
