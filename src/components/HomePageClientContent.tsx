@@ -247,8 +247,8 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                           <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card">
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
-                                  <div className={`p-2 sm:p-3 rounded-lg ${service.bgColor}`}>
-                                  {React.cloneElement(service.icon, { className: cn(service.icon.props.className, "w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110") })}
+                                  <div className={cn('p-2 sm:p-3 rounded-lg', service.bgColor)}>
+                                    {React.cloneElement(service.icon, { className: cn(service.icon.props.className, "w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110") })}
                                   </div>
                                   <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
                                   {service.title}
