@@ -96,6 +96,7 @@ export default function Header() {
       { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
       { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
       { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
+      { href: "/markdown-to-html", label: "Markdown to HTML", icon: <Code /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
