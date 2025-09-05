@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check, Upload } from "lucide-react";
+import { Copy, Download, Check, Upload, ArrowLeftRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -13,7 +13,7 @@ import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
 import "prismjs/components/prism-markup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cn } from "@/lib/utils";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
@@ -44,38 +44,21 @@ function greet() {
 Happy converting!
 `;
 
-const DesktopToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
-  <div className="flex items-center gap-2">
-    <Button variant="ghost" size="sm" onClick={onUpload} className="h-8">
-        <Upload className="w-4 h-4 mr-2" />
-        Upload
+const Toolbar = ({ onUpload, onCopy, onDownload, isCopied, className }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean, className?: string }) => (
+  <div className={cn("flex items-center gap-1 sm:gap-2", className)}>
+    <Button variant="ghost" size="sm" onClick={onUpload} className="h-8 px-2 sm:px-3">
+        <Upload className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Upload</span>
     </Button>
-    <Button variant="ghost" size="sm" onClick={onCopy} className="h-8">
-      {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-      {isCopied ? "Copied!" : "Copy"}
+    <Button variant="ghost" size="sm" onClick={onCopy} className="h-8 px-2 sm:px-3">
+      {isCopied ? <Check className="w-4 h-4 sm:mr-2 text-green-500" /> : <Copy className="w-4 h-4 sm:mr-2" />}
+      <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
     </Button>
-    <Button variant="ghost" size="sm" onClick={onDownload} className="h-8">
-      <Download className="w-4 h-4 mr-2" />
-      Download
+    <Button variant="ghost" size="sm" onClick={onDownload} className="h-8 px-2 sm:px-3">
+      <Download className="w-4 h-4 sm:mr-2" />
+      <span className="hidden sm:inline">Download</span>
     </Button>
   </div>
-);
-
-const MobileToolbar = ({ onUpload, onCopy, onDownload, isCopied }: { onUpload: () => void, onCopy: () => void, onDownload: () => void, isCopied: boolean }) => (
-    <div className="flex justify-end items-center gap-2 p-2 border-b">
-        <Button variant="ghost" size="sm" onClick={onUpload}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onCopy}>
-            {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-            Copy
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onDownload}>
-            <Download className="w-4 h-4 mr-2" />
-            Download
-        </Button>
-    </div>
 );
 
 export function MarkdownToHtmlConverter() {
@@ -83,7 +66,9 @@ export function MarkdownToHtmlConverter() {
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
     const { toast } = useToast();
-    const isMobile = useIsMobile();
+    const isMobile = useBreakpoint('sm');
+    const isTablet = useBreakpoint('lg');
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -149,10 +134,13 @@ export function MarkdownToHtmlConverter() {
             reader.readAsText(file);
         }
     };
-
+    
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
       const textarea = e.target as HTMLTextAreaElement;
       const { selectionStart, selectionEnd, value } = textarea;
+      const currentLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+      const currentLineEnd = value.indexOf('\n', selectionStart);
+      const currentLine = value.substring(currentLineStart, currentLineEnd === -1 ? value.length : currentLineEnd);
 
       if (e.key === 'Tab' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
@@ -161,8 +149,59 @@ export function MarkdownToHtmlConverter() {
         setTimeout(() => {
           textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
         }, 0);
+      } else if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const lineToDuplicate = currentLine + (currentLineEnd === -1 ? '' : '\n');
+        const newValue = value.substring(0, currentLineEnd === -1 ? value.length : currentLineEnd) + '\n' + lineToDuplicate + value.substring(currentLineEnd === -1 ? value.length : currentLineEnd);
+        setMarkdown(newValue);
+        setTimeout(() => {
+           textarea.selectionStart = textarea.selectionEnd = currentLineEnd + lineToDuplicate.length + 1;
+        }, 0);
+      } else if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        e.preventDefault();
+        const lines = value.split('\n');
+        const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
+
+        if (e.key === "ArrowUp" && currentLineIndex > 0) {
+            [lines[currentLineIndex - 1], lines[currentLineIndex]] = [lines[currentLineIndex], lines[currentLineIndex - 1]];
+            const newCursorOffset = lines.slice(0, currentLineIndex -1).join('\n').length + (currentLineIndex > 1 ? 1 : 0);
+            setMarkdown(lines.join('\n'));
+            setTimeout(() => {
+              textarea.selectionStart = textarea.selectionEnd = newCursorOffset + value.substring(currentLineStart, selectionStart).length;
+            }, 0);
+        } else if (e.key === "ArrowDown" && currentLineIndex < lines.length - 1) {
+            [lines[currentLineIndex], lines[currentLineIndex + 1]] = [lines[currentLineIndex + 1], lines[currentLineIndex]];
+             const newCursorOffset = lines.slice(0, currentLineIndex).join('\n').length + 1;
+            setMarkdown(lines.join('\n'));
+            setTimeout(() => {
+               textarea.selectionStart = textarea.selectionEnd = newCursorOffset + lines[currentLineIndex].length + value.substring(currentLineStart, selectionStart).length;
+            }, 0);
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        const selectedText = value.substring(selectionStart, selectionEnd);
+        const isCommented = selectedText.startsWith('<!-- ') && selectedText.endsWith(' -->');
+        
+        let newValue, newSelectionStart, newSelectionEnd;
+
+        if (isCommented) {
+          newValue = value.substring(0, selectionStart) + selectedText.slice(5, -4) + value.substring(selectionEnd);
+          newSelectionStart = selectionStart;
+          newSelectionEnd = selectionEnd - 9;
+        } else {
+          newValue = value.substring(0, selectionStart) + `<!-- ${selectedText} -->` + value.substring(selectionEnd);
+          newSelectionStart = selectionStart + 5;
+          newSelectionEnd = selectionEnd + 5;
+        }
+
+        setMarkdown(newValue);
+        setTimeout(() => {
+          textarea.selectionStart = newSelectionStart;
+          textarea.selectionEnd = newSelectionEnd;
+        });
       }
     };
+
 
     const editorPanel = (
         <div className="flex-1 flex overflow-hidden code-editor-container">
@@ -186,7 +225,7 @@ export function MarkdownToHtmlConverter() {
                     <TabsTrigger value="preview" className="text-sm">Preview</TabsTrigger>
                     <TabsTrigger value="raw" className="text-sm">Raw HTML</TabsTrigger>
                 </TabsList>
-                {!isMobile && <DesktopToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />}
+                <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
             </div>
             <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
                 <ScrollArea className="h-full">
@@ -207,9 +246,64 @@ export function MarkdownToHtmlConverter() {
             </TabsContent>
         </Tabs>
     );
+
+    const renderLayout = () => {
+      if (isMobile) {
+        return (
+            <Tabs defaultValue="markdown" className="w-full h-full flex flex-col">
+                <div className="flex justify-between items-center p-2 border-b">
+                   <TabsList className="grid w-full grid-cols-2">
+                       <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                       <TabsTrigger value="result">Result</TabsTrigger>
+                   </TabsList>
+                </div>
+                <Toolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} className="justify-end p-1 border-b" />
+                <TabsContent value="markdown" className="flex-1 flex flex-col min-h-0">
+                    {editorPanel}
+                </TabsContent>
+                <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
+                    {htmlResultPanel}
+                </TabsContent>
+            </Tabs>
+        )
+      }
+
+      if (isTablet) {
+        return (
+            <ResizablePanelGroup direction="vertical" className="flex-1 rounded-t-xl overflow-hidden">
+                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                     <div className="p-3 border-b flex justify-between items-center text-sm font-medium text-muted-foreground">
+                        <span>MARKDOWN</span>
+                        <ArrowLeftRight className="w-4 h-4"/>
+                    </div>
+                    {editorPanel}
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                    {htmlResultPanel}
+                </ResizablePanel>
+            </ResizablePanelGroup>
+        )
+      }
+
+      return (
+        <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
+            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
+                    MARKDOWN
+                </div>
+                {editorPanel}
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+                {htmlResultPanel}
+            </ResizablePanel>
+        </ResizablePanelGroup>
+      );
+    }
     
     return (
-        <div className={cn("border rounded-xl bg-card shadow-sm flex flex-col", isMobile ? "h-full" : "h-[80vh]")}>
+        <div className={cn("border rounded-xl bg-card shadow-sm flex flex-col", isMobile ? "h-[calc(100vh-10rem)]" : "h-[80vh]")}>
             <input
                 type="file"
                 ref={fileInputRef}
@@ -217,34 +311,7 @@ export function MarkdownToHtmlConverter() {
                 accept=".md,.markdown"
                 className="hidden"
             />
-            {isMobile ? (
-                <Tabs defaultValue="markdown" className="w-full h-full flex flex-col">
-                    <MobileToolbar onUpload={handleUploadClick} onCopy={handleCopy} onDownload={handleDownload} isCopied={isCopied} />
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="markdown">Markdown</TabsTrigger>
-                        <TabsTrigger value="result">Result</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="markdown" className="flex-1 flex flex-col min-h-0">
-                        {editorPanel}
-                    </TabsContent>
-                    <TabsContent value="result" className="flex-1 flex flex-col min-h-0">
-                        {htmlResultPanel}
-                    </TabsContent>
-                </Tabs>
-            ) : (
-                <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
-                    <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                        <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
-                            MARKDOWN
-                        </div>
-                        {editorPanel}
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                        {htmlResultPanel}
-                    </ResizablePanel>
-                </ResizablePanelGroup>
-            )}
+            {renderLayout()}
         </div>
     );
 }
