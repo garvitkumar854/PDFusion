@@ -1,14 +1,14 @@
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check, SeparatorHorizontal } from "lucide-react";
+import { Copy, Download, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Textarea } from "./ui/textarea";
+import { cn } from "@/lib/utils";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -42,11 +42,15 @@ export function MarkdownToHtmlConverter() {
     const [markdown, setMarkdown] = useState(defaultMarkdown);
     const [html, setHtml] = useState("");
     const [isCopied, setIsCopied] = useState(false);
+    const [lineCount, setLineCount] = useState(defaultMarkdown.split('\n').length);
     const { toast } = useToast();
+    const lineCounterRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         const convertedHtml = marked.parse(markdown);
         setHtml(convertedHtml as string);
+        setLineCount(markdown.split('\n').length);
     }, [markdown]);
     
     const handleCopy = () => {
@@ -68,7 +72,7 @@ export function MarkdownToHtmlConverter() {
                 <meta charset="UTF-8">
                 <title>Converted Markdown</title>
                 <style>
-                    body { font-family: sans-serif; line-height: 1.6; }
+                    body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
                     pre { background-color: #f4f4f4; padding: 1rem; border-radius: 0.5rem; }
                     code { font-family: monospace; }
                 </style>
@@ -88,26 +92,37 @@ export function MarkdownToHtmlConverter() {
         URL.revokeObjectURL(url);
     };
 
+    const handleScroll = () => {
+        if (lineCounterRef.current && textareaRef.current) {
+            lineCounterRef.current.scrollTop = textareaRef.current.scrollTop;
+        }
+    };
+
     return (
       <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
-          <ResizablePanel defaultSize={50}>
-            <div className="flex flex-col h-full">
+          <ResizablePanel defaultSize={50} className="flex flex-col">
               <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
                 MARKDOWN
               </div>
-              <ScrollArea className="flex-1">
+              <div className="flex flex-1 min-h-0">
+                <div ref={lineCounterRef} className="text-right pr-2 py-4 bg-muted/30 text-muted-foreground font-mono text-sm select-none overflow-y-hidden">
+                    {Array.from({ length: lineCount }, (_, i) => (
+                        <div key={i}>{i + 1}</div>
+                    ))}
+                </div>
                 <Textarea
+                  ref={textareaRef}
                   value={markdown}
+                  onScroll={handleScroll}
                   onChange={(e) => setMarkdown(e.target.value)}
-                  className="w-full min-h-full flex-1 resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  className="w-full flex-1 resize-none p-4 font-mono text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent min-h-full"
                   placeholder="Type your Markdown here..."
                 />
-              </ScrollArea>
-            </div>
+              </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50}>
+          <ResizablePanel defaultSize={50} className="flex flex-col">
             <div className="flex flex-col h-full">
               <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
                 HTML
