@@ -54,12 +54,12 @@ export function MarkdownToHtmlConverter() {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(html);
-        setIsCopied(true);
         toast({
             variant: "success",
             title: "HTML Copied!",
             description: "The generated HTML has been copied to your clipboard.",
         });
+        setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
 
@@ -94,6 +94,8 @@ export function MarkdownToHtmlConverter() {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const textarea = e.target as HTMLTextAreaElement;
         const { selectionStart, selectionEnd, value } = textarea;
+        const lines = value.split('\n');
+        const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
 
         if (e.key === "Tab") {
             e.preventDefault();
@@ -109,11 +111,8 @@ export function MarkdownToHtmlConverter() {
         
         if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
             e.preventDefault();
-            const lines = value.split('\n');
-            const lineNo = value.substring(0, selectionStart).split('\n').length - 1;
-            const line = lines[lineNo];
-            
-            lines.splice(lineNo + 1, 0, line);
+            const line = lines[currentLineIndex];
+            lines.splice(currentLineIndex, 0, line);
             const newValue = lines.join('\n');
             const newCursorPos = selectionStart + line.length + 1;
             
@@ -123,10 +122,42 @@ export function MarkdownToHtmlConverter() {
                  textarea.selectionStart = textarea.selectionEnd = newCursorPos;
             }, 0);
         }
+
+        if (e.altKey) {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentLineIndex > 0) {
+                    const newLines = [...lines];
+                    [newLines[currentLineIndex - 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex - 1]];
+                    const lineLength = lines[currentLineIndex].length;
+                    const prevLineLength = lines[currentLineIndex - 1].length;
+                    const newCursorPos = selectionStart - prevLineLength - 1;
+                    
+                    setMarkdown(newLines.join('\n'));
+                    setTimeout(() => {
+                        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+                    }, 0);
+                }
+            } else if (e.key === 'ArrowDown') {
+                 e.preventDefault();
+                 if (currentLineIndex < lines.length - 1) {
+                    const newLines = [...lines];
+                    [newLines[currentLineIndex + 1], newLines[currentLineIndex]] = [newLines[currentLineIndex], newLines[currentLineIndex + 1]];
+                    const lineLength = lines[currentLineIndex].length;
+                    const nextLineLength = lines[currentLineIndex + 1].length;
+                    const newCursorPos = selectionStart + nextLineLength + 1;
+
+                    setMarkdown(newLines.join('\n'));
+                     setTimeout(() => {
+                        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+                    }, 0);
+                 }
+            }
+        }
     };
 
     return (
-      <div className="border rounded-xl bg-card shadow-sm h-[70vh] flex flex-col">
+      <div className="border rounded-xl bg-card shadow-sm h-[75vh] flex flex-col">
         <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-t-xl overflow-hidden">
           <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
             <div className="p-3 border-b text-center text-sm font-medium text-muted-foreground">
