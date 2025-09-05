@@ -54,13 +54,6 @@ export const services: Service[] = [
       href: '/add-watermark'
     },
     {
-      icon: <Pencil className="text-yellow-600 dark:text-yellow-400" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Text Summarizer',
-      description: 'Get a quick, AI-powered summary of any text.',
-      href: '/text-summarizer'
-    },
-    {
       icon: <Code className="text-lime-600 dark:text-lime-400" />,
       bgColor: 'bg-lime-100 dark:bg-lime-900/20',
       title: 'PDF to HTML',

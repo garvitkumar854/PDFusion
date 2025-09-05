@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, Pencil } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,13 @@ const tools = [
       title: 'Markdown to HTML',
       description: 'Convert Markdown to clean HTML with a live side-by-side editor.',
       href: '/markdown-to-html',
+    },
+    {
+      icon: <Pencil className="w-8 h-8 text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Text Summarizer',
+      description: 'Get a quick, AI-powered summary of any text.',
+      href: '/text-summarizer',
     },
 ];
 
