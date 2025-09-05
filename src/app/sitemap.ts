@@ -28,6 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/unit-converter',
     '/calculator',
     '/currency-converter',
+    '/markdown-to-html',
   ].map(route => ({
     url: `${baseUrl}${route}`,
     priority: 0.9,

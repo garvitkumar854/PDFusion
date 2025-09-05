@@ -54,7 +54,8 @@ const withPWA = withPWAInit({
                 url.pathname.startsWith('/currency-converter') ||
                 url.pathname.startsWith('/qr-code-generator') ||
                 url.pathname.startsWith('/unit-converter') ||
-                url.pathname.startsWith('/password-generator')
+                url.pathname.startsWith('/password-generator') ||
+                url.pathname.startsWith('/markdown-to-html')
             )
         },
         handler: 'NetworkFirst',
