@@ -9,7 +9,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const SummarizeInputSchema = z.object({
-  text: z.string().min(50, {message: 'Please enter at least 50 characters to summarize.'}).describe('The text to be summarized.'),
+  text: z.string().min(20, {message: 'Please enter at least 20 characters to summarize.'}).describe('The text to be summarized.'),
 });
 export type SummarizeInput = z.infer<typeof SummarizeInputSchema>;
 
