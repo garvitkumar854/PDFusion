@@ -5,7 +5,6 @@ import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 import { Textarea } from "./ui/textarea";
@@ -13,6 +12,7 @@ import { Pilcrow, Copy, Check, Wand2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WordCounter = ({ text }: { text: string }) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -138,11 +138,11 @@ export function TextSummarizer() {
             </div>
             <TabsContent value="input" className="flex-1 min-h-0">
               <div className="h-full flex flex-col">
-                {editorPanel}
+                <div className="flex-grow min-h-0">{editorPanel}</div>
                  <div className="p-2 border-t flex-shrink-0">
                     <Button onClick={handleSummarize} className="w-full" disabled={isSummarizing || inputText.length < 20}>
                        {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
-                       Summarize
+                       {isSummarizing ? 'Summarizing...' : 'Summarize'}
                     </Button>
                 </div>
               </div>
@@ -155,25 +155,25 @@ export function TextSummarizer() {
       }
       
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full flex-1">
-            {editorPanel}
-             <div className="hidden md:flex flex-col gap-4 h-full">
+        <div className="flex flex-col flex-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+                {editorPanel}
                 {summaryPanel}
-                <Button onClick={handleSummarize} size="lg" className="w-full text-base" disabled={isSummarizing || inputText.length < 20}>
-                    <AnimatePresence mode="wait">
-                         {isSummarizing ? (
-                             <motion.div key="loader-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/>
-                             </motion.div>
-                        ) : (
-                            <motion.div key="wand-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                <Wand2 className="mr-2 h-5 w-5"/>
+            </div>
+             <Button onClick={handleSummarize} size="lg" className="w-full text-base" disabled={isSummarizing || inputText.length < 20}>
+                <AnimatePresence mode="wait">
+                        {isSummarizing ? (
+                            <motion.div key="loader-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin"/>
                             </motion.div>
-                        )}
-                    </AnimatePresence>
-                   Summarize
-                </Button>
-             </div>
+                        ) : (
+                        <motion.div key="wand-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <Wand2 className="mr-2 h-5 w-5"/>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                {isSummarizing ? 'Summarizing...' : 'Summarize'}
+            </Button>
         </div>
       );
     }
