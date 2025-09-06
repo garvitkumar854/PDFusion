@@ -19,7 +19,7 @@ const WordCounter = ({ text }: { text: string }) => {
     const charCount = text.length;
     return (
         <div className="text-xs text-muted-foreground">
-            {wordCount} {wordCount === 1 ? 'word' : 'words'} &bull; {charCount} {charCount === 1 ? 'character' : 'characters'}
+            {wordCount} {wordCount === 1 ? 'word' : 'words'} • {charCount} {charCount === 1 ? 'character' : 'characters'}
         </div>
     )
 }
