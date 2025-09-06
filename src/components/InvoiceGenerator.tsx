@@ -11,6 +11,7 @@ import { Download, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import html2pdf from 'html2pdf.js';
 import { useForm, useFieldArray, FormProvider, useFormContext, Controller } from 'react-hook-form';
+import { cn } from '@/lib/utils';
 
 type InvoiceItem = {
   description: string;
