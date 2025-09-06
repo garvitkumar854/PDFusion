@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
@@ -12,7 +12,6 @@ import { Pilcrow, Copy, Check, Wand2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WordCounter = ({ text }: { text: string }) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -129,28 +128,16 @@ export function TextSummarizer() {
     const renderLayout = () => {
       if (isMobile) {
         return (
-          <Tabs defaultValue="input" className="w-full h-full flex flex-col">
-            <div className="flex-shrink-0 border-b">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="input">Input</TabsTrigger>
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="input" className="flex-1 min-h-0">
-              <div className="h-full flex flex-col">
-                <div className="flex-grow min-h-0">{editorPanel}</div>
-                 <div className="p-2 border-t flex-shrink-0">
+            <div className="flex flex-col gap-4 h-full">
+                <div className="flex-1 min-h-[200px]">{editorPanel}</div>
+                <div className="flex-shrink-0">
                     <Button onClick={handleSummarize} className="w-full" disabled={isSummarizing || inputText.length < 20}>
                        {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
                        {isSummarizing ? 'Summarizing...' : 'Summarize'}
                     </Button>
                 </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="summary" className="flex-1 flex flex-col min-h-0">
-               {summaryPanel}
-            </TabsContent>
-          </Tabs>
+                <div className="flex-1 min-h-[200px]">{summaryPanel}</div>
+            </div>
         );
       }
       
