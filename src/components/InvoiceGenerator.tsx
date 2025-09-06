@@ -22,6 +22,7 @@ import { currencyList } from '@/lib/currency-data';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const invoiceDetailsSchema = z.object({
@@ -172,7 +173,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                        <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <Button variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                       <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
                 
@@ -211,7 +212,14 @@ export function InvoiceGenerator() {
             billedByGstin: "",
             billedToGstin: "",
             billedByAddress: "",
-            billedToAddress: ""
+            billedToAddress: "",
+            billedByEmail: undefined,
+            billedByPan: undefined,
+            billedByPhone: undefined,
+            billedToEmail: undefined,
+            billedToPan: undefined,
+            billedToPhone: undefined,
+            dueDate: undefined
         }
     });
 
