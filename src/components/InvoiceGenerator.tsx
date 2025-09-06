@@ -236,8 +236,27 @@ export function InvoiceGenerator() {
         resolver: zodResolver(invoiceDetailsSchema),
         defaultValues: {
             invoiceNumber: "A00001",
+            invoiceDate: new Date(),
             billedByCountry: "IN",
+            billedByBusinessName: "",
+            billedByGstin: "",
+            billedByAddress: "",
+            billedByCity: "",
+            billedByZip: "",
+            billedByState: "",
+            billedByEmail: "",
+            billedByPan: "",
+            billedByPhone: "",
             billedToCountry: "IN",
+            billedToBusinessName: "",
+            billedToGstin: "",
+            billedToAddress: "",
+            billedToCity: "",
+            billedToZip: "",
+            billedToState: "",
+            billedToEmail: "",
+            billedToPan: "",
+            billedToPhone: "",
         }
     });
 
