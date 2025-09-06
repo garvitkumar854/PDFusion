@@ -65,7 +65,7 @@ export function TextSummarizer() {
     }, [summary, toast]);
     
     const editorPanel = (
-        <div className="flex-1 flex overflow-hidden flex-col">
+        <div className="flex-1 flex overflow-hidden flex-col h-full">
             <Textarea 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -80,7 +80,7 @@ export function TextSummarizer() {
     );
     
     const summaryPanel = (
-        <div className="flex-1 flex overflow-hidden flex-col">
+        <div className="flex-1 flex overflow-hidden flex-col h-full">
              <ScrollArea className="w-full h-full flex-1">
                 <AnimatePresence mode="wait">
                 {isSummarizing ? (
@@ -119,17 +119,19 @@ export function TextSummarizer() {
               </TabsList>
             </div>
             <TabsContent value="input" className="flex-1 min-h-0">
-              {editorPanel}
+              <div className="h-full flex flex-col">
+                {editorPanel}
+                 <div className="p-2 border-t flex-shrink-0">
+                    <Button onClick={handleSummarize} className="w-full" disabled={isSummarizing || inputText.length < 50}>
+                       {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
+                       Summarize
+                    </Button>
+                </div>
+              </div>
             </TabsContent>
             <TabsContent value="summary" className="flex-1 flex flex-col min-h-0">
                {summaryPanel}
             </TabsContent>
-            <div className="p-2 border-t flex-shrink-0">
-                <Button onClick={handleSummarize} className="w-full" disabled={isSummarizing || inputText.length < 50}>
-                   {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
-                   Summarize
-                </Button>
-            </div>
           </Tabs>
         );
       }
@@ -145,13 +147,23 @@ export function TextSummarizer() {
             <div className="relative flex items-center justify-center">
                 <ResizableHandle withHandle />
                 <Button onClick={handleSummarize} size="icon" className="absolute z-10 rounded-full h-12 w-12 shadow-lg" disabled={isSummarizing || inputText.length < 50}>
-                    {isSummarizing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Wand2 className="h-5 w-5"/>}
+                    <AnimatePresence mode="wait">
+                        {isSummarizing ? (
+                             <motion.div key="loader-icon" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                                <Loader2 className="h-5 w-5 animate-spin"/>
+                             </motion.div>
+                        ) : (
+                            <motion.div key="wand-icon" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                                <Wand2 className="h-5 w-5"/>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </Button>
             </div>
             <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
                 <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0">
                     <span className="px-2">SUMMARY</span>
-                    <Button variant="ghost" size="sm" onClick={handleCopy} disabled={!summary}>
+                    <Button variant="ghost" size="sm" onClick={handleCopy} disabled={!summary || isSummarizing}>
                        {isCopied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
                        {isCopied ? "Copied!" : "Copy"}
                     </Button>

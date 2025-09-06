@@ -28,6 +28,7 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeOutputSchema},
   prompt: `You are an expert in text summarization. Your task is to provide a concise and clear summary of the following text.
 Focus on the main points and key information. The summary should be easy to understand and capture the essence of the original text.
+Do not start with "This is a summary of the text". Just provide the summary directly.
 
 Text to summarize:
 {{{text}}}
@@ -42,6 +43,9 @@ const summarizeTextFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The AI failed to generate a summary. Please try again.");
+    }
+    return output;
   }
 );
