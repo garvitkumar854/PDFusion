@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -148,7 +148,7 @@ const CountrySelector = ({ field }: { field: any }) => {
 }
 
 const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
-    const { control, watch } = useFormContext<InvoiceDetailsValues>();
+    const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const prefix = `billed${type}` as const;
     const { fields, append, remove } = useFieldArray({ control, name: `${prefix}CustomFields` });
 
@@ -178,9 +178,9 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                 ))}
                 
                 <div className="flex flex-wrap gap-2 pt-2">
-                    {!showEmail && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => control.setValue(`${prefix}Email` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Email</Button>}
-                    {!showPan && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => control.setValue(`${prefix}Pan` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add PAN</Button>}
-                    {!showPhone && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => control.setValue(`${prefix}Phone` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Phone</Button>}
+                    {!showEmail && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Email</Button>}
+                    {!showPan && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add PAN</Button>}
+                    {!showPhone && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Phone` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Phone</Button>}
                     <Button type="button" variant="link" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Field</Button>
                 </div>
             </div>
