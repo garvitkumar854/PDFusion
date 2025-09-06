@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -96,6 +96,9 @@ export default function Header() {
       { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
       { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
       { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
+      { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code /> },
+      { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow /> },
+      { href: '/invoice-generator', label: 'Invoice Generator', icon: <FileText /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');

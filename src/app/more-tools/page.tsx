@@ -3,7 +3,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,20 @@ const tools = [
       title: 'Markdown to HTML',
       description: 'Convert Markdown to clean HTML with a live side-by-side editor.',
       href: '/markdown-to-html',
+    },
+    {
+      icon: <Pilcrow className="w-8 h-8 text-indigo-500" />,
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
+      title: 'Text Summarizer',
+      description: 'Use AI to quickly summarize long articles or documents.',
+      href: '/text-summarizer',
+    },
+    {
+      icon: <FileText className="w-8 h-8 text-sky-500" />,
+      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      title: 'Invoice Generator',
+      description: 'Create and download professional invoices in seconds.',
+      href: '/invoice-generator',
     },
 ];
 
@@ -98,7 +112,7 @@ export default function MoreToolsPage() {
 
       <main className="flex-1 w-full">
         <motion.div 
-            className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
