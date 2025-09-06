@@ -1,252 +1,340 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
 import { Card, CardContent } from './ui/card';
-import { Download, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import html2pdf from 'html2pdf.js';
-import { useForm, useFieldArray, FormProvider, useFormContext, Controller } from 'react-hook-form';
+import { useForm, FormProvider, useFormContext, Controller } from 'react-hook-form';
 import { cn } from '@/lib/utils';
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { format } from 'date-fns';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
+import { countryList } from '@/lib/country-data';
 
-type InvoiceItem = {
-  description: string;
-  quantity: number;
-  rate: number;
-};
 
-type InvoiceFormValues = {
-  companyName: string;
-  yourName: string;
-  companyAddress: string;
-  companyCity: string;
-  clientName: string;
-  clientAddress: string;
-  clientCity: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  items: InvoiceItem[];
-  notes: string;
-  taxRate: number;
-  logo: string | null;
-};
+const invoiceDetailsSchema = z.object({
+    invoiceNumber: z.string().min(1, "Invoice number is required."),
+    invoiceDate: z.date({ required_error: "Invoice date is required."}),
+    dueDate: z.date().optional(),
+    
+    // Billed By
+    billedByCountry: z.string().min(1, "Country is required."),
+    billedByBusinessName: z.string().min(1, "Business name is required."),
+    billedByGstin: z.string().optional(),
+    billedByAddress: z.string().optional(),
+    billedByCity: z.string().optional(),
+    billedByZip: z.string().optional(),
+    billedByState: z.string().optional(),
+    billedByEmail: z.string().email().optional().or(z.literal('')),
+    billedByPan: z.string().optional(),
+    billedByPhone: z.string().optional(),
 
-const EditableField = ({ name, placeholder, className, as: Component = Input }: { name: string, placeholder?: string, className?: string, as?: React.ElementType }) => {
-    const { control } = useFormContext<InvoiceFormValues>();
+    // Billed To
+    billedToCountry: z.string().min(1, "Country is required."),
+    billedToBusinessName: z.string().min(1, "Client's business name is required."),
+    billedToGstin: z.string().optional(),
+    billedToAddress: z.string().optional(),
+    billedToCity: z.string().optional(),
+    billedToZip: z.string().optional(),
+    billedToState: z.string().optional(),
+    billedToEmail: z.string().email().optional().or(z.literal('')),
+    billedToPan: z.string().optional(),
+    billedToPhone: z.string().optional(),
+
+    logo: z.any().optional(),
+});
+
+type InvoiceDetailsValues = z.infer<typeof invoiceDetailsSchema>;
+
+const StageStepper = ({ currentStage }: { currentStage: number }) => {
+    const stages = ["Add Invoice Details", "Add Banking Details", "Design & Share"];
+
     return (
-        <Controller
-            control={control}
-            name={name as keyof InvoiceFormValues}
-            render={({ field }) => (
-                <Component
-                    {...field}
-                    placeholder={placeholder}
-                    className={cn("w-full p-1 bg-transparent border-none focus:ring-0 focus:bg-muted/50 rounded-md", className)}
-                />
-            )}
-        />
-    )
-}
-
-const InvoiceItems = () => {
-    const { control } = useFormContext<InvoiceFormValues>();
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "items"
-    });
-
-    return (
-        <tbody>
-            {fields.map((field, index) => (
-                <tr key={field.id} className="border-b border-gray-200 dark:border-gray-700">
-                    <td className="py-2 px-1"><EditableField name={`items.${index}.description`} placeholder="Item description" as={Textarea} className="text-sm min-h-[40px]" /></td>
-                    <td className="py-2 px-1 w-24"><EditableField name={`items.${index}.quantity`} placeholder="1" type="number" className="text-right text-sm" /></td>
-                    <td className="py-2 px-1 w-28"><EditableField name={`items.${index}.rate`} placeholder="0.00" type="number" className="text-right text-sm" /></td>
-                    <td className="py-2 px-1 text-right w-32">
-                        <Controller
-                            control={control}
-                            name={`items.${index}`}
-                            render={({ field: { value } }) => (
-                                <p className="text-sm font-semibold">${(value.quantity * value.rate).toFixed(2)}</p>
-                            )}
-                        />
-                    </td>
-                    <td className="py-2 text-right w-12">
-                        <Button variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4"/>
-                        </Button>
-                    </td>
-                </tr>
+        <div className="flex items-center justify-center mb-12">
+            {stages.map((stage, index) => (
+                <React.Fragment key={stage}>
+                    <div className="flex items-center gap-2">
+                        <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold", 
+                            index + 1 === currentStage ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                            {index + 1}
+                        </div>
+                        <span className={cn("font-semibold", index + 1 === currentStage ? "text-primary" : "text-muted-foreground")}>{stage}</span>
+                         {index + 1 === currentStage && stage.includes("optional") && <Info className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                    {index < stages.length - 1 && <div className="w-12 h-px bg-border mx-4"></div>}
+                </React.Fragment>
             ))}
-            <tr>
-                <td colSpan={5} className="pt-2">
-                    <Button variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, rate: 0 })}>
-                        <Plus className="h-4 w-4 mr-2"/> Add Item
-                    </Button>
-                </td>
-            </tr>
-        </tbody>
+        </div>
     )
 }
 
+const CountrySelector = ({ field }: { field: any }) => {
+    const [open, setOpen] = React.useState(false)
+    const selectedCountry = countryList.find(c => c.code === field.value);
+    
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant="outline"
+              role="combobox"
+              className={cn(
+                "w-full justify-between",
+                !field.value && "text-muted-foreground"
+              )}
+            >
+              {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.name}` : "Select country"}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0">
+          <Command>
+            <CommandInput placeholder="Search country..." />
+            <CommandEmpty>No country found.</CommandEmpty>
+            <CommandGroup className="max-h-64 overflow-y-auto">
+              {countryList.map((country) => (
+                <CommandItem
+                  value={country.name}
+                  key={country.code}
+                  onSelect={() => {
+                    field.onChange(country.code)
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      country.code === field.value
+                        ? "opacity-100"
+                        : "opacity-0"
+                    )}
+                  />
+                  {country.flag} {country.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
+}
+
+const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
+    const form = useFormContext<InvoiceDetailsValues>();
+    const prefix = `billed${type}`;
+
+    return (
+        <Card className="p-6">
+            <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
+            <div className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name={`${prefix}Country` as keyof InvoiceDetailsValues}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <CountrySelector field={field} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name={`${prefix}BusinessName` as keyof InvoiceDetailsValues}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Your Business Name (required)</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name={`${prefix}Gstin` as keyof InvoiceDetailsValues}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Your GSTIN (optional)</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name={`${prefix}Address` as keyof InvoiceDetailsValues}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Address (optional)</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name={`${prefix}City` as keyof InvoiceDetailsValues}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>City (optional)</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name={`${prefix}Zip` as keyof InvoiceDetailsValues}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Postal / ZIP Code</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                 <FormField
+                    control={form.control}
+                    name={`${prefix}State` as keyof InvoiceDetailsValues}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>State (optional)</FormLabel>
+                             <FormControl>
+                               <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        </Card>
+    )
+}
 
 export function InvoiceGenerator() {
-    const formMethods = useForm<InvoiceFormValues>({
+    const [currentStage, setCurrentStage] = useState(1);
+    const { toast } = useToast();
+
+    const form = useForm<InvoiceDetailsValues>({
+        resolver: zodResolver(invoiceDetailsSchema),
         defaultValues: {
-            companyName: 'Your Company',
-            yourName: 'Your Name',
-            companyAddress: '123 Street, Suite 1A',
-            companyCity: 'City, State, Zip',
-            clientName: 'Client Company',
-            clientAddress: '456 Avenue, Suite 2B',
-            clientCity: 'City, State, Zip',
-            invoiceNumber: 'INV-001',
-            invoiceDate: new Date().toISOString().split('T')[0],
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            items: [{ description: 'Website Design', quantity: 1, rate: 1500 }],
-            notes: 'Thank you for your business!',
-            taxRate: 8,
-            logo: null
+            invoiceNumber: "A00001",
+            billedByCountry: "IN",
+            billedToCountry: "IN",
         }
     });
 
-    const { watch, setValue } = formMethods;
-    const items = watch('items');
-    const taxRate = watch('taxRate');
-    const logo = watch('logo');
-    const invoiceRef = useRef(null);
-    const logoInputRef = useRef<HTMLInputElement>(null);
-    const { toast } = useToast();
-
-    const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
-    const tax = subtotal * (taxRate / 100);
-    const total = subtotal + tax;
-
-    const handleDownload = () => {
-        const element = invoiceRef.current;
-        if (!element) return;
-        const opt = {
-          margin: 0,
-          filename: 'invoice.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        html2pdf().from(element).set(opt).save();
-        toast({ title: 'Invoice Downloading', description: 'Your PDF is being generated.' });
-    };
-
-    const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setValue('logo', reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    function onSubmit(data: InvoiceDetailsValues) {
+       console.log(data);
+       toast({ title: 'Invoice Details Saved!', description: 'Moving to the next step.' });
+       setCurrentStage(2);
+    }
     
   return (
-    <FormProvider {...formMethods}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3">
-                <Card className="shadow-lg">
-                    <CardContent className="p-4 sm:p-6">
-                        <div ref={invoiceRef} className="bg-white dark:bg-card text-foreground p-8 rounded-lg shadow-2xl">
-                            <header className="flex justify-between items-start mb-10">
-                                <div>
-                                    {logo ? (
-                                        <div className="relative group">
-                                            <img src={logo} alt="Company Logo" className="max-h-20" />
-                                             <Button variant="destructive" size="sm" className="absolute -top-2 -right-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setValue('logo', null)}>
-                                                <Trash2 className="h-4 w-4"/>
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <Button variant="outline" onClick={() => logoInputRef.current?.click()} className="group">
-                                            <ImageIcon className="h-4 w-4 mr-2"/> Upload Logo
+    <FormProvider {...form}>
+        <div className="w-full max-w-5xl mx-auto">
+            <StageStepper currentStage={currentStage} />
+            
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                 <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-2">
+                        <h2 className="text-4xl font-bold">Invoice</h2>
+                        <Button variant="ghost" size="icon"><Edit2 className="w-6 h-6 text-muted-foreground" /></Button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                   <div className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="invoiceNumber"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center gap-4 space-y-0">
+                                    <FormLabel className="w-28 mt-2">Invoice No*</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="invoiceDate"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center gap-4 space-y-0">
+                                <FormLabel className="w-28">Invoice Date*</FormLabel>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full pl-3 text-left font-normal",
+                                            !field.value && "text-muted-foreground"
+                                        )}
+                                        >
+                                        {field.value ? (
+                                            format(field.value, "LLL dd, y")
+                                        ) : (
+                                            <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
-                                    )}
-                                    <input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
-                                    <h1 className="text-3xl font-bold text-primary mt-4"><EditableField name="companyName" placeholder="Your Company"/></h1>
-                                    <p className="text-muted-foreground"><EditableField name="yourName" placeholder="Your Name"/></p>
-                                </div>
-                                <div className="text-right">
-                                    <h2 className="text-4xl font-extrabold text-foreground">INVOICE</h2>
-                                    <p className="text-muted-foreground mt-1"># <EditableField name="invoiceNumber" placeholder="INV-001" className="text-right" /></p>
-                                </div>
-                            </header>
-                            
-                            <section className="grid grid-cols-2 gap-10 mb-10">
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold text-muted-foreground">Bill To</h3>
-                                    <p className="font-bold text-lg"><EditableField name="clientName" placeholder="Client Company"/></p>
-                                    <p><EditableField name="clientAddress" placeholder="Client Address"/></p>
-                                    <p><EditableField name="clientCity" placeholder="City, State, Zip" /></p>
-                                </div>
-                                <div className="space-y-1 text-right">
-                                     <p><span className="font-semibold">Date:</span> <EditableField name="invoiceDate" type="date" className="text-right" /></p>
-                                     <p><span className="font-semibold">Due Date:</span> <EditableField name="dueDate" type="date" className="text-right" /></p>
-                                </div>
-                            </section>
-
-                            <section>
-                                <table className="w-full text-left">
-                                    <thead className="bg-muted">
-                                        <tr>
-                                            <th className="py-2 px-4 font-semibold">Description</th>
-                                            <th className="py-2 px-4 font-semibold text-right">Quantity</th>
-                                            <th className="py-2 px-4 font-semibold text-right">Rate</th>
-                                            <th className="py-2 px-4 font-semibold text-right">Amount</th>
-                                            <th className="w-12"></th>
-                                        </tr>
-                                    </thead>
-                                    <InvoiceItems />
-                                </table>
-                            </section>
-                            
-                            <section className="grid grid-cols-2 mt-6">
-                                <div>
-                                    <h4 className="font-semibold">Notes</h4>
-                                    <EditableField name="notes" as={Textarea} className="text-sm mt-1 h-24"/>
-                                </div>
-                                <div className="text-right space-y-2">
-                                    <div className="flex justify-end items-center gap-4">
-                                        <p className="font-semibold">Subtotal:</p>
-                                        <p>${subtotal.toFixed(2)}</p>
-                                    </div>
-                                    <div className="flex justify-end items-center gap-4">
-                                        <p className="font-semibold">Tax (<EditableField name="taxRate" type="number" className="w-16 text-right inline-block" />%):</p>
-                                        <p>${tax.toFixed(2)}</p>
-                                    </div>
-                                    <hr className="my-2 border-border"/>
-                                    <div className="flex justify-end items-center gap-4 text-2xl font-bold text-primary">
-                                        <p>Total:</p>
-                                        <p>${total.toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            </section>
+                                    </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button variant="link" className="p-0 h-auto text-primary"><Plus className="w-4 h-4 mr-2"/>Add due date</Button>
+                        <br />
+                        <Button variant="link" className="p-0 h-auto text-primary"><Plus className="w-4 h-4 mr-2"/>Add More Fields</Button>
+                   </div>
+                    <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+                        <input {...getInputProps()} />
+                        <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                            <ImageIcon className="w-8 h-8" />
+                            <p className="font-semibold text-primary">Add Business Logo</p>
+                            <p className="text-xs">Resolution up to 1080x1080px.</p>
+                            <p className="text-xs">PNG or JPEG file.</p>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
+                </div>
 
-            <div className="lg:col-span-2">
-                <Card className="shadow-lg sticky top-24">
-                    <CardContent className="p-6">
-                         <h3 className="text-lg font-semibold mb-4">Actions</h3>
-                         <Button onClick={handleDownload} className="w-full text-base">
-                            <Download className="h-5 w-5 mr-2"/> Download PDF
-                         </Button>
-                    </CardContent>
-                </Card>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <BilledPartyForm type="By" />
+                    <BilledPartyForm type="To" />
+                </div>
+                
+                 <div className="flex justify-end pt-8 mt-8 border-t">
+                    <Button type="submit" size="lg">
+                        Continue <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                </div>
+            </form>
         </div>
     </FormProvider>
   );
