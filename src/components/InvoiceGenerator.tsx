@@ -16,9 +16,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { format } from 'date-fns';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
 import { countryList } from '@/lib/country-data';
+import { useDropzone } from 'react-dropzone';
+import Image from 'next/image';
 
 
 const invoiceDetailsSchema = z.object({
@@ -229,6 +230,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 export function InvoiceGenerator() {
     const [currentStage, setCurrentStage] = useState(1);
     const { toast } = useToast();
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
     const form = useForm<InvoiceDetailsValues>({
         resolver: zodResolver(invoiceDetailsSchema),
@@ -238,6 +240,25 @@ export function InvoiceGenerator() {
             billedToCountry: "IN",
         }
     });
+
+    const onDrop = React.useCallback((acceptedFiles: File[]) => {
+        const file = acceptedFiles[0];
+        if (file) {
+            form.setValue('logo', file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    }, [form]);
+
+    const { getRootProps, getInputProps } = useDropzone({
+        onDrop,
+        accept: { 'image/*': ['.jpeg', '.png'] },
+        multiple: false,
+    });
+
 
     function onSubmit(data: InvoiceDetailsValues) {
        console.log(data);
@@ -313,14 +334,18 @@ export function InvoiceGenerator() {
                         <br />
                         <Button variant="link" className="p-0 h-auto text-primary"><Plus className="w-4 h-4 mr-2"/>Add More Fields</Button>
                    </div>
-                    <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary">
+                    <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary h-full flex items-center justify-center">
                         <input {...getInputProps()} />
-                        <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                            <ImageIcon className="w-8 h-8" />
-                            <p className="font-semibold text-primary">Add Business Logo</p>
-                            <p className="text-xs">Resolution up to 1080x1080px.</p>
-                            <p className="text-xs">PNG or JPEG file.</p>
-                        </div>
+                        {logoPreview ? (
+                            <Image src={logoPreview} alt="Logo preview" width={128} height={128} className="max-h-32 w-auto object-contain" />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                                <ImageIcon className="w-8 h-8" />
+                                <p className="font-semibold text-primary">Add Business Logo</p>
+                                <p className="text-xs">Resolution up to 1080x1080px.</p>
+                                <p className="text-xs">PNG or JPEG file.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
