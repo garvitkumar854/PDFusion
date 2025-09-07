@@ -218,14 +218,16 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
             <div className="space-y-2">
                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
                 <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
+                
                 <div className="grid grid-cols-2 gap-2">
-                   {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div/>}
-                   <PhoneInput control={control} prefix={prefix} />
+                    {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div className={cn(!showEmail && "col-span-2")} />}
+                    <PhoneInput control={control} prefix={prefix} />
                 </div>
                  <div className="grid grid-cols-2 gap-2">
-                    <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
-                    {showPan ? <EditableField name={`${prefix}Pan`} placeholder="PAN Number" /> : <div/>}
+                    <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" className={cn(!showPan && "col-span-2")} />
+                    {showPan && <EditableField name={`${prefix}Pan`} placeholder="PAN Number" />}
                 </div>
+
                 <EditableField name={`${prefix}Address`} placeholder="Address" as="input"/>
                  <div className="grid grid-cols-2 gap-2">
                     <EditableField name={`${prefix}City`} placeholder="City" />
@@ -277,32 +279,31 @@ const ItemRow = ({ index, onHsnOpen }: { index: number, onHsnOpen: () => void })
 
     return (
         <Card className="p-2 bg-background/50">
-            <div className="grid grid-cols-[auto_2fr_repeat(8,_1fr)_auto] gap-x-2 gap-y-1 items-start text-sm">
-                 <div className="flex flex-col gap-1">
-                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
-                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
-                 </div>
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-x-2 gap-y-1 items-start text-sm">
                  <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" />
-                 <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
+                 <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="number" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
                  <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" type="number" />
                  <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" type="number" />
                  <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" type="number" />
                  <div className="text-right pt-1">{amount.toFixed(2)}</div>
                  <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
-                 <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
                  <div className="text-right pt-1 font-bold">{total.toFixed(2)}</div>
                  <Button type="button" variant="ghost" size="icon" className="w-6 h-6 justify-self-end" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
             </div>
              {showDescription && (
-                <div className="mt-2 pr-8 pl-6">
+                <div className="mt-2 pr-8">
                      <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none" />
                 </div>
             )}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs pl-6">
+            <div className="grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-x-4 gap-y-1 mt-2 text-xs">
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
                 <div {...getRootProps()}><Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button><input {...getInputProps()} /></div>
                 <div className="flex-grow"/>
-                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => fields.length > 1 && insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
+                <div className="flex gap-1">
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
+                 </div>
             </div>
         </Card>
     )
@@ -636,8 +637,7 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid-cols-[auto_2fr_repeat(8,_1fr)_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid">
-                           <span/>
+                        <div className="grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid">
                            <span>Item</span>
                            <span className="text-right">HSN/SAC</span>
                            <span className="text-right">GST Rate</span>
@@ -645,7 +645,6 @@ export function InvoiceGenerator() {
                            <span className="text-right">Rate</span>
                            <span className="text-right">Amount</span>
                            <span className="text-right">CGST</span>
-                           <span className="text-right">SGST</span>
                            <span className="text-right">Total</span>
                            <span/>
                         </div>
