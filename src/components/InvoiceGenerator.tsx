@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare, X, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray, Control } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -96,7 +96,7 @@ const StageStepper = ({ currentStage }: { currentStage: number }) => {
 
 const EditableField = ({ name, placeholder, className, as = "input" }: { name: string, placeholder?: string, className?: string, as?: 'input' | 'textarea' }) => {
     const { control } = useFormContext();
-    const Comp = as;
+    const Comp = as === 'input' ? Input : Textarea;
     return (
         <FormField
             control={control}
@@ -105,7 +105,7 @@ const EditableField = ({ name, placeholder, className, as = "input" }: { name: s
                 <Comp
                     {...field}
                     placeholder={placeholder}
-                    className={cn("w-full p-1 bg-transparent border-none focus:ring-0 focus:bg-muted/50 rounded-md", className)}
+                    className={cn("w-full p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md", className)}
                 />
             )}
         />
@@ -168,7 +168,8 @@ const CountrySelector = ({ field, label }: { field: any, label: string }) => {
 }
 
 const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
-    const countryCode = useFormContext<InvoiceDetailsValues>().watch(`${prefix}Country` as const);
+    const { watch } = useFormContext<InvoiceDetailsValues>();
+    const countryCode = watch(`${prefix}Country` as const);
     const phoneCode = countryList.find(c => c.code === countryCode)?.phoneCode || '';
     
     return (
@@ -197,23 +198,24 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 
     const showEmail = watch(`${prefix}Email` as const) !== undefined;
     const showPan = watch(`${prefix}Pan` as const) !== undefined;
+    const showPhone = watch(`${prefix}Phone` as const) !== undefined;
 
     return (
-        <Card className="p-4">
+        <Card className="p-2 sm:p-4">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-xs text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
             <div className="space-y-2">
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
-                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><Input placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
-                 <PhoneInput control={control} prefix={prefix} />
-                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder="GSTIN" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Address" {...field} className="text-xs h-auto p-1"/></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} className="text-sm" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Gstin`} placeholder="GSTIN" className="text-sm" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Address`} placeholder="Address" as="textarea" className="text-sm h-12 resize-none" /></FormControl><FormMessage /></FormItem>)} />
                  <div className="grid grid-cols-2 gap-2">
-                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}City`} placeholder="City" className="text-sm" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" className="text-sm" /></FormControl><FormMessage /></FormItem>)} />
                  </div>
-                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}State`} placeholder="State" className="text-sm" /></FormControl><FormMessage /></FormItem>)} />
 
+                {showPhone && <PhoneInput control={control} prefix={prefix} />}
                 {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><Input type="email" placeholder="Email Address" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />}
                 {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><Input placeholder="PAN Number" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />}
 
@@ -225,7 +227,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                     </div>
                 ))}
                 
-                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs pt-2">
                     {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
                     {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
                     <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
@@ -249,10 +251,9 @@ const ItemRow = ({ index }: { index: number }) => {
     const gstAmount = amount * (gstRate / 100);
     const total = amount + gstAmount;
 
-
     return (
         <Card className="p-2 bg-background/50">
-            <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 items-start text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 gap-y-1 items-start text-xs">
                  <EditableField name={`items.${index}.name`} placeholder="Item Name" as="textarea" className="h-10 resize-none text-xs" />
                  <EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right text-xs" />
                  <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right text-xs" />
@@ -262,7 +263,7 @@ const ItemRow = ({ index }: { index: number }) => {
                  <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
                  <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
                  <div className="text-right pt-1 font-bold">₹{total.toFixed(2)}</div>
-                 <Button type="button" variant="ghost" size="icon" className="w-6 h-6" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
+                 <Button type="button" variant="ghost" size="icon" className="w-6 h-6 justify-self-end" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
             </div>
              {showDescription && (
                 <div className="mt-2 pr-8">
@@ -311,11 +312,11 @@ export function InvoiceGenerator() {
             billedToState: "",
             billedByZip: "",
             billedToZip: "",
-            billedByEmail: undefined,
-            billedByPan: undefined,
+            billedByEmail: "",
+            billedByPan: "",
             billedByPhone: "",
-            billedToEmail: undefined,
-            billedToPan: undefined,
+            billedToEmail: "",
+            billedToPan: "",
             billedToPhone: "",
             dueDate: undefined,
         }
@@ -352,7 +353,7 @@ export function InvoiceGenerator() {
     
   return (
     <FormProvider {...form}>
-        <div className="w-full max-w-6xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto">
             <StageStepper currentStage={currentStage} />
             
             <Form {...form}>
@@ -451,7 +452,7 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 text-xs font-bold text-primary mb-2">
+                        <div className="grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 text-xs font-bold text-primary mb-2 hidden sm:grid">
                            <span>Item</span>
                            <span className="text-right">HSN/SAC</span>
                            <span className="text-right">GST Rate</span>
