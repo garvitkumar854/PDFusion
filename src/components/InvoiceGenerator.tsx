@@ -18,6 +18,7 @@ import { Calendar } from './ui/calendar';
 import { format } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { countryList } from '@/lib/country-data';
+import { indianStates } from '@/lib/states-data';
 import { currencyList } from '@/lib/currency-data';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
@@ -46,7 +47,7 @@ const invoiceDetailsSchema = z.object({
     billedByZip: z.string().optional(),
     billedByState: z.string().optional(),
     billedByEmail: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    billedByPan: z.string().optional(),
+    billedByPan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format.").optional().or(z.literal('')),
     billedByPhone: z.string().optional(),
     billedByCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
 
@@ -58,7 +59,7 @@ const invoiceDetailsSchema = z.object({
     billedToZip: z.string().optional(),
     billedToState: z.string().optional(),
     billedToEmail: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-    billedToPan: z.string().optional(),
+    billedToPan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format.").optional().or(z.literal('')),
     billedToPhone: z.string().optional(),
     billedToCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
     
@@ -68,7 +69,7 @@ const invoiceDetailsSchema = z.object({
     items: z.array(z.object({
         name: z.string().min(1, "Item name is required."),
         description: z.string().optional(),
-        hsn: z.string().optional(),
+        hsn: z.string().regex(/^[0-9]*$/, "HSN/SAC must be numeric.").optional(),
         quantity: z.number().min(0),
         rate: z.number().min(0),
         gstRate: z.number().optional(),
@@ -210,21 +211,26 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 
     const showEmail = watch(`${prefix}Email`) !== undefined;
     const showPan = watch(`${prefix}Pan`) !== undefined;
+    const country = watch(`${prefix}Country`);
 
     return (
         <Card className="p-4">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
             <div className="space-y-2">
-                <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
-                <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
+                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
+                 <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
                 
-                <div className="grid grid-cols-2 gap-2">
-                    {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div className={cn(!showEmail && "col-span-2")} />}
-                    <PhoneInput control={control} prefix={prefix} />
+                 <div className="grid grid-cols-2 gap-2">
+                    <div className={cn(!showEmail && "col-span-2")}>
+                      <PhoneInput control={control} prefix={prefix} />
+                    </div>
+                    {showEmail && <EditableField name={`${prefix}Email`} placeholder="Email Address" />}
                 </div>
                  <div className="grid grid-cols-2 gap-2">
-                    <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" className={cn(!showPan && "col-span-2")} />
+                    <div className={cn(!showPan && "col-span-2")}>
+                        <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
+                    </div>
                     {showPan && <EditableField name={`${prefix}Pan`} placeholder="PAN Number" />}
                 </div>
 
@@ -233,7 +239,29 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                     <EditableField name={`${prefix}City`} placeholder="City" />
                     <EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" />
                 </div>
-                <EditableField name={`${prefix}State`} placeholder="State" />
+                {country === 'IN' ? (
+                     <FormField
+                        control={control}
+                        name={`${prefix}State`}
+                        render={({ field }) => (
+                           <FormItem>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger className="text-sm h-auto p-1 bg-transparent border-0 border-b rounded-none focus:ring-0 focus:ring-offset-0 hover:bg-muted/50">
+                                    <SelectValue placeholder="Select State" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {indianStates.map(state => <SelectItem key={state} value={state}>{state}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage/>
+                           </FormItem>
+                        )}
+                        />
+                ) : (
+                    <EditableField name={`${prefix}State`} placeholder="State / Province / Region" />
+                )}
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                        <EditableField name={`${prefix}CustomFields.${index}.key`} placeholder="Field Name" />
@@ -251,7 +279,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     )
 }
 
-const ItemRow = ({ index, onHsnOpen }: { index: number, onHsnOpen: () => void }) => {
+const ItemRow = ({ index, onHsnOpen, currencySymbol, taxType }: { index: number, onHsnOpen: () => void, currencySymbol: string, taxType: 'none' | 'cgst-sgst' | 'igst' }) => {
     const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const { fields, remove, insert, move } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
@@ -279,30 +307,33 @@ const ItemRow = ({ index, onHsnOpen }: { index: number, onHsnOpen: () => void })
 
     return (
         <Card className="p-2 bg-background/50">
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-x-2 gap-y-1 items-start text-sm">
+            <div className={cn(
+                "grid gap-x-2 gap-y-1 items-start text-sm",
+                taxType === 'none' ? "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
+            )}>
                  <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" />
-                 <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="number" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
-                 <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" type="number" />
+                 <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
+                 <div className="flex items-center border-b"><EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right border-none" type="number" /><Percent className="w-3 h-3 text-muted-foreground"/></div>
                  <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" type="number" />
-                 <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" type="number" />
-                 <div className="text-right pt-1">{amount.toFixed(2)}</div>
-                 <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
-                 <div className="text-right pt-1 font-bold">{total.toFixed(2)}</div>
-                 <Button type="button" variant="ghost" size="icon" className="w-6 h-6 justify-self-end" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
+                 <div className="flex items-center border-b"><span className="text-muted-foreground">{currencySymbol}</span><EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right border-none" type="number" /></div>
+                 <div className="text-right pt-1"><span className="text-muted-foreground text-xs">{currencySymbol}</span>{amount.toFixed(2)}</div>
+                 {taxType !== 'none' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
+                 {taxType !== 'none' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
+                 <div className="text-right pt-1 font-bold"><span className="text-muted-foreground text-xs">{currencySymbol}</span>{total.toFixed(2)}</div>
             </div>
              {showDescription && (
                 <div className="mt-2 pr-8">
                      <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none" />
                 </div>
             )}
-            <div className="grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-x-4 gap-y-1 mt-2 text-xs">
-                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
+             <div className="grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-x-4 gap-y-1 mt-2 text-xs">
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>{showDescription ? 'Hide' : 'Add'} Description</Button>
                 <div {...getRootProps()}><Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button><input {...getInputProps()} /></div>
                 <div className="flex-grow"/>
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
-                <div className="flex gap-1">
-                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
-                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
+                 <div className="flex gap-1 justify-self-end">
+                    {index > 0 && <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)}><ArrowUp className="w-3 h-3"/></Button>}
+                    {index < fields.length - 1 && <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)}><ArrowDown className="w-3 h-3"/></Button>}
                  </div>
             </div>
         </Card>
@@ -453,6 +484,7 @@ export function InvoiceGenerator() {
     const [isGstModalOpen, setIsGstModalOpen] = useState(false);
     const [isHsnModalOpen, setIsHsnModalOpen] = useState(false);
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+    const [taxType, setTaxType] = useState<'none' | 'cgst-sgst' | 'igst'>('cgst-sgst');
 
     const form = useForm<InvoiceDetailsValues>({
         resolver: zodResolver(invoiceDetailsSchema),
@@ -489,9 +521,12 @@ export function InvoiceGenerator() {
         }
     });
 
-    const { control, setValue } = form;
+    const { control, setValue, watch } = form;
     const { fields: topLevelFields, append: appendTopLevel, remove: removeTopLevel } = useFieldArray({ control: form.control, name: "topLevelCustomFields" });
     const { fields: itemFields, append: appendItem } = useFieldArray({ control: form.control, name: "items" });
+    
+    const selectedCurrency = watch("currency");
+    const currencySymbol = useMemo(() => currencyList.find(c => c.code === selectedCurrency)?.symbol || '$', [selectedCurrency]);
 
     const onDrop = React.useCallback((acceptedFiles: File[]) => {
         const file = acceptedFiles[0];
@@ -637,19 +672,23 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid">
+                        <div className={cn(
+                            "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid",
+                            taxType !== 'none' && "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
+                        )}>
                            <span>Item</span>
                            <span className="text-right">HSN/SAC</span>
                            <span className="text-right">GST Rate</span>
                            <span className="text-right">Quantity</span>
                            <span className="text-right">Rate</span>
                            <span className="text-right">Amount</span>
-                           <span className="text-right">CGST</span>
+                           {taxType !== 'none' && <span className="text-right">CGST</span>}
+                           {taxType !== 'none' && <span className="text-right">SGST</span>}
                            <span className="text-right">Total</span>
                            <span/>
                         </div>
                         <div className="space-y-2">
-                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} />)}
+                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} currencySymbol={currencySymbol} taxType={taxType} />)}
                         </div>
                         <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
