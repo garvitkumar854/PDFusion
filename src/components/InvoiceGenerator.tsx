@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, Mail } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, Mail, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -159,11 +159,10 @@ const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
             name={`${prefix}Phone`}
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Phone (optional)</FormLabel>
                      <div className="flex items-center gap-2">
-                        <Input value={phoneCode} className="w-20 bg-muted" readOnly/>
+                        <Input value={phoneCode} className="w-20 bg-muted" readOnly placeholder="Code"/>
                         <FormControl>
-                            <Input type="tel" {...field} />
+                            <Input type="tel" placeholder="Phone Number (optional)" {...field} />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -180,40 +179,39 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 
     const showEmail = watch(`${prefix}Email` as const) !== undefined;
     const showPan = watch(`${prefix}Pan` as const) !== undefined;
-    const showPhone = true;
 
     return (
-        <Card className="p-6">
+        <Card className="p-4">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
-            <div className="space-y-4">
+            <div className="space-y-2">
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
                  <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><Input placeholder={type === 'By' ? 'Your Business Name (required)' : "Client's Business Name (required)"} {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 {showPhone && <PhoneInput control={control} prefix={prefix} />}
-                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Your GSTIN ${type === 'By' ? '' : '(optional)'}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <PhoneInput control={control} prefix={prefix} />
+                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`GSTIN ${type === 'By' ? '(optional)' : '(optional)'}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
                  <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Address (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-2">
                     <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><Input placeholder="City (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP" {...field} /></FormControl><FormMessage /></FormItem>)} />
                  </div>
-                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="text-muted-foreground"><SelectValue placeholder="State (optional)" /></SelectTrigger></FormControl><SelectContent></SelectContent></Select><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><Input placeholder="State (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
-                {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />}
-                {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormLabel>PAN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />}
+                {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><Input type="email" placeholder="Email Address" {...field} /></FormControl><FormMessage /></FormItem>)} />}
+                {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><Input placeholder="PAN Number" {...field} /></FormControl><FormMessage /></FormItem>)} />}
 
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormLabel>Field Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormLabel>Value</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Field Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Value" {...field} /></FormControl><FormMessage /></FormItem>)} />
                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
                 
-                 <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
-                    {!showEmail && <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-4 h-4 mr-1"/>Add Email</Button>}
-                    {!showPan && <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add PAN</Button>}
+                 <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-4 h-4 mr-1"/>Add Email</Button>}
+                    {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileText className="w-4 h-4 mr-1"/>Add PAN</Button>}
+                    <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Field</Button>
                 </div>
-                <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Fields</Button>
             </div>
         </Card>
     )
@@ -229,10 +227,10 @@ export function InvoiceGenerator() {
         resolver: zodResolver(invoiceDetailsSchema),
         defaultValues: {
             invoiceTitle: "Invoice",
-            invoiceNumber: "INV-001",
+            invoiceNumber: "",
             invoiceDate: new Date(),
-            billedByCountry: "IN",
-            billedToCountry: "IN",
+            billedByCountry: "",
+            billedToCountry: "",
             currency: "INR",
             items: [{ name: "", quantity: 1, rate: 0 }],
             topLevelCustomFields: [],
