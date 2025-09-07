@@ -320,7 +320,7 @@ export function InvoiceGenerator() {
             billedByCountry: "IN",
             billedToCountry: "IN",
             currency: "INR",
-            items: [{ name: "", quantity: 1, rate: 0, gstRate: 18, description: "" }],
+            items: [{ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null }],
             topLevelCustomFields: [],
             billedByCustomFields: [],
             billedToCustomFields: [],
@@ -491,7 +491,7 @@ export function InvoiceGenerator() {
                         <div className="space-y-2">
                             {itemFields.map((item, index) => <ItemRow key={item.id} index={index} />)}
                         </div>
-                        <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "" })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
+                        <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
                 </div>
 
@@ -506,3 +506,6 @@ export function InvoiceGenerator() {
     </FormProvider>
   );
 }
+
+
+    
