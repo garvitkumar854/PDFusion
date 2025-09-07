@@ -176,21 +176,21 @@ const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
     const phoneCode = countryList.find(c => c.code === countryCode)?.phoneCode || '';
     
     return (
-        <FormField
-            control={control}
-            name={`${prefix}Phone`}
-            render={({ field }) => (
-                <FormItem>
-                     <div className="flex items-center gap-2 border-b">
-                        <Input value={phoneCode} className="w-16 bg-transparent border-none text-sm h-auto p-1" readOnly placeholder="Code"/>
+        <div className="flex items-center gap-2 border-b">
+            <Input value={phoneCode} className="w-16 bg-transparent border-none text-sm h-auto p-1" readOnly placeholder="Code"/>
+            <FormField
+                control={control}
+                name={`${prefix}Phone`}
+                render={({ field }) => (
+                    <FormItem className="flex-1">
                         <FormControl>
                             <Input type="tel" placeholder="Phone Number" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-none" />
                         </FormControl>
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
     )
 }
 
@@ -207,39 +207,40 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
             <div className="space-y-2">
-                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
-                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} as="input" /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Address`} placeholder="Address" as="input" /></FormControl><FormMessage /></FormItem>)} />
-                 <div className="grid grid-cols-2 gap-2">
-                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}City`} placeholder="City" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" /></FormControl><FormMessage /></FormItem>)} />
-                 </div>
-                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}State`} placeholder="State" /></FormControl><FormMessage /></FormItem>)} />
-                 
+                <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
+                <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
+                
                 <div className="grid grid-cols-2 gap-2">
+                    {showEmail && <EditableField name={`${prefix}Email`} placeholder="Email Address" />}
                     <PhoneInput control={control} prefix={prefix} />
-                    {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Email`} placeholder="Email Address" /></FormControl><FormMessage /></FormItem>)} />}
-                 </div>
-
+                </div>
+                
                 <div className="grid grid-cols-2 gap-2">
-                    <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Gstin`} placeholder="GSTIN" /></FormControl><FormMessage /></FormItem>)} />
-                    {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Pan`} placeholder="PAN Number" /></FormControl><FormMessage /></FormItem>)} />}
-                 </div>
+                    <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
+                    {showPan && <EditableField name={`${prefix}Pan`} placeholder="PAN Number" />}
+                </div>
 
+                <EditableField name={`${prefix}Address`} placeholder="Address" />
+                
+                <div className="grid grid-cols-2 gap-2">
+                    <EditableField name={`${prefix}City`} placeholder="City" />
+                    <EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" />
+                </div>
+                <EditableField name={`${prefix}State`} placeholder="State" />
+                
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}CustomFields.${index}.key`} placeholder="Field Name" /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}CustomFields.${index}.value`} placeholder="Value" /></FormControl><FormMessage /></FormItem>)} />
+                       <EditableField name={`${prefix}CustomFields.${index}.key`} placeholder="Field Name" />
+                       <EditableField name={`${prefix}CustomFields.${index}.value`} placeholder="Value" />
                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
                 
-                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-2">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-2">
                     {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
                     {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
-                     <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
-                 </div>
-
+                    <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
+                </div>
             </div>
         </Card>
     )
@@ -247,13 +248,13 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 
 const ItemRow = ({ index }: { index: number }) => {
     const { control, watch } = useFormContext<InvoiceDetailsValues>();
-    const { fields, remove, duplicate } = useFieldArray({ control, name: "items" });
+    const { fields, remove, insert } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
     
     const item = watch(`items.${index}`);
-    const quantity = item.quantity || 0;
-    const rate = item.rate || 0;
-    const gstRate = item.gstRate || 0;
+    const quantity = Number(item.quantity) || 0;
+    const rate = Number(item.rate) || 0;
+    const gstRate = Number(item.gstRate) || 0;
 
     const amount = quantity * rate;
     const gstAmount = amount * (gstRate / 100);
@@ -267,10 +268,10 @@ const ItemRow = ({ index }: { index: number }) => {
                  <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" />
                  <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" />
                  <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" />
-                 <div className="text-right pt-1">₹{amount.toFixed(2)}</div>
-                 <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
-                 <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
-                 <div className="text-right pt-1 font-bold">₹{total.toFixed(2)}</div>
+                 <div className="text-right pt-1">{amount.toFixed(2)}</div>
+                 <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
+                 <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
+                 <div className="text-right pt-1 font-bold">{total.toFixed(2)}</div>
                  <Button type="button" variant="ghost" size="icon" className="w-6 h-6 justify-self-end" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
             </div>
              {showDescription && (
@@ -278,11 +279,11 @@ const ItemRow = ({ index }: { index: number }) => {
                      <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none" />
                 </div>
             )}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button>
                 <div className="flex-grow"/>
-                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => fields.length > 1 && duplicate(index)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => fields.length > 1 && insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
             </div>
         </Card>
     )
@@ -489,3 +490,4 @@ export function InvoiceGenerator() {
     </FormProvider>
   );
 }
+
