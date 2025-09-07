@@ -41,7 +41,7 @@ const invoiceDetailsSchema = z.object({
     billedByZip: z.string().optional(),
     billedByState: z.string().optional(),
     billedByEmail: z.string().email().optional().or(z.literal('')),
-    billedByPan: z.string().optional(),
+    billedByPan: z.string().optional().or(z.literal('')),
     billedByPhone: z.string().optional(),
     billedByCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
 
@@ -53,7 +53,7 @@ const invoiceDetailsSchema = z.object({
     billedToZip: z.string().optional(),
     billedToState: z.string().optional(),
     billedToEmail: z.string().email().optional().or(z.literal('')),
-    billedToPan: z.string().optional(),
+    billedToPan: z.string().optional().or(z.literal('')),
     billedToPhone: z.string().optional(),
     billedToCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
     
@@ -105,7 +105,10 @@ const EditableField = ({ name, placeholder, className, as = "input" }: { name: s
                 <Comp
                     {...field}
                     placeholder={placeholder}
-                    className={cn("w-full p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md text-sm", className)}
+                    className={cn(
+                        "w-full p-1 bg-transparent border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 text-sm",
+                        className
+                    )}
                 />
             )}
         />
@@ -124,7 +127,7 @@ const CountrySelector = ({ field, label }: { field: any, label: string }) => {
               variant="outline"
               role="combobox"
               className={cn(
-                "w-full justify-between text-muted-foreground text-sm h-auto p-1 border-none hover:bg-muted/50",
+                "w-full justify-between text-muted-foreground text-sm h-auto p-1 border-0 border-b rounded-none hover:bg-muted/50",
                 !field.value && "text-muted-foreground"
               )}
             >
@@ -178,10 +181,10 @@ const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
             name={`${prefix}Phone`}
             render={({ field }) => (
                 <FormItem>
-                     <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2 border-b">
                         <Input value={phoneCode} className="w-16 bg-transparent border-none text-sm h-auto p-1" readOnly placeholder="Code"/>
                         <FormControl>
-                            <Input type="tel" placeholder="Phone Number" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md" />
+                            <Input type="tel" placeholder="Phone Number" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-none" />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -196,54 +199,46 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     const prefix = `billed${type}` as const;
     const { fields, append, remove } = useFieldArray({ control, name: `${prefix}CustomFields` });
 
-    const showEmail = watch(`${prefix}Email` as const) !== undefined;
-    const showPan = watch(`${prefix}Pan` as const) !== undefined;
+    const showEmail = watch(`${prefix}Email`) !== undefined;
+    const showPan = watch(`${prefix}Pan`) !== undefined;
 
     return (
         <Card className="p-4">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
-            <div className="space-y-4">
+            <div className="space-y-2">
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
-                 <hr/>
-                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name (required)' : "Client's Business Name (optional)"} /></FormControl><FormMessage /></FormItem>)} />
-                 <hr/>
-                 <div className="grid grid-cols-2 gap-4">
+                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} as="input" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Address`} placeholder="Address" as="input" /></FormControl><FormMessage /></FormItem>)} />
+                 <div className="grid grid-cols-2 gap-2">
+                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}City`} placeholder="City" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" /></FormControl><FormMessage /></FormItem>)} />
+                 </div>
+                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}State`} placeholder="State" /></FormControl><FormMessage /></FormItem>)} />
+                 
+                <div className="grid grid-cols-2 gap-2">
                     <PhoneInput control={control} prefix={prefix} />
-                    {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><Input type="email" placeholder="Email Address" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md" /></FormControl><FormMessage /></FormItem>)} />}
+                    {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Email`} placeholder="Email Address" /></FormControl><FormMessage /></FormItem>)} />}
                  </div>
-                 <hr/>
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Gstin`} placeholder="Your GSTIN" /></FormControl><FormMessage /></FormItem>)} />
-                    {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><Input placeholder="PAN Number" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md" /></FormControl><FormMessage /></FormItem>)} />}
+
+                <div className="grid grid-cols-2 gap-2">
+                    <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Gstin`} placeholder="GSTIN" /></FormControl><FormMessage /></FormItem>)} />
+                    {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Pan`} placeholder="PAN Number" /></FormControl><FormMessage /></FormItem>)} />}
                  </div>
-                 <hr/>
-                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Address`} placeholder="Address (optional)" as="input" /></FormControl><FormMessage /></FormItem>)} />
-                 <hr/>
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}City`} placeholder="City (optional)" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP Code" /></FormControl><FormMessage /></FormItem>)} />
-                 </div>
-                 <hr/>
-                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}State`} placeholder="State (optional)" /></FormControl><FormMessage /></FormItem>)} />
-                 <hr/>
 
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Field Name" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md" /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Value" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-md" /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}CustomFields.${index}.key`} placeholder="Field Name" /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><EditableField name={`${prefix}CustomFields.${index}.value`} placeholder="Value" /></FormControl><FormMessage /></FormItem>)} />
                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
                 
-                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm pt-2">
-                    <div className="flex items-center">
-                        {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
-                        {!showPan && <span className="mx-2">+</span>}
-                        {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}>Add PAN</Button>}
-                    </div>
+                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-2">
+                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
+                    {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
+                     <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
                  </div>
-                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Fields</Button>
 
             </div>
         </Card>
