@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare, X, Mail } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare, X, Mail, HelpCircle, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray, Control } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,11 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { hsnSacCodes } from '@/lib/hsn-data';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { ScrollArea } from './ui/scroll-area';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 
 
 const invoiceDetailsSchema = z.object({
@@ -213,25 +218,20 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
             <div className="space-y-2">
                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
                 <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
-                
                 <div className="grid grid-cols-2 gap-2">
-                    {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div/>}
-                    <PhoneInput control={control} prefix={prefix} />
+                   {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div/>}
+                   <PhoneInput control={control} prefix={prefix} />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-2 gap-2">
                     <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
                     {showPan ? <EditableField name={`${prefix}Pan`} placeholder="PAN Number" /> : <div/>}
                 </div>
-
                 <EditableField name={`${prefix}Address`} placeholder="Address" as="input"/>
-                
-                <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-2 gap-2">
                     <EditableField name={`${prefix}City`} placeholder="City" />
                     <EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" />
                 </div>
                 <EditableField name={`${prefix}State`} placeholder="State" />
-                
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                        <EditableField name={`${prefix}CustomFields.${index}.key`} placeholder="Field Name" />
@@ -239,7 +239,6 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
-                
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-2">
                     {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
                     {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
@@ -250,9 +249,9 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     )
 }
 
-const ItemRow = ({ index }: { index: number }) => {
+const ItemRow = ({ index, onHsnOpen }: { index: number, onHsnOpen: () => void }) => {
     const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
-    const { fields, remove, insert } = useFieldArray({ control, name: "items" });
+    const { fields, remove, insert, move } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
     
     const item = watch(`items.${index}`);
@@ -278,10 +277,14 @@ const ItemRow = ({ index }: { index: number }) => {
 
     return (
         <Card className="p-2 bg-background/50">
-            <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 gap-y-1 items-start text-sm">
+            <div className="grid grid-cols-[auto_2fr_repeat(8,_1fr)_auto] gap-x-2 gap-y-1 items-start text-sm">
+                 <div className="flex flex-col gap-1">
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
+                 </div>
                  <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" />
-                 <EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right" />
-                 <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" />
+                 <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
+                 <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" type="number" />
                  <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" type="number" />
                  <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" type="number" />
                  <div className="text-right pt-1">{amount.toFixed(2)}</div>
@@ -291,11 +294,11 @@ const ItemRow = ({ index }: { index: number }) => {
                  <Button type="button" variant="ghost" size="icon" className="w-6 h-6 justify-self-end" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
             </div>
              {showDescription && (
-                <div className="mt-2 pr-8">
+                <div className="mt-2 pr-8 pl-6">
                      <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none" />
                 </div>
             )}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs pl-6">
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
                 <div {...getRootProps()}><Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button><input {...getInputProps()} /></div>
                 <div className="flex-grow"/>
@@ -305,11 +308,150 @@ const ItemRow = ({ index }: { index: number }) => {
     )
 }
 
+const HsnSacModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOpenChange: (open: boolean) => void; onSelect: (code: string) => void }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const filteredData = useMemo(() => {
+    let data = [...hsnSacCodes];
+    if (searchTerm) {
+      data = data.filter(item =>
+        item.code.includes(searchTerm) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    data.sort((a, b) => {
+      const comparison = a.code.localeCompare(b.code, undefined, { numeric: true });
+      return sortAsc ? comparison : -comparison;
+    });
+    return data;
+  }, [searchTerm, sortAsc]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredData.slice(startIndex, endIndex);
+  }, [filteredData, currentPage, itemsPerPage]);
+
+  const handleSelect = (code: string) => {
+    onSelect(code);
+    onOpenChange(false);
+  };
+
+  const getPaginationItems = () => {
+    const items = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      items.push(1);
+      if (currentPage > 4) items.push('...');
+      
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        items.push(i);
+      }
+      
+      if (currentPage < totalPages - 3) items.push('...');
+      items.push(totalPages);
+    }
+    return items;
+  };
+
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-2xl">HSN/SAC List</DialogTitle>
+          <DialogDescription>Select HSN/SAC to apply</DialogDescription>
+        </DialogHeader>
+        <div className="px-6 pb-4 border-b">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} items
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search items" className="pl-9" value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1)}} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-grow overflow-hidden">
+          <ScrollArea className="h-full">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
+                  <TableHead className="w-[150px] cursor-pointer" onClick={() => setSortAsc(s => !s)}>
+                    <div className="flex items-center gap-1">
+                        HSN Code {sortAsc ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
+                    </div>
+                  </TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((item) => (
+                  <TableRow key={item.code} className="cursor-pointer" onClick={() => handleSelect(item.code)}>
+                    <TableCell className="font-medium">{item.code}</TableCell>
+                    <TableCell>{item.description}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
+         <div className="p-4 border-t flex items-center justify-between">
+           <Pagination>
+              <PaginationContent>
+                <PaginationPrevious onClick={() => setCurrentPage(p => Math.max(1, p - 1))} />
+                {getPaginationItems().map((item, index) => (
+                  <PaginationItem key={index}>
+                    {typeof item === 'number' ? (
+                      <PaginationLink isActive={item === currentPage} onClick={() => setCurrentPage(item)}>
+                        {item}
+                      </PaginationLink>
+                    ) : (
+                      <PaginationEllipsis />
+                    )}
+                  </PaginationItem>
+                ))}
+                <PaginationNext onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+              </PaginationContent>
+            </Pagination>
+            <div className="flex items-center gap-2">
+                <Select value={String(itemsPerPage)} onValueChange={(v) => setItemsPerPage(Number(v))}>
+                    <SelectTrigger className="w-[70px] h-9"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <span className="text-sm text-muted-foreground">items per page</span>
+            </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function InvoiceGenerator() {
     const [currentStage, setCurrentStage] = useState(1);
     const { toast } = useToast();
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [showDueDate, setShowDueDate] = useState(false);
+    const [isGstModalOpen, setIsGstModalOpen] = useState(false);
+    const [isHsnModalOpen, setIsHsnModalOpen] = useState(false);
+    const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
 
     const form = useForm<InvoiceDetailsValues>({
         resolver: zodResolver(invoiceDetailsSchema),
@@ -374,12 +516,30 @@ export function InvoiceGenerator() {
        toast({ title: 'Invoice Details Saved!', description: 'Moving to the next step.' });
        setCurrentStage(2);
     }
+
+    const handleHsnSelect = (code: string) => {
+        if(activeItemIndex !== null) {
+            setValue(`items.${activeItemIndex}.hsn`, code);
+        }
+    }
     
   return (
     <FormProvider {...form}>
         <div className="w-full max-w-7xl mx-auto">
             <StageStepper currentStage={currentStage} />
             
+            <HsnSacModal open={isHsnModalOpen} onOpenChange={setIsHsnModalOpen} onSelect={handleHsnSelect} />
+            <Dialog open={isGstModalOpen} onOpenChange={setIsGstModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Configure GST</DialogTitle>
+                        <DialogDescription>
+                            GST configuration options will be available here soon.
+                        </DialogDescription>
+                    </DialogHeader>
+                </DialogContent>
+            </Dialog>
+
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                  <div className="text-center mb-8">
@@ -451,7 +611,7 @@ export function InvoiceGenerator() {
                 
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-4">
-                        <Button type="button" variant="outline"><Percent className="w-4 h-4 mr-2"/>Configure GST</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsGstModalOpen(true)}><Percent className="w-4 h-4 mr-2"/>Configure GST</Button>
                         <FormField
                             control={form.control}
                             name="currency"
@@ -476,7 +636,8 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid">
+                        <div className="grid-cols-[auto_2fr_repeat(8,_1fr)_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid">
+                           <span/>
                            <span>Item</span>
                            <span className="text-right">HSN/SAC</span>
                            <span className="text-right">GST Rate</span>
@@ -489,7 +650,7 @@ export function InvoiceGenerator() {
                            <span/>
                         </div>
                         <div className="space-y-2">
-                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} />)}
+                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} />)}
                         </div>
                         <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
@@ -506,6 +667,3 @@ export function InvoiceGenerator() {
     </FormProvider>
   );
 }
-
-
-    
