@@ -267,7 +267,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     )
 }
 
-const ItemRow = ({ index, onHsnOpen, currencySymbol, taxType }: { index: number, onHsnOpen: () => void, currencySymbol: string, taxType: 'none' | 'cgst-sgst' | 'igst' }) => {
+const ItemRow = ({ index, onHsnOpen, currencySymbol, taxDetails }: { index: number, onHsnOpen: () => void, currencySymbol: string, taxDetails: TaxDetailsValues }) => {
     const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const { fields, remove, insert, move } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
@@ -291,22 +291,32 @@ const ItemRow = ({ index, onHsnOpen, currencySymbol, taxType }: { index: number,
         accept: { 'image/*': ['.jpeg', '.png'] },
         multiple: false,
     });
-
+    
+    const gridTemplateColumns = useMemo(() => {
+        let columns = "2fr 1fr 1fr 1fr 1fr 1fr"; // Item, HSN, Rate, Qty, Amount, Total
+        if(taxDetails.taxType !== 'none') {
+            if(taxDetails.gstType === 'cgst-sgst') {
+                columns = "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr"; // + CGST + SGST
+            } else {
+                columns = "2fr 1fr 1fr 1fr 1fr 1fr 1fr"; // + Tax
+            }
+        }
+        return columns;
+    }, [taxDetails]);
 
     return (
         <Card className="p-2 bg-background/50">
-            <div className={cn(
-                "grid gap-x-2 gap-y-1 items-start text-sm",
-                taxType === 'none' ? "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
-            )}>
-                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" />
+             <div className="grid gap-x-2 gap-y-1 items-start text-sm" style={{ gridTemplateColumns }}>
+                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" className="text-left"/>
                  <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
-                 <div className="flex items-center border-b"><EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right border-none" type="number" /><Percent className="w-3 h-3 text-muted-foreground"/></div>
+                 {taxDetails.taxType !== 'none' && <div className="flex items-center border-b"><EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right border-none" type="number" /><Percent className="w-3 h-3 text-muted-foreground"/></div>}
                  <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" type="number" />
                  <div className="flex items-center border-b"><span className="text-muted-foreground">{currencySymbol}</span><EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right border-none" type="number" /></div>
                  <div className="text-right pt-1"><span className="text-muted-foreground text-xs">{currencySymbol}</span>{amount.toFixed(2)}</div>
-                 {taxType !== 'none' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
-                 {taxType !== 'none' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
+                 {taxDetails.taxType === 'gst' && taxDetails.gstType === 'cgst-sgst' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
+                 {taxDetails.taxType === 'gst' && taxDetails.gstType === 'cgst-sgst' && <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>}
+                 {taxDetails.taxType === 'gst' && taxDetails.gstType === 'igst' && <div className="text-right pt-1">{gstAmount.toFixed(2)}</div>}
+                 {['vat', 'ppn', 'sst'].includes(taxDetails.taxType) && <div className="text-right pt-1">{gstAmount.toFixed(2)}</div>}
                  <div className="text-right pt-1 font-bold"><span className="text-muted-foreground text-xs">{currencySymbol}</span>{total.toFixed(2)}</div>
             </div>
              {showDescription && (
@@ -683,6 +693,52 @@ export function InvoiceGenerator() {
             setValue(`items.${activeItemIndex}.hsn`, code);
         }
     }
+
+    const itemTableHeader = useMemo(() => {
+        let headers: { key: string, label: string, className: string }[] = [
+            { key: "item", label: "Item", className: "text-left"},
+            { key: "hsn", label: "HSN/SAC", className: "text-right" },
+        ];
+        
+        const taxRateLabel = taxDetails.taxType === 'none' ? '' : `${taxDetails.taxType.toUpperCase()} Rate`;
+
+        if (taxDetails.taxType !== 'none') {
+            headers.push({ key: "taxRate", label: taxRateLabel, className: "text-right" });
+        }
+
+        headers.push(
+            { key: "qty", label: "Quantity", className: "text-right" },
+            { key: "rate", label: "Rate", className: "text-right" },
+            { key: "amount", label: "Amount", className: "text-right" }
+        );
+
+        if (taxDetails.taxType === 'gst' && taxDetails.gstType === 'cgst-sgst') {
+            headers.push({ key: "cgst", label: "CGST", className: "text-right" });
+            headers.push({ key: "sgst", label: "SGST", className: "text-right" });
+        } else if (taxDetails.taxType !== 'none') {
+            const taxLabel = taxDetails.taxType.toUpperCase();
+            headers.push({ key: "tax", label: taxLabel, className: "text-right" });
+        }
+        
+        headers.push({ key: "total", label: "Total", className: "text-right" });
+        
+        const gridTemplateColumns = {
+             'none': "2fr 1fr 1fr 1fr 1fr 1fr",
+             'gst-igst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'gst-cgst-sgst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'vat': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'ppn': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'sst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+        };
+        
+        let gridKey = taxDetails.taxType;
+        if(gridKey === 'gst') {
+            gridKey = `gst-${taxDetails.gstType || 'igst'}`;
+        }
+        
+        return { headers, gridTemplateColumns: gridTemplateColumns[gridKey as keyof typeof gridTemplateColumns] || "2fr 1fr 1fr 1fr 1fr 1fr" };
+
+    }, [taxDetails]);
     
   return (
     <FormProvider {...form}>
@@ -788,23 +844,13 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className={cn(
-                            "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid",
-                            taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
-                        )}>
-                           <span>Item</span>
-                           <span className="text-right">HSN/SAC</span>
-                           <span className="text-right">GST Rate</span>
-                           <span className="text-right">Quantity</span>
-                           <span className="text-right">Rate</span>
-                           <span className="text-right">Amount</span>
-                           {taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && <span className="text-right">CGST</span>}
-                           {taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && <span className="text-right">SGST</span>}
-                           <span className="text-right">Total</span>
-                           <span/>
+                        <div className="grid gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid" style={{ gridTemplateColumns: itemTableHeader.gridTemplateColumns }}>
+                           {itemTableHeader.headers.map(header => (
+                               <span key={header.key} className={header.className}>{header.label}</span>
+                           ))}
                         </div>
                         <div className="space-y-2">
-                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} currencySymbol={currencySymbol} taxType={taxDetails.taxType === 'none' ? 'none' : 'cgst-sgst'} />)}
+                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} currencySymbol={currencySymbol} taxDetails={taxDetails} />)}
                         </div>
                         <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
