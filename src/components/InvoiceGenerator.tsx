@@ -40,8 +40,8 @@ const invoiceDetailsSchema = z.object({
     billedByCity: z.string().optional(),
     billedByZip: z.string().optional(),
     billedByState: z.string().optional(),
-    billedByEmail: z.string().email().optional().or(z.literal('')),
-    billedByPan: z.string().optional().or(z.literal('')),
+    billedByEmail: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
+    billedByPan: z.string().optional(),
     billedByPhone: z.string().optional(),
     billedByCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
 
@@ -52,8 +52,8 @@ const invoiceDetailsSchema = z.object({
     billedToCity: z.string().optional(),
     billedToZip: z.string().optional(),
     billedToState: z.string().optional(),
-    billedToEmail: z.string().email().optional().or(z.literal('')),
-    billedToPan: z.string().optional().or(z.literal('')),
+    billedToEmail: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
+    billedToPan: z.string().optional(),
     billedToPhone: z.string().optional(),
     billedToCustomFields: z.array(z.object({ key: z.string().min(1, "Field name is required."), value: z.string().min(1, "Value is required.") })).optional(),
     
@@ -67,6 +67,9 @@ const invoiceDetailsSchema = z.object({
         quantity: z.number().min(0),
         rate: z.number().min(0),
         gstRate: z.number().optional(),
+        thumbnail: z.any().optional(),
+        unit: z.string().optional(),
+        type: z.string().optional(),
     })).min(1, "Please add at least one item."),
 });
 
@@ -94,7 +97,7 @@ const StageStepper = ({ currentStage }: { currentStage: number }) => {
     )
 }
 
-const EditableField = ({ name, placeholder, className, as = "input" }: { name: string, placeholder?: string, className?: string, as?: 'input' | 'textarea' }) => {
+const EditableField = ({ name, placeholder, className, as = "input", type = "text" }: { name: string, placeholder?: string, className?: string, as?: 'input' | 'textarea', type?: string }) => {
     const { control } = useFormContext();
     const Comp = as === 'input' ? Input : Textarea;
     return (
@@ -105,8 +108,9 @@ const EditableField = ({ name, placeholder, className, as = "input" }: { name: s
                 <Comp
                     {...field}
                     placeholder={placeholder}
+                    type={type}
                     className={cn(
-                        "w-full p-1 bg-transparent border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 text-sm",
+                        "w-full p-1 bg-transparent border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 text-sm h-auto",
                         className
                     )}
                 />
@@ -127,7 +131,7 @@ const CountrySelector = ({ field, label }: { field: any, label: string }) => {
               variant="outline"
               role="combobox"
               className={cn(
-                "w-full justify-between text-muted-foreground text-sm h-auto p-1 border-0 border-b rounded-none hover:bg-muted/50",
+                "w-full justify-between text-muted-foreground text-sm h-auto p-1 border-0 border-b rounded-none hover:bg-muted/50 font-normal",
                 !field.value && "text-muted-foreground"
               )}
             >
@@ -211,16 +215,16 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                 <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
                 
                 <div className="grid grid-cols-2 gap-2">
-                    {showEmail && <EditableField name={`${prefix}Email`} placeholder="Email Address" />}
+                    {showEmail ? <EditableField name={`${prefix}Email`} placeholder="Email Address" /> : <div/>}
                     <PhoneInput control={control} prefix={prefix} />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
                     <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
-                    {showPan && <EditableField name={`${prefix}Pan`} placeholder="PAN Number" />}
+                    {showPan ? <EditableField name={`${prefix}Pan`} placeholder="PAN Number" /> : <div/>}
                 </div>
 
-                <EditableField name={`${prefix}Address`} placeholder="Address" />
+                <EditableField name={`${prefix}Address`} placeholder="Address" as="input"/>
                 
                 <div className="grid grid-cols-2 gap-2">
                     <EditableField name={`${prefix}City`} placeholder="City" />
@@ -247,7 +251,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 }
 
 const ItemRow = ({ index }: { index: number }) => {
-    const { control, watch } = useFormContext<InvoiceDetailsValues>();
+    const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const { fields, remove, insert } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
     
@@ -260,14 +264,26 @@ const ItemRow = ({ index }: { index: number }) => {
     const gstAmount = amount * (gstRate / 100);
     const total = amount + gstAmount;
 
+    const { getRootProps, getInputProps } = useDropzone({
+        onDrop: (acceptedFiles) => {
+            const file = acceptedFiles[0];
+            if (file) {
+                setValue(`items.${index}.thumbnail`, file);
+            }
+        },
+        accept: { 'image/*': ['.jpeg', '.png'] },
+        multiple: false,
+    });
+
+
     return (
         <Card className="p-2 bg-background/50">
             <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 gap-y-1 items-start text-sm">
-                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="textarea" className="h-10 resize-none" />
+                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" />
                  <EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right" />
                  <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right" />
-                 <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" />
-                 <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" />
+                 <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right" type="number" />
+                 <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right" type="number" />
                  <div className="text-right pt-1">{amount.toFixed(2)}</div>
                  <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
                  <div className="text-right pt-1">{(gstAmount / 2).toFixed(2)}</div>
@@ -281,7 +297,7 @@ const ItemRow = ({ index }: { index: number }) => {
             )}
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
-                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button>
+                <div {...getRootProps()}><Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button><input {...getInputProps()} /></div>
                 <div className="flex-grow"/>
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => fields.length > 1 && insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
             </div>
@@ -490,4 +506,3 @@ export function InvoiceGenerator() {
     </FormProvider>
   );
 }
-
