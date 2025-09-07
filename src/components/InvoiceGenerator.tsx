@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare, X, Mail, HelpCircle, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare, X, HelpCircle, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray, Control } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -270,7 +270,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                     </div>
                 ))}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs pt-2">
-                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
+                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><MessageSquare className="w-3 h-3 mr-1"/>Add Email</Button>}
                     {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
                     <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
                 </div>
@@ -570,9 +570,22 @@ export function InvoiceGenerator() {
                     <DialogHeader>
                         <DialogTitle>Configure GST</DialogTitle>
                         <DialogDescription>
-                            GST configuration options will be available here soon.
+                            Select the type of tax to apply to your invoice items.
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="pt-4">
+                        <Label>Tax Type</Label>
+                        <Select value={taxType} onValueChange={(v) => setTaxType(v as any)}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No Tax</SelectItem>
+                                <SelectItem value="cgst-sgst">CGST + SGST</SelectItem>
+                                <SelectItem value="igst">IGST</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </DialogContent>
             </Dialog>
 
