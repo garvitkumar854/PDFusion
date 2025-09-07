@@ -6,9 +6,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, Mail, FileText } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, FileText as FileTextIcon, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useForm, FormProvider, useFormContext, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider, useFormContext, Controller, useFieldArray, Control } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -64,10 +64,10 @@ const invoiceDetailsSchema = z.object({
         name: z.string().min(1, "Item name is required."),
         description: z.string().optional(),
         hsn: z.string().optional(),
-        gstRate: z.number().optional(),
         quantity: z.number().min(0),
         rate: z.number().min(0),
-    })).optional(),
+        gstRate: z.number().optional(),
+    })).min(1, "Please add at least one item."),
 });
 
 type InvoiceDetailsValues = z.infer<typeof invoiceDetailsSchema>;
@@ -94,6 +94,24 @@ const StageStepper = ({ currentStage }: { currentStage: number }) => {
     )
 }
 
+const EditableField = ({ name, placeholder, className, as = "input" }: { name: string, placeholder?: string, className?: string, as?: 'input' | 'textarea' }) => {
+    const { control } = useFormContext();
+    const Comp = as;
+    return (
+        <FormField
+            control={control}
+            name={name}
+            render={({ field }) => (
+                <Comp
+                    {...field}
+                    placeholder={placeholder}
+                    className={cn("w-full p-1 bg-transparent border-none focus:ring-0 focus:bg-muted/50 rounded-md", className)}
+                />
+            )}
+        />
+    )
+}
+
 const CountrySelector = ({ field, label }: { field: any, label: string }) => {
     const [open, setOpen] = React.useState(false)
     const selectedCountry = countryList.find(c => c.code === field.value);
@@ -106,11 +124,11 @@ const CountrySelector = ({ field, label }: { field: any, label: string }) => {
               variant="outline"
               role="combobox"
               className={cn(
-                "w-full justify-between text-muted-foreground",
+                "w-full justify-between text-muted-foreground text-xs",
                 !field.value && "text-muted-foreground"
               )}
             >
-              {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.name}` : label}
+              {selectedCountry ? <div className="flex items-center gap-2"><span className="text-lg">{selectedCountry.flag}</span> <span>{selectedCountry.name}</span></div> : label}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </FormControl>
@@ -160,9 +178,9 @@ const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
             render={({ field }) => (
                 <FormItem>
                      <div className="flex items-center gap-2">
-                        <Input value={phoneCode} className="w-20 bg-muted" readOnly placeholder="Code"/>
+                        <Input value={phoneCode} className="w-20 bg-muted text-xs h-auto p-1" readOnly placeholder="Code"/>
                         <FormControl>
-                            <Input type="tel" placeholder="Phone Number (optional)" {...field} />
+                            <Input type="tel" placeholder="Phone Number" {...field} className="text-xs h-auto p-1" />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -183,35 +201,80 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     return (
         <Card className="p-4">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
+            <p className="text-xs text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
             <div className="space-y-2">
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
-                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><Input placeholder={type === 'By' ? 'Your Business Name (required)' : "Client's Business Name (required)"} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><Input placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
                  <PhoneInput control={control} prefix={prefix} />
-                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`GSTIN ${type === 'By' ? '(optional)' : '(optional)'}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Address (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder="GSTIN" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Address" {...field} className="text-xs h-auto p-1"/></FormControl><FormMessage /></FormItem>)} />
                  <div className="grid grid-cols-2 gap-2">
-                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><Input placeholder="City (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
                  </div>
-                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><Input placeholder="State (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
 
-                {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><Input type="email" placeholder="Email Address" {...field} /></FormControl><FormMessage /></FormItem>)} />}
-                {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><Input placeholder="PAN Number" {...field} /></FormControl><FormMessage /></FormItem>)} />}
+                {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormControl><Input type="email" placeholder="Email Address" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />}
+                {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormControl><Input placeholder="PAN Number" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />}
 
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Field Name" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Value" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.key`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Field Name" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`${prefix}CustomFields.${index}.value`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Value" {...field} className="text-xs h-auto p-1" /></FormControl><FormMessage /></FormItem>)} />
                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                 ))}
                 
-                 <div className="flex flex-wrap gap-x-4 gap-y-2">
-                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-4 h-4 mr-1"/>Add Email</Button>}
-                    {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileText className="w-4 h-4 mr-1"/>Add PAN</Button>}
-                    <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Field</Button>
+                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                    {!showEmail && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-3 h-3 mr-1"/>Add Email</Button>}
+                    {!showPan && <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><FileTextIcon className="w-3 h-3 mr-1"/>Add PAN</Button>}
+                    <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-3 h-3 mr-1"/>Add Custom Field</Button>
                 </div>
+            </div>
+        </Card>
+    )
+}
+
+const ItemRow = ({ index }: { index: number }) => {
+    const { control, watch } = useFormContext<InvoiceDetailsValues>();
+    const { fields, remove, duplicate } = useFieldArray({ control, name: "items" });
+    const [showDescription, setShowDescription] = useState(false);
+    
+    const item = watch(`items.${index}`);
+    const quantity = item.quantity || 0;
+    const rate = item.rate || 0;
+    const gstRate = item.gstRate || 0;
+
+    const amount = quantity * rate;
+    const gstAmount = amount * (gstRate / 100);
+    const total = amount + gstAmount;
+
+
+    return (
+        <Card className="p-2 bg-background/50">
+            <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 items-start text-xs">
+                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="textarea" className="h-10 resize-none text-xs" />
+                 <EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right text-xs" />
+                 <EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right text-xs" />
+                 <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-right text-xs" />
+                 <EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-right text-xs" />
+                 <div className="text-right pt-1">₹{amount.toFixed(2)}</div>
+                 <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
+                 <div className="text-right pt-1">₹{(gstAmount / 2).toFixed(2)}</div>
+                 <div className="text-right pt-1 font-bold">₹{total.toFixed(2)}</div>
+                 <Button type="button" variant="ghost" size="icon" className="w-6 h-6" onClick={() => remove(index)}><X className="w-4 h-4 text-destructive"/></Button>
+            </div>
+             {showDescription && (
+                <div className="mt-2 pr-8">
+                     <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none text-xs" />
+                </div>
+            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-xs"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button>
+                <div className="flex-grow"/>
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-xs"><MessageSquare className="w-3 h-3 mr-1"/>Insert item below</Button>
+                <Button type="button" variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => duplicate(index)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
             </div>
         </Card>
     )
@@ -229,10 +292,10 @@ export function InvoiceGenerator() {
             invoiceTitle: "Invoice",
             invoiceNumber: "",
             invoiceDate: new Date(),
-            billedByCountry: "",
-            billedToCountry: "",
+            billedByCountry: "IN",
+            billedToCountry: "IN",
             currency: "INR",
-            items: [{ name: "", quantity: 1, rate: 0 }],
+            items: [{ name: "", quantity: 1, rate: 0, gstRate: 18 }],
             topLevelCustomFields: [],
             billedByCustomFields: [],
             billedToCustomFields: [],
@@ -254,7 +317,7 @@ export function InvoiceGenerator() {
             billedToEmail: undefined,
             billedToPan: undefined,
             billedToPhone: "",
-            dueDate: undefined
+            dueDate: undefined,
         }
     });
 
@@ -388,37 +451,22 @@ export function InvoiceGenerator() {
                     </div>
 
                      <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 text-sm font-bold text-primary mb-2">
+                        <div className="grid grid-cols-[2fr_repeat(8,_1fr)_auto] gap-x-2 text-xs font-bold text-primary mb-2">
                            <span>Item</span>
+                           <span className="text-right">HSN/SAC</span>
+                           <span className="text-right">GST Rate</span>
                            <span className="text-right">Quantity</span>
                            <span className="text-right">Rate</span>
                            <span className="text-right">Amount</span>
-                           <span className="text-right">GST</span>
+                           <span className="text-right">CGST</span>
+                           <span className="text-right">SGST</span>
                            <span className="text-right">Total</span>
+                           <span/>
                         </div>
                         <div className="space-y-2">
-                            {itemFields.map((item, index) => (
-                                <Card key={item.id} className="p-4 bg-background">
-                                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 items-start">
-                                        <FormField control={form.control} name={`items.${index}.name`} render={({field}) => <FormItem><FormControl><Textarea placeholder="Item Name" {...field} className="text-sm h-10 resize-none"/></FormControl></FormItem>} />
-                                        <FormField control={form.control} name={`items.${index}.quantity`} render={({field}) => <FormItem><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} className="text-right text-sm h-10" /></FormControl></FormItem>} />
-                                        <FormField control={form.control} name={`items.${index}.rate`} render={({field}) => <FormItem><FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} className="text-right text-sm h-10" /></FormControl></FormItem>} />
-                                        <div className="text-right text-sm pt-2">₹{(form.watch(`items.${index}.quantity`) * form.watch(`items.${index}.rate`)).toFixed(2)}</div>
-                                        <FormField control={form.control} name={`items.${index}.gstRate`} render={({field}) => <FormItem><FormControl><Input type="number" placeholder="%" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} className="text-right text-sm h-10" /></FormControl></FormItem>} />
-                                        <div className="text-right text-sm font-bold pt-2">₹{((form.watch(`items.${index}.quantity`) * form.watch(`items.${index}.rate`)) * (1 + (form.watch(`items.${index}.gstRate`) || 0)/100)).toFixed(2)}</div>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
-                                    </div>
-                                    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
-                                        <Button type="button" variant="link" size="sm" className="p-0 h-auto"><Plus className="w-3 h-3 mr-1"/>Add Description</Button>
-                                        <Button type="button" variant="link" size="sm" className="p-0 h-auto"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button>
-                                        <Button type="button" variant="link" size="sm" className="p-0 h-auto"><Scale className="w-3 h-3 mr-1"/>Add Unit</Button>
-                                        <div className="flex-grow"/>
-                                        <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => duplicate(index)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
-                                    </div>
-                                </Card>
-                            ))}
+                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} />)}
                         </div>
-                        <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0 })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
+                        <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18 })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
                 </div>
 
