@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow } from 'lucide-react';
+import { ArrowRight, CalendarIcon, Check, ChevronsUpDown, Edit2, Image as ImageIcon, Info, Plus, Percent, NotebookText, Trash2, Copy, Scale, Pilcrow, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useForm, FormProvider, useFormContext, Controller, useFieldArray } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { format } from 'date-fns';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from './ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { countryList } from '@/lib/country-data';
 import { currencyList } from '@/lib/currency-data';
 import { useDropzone } from 'react-dropzone';
@@ -94,7 +94,7 @@ const StageStepper = ({ currentStage }: { currentStage: number }) => {
     )
 }
 
-const CountrySelector = ({ field }: { field: any }) => {
+const CountrySelector = ({ field, label }: { field: any, label: string }) => {
     const [open, setOpen] = React.useState(false)
     const selectedCountry = countryList.find(c => c.code === field.value);
     
@@ -106,11 +106,11 @@ const CountrySelector = ({ field }: { field: any }) => {
               variant="outline"
               role="combobox"
               className={cn(
-                "w-full justify-between",
+                "w-full justify-between text-muted-foreground",
                 !field.value && "text-muted-foreground"
               )}
             >
-              {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.name}` : "Select country"}
+              {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.name}` : label}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </FormControl>
@@ -118,32 +118,58 @@ const CountrySelector = ({ field }: { field: any }) => {
         <PopoverContent className="w-full p-0">
           <Command>
             <CommandInput placeholder="Search country..." />
-            <CommandEmpty>No country found.</CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-y-auto">
-              {countryList.map((country) => (
-                <CommandItem
-                  value={country.name}
-                  key={country.code}
-                  onSelect={() => {
-                    field.onChange(country.code)
-                    setOpen(false)
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      country.code === field.value
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
-                  {country.flag} {country.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandList>
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-y-auto">
+                {countryList.map((country) => (
+                    <CommandItem
+                    value={country.name}
+                    key={country.code}
+                    onSelect={() => {
+                        field.onChange(country.code)
+                        setOpen(false)
+                    }}
+                    >
+                    <Check
+                        className={cn(
+                        "mr-2 h-4 w-4",
+                        country.code === field.value
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                    />
+                    {country.flag} {country.name}
+                    </CommandItem>
+                ))}
+                </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
+    )
+}
+
+const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
+    const countryCode = useFormContext<InvoiceDetailsValues>().watch(`${prefix}Country` as const);
+    const phoneCode = countryList.find(c => c.code === countryCode)?.phoneCode || '';
+    
+    return (
+        <FormField
+            control={control}
+            name={`${prefix}Phone`}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Phone (optional)</FormLabel>
+                     <div className="flex items-center gap-2">
+                        <Input value={phoneCode} className="w-20 bg-muted" readOnly/>
+                        <FormControl>
+                            <Input type="tel" {...field} />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
     )
 }
 
@@ -154,20 +180,26 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
 
     const showEmail = watch(`${prefix}Email` as const) !== undefined;
     const showPan = watch(`${prefix}Pan` as const) !== undefined;
-    const showPhone = watch(`${prefix}Phone` as const) !== undefined;
+    const showPhone = true;
 
     return (
         <Card className="p-6">
             <h3 className="font-bold text-lg mb-1">Billed {type}</h3>
             <p className="text-sm text-muted-foreground mb-4">{type === 'By' ? 'Your Details' : "Client's Details"}</p>
             <div className="space-y-4">
-                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormLabel>Business Name*</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><CountrySelector field={field} /><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormLabel>GSTIN (optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
-                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
+                 <FormField control={control} name={`${prefix}BusinessName`} render={({ field }) => (<FormItem><FormControl><Input placeholder={type === 'By' ? 'Your Business Name (required)' : "Client's Business Name (required)"} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 {showPhone && <PhoneInput control={control} prefix={prefix} />}
+                 <FormField control={control} name={`${prefix}Gstin`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Your GSTIN ${type === 'By' ? '' : '(optional)'}`} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={control} name={`${prefix}Address`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Address (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField control={control} name={`${prefix}City`} render={({ field }) => (<FormItem><FormControl><Input placeholder="City (optional)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`${prefix}Zip`} render={({ field }) => (<FormItem><FormControl><Input placeholder="Postal Code / ZIP Code" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 </div>
+                 <FormField control={control} name={`${prefix}State`} render={({ field }) => (<FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="text-muted-foreground"><SelectValue placeholder="State (optional)" /></SelectTrigger></FormControl><SelectContent></SelectContent></Select><FormMessage /></FormItem>)} />
+
                 {showEmail && <FormField control={control} name={`${prefix}Email`} render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>)} />}
                 {showPan && <FormField control={control} name={`${prefix}Pan`} render={({ field }) => (<FormItem><FormLabel>PAN</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />}
-                {showPhone && <FormField control={control} name={`${prefix}Phone`} render={({ field }) => (<FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)} />}
 
                 {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
@@ -177,12 +209,11 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                     </div>
                 ))}
                 
-                <div className="flex flex-wrap gap-2 pt-2">
-                    {!showEmail && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Email` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Email</Button>}
-                    {!showPan && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Pan` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add PAN</Button>}
-                    {!showPhone && <Button type="button" variant="link" className="p-0 h-auto" onClick={() => setValue(`${prefix}Phone` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add Phone</Button>}
-                    <Button type="button" variant="link" className="p-0 h-auto" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Field</Button>
+                 <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+                    {!showEmail && <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Email` as const, '')}><Mail className="w-4 h-4 mr-1"/>Add Email</Button>}
+                    {!showPan && <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setValue(`${prefix}Pan` as const, '')}><Plus className="w-4 h-4 mr-1"/>Add PAN</Button>}
                 </div>
+                <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => append({ key: '', value: '' })}><Plus className="w-4 h-4 mr-1"/>Add Custom Fields</Button>
             </div>
         </Card>
     )
@@ -213,16 +244,23 @@ export function InvoiceGenerator() {
             billedToGstin: "",
             billedByAddress: "",
             billedToAddress: "",
+            billedByCity: "",
+            billedToCity: "",
+            billedByState: "",
+            billedToState: "",
+            billedByZip: "",
+            billedToZip: "",
             billedByEmail: undefined,
             billedByPan: undefined,
-            billedByPhone: undefined,
+            billedByPhone: "",
             billedToEmail: undefined,
             billedToPan: undefined,
-            billedToPhone: undefined,
+            billedToPhone: "",
             dueDate: undefined
         }
     });
 
+    const { control, setValue } = form;
     const { fields: topLevelFields, append: appendTopLevel, remove: removeTopLevel } = useFieldArray({ control: form.control, name: "topLevelCustomFields" });
     const { fields: itemFields, append: appendItem, remove: removeItem, duplicate } = useFieldArray({ control: form.control, name: "items" });
 
@@ -256,6 +294,7 @@ export function InvoiceGenerator() {
         <div className="w-full max-w-6xl mx-auto">
             <StageStepper currentStage={currentStage} />
             
+            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                  <div className="text-center mb-8">
                      <FormField
@@ -391,6 +430,7 @@ export function InvoiceGenerator() {
                     </Button>
                 </div>
             </form>
+            </Form>
         </div>
     </FormProvider>
   );
