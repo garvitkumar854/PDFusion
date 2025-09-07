@@ -24,11 +24,12 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { hsnSacCodes } from '@/lib/hsn-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
+import { Checkbox } from './ui/checkbox';
 
 
 const invoiceDetailsSchema = z.object({
@@ -80,6 +81,17 @@ const invoiceDetailsSchema = z.object({
 });
 
 type InvoiceDetailsValues = z.infer<typeof invoiceDetailsSchema>;
+
+const taxDetailsSchema = z.object({
+    taxType: z.enum(["none", "gst", "vat", "ppn", "sst"]),
+    gstType: z.enum(["igst", "cgst-sgst"]).optional(),
+    addCess: z.boolean().optional(),
+    cessType: z.enum(["central", "state"]).optional(),
+    cessName: z.string().optional(),
+    isReverseCharge: z.boolean().optional(),
+});
+type TaxDetailsValues = z.infer<typeof taxDetailsSchema>;
+
 
 const StageStepper = ({ currentStage }: { currentStage: number }) => {
     const stages = ["Add Invoice Details", "Add Banking Details", "Download"];
@@ -180,30 +192,6 @@ const CountrySelector = ({ field, label }: { field: any, label: string }) => {
     )
 }
 
-const PhoneInput = ({ control, prefix }: { control: any, prefix: string }) => {
-    const { watch } = useFormContext<InvoiceDetailsValues>();
-    const countryCode = watch(`${prefix}Country` as const);
-    const phoneCode = countryList.find(c => c.code === countryCode)?.phoneCode || '';
-    
-    return (
-        <div className="flex items-center gap-2 border-b">
-            <Input value={phoneCode} className="w-16 bg-transparent border-none text-sm h-auto p-1" readOnly placeholder="Code"/>
-            <FormField
-                control={control}
-                name={`${prefix}Phone`}
-                render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormControl>
-                            <Input type="tel" placeholder="Phone Number" {...field} className="text-sm h-auto p-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:bg-muted/50 rounded-none" />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-    )
-}
-
 const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
     const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const prefix = `billed${type}` as const;
@@ -221,9 +209,9 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
                  <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
                 
-                 <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     <div className={cn(!showEmail && "col-span-2")}>
-                      <PhoneInput control={control} prefix={prefix} />
+                      <EditableField name={`${prefix}Phone`} placeholder="Phone Number" />
                     </div>
                     {showEmail && <EditableField name={`${prefix}Email`} placeholder="Email Address" />}
                 </div>
@@ -332,8 +320,8 @@ const ItemRow = ({ index, onHsnOpen, currencySymbol, taxType }: { index: number,
                 <div className="flex-grow"/>
                 <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary" onClick={() => insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
                  <div className="flex gap-1 justify-self-end">
-                    {index > 0 && <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)}><ArrowUp className="w-3 h-3"/></Button>}
-                    {index < fields.length - 1 && <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)}><ArrowDown className="w-3 h-3"/></Button>}
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
                  </div>
             </div>
         </Card>
@@ -476,6 +464,143 @@ const HsnSacModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOpenCh
   )
 }
 
+const ConfigureTaxModal = ({ open, onOpenChange, onSave, initialValues }: { open: boolean; onOpenChange: (open: boolean) => void; onSave: (data: TaxDetailsValues) => void; initialValues: TaxDetailsValues }) => {
+    const form = useForm<TaxDetailsValues>({
+        resolver: zodResolver(taxDetailsSchema),
+        defaultValues: initialValues,
+    });
+
+    const taxType = form.watch("taxType");
+    const addCess = form.watch("addCess");
+
+    const handleSave = (data: TaxDetailsValues) => {
+        onSave(data);
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>Configure Tax</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="text-sm font-semibold mb-2">1. Select Tax Type*</h4>
+                                <FormField
+                                    control={form.control}
+                                    name="taxType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="none">None</SelectItem>
+                                                    <SelectItem value="gst">GST (India)</SelectItem>
+                                                    <SelectItem value="vat">VAT</SelectItem>
+                                                    <SelectItem value="ppn">PPN</SelectItem>
+                                                    <SelectItem value="sst">SST</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            {taxType === 'gst' && (
+                                <div className="pl-4 border-l-2 space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="gstType"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>GST Type</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Select GST Type"/></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="igst">IGST</SelectItem>
+                                                        <SelectItem value="cgst-sgst">CGST & SGST</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="addCess"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                                <div className="space-y-1 leading-none"><FormLabel>Add cess</FormLabel></div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {addCess && (
+                                        <div className="pl-4 border-l-2 space-y-4">
+                                             <FormField
+                                                control={form.control}
+                                                name="cessType"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Cess Type</FormLabel>
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <FormControl><SelectTrigger><SelectValue placeholder="Select Cess Type"/></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="central">Central Cess</SelectItem>
+                                                                <SelectItem value="state">State Cess</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="cessName"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Cess Name</FormLabel>
+                                                        <FormControl><Input placeholder="e.g., Natural Calamity Contingent Duty" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <p className="text-xs text-muted-foreground italic">Additional cess can be levied in addition to GST tax invoice</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div>
+                                <h4 className="text-sm font-semibold mb-2">2. Other Options</h4>
+                                <FormField
+                                    control={form.control}
+                                    name="isReverseCharge"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                            <FormLabel>Is Reverse Charge Applicable?</FormLabel>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
+                            <Button type="submit">Save Changes</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 export function InvoiceGenerator() {
     const [currentStage, setCurrentStage] = useState(1);
     const { toast } = useToast();
@@ -484,7 +609,7 @@ export function InvoiceGenerator() {
     const [isGstModalOpen, setIsGstModalOpen] = useState(false);
     const [isHsnModalOpen, setIsHsnModalOpen] = useState(false);
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
-    const [taxType, setTaxType] = useState<'none' | 'cgst-sgst' | 'igst'>('cgst-sgst');
+    const [taxDetails, setTaxDetails] = useState<TaxDetailsValues>({ taxType: 'none' });
 
     const form = useForm<InvoiceDetailsValues>({
         resolver: zodResolver(invoiceDetailsSchema),
@@ -565,29 +690,7 @@ export function InvoiceGenerator() {
             <StageStepper currentStage={currentStage} />
             
             <HsnSacModal open={isHsnModalOpen} onOpenChange={setIsHsnModalOpen} onSelect={handleHsnSelect} />
-            <Dialog open={isGstModalOpen} onOpenChange={setIsGstModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Configure GST</DialogTitle>
-                        <DialogDescription>
-                            Select the type of tax to apply to your invoice items.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="pt-4">
-                        <Label>Tax Type</Label>
-                        <Select value={taxType} onValueChange={(v) => setTaxType(v as any)}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">No Tax</SelectItem>
-                                <SelectItem value="cgst-sgst">CGST + SGST</SelectItem>
-                                <SelectItem value="igst">IGST</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <ConfigureTaxModal open={isGstModalOpen} onOpenChange={setIsGstModalOpen} initialValues={taxDetails} onSave={setTaxDetails} />
 
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -687,7 +790,7 @@ export function InvoiceGenerator() {
                      <div className="bg-primary/10 p-4 rounded-lg">
                         <div className={cn(
                             "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid",
-                            taxType !== 'none' && "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
+                            taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto]"
                         )}>
                            <span>Item</span>
                            <span className="text-right">HSN/SAC</span>
@@ -695,13 +798,13 @@ export function InvoiceGenerator() {
                            <span className="text-right">Quantity</span>
                            <span className="text-right">Rate</span>
                            <span className="text-right">Amount</span>
-                           {taxType !== 'none' && <span className="text-right">CGST</span>}
-                           {taxType !== 'none' && <span className="text-right">SGST</span>}
+                           {taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && <span className="text-right">CGST</span>}
+                           {taxDetails.taxType !== 'none' && taxDetails.gstType === 'cgst-sgst' && <span className="text-right">SGST</span>}
                            <span className="text-right">Total</span>
                            <span/>
                         </div>
                         <div className="space-y-2">
-                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} currencySymbol={currencySymbol} taxType={taxType} />)}
+                            {itemFields.map((item, index) => <ItemRow key={item.id} index={index} onHsnOpen={() => {setActiveItemIndex(index); setIsHsnModalOpen(true)}} currencySymbol={currencySymbol} taxType={taxDetails.taxType === 'none' ? 'none' : 'cgst-sgst'} />)}
                         </div>
                         <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
