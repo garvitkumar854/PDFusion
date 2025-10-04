@@ -19,6 +19,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useTheme } from 'next-themes';
+import { ScrollArea } from './ui/scroll-area';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -252,9 +253,9 @@ export default function Header() {
                             <span className="sr-only">Open menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="p-0">
+                    <SheetContent side="right" className="p-0 flex flex-col">
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                        <div className="p-6 flex flex-col h-full">
+                        <div className="p-6 pb-0">
                             <div className="flex justify-between items-center mb-6">
                                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
                                     {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
@@ -265,14 +266,18 @@ export default function Header() {
                                     </h1>
                                 </Link>
                             </div>
-                            <nav className="flex flex-col gap-4 items-start px-2 mb-6">
-                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                        </div>
+                        <ScrollArea className="flex-1">
+                            <nav className="flex flex-col items-start px-6 space-y-6 pb-6">
+                                <div className='flex flex-col items-start space-y-2'>
+                                    <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                </div>
                                 
-                                <div className="w-full pt-4">
+                                <div className="w-full pt-4 border-t">
                                     <div className="text-base font-semibold text-foreground mb-2">Services</div>
-                                    <div className="grid grid-cols-1 gap-1">
+                                    <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
                                             return (
@@ -293,9 +298,9 @@ export default function Header() {
                                         )})}
                                     </div>
                                 </div>
-                                <div className="w-full pt-4">
+                                <div className="w-full pt-4 border-t">
                                     <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <div className="grid grid-cols-1 gap-1 mt-2">
+                                    <div className="grid grid-cols-1 gap-2 mt-2">
                                         {moreTools.map((tool) => {
                                             const isActive = pathname.startsWith(tool.href);
                                             return (
@@ -316,11 +321,10 @@ export default function Header() {
                                         )})}
                                     </div>
                                 </div>
-
-                                 <div className="pt-4 w-full">
-                                    <InstallPWA inSheet={true} />
-                                </div>
                             </nav>
+                        </ScrollArea>
+                        <div className="p-6 mt-auto border-t">
+                            <InstallPWA inSheet={true} />
                         </div>
                     </SheetContent>
                 </Sheet>
