@@ -28,7 +28,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary"
+      className="group relative pt-2 pb-1 font-semibold transition-colors text-muted-foreground hover:text-primary"
     >
       <span className={cn(isActive && "text-primary")}>{children}</span>
       <span
@@ -50,7 +50,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-sm font-semibold transition-colors w-fit",
+            "group relative pb-1 text-sm font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -139,7 +139,7 @@ export default function Header() {
               }}
             >
               <div
-                className="group relative py-2 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
+                className="group relative pt-2 pb-1 font-semibold transition-colors text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
               >
                 <span className={cn(isServicesActive && "text-primary")}>Services</span>
                 <motion.div
