@@ -10,6 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { GlowingCard } from './GlowingCard';
 import AnimatedArrow from './AnimatedArrow';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 const services = [
     {
@@ -195,65 +201,6 @@ const serviceItemVariants = {
   hidden: { opacity: 0, y: 20 },
 }
 
-const FeatureAccordion = () => {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
-
-  const handleClick = (index: number) => {
-    setExpandedIndex(prev => (prev === index ? null : index));
-  };
-
-  return (
-    <div className="flex flex-col gap-4 text-left">
-      {whyChooseUsFeatures.map((feature, index) => {
-        const isExpanded = index === expandedIndex;
-        
-        return (
-          <motion.div
-            key={feature.title}
-            onClick={() => handleClick(index)}
-            layout
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          >
-            <GlowingCard
-              animate={{ opacity: isExpanded || expandedIndex === null ? 1 : 0.7 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              glowing={isExpanded}
-            >
-              <div className="flex items-center gap-4">
-                {feature.icon}
-                <h3 className="text-base sm:text-lg font-bold text-foreground transition-colors">
-                  {feature.title}
-                </h3>
-              </div>
-              <AnimatePresence initial={false}>
-                {isExpanded && (
-                  <motion.div
-                    key="content"
-                    initial="collapsed"
-                    animate="open"
-                    exit="collapsed"
-                    variants={{
-                      open: { opacity: 1, height: 'auto' },
-                      collapsed: { opacity: 0, height: 0 }
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30, duration: 0.4 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="text-muted-foreground text-sm sm:text-base mt-4 pl-12">
-                      {feature.description}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </GlowingCard>
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-};
-
-
 const CTAButton = () => {
     const [isHovered, setIsHovered] = useState(false);
 
@@ -350,8 +297,24 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         Discover the most intuitive and powerful PDF tools available online. Built with cutting-edge technology for the best user experience.
                         </p>
 
-                        <div className="max-w-3xl mx-auto">
-                          <FeatureAccordion />
+                        <div className="max-w-3xl mx-auto text-left">
+                            <Accordion type="single" collapsible defaultValue="item-0">
+                                {whyChooseUsFeatures.map((feature, index) => (
+                                <AccordionItem value={`item-${index}`} key={index}>
+                                    <AccordionTrigger>
+                                        <div className="flex items-center gap-4 text-base sm:text-lg font-bold text-foreground transition-colors">
+                                            {feature.icon}
+                                            {feature.title}
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <p className="text-muted-foreground text-sm sm:text-base pl-12">
+                                            {feature.description}
+                                        </p>
+                                    </AccordionContent>
+                                </AccordionItem>
+                                ))}
+                            </Accordion>
                         </div>
                     </div>
                 </AnimateOnScroll>
