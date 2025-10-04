@@ -252,7 +252,7 @@ export default function Header() {
                             <span className="sr-only">Open menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="top" className="h-auto p-0">
+                    <SheetContent side="right" className="p-0">
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <div className="p-6 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-6">
@@ -266,15 +266,13 @@ export default function Header() {
                                 </Link>
                             </div>
                             <nav className="flex flex-col gap-4 items-start px-2 mb-6">
-                                <div className="flex flex-row gap-4 items-start w-full">
-                                    <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                </div>
+                                <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 
-                                <div className="w-full pt-2">
+                                <div className="w-full pt-4">
                                     <div className="text-base font-semibold text-foreground mb-2">Services</div>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                    <div className="grid grid-cols-1 gap-1">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
                                             return (
@@ -290,14 +288,14 @@ export default function Header() {
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
                                                     {React.cloneElement(service.icon, { className: "" })}
                                                 </div>
-                                                <span className="text-xs font-medium">{service.label}</span>
+                                                <span className="text-sm font-medium">{service.label}</span>
                                             </Link>
                                         )})}
                                     </div>
                                 </div>
                                 <div className="w-full pt-4">
                                     <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
+                                    <div className="grid grid-cols-1 gap-1 mt-2">
                                         {moreTools.map((tool) => {
                                             const isActive = pathname.startsWith(tool.href);
                                             return (
@@ -313,7 +311,7 @@ export default function Header() {
                                                 <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
                                                     {React.cloneElement(tool.icon, { className: "" })}
                                                 </div>
-                                                <span className="text-xs font-medium">{tool.label}</span>
+                                                <span className="text-sm font-medium">{tool.label}</span>
                                             </Link>
                                         )})}
                                     </div>
