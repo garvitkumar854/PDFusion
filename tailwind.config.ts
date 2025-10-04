@@ -75,6 +75,20 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+       typography: (theme) => ({
+        DEFAULT: {
+          css: {
+            '--tw-prose-bullets': theme('colors.primary.DEFAULT'),
+             ul: {
+              paddingLeft: '1.5rem',
+            },
+            li: {
+              marginTop: '0.25rem',
+              marginBottom: '0.25rem',
+            },
+          },
+        },
+      }),
       keyframes: {
         'accordion-down': {
           from: {
@@ -110,5 +124,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
 } satisfies Config;

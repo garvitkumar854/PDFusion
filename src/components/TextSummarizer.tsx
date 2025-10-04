@@ -112,9 +112,7 @@ export function TextSummarizer() {
                             <p className="text-sm">This may take a moment for longer documents.</p>
                         </motion.div>
                     ) : summary ? (
-                        <motion.div key="summary" initial={{opacity: 0}} animate={{opacity: 1}} className="p-4 prose dark:prose-invert max-w-full">
-                            {summary}
-                        </motion.div>
+                        <motion.div key="summary" initial={{opacity: 0}} animate={{opacity: 1}} className="p-4 prose dark:prose-invert max-w-full" dangerouslySetInnerHTML={{ __html: summary }}/>
                     ) : (
                         <motion.div key="placeholder" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="h-full min-h-[300px] flex flex-col items-center justify-center text-muted-foreground p-8 text-center">
                             <Pilcrow className="w-12 h-12 mb-4"/>
