@@ -31,8 +31,12 @@ export function TextSummarizer() {
     const [isCopied, setIsCopied] = useState(false);
     
     // New options
-    const [summaryLength, setSummaryLength] = useState<'short' | 'medium' | 'long'>('medium');
-    const [summaryFormat, setSummaryFormat] = useState<'paragraph' | 'bullets'>('paragraph');
+    const [summaryLength, setSummaryLength] = useState<SummarizeInput['length']>('medium');
+    const [summaryFormat, setSummaryFormat] = useState<SummarizeInput['format']>('paragraph');
+    const [summaryTone, setSummaryTone] = useState<SummarizeInput['tone']>('neutral');
+    const [summaryAudience, setSummaryAudience] = useState<SummarizeInput['audience']>('general');
+    const [summaryLanguage, setSummaryLanguage] = useState<string>('English');
+
 
     const { toast } = useToast();
     const isMobile = useIsMobile();
@@ -46,7 +50,14 @@ export function TextSummarizer() {
         setSummary("");
 
         try {
-            const input: SummarizeInput = { text: inputText, length: summaryLength, format: summaryFormat };
+            const input: SummarizeInput = { 
+                text: inputText, 
+                length: summaryLength, 
+                format: summaryFormat,
+                tone: summaryTone,
+                audience: summaryAudience,
+                language: summaryLanguage,
+            };
             const result = await summarizeText(input);
             setSummary(result.summary);
             toast({ variant: 'success', title: 'Summary Generated!', description: 'Your text has been successfully summarized.' });
@@ -55,7 +66,7 @@ export function TextSummarizer() {
         } finally {
             setIsSummarizing(false);
         }
-    }, [inputText, summaryLength, summaryFormat, toast]);
+    }, [inputText, summaryLength, summaryFormat, summaryTone, summaryAudience, summaryLanguage, toast]);
 
     const handleCopy = useCallback(() => {
         if (!summary) return;
@@ -130,9 +141,9 @@ export function TextSummarizer() {
     );
 
     const optionsPanel = (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-                <Label htmlFor="summary-length">Summary Length</Label>
+                <Label htmlFor="summary-length">Length</Label>
                 <Select value={summaryLength} onValueChange={v => setSummaryLength(v as any)} disabled={isSummarizing}>
                     <SelectTrigger id="summary-length" className="mt-1"><SelectValue/></SelectTrigger>
                     <SelectContent>
@@ -151,6 +162,41 @@ export function TextSummarizer() {
                         <SelectItem value="bullets">Bullet Points</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+            <div>
+                <Label htmlFor="summary-tone">Tone</Label>
+                <Select value={summaryTone} onValueChange={v => setSummaryTone(v as any)} disabled={isSummarizing}>
+                    <SelectTrigger id="summary-tone" className="mt-1"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="neutral">Neutral</SelectItem>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                        <SelectItem value="confident">Confident</SelectItem>
+                        <SelectItem value="friendly">Friendly</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label htmlFor="summary-audience">Audience</Label>
+                <Select value={summaryAudience} onValueChange={v => setSummaryAudience(v as any)} disabled={isSummarizing}>
+                    <SelectTrigger id="summary-audience" className="mt-1"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="lg:col-span-2">
+                <Label htmlFor="summary-language">Language</Label>
+                <Input 
+                    id="summary-language" 
+                    value={summaryLanguage} 
+                    onChange={(e) => setSummaryLanguage(e.target.value)} 
+                    className="mt-1"
+                    placeholder="e.g., Spanish, French"
+                    disabled={isSummarizing}
+                />
             </div>
         </div>
     );
@@ -178,8 +224,8 @@ export function TextSummarizer() {
                 {editorPanel}
                 {summaryPanel}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-1">{optionsPanel}</div>
+            <div className="grid grid-cols-[2fr_1fr] gap-4 items-end">
+                <div>{optionsPanel}</div>
                 <Button onClick={handleSummarize} size="lg" className="w-full text-base self-end" disabled={isSummarizing || inputText.length < 20}>
                     <AnimatePresence mode="wait">
                             {isSummarizing ? (
