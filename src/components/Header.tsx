@@ -275,7 +275,7 @@ export default function Header() {
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 </div>
                                 
-                                <div className="w-full pt-4 border-t">
+                                <div className="w-full pt-2 border-t">
                                     <div className="text-sm font-semibold text-foreground mb-2">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
@@ -298,7 +298,7 @@ export default function Header() {
                                         )})}
                                     </div>
                                 </div>
-                                <div className="w-full pt-4 border-t">
+                                <div className="w-full pt-2 border-t">
                                     <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <div className="grid grid-cols-1 gap-2 mt-2">
                                         {moreTools.map((tool) => {
