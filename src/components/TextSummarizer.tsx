@@ -70,7 +70,8 @@ export function TextSummarizer() {
 
     const handleCopy = useCallback(() => {
         if (!summary) return;
-        navigator.clipboard.writeText(summary);
+        const plainText = new DOMParser().parseFromString(summary, "text/html").documentElement.textContent || summary;
+        navigator.clipboard.writeText(plainText);
         toast({
             variant: "success",
             title: "Summary Copied!",
@@ -123,12 +124,12 @@ export function TextSummarizer() {
                             <p className="text-sm">This may take a moment for longer documents.</p>
                         </motion.div>
                     ) : summary ? (
-                        <motion.div key="summary" initial={{opacity: 0}} animate={{opacity: 1}} className="p-4 prose dark:prose-invert max-w-full" dangerouslySetInnerHTML={{ __html: summary }}/>
+                        <motion.div key="summary" initial={{opacity: 0}} animate={{opacity: 1}} className="html-preview" dangerouslySetInnerHTML={{ __html: summary }}/>
                     ) : (
                         <motion.div key="placeholder" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="h-full min-h-[300px] flex flex-col items-center justify-center text-muted-foreground p-8 text-center">
                             <Pilcrow className="w-12 h-12 mb-4"/>
                             <h3 className="font-semibold">Your summary will appear here</h3>
-                            <p className="text-sm">Paste your text and click "Summarize" to begin.</p>
+                            <p className="text-sm">Enter some text, choose your options, and click "Summarize".</p>
                         </motion.div>
                     )}
                     </AnimatePresence>
@@ -141,7 +142,7 @@ export function TextSummarizer() {
     );
 
     const optionsPanel = (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
                 <Label htmlFor="summary-length">Length</Label>
                 <Select value={summaryLength} onValueChange={v => setSummaryLength(v as any)} disabled={isSummarizing}>
@@ -187,7 +188,7 @@ export function TextSummarizer() {
                     </SelectContent>
                 </Select>
             </div>
-            <div className="sm:col-span-2 md:col-span-1">
+            <div>
                 <Label htmlFor="summary-language">Language</Label>
                 <Select value={summaryLanguage} onValueChange={v => setSummaryLanguage(v)} disabled={isSummarizing}>
                   <SelectTrigger id="summary-language" className="mt-1">
@@ -233,9 +234,9 @@ export function TextSummarizer() {
                 {editorPanel}
                 {summaryPanel}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-end">
-                <div className="bg-card p-4 rounded-xl border shadow-sm">{optionsPanel}</div>
-                <Button onClick={handleSummarize} size="lg" className="w-full text-base self-end" disabled={isSummarizing || inputText.length < 20}>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end">
+                <Card className="shadow-lg p-4">{optionsPanel}</Card>
+                <Button onClick={handleSummarize} size="lg" className="w-full text-base self-end h-auto py-6" disabled={isSummarizing || inputText.length < 20}>
                     <AnimatePresence mode="wait">
                             {isSummarizing ? (
                                 <motion.div key="loader-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
