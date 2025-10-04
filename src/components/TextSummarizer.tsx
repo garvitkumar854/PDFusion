@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback } from "react";
@@ -12,6 +11,8 @@ import { Pilcrow, Copy, Check, Wand2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const WordCounter = ({ text }: { text: string }) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -28,6 +29,11 @@ export function TextSummarizer() {
     const [summary, setSummary] = useState("");
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+    
+    // New options
+    const [summaryLength, setSummaryLength] = useState<'short' | 'medium' | 'long'>('medium');
+    const [summaryFormat, setSummaryFormat] = useState<'paragraph' | 'bullets'>('paragraph');
+
     const { toast } = useToast();
     const isMobile = useIsMobile();
     
@@ -40,7 +46,7 @@ export function TextSummarizer() {
         setSummary("");
 
         try {
-            const input: SummarizeInput = { text: inputText };
+            const input: SummarizeInput = { text: inputText, length: summaryLength, format: summaryFormat };
             const result = await summarizeText(input);
             setSummary(result.summary);
             toast({ variant: 'success', title: 'Summary Generated!', description: 'Your text has been successfully summarized.' });
@@ -49,7 +55,7 @@ export function TextSummarizer() {
         } finally {
             setIsSummarizing(false);
         }
-    }, [inputText, toast]);
+    }, [inputText, summaryLength, summaryFormat, toast]);
 
     const handleCopy = useCallback(() => {
         if (!summary) return;
@@ -124,12 +130,39 @@ export function TextSummarizer() {
             </CardContent>
         </Card>
     );
+
+    const optionsPanel = (
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <Label htmlFor="summary-length">Summary Length</Label>
+                <Select value={summaryLength} onValueChange={v => setSummaryLength(v as any)} disabled={isSummarizing}>
+                    <SelectTrigger id="summary-length" className="mt-1"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="short">Short</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="long">Long</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label htmlFor="summary-format">Format</Label>
+                <Select value={summaryFormat} onValueChange={v => setSummaryFormat(v as any)} disabled={isSummarizing}>
+                    <SelectTrigger id="summary-format" className="mt-1"><SelectValue/></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="paragraph">Paragraph</SelectItem>
+                        <SelectItem value="bullets">Bullet Points</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    );
     
     const renderLayout = () => {
       if (isMobile) {
         return (
             <div className="flex flex-col gap-4 h-full">
                 <div className="flex-1 min-h-[200px]">{editorPanel}</div>
+                 <div className="flex-shrink-0">{optionsPanel}</div>
                 <div className="flex-shrink-0">
                     <Button onClick={handleSummarize} className="w-full" disabled={isSummarizing || inputText.length < 20}>
                        {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
@@ -147,20 +180,23 @@ export function TextSummarizer() {
                 {editorPanel}
                 {summaryPanel}
             </div>
-             <Button onClick={handleSummarize} size="lg" className="w-full text-base" disabled={isSummarizing || inputText.length < 20}>
-                <AnimatePresence mode="wait">
-                        {isSummarizing ? (
-                            <motion.div key="loader-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin"/>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-1">{optionsPanel}</div>
+                <Button onClick={handleSummarize} size="lg" className="w-full text-base self-end" disabled={isSummarizing || inputText.length < 20}>
+                    <AnimatePresence mode="wait">
+                            {isSummarizing ? (
+                                <motion.div key="loader-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/>
+                                </motion.div>
+                            ) : (
+                            <motion.div key="wand-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                <Wand2 className="mr-2 h-5 w-5"/>
                             </motion.div>
-                        ) : (
-                        <motion.div key="wand-icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <Wand2 className="mr-2 h-5 w-5"/>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                {isSummarizing ? 'Summarizing...' : 'Summarize'}
-            </Button>
+                        )}
+                    </AnimatePresence>
+                    {isSummarizing ? 'Summarizing...' : 'Summarize'}
+                </Button>
+            </div>
         </div>
       );
     }
