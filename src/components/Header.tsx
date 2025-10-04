@@ -269,7 +269,7 @@ export default function Header() {
                         </div>
                         <ScrollArea className="flex-1">
                             <nav className="flex flex-col items-start px-6 space-y-6 pb-6 mt-6">
-                                <div className='flex flex-col items-start space-y-1'>
+                                <div className='flex flex-col items-start space-y-4'>
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
