@@ -50,7 +50,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative py-2 text-base font-semibold transition-colors w-fit",
+            "group relative py-2 text-sm font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -256,7 +256,7 @@ export default function Header() {
                     <SheetContent side="right" className="p-0 flex flex-col">
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                         <div className="p-6 pb-0">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center">
                                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
                                     {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
                                     <h1 className="text-xl font-bold tracking-tight">
@@ -269,14 +269,14 @@ export default function Header() {
                         </div>
                         <ScrollArea className="flex-1">
                             <nav className="flex flex-col items-start px-6 space-y-6 pb-6">
-                                <div className='flex flex-col items-start space-y-2'>
+                                <div className='flex flex-col items-start space-y-1'>
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 </div>
                                 
                                 <div className="w-full pt-4 border-t">
-                                    <div className="text-base font-semibold text-foreground mb-2">Services</div>
+                                    <div className="text-sm font-semibold text-foreground mb-2">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
