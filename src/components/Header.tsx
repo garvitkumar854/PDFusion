@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
   SheetContent,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -253,22 +254,25 @@ export default function Header() {
                             <span className="sr-only">Open menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="p-0 flex flex-col">
+                    <SheetContent side="right" className="p-0 flex flex-col" showCloseButton={false}>
                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                        <div className="p-6 pb-0">
-                            <div className="flex justify-between items-center">
-                                <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
-                                    {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
-                                    <h1 className="text-xl font-bold tracking-tight">
-                                    <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                                        PDFusion
-                                    </span>
-                                    </h1>
-                                </Link>
-                            </div>
+                        <div className="p-6 pb-4 flex items-center justify-between">
+                            <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
+                                {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+                                <h1 className="text-xl font-bold tracking-tight">
+                                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                                    PDFusion
+                                </span>
+                                </h1>
+                            </Link>
+                             <SheetClose asChild>
+                                <Button variant="ghost" size="icon" className="rounded-full">
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </SheetClose>
                         </div>
                         <ScrollArea className="flex-1">
-                            <nav className="flex flex-col items-start px-6 space-y-6 pb-6 mt-6">
+                            <nav className="flex flex-col px-6 pb-6 space-y-6">
                                 <div className='flex flex-col items-start space-y-4'>
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
