@@ -50,7 +50,7 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         href={href}
         onClick={onClick}
         className={cn(
-            "group relative pb-1 text-sm font-semibold transition-colors w-fit",
+            "group relative pb-1 text-base font-semibold transition-colors w-fit",
              isActive ? "text-primary" : "text-foreground hover:text-primary"
         )}
         >
@@ -276,7 +276,7 @@ export default function Header() {
                                 </div>
                                 
                                 <div className="w-full border-t pt-6">
-                                    <div className="text-sm font-semibold text-foreground mb-4">Services</div>
+                                    <div className="text-base font-semibold text-foreground mb-4">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
