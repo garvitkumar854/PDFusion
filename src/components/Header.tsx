@@ -268,15 +268,15 @@ export default function Header() {
                             </div>
                         </div>
                         <ScrollArea className="flex-1">
-                            <nav className="flex flex-col items-start px-6 space-y-6 pb-6">
+                            <nav className="flex flex-col items-start px-6 space-y-6 pb-6 mt-6">
                                 <div className='flex flex-col items-start space-y-1'>
                                     <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 </div>
                                 
-                                <div className="w-full pt-2 border-t">
-                                    <div className="text-sm font-semibold text-foreground mb-2">Services</div>
+                                <div className="w-full border-t pt-6">
+                                    <div className="text-sm font-semibold text-foreground mb-4">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
@@ -290,17 +290,17 @@ export default function Header() {
                                                     isActive && "bg-accent text-accent-foreground"
                                                 )}
                                             >
-                                                <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
-                                                    {React.cloneElement(service.icon, { className: "" })}
+                                                <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
+                                                    {React.cloneElement(service.icon, { className: "w-5 h-5" })}
                                                 </div>
                                                 <span className="text-sm font-medium">{service.label}</span>
                                             </Link>
                                         )})}
                                     </div>
                                 </div>
-                                <div className="w-full pt-2 border-t">
-                                    <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <div className="grid grid-cols-1 gap-2 mt-2">
+                                <div className="w-full border-t pt-6">
+                                     <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                                    <div className="grid grid-cols-1 gap-2 mt-4">
                                         {moreTools.map((tool) => {
                                             const isActive = pathname.startsWith(tool.href);
                                             return (
@@ -313,8 +313,8 @@ export default function Header() {
                                                     isActive && "bg-accent text-accent-foreground"
                                                 )}
                                             >
-                                                <div className="h-5 w-5 flex items-center justify-center mr-2 shrink-0">
-                                                    {React.cloneElement(tool.icon, { className: "" })}
+                                                <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
+                                                   {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
                                                 </div>
                                                 <span className="text-sm font-medium">{tool.label}</span>
                                             </Link>
