@@ -13,7 +13,6 @@ import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Input } from "./ui/input";
 
 const WordCounter = ({ text }: { text: string }) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -142,7 +141,7 @@ export function TextSummarizer() {
     );
 
     const optionsPanel = (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
                 <Label htmlFor="summary-length">Length</Label>
                 <Select value={summaryLength} onValueChange={v => setSummaryLength(v as any)} disabled={isSummarizing}>
@@ -188,16 +187,25 @@ export function TextSummarizer() {
                     </SelectContent>
                 </Select>
             </div>
-            <div className="lg:col-span-2">
+            <div className="sm:col-span-2 md:col-span-1">
                 <Label htmlFor="summary-language">Language</Label>
-                <Input 
-                    id="summary-language" 
-                    value={summaryLanguage} 
-                    onChange={(e) => setSummaryLanguage(e.target.value)} 
-                    className="mt-1"
-                    placeholder="e.g., Spanish, French"
-                    disabled={isSummarizing}
-                />
+                <Select value={summaryLanguage} onValueChange={v => setSummaryLanguage(v)} disabled={isSummarizing}>
+                  <SelectTrigger id="summary-language" className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Sanskrit">Sanskrit</SelectItem>
+                    <SelectItem value="Hinglish">Hinglish</SelectItem>
+                    <SelectItem value="Russian">Russian</SelectItem>
+                    <SelectItem value="Italian">Italian</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                    <SelectItem value="Chinese">Chinese</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
         </div>
     );
@@ -225,8 +233,8 @@ export function TextSummarizer() {
                 {editorPanel}
                 {summaryPanel}
             </div>
-            <div className="grid grid-cols-[2fr_1fr] gap-4 items-end">
-                <div>{optionsPanel}</div>
+            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-end">
+                <div className="bg-card p-4 rounded-xl border shadow-sm">{optionsPanel}</div>
                 <Button onClick={handleSummarize} size="lg" className="w-full text-base self-end" disabled={isSummarizing || inputText.length < 20}>
                     <AnimatePresence mode="wait">
                             {isSummarizing ? (
