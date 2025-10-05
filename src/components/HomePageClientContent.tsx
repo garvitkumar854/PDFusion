@@ -1,8 +1,7 @@
-
 'use client';
 
 import React from 'react';
-import { ArrowUpRight, Wand2 } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { services as servicesData, Service } from '@/lib/services';
+import { services as servicesData } from '@/lib/services';
 import { ShieldCheck, Zap, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-is-mobile';

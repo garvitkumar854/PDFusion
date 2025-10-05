@@ -1,4 +1,3 @@
-
 'use client';
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedArrow from "@/components/AnimatedArrow";

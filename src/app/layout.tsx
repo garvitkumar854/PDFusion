@@ -1,4 +1,3 @@
-
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins, Inter } from 'next/font/google'
@@ -7,7 +6,7 @@ import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import ClientLayout from '@/components/ClientLayout';
 
 const poppins = Poppins({ 
@@ -47,7 +46,6 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  themeColor: "#5e4dff",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -87,6 +85,10 @@ export const metadata: Metadata = {
     creator: "@its_garvit__854_",
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: "#5e4dff",
+}
 
 export default function RootLayout({
   children,

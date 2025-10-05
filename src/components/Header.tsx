@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +10,6 @@ import {
   SheetContent,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
