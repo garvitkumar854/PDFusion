@@ -75,8 +75,8 @@ export const services: Service[] = [
       href: '/rotate-pdf'
     },
     {
-      icon: <Hash className="text-rose-500" />,
-      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
+      icon: <Hash className="text-pink-500" />,
+      bgColor: 'bg-pink-100 dark:bg-pink-900/20',
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
