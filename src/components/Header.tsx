@@ -43,7 +43,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 };
 
 
-const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; label: string; currentPath: string, onClick?: () => void }) => {
+const MobileNavLink = ({ href, label, currentPath, onClick, className }: { href: string; label: string; currentPath: string, onClick?: () => void, className?: string }) => {
   const isActive = href === "/" ? currentPath === href : currentPath.startsWith(href);
 
   return (
@@ -52,7 +52,8 @@ const MobileNavLink = ({ href, label, currentPath, onClick }: { href: string; la
         onClick={onClick}
         className={cn(
             "group relative pb-1 text-base font-semibold transition-colors w-fit",
-             isActive ? "text-primary" : "text-foreground hover:text-primary"
+             isActive ? "text-primary" : "text-foreground hover:text-primary",
+             className,
         )}
         >
         <span>{label}</span>
@@ -138,11 +139,6 @@ export default function Header() {
                           </span>
                           </h1>
                       </Link>
-                      <SheetClose asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                           <X className="h-5 w-5" />
-                        </Button>
-                      </SheetClose>
                   </div>
                   <ScrollArea className="flex-1">
                       <nav className="flex flex-col p-6 space-y-6">
@@ -153,8 +149,8 @@ export default function Header() {
                           </div>
                           
                            <div className="w-full border-t pt-6 space-y-2">
-                              <div className="text-base font-semibold text-foreground mb-2">Services</div>
-                              <div className="grid grid-cols-1 gap-2">
+                              <MobileNavLink href="#services" label="Services" currentPath={pathname} onClick={() => setIsSheetOpen(false)} className="text-base" />
+                              <div className="grid grid-cols-1 gap-2 pt-2">
                                   {services.map((service) => {
                                       const isActive = pathname.startsWith(service.href);
                                       return (
@@ -176,8 +172,8 @@ export default function Header() {
                               </div>
                           </div>
                           <div className="w-full border-t pt-6 space-y-2">
-                                <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                              <div className="grid grid-cols-1 gap-2 mt-2">
+                                <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} className="text-base" />
+                              <div className="grid grid-cols-1 gap-2 pt-2">
                                   {moreTools.map((tool) => {
                                       const isActive = pathname.startsWith(tool.href);
                                       return (
@@ -347,10 +343,14 @@ export default function Header() {
 
         {/* Right side controls (Desktop & Mobile) */}
         <div className="flex items-center gap-2 justify-end">
-            <InstallPWA />
+            <div className="hidden sm:block">
+              <InstallPWA />
+            </div>
             <ThemeToggle />
         </div>
       </div>
     </motion.header>
   );
 }
+
+    
