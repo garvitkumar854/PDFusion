@@ -117,18 +117,120 @@ export default function Header() {
       animate={scrollDirection === "down" ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center gap-4">
-        <div className="flex-shrink-0 flex items-center gap-4">
+      <div className="container mx-auto px-4 flex items-center justify-between md:grid-cols-1 grid grid-cols-3">
+        {/* Mobile Left */}
+        <div className="md:hidden flex items-center justify-start">
+           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                      <Menu className="h-6 w-6" />
+                      <span className="sr-only">Open menu</span>
+                  </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 flex flex-col">
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                  <div className="p-6 pb-4 flex items-center justify-between border-b">
+                      <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
+                          {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+                          <h1 className="text-xl font-bold tracking-tight">
+                          <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                              PDFusion
+                          </span>
+                          </h1>
+                      </Link>
+                      <SheetClose asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full">
+                              <X className="h-5 w-5" />
+                          </Button>
+                      </SheetClose>
+                  </div>
+                  <ScrollArea className="flex-1">
+                      <nav className="flex flex-col p-6 space-y-6">
+                          <div className='flex flex-col items-start space-y-4'>
+                              <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                              <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                              <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                          </div>
+                          
+                           <div className="w-full border-t pt-6 space-y-2">
+                              <div className="text-base font-semibold text-foreground mb-2">Services</div>
+                              <div className="grid grid-cols-1 gap-2">
+                                  {services.map((service) => {
+                                      const isActive = pathname.startsWith(service.href);
+                                      return (
+                                      <Link 
+                                          key={service.href} 
+                                          href={service.href} 
+                                          onClick={() => setIsSheetOpen(false)} 
+                                          className={cn(
+                                              "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                              isActive && "bg-accent text-accent-foreground"
+                                          )}
+                                      >
+                                          <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
+                                              {React.cloneElement(service.icon, { className: "w-5 h-5" })}
+                                          </div>
+                                          <span className="text-sm font-medium">{service.label}</span>
+                                      </Link>
+                                  )})}
+                              </div>
+                          </div>
+                          <div className="w-full border-t pt-6 space-y-2">
+                                <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                              <div className="grid grid-cols-1 gap-2 mt-2">
+                                  {moreTools.map((tool) => {
+                                      const isActive = pathname.startsWith(tool.href);
+                                      return (
+                                      <Link 
+                                          key={tool.href} 
+                                          href={tool.href} 
+                                          onClick={() => setIsSheetOpen(false)} 
+                                          className={cn(
+                                              "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
+                                              isActive && "bg-accent text-accent-foreground"
+                                          )}
+                                      >
+                                          <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
+                                              {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
+                                          </div>
+                                          <span className="text-sm font-medium">{tool.label}</span>
+                                      </Link>
+                                  )})}
+                              </div>
+                          </div>
+                      </nav>
+                  </ScrollArea>
+                  <div className="p-6 mt-auto border-t">
+                      <InstallPWA inSheet={true} />
+                  </div>
+              </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Desktop Logo & Nav */}
+        <div className="hidden md:flex flex-shrink-0 items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-            {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
-            <h1 className="text-xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                PDFusion
-                </span>
-            </h1>
+              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+              <h1 className="text-xl font-bold tracking-tight">
+                  <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                  PDFusion
+                  </span>
+              </h1>
             </Link>
         </div>
         
+        {/* Mobile Center (Logo) */}
+         <div className="md:hidden flex items-center justify-center">
+             <Link href="/" className="flex items-center gap-2">
+              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+              <h1 className="text-xl font-bold tracking-tight">
+                  <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                  PDFusion
+                  </span>
+              </h1>
+            </Link>
+        </div>
+
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
             <motion.div
@@ -243,95 +345,13 @@ export default function Header() {
             <NavLink href="/contact">Contact</NavLink>
         </nav>
 
-        <div className="flex-shrink-0 flex items-center gap-2">
+        {/* Right side controls (Desktop & Mobile) */}
+        <div className="flex items-center gap-2 justify-end">
             <InstallPWA />
             <ThemeToggle />
-            <div className="md:hidden">
-                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="mr-2">
-                            <Menu className="h-6 w-6" />
-                            <span className="sr-only">Open menu</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="p-0 flex flex-col" showCloseButton={false}>
-                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                        <div className="p-6 pb-4 flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
-                                {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
-                                <h1 className="text-xl font-bold tracking-tight">
-                                <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                                    PDFusion
-                                </span>
-                                </h1>
-                            </Link>
-                             <SheetClose asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full">
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </SheetClose>
-                        </div>
-                        <ScrollArea className="flex-1">
-                            <nav className="flex flex-col px-6 pb-6 space-y-6">
-                                <div className='flex flex-col items-start space-y-4'>
-                                    <MobileNavLink href="/" label="Home" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <MobileNavLink href="/about" label="About" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                </div>
-                                
-                                <div className="w-full border-t pt-2">
-                                    <div className="text-base font-semibold text-foreground mb-2">Services</div>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {services.map((service) => {
-                                            const isActive = pathname.startsWith(service.href);
-                                            return (
-                                            <Link 
-                                                key={service.href} 
-                                                href={service.href} 
-                                                onClick={() => setIsSheetOpen(false)} 
-                                                className={cn(
-                                                    "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
-                                                    isActive && "bg-accent text-accent-foreground"
-                                                )}
-                                            >
-                                                <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                                    {React.cloneElement(service.icon, { className: "w-5 h-5" })}
-                                                </div>
-                                                <span className="text-sm font-medium">{service.label}</span>
-                                            </Link>
-                                        )})}
-                                    </div>
-                                </div>
-                                <div className="w-full border-t pt-2">
-                                     <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
-                                    <div className="grid grid-cols-1 gap-2 mt-2">
-                                        {moreTools.map((tool) => {
-                                            const isActive = pathname.startsWith(tool.href);
-                                            return (
-                                            <Link 
-                                                key={tool.href} 
-                                                href={tool.href} 
-                                                onClick={() => setIsSheetOpen(false)} 
-                                                className={cn(
-                                                    "group flex items-center p-2 rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground",
-                                                    isActive && "bg-accent text-accent-foreground"
-                                                )}
-                                            >
-                                                <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                                   {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
-                                                </div>
-                                                <span className="text-sm font-medium">{tool.label}</span>
-                                            </Link>
-                                        )})}
-                                    </div>
-                                </div>
-                            </nav>
-                        </ScrollArea>
-                        <div className="p-6 mt-auto border-t">
-                            <InstallPWA inSheet={true} />
-                        </div>
-                    </SheetContent>
-                </Sheet>
+             <div className="md:hidden">
+              {/* This is a placeholder to balance the grid, the actual menu trigger is in the left column */}
+              <div className="w-10 h-10" />
             </div>
         </div>
       </div>
