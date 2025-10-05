@@ -54,15 +54,15 @@ export const services: Service[] = [
       href: '/add-watermark'
     },
     {
-      icon: <Code className="text-lime-500" />,
-      bgColor: 'bg-lime-100 dark:bg-lime-900/20',
+      icon: <Code className="text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
       title: 'PDF to HTML',
       description: 'Convert your PDF into a basic, editable HTML file.',
       href: '/pdf-to-html'
     },
     {
-      icon: <FileText className="text-teal-500" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      icon: <FileText className="text-sky-500" />,
+      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
       title: 'HTML to PDF',
       description: 'Convert any webpage into a PDF document.',
       href: '/html-to-pdf'
@@ -75,8 +75,8 @@ export const services: Service[] = [
       href: '/rotate-pdf'
     },
     {
-      icon: <Hash className="text-pink-500" />,
-      bgColor: 'bg-pink-100 dark:bg-pink-900/20',
+      icon: <Hash className="text-rose-500" />,
+      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
