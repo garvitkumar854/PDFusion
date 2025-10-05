@@ -118,7 +118,7 @@ ${values.message}
                   </span>
                 </h1>
                 <p className="max-w-2xl mx-auto lg:mx-0 text-muted-foreground text-base md:text-lg">
-                  Have a question or need help? We're here to assist you with any inquiries about our PDF merger tool.
+                  Have a question or need help? We're here to assist you with any inquiries about PDFusion.
                 </p>
               </AnimateOnScroll>
             </div>
