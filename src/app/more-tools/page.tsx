@@ -3,14 +3,13 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-<<<<<<< HEAD
 import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow } from "lucide-react";
-=======
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, Pencil } from "lucide-react";
->>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import { cn } from "@/lib/utils";
+import React from "react";
 
 const tools = [
     {
@@ -56,7 +55,6 @@ const tools = [
       href: '/markdown-to-html',
     },
     {
-<<<<<<< HEAD
       icon: <Pilcrow className="w-8 h-8 text-indigo-500" />,
       bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
       title: 'Text Summarizer',
@@ -70,14 +68,6 @@ const tools = [
       description: 'Create and download professional invoices in seconds.',
       href: '/invoice-generator',
     },
-=======
-      icon: <Pencil className="w-8 h-8 text-yellow-500" />,
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-      title: 'Text Summarizer',
-      description: 'Get a quick, AI-powered summary of any text.',
-      href: '/text-summarizer',
-    },
->>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
 ];
 
 const containerVariants = {
@@ -103,6 +93,7 @@ const itemVariants = {
 };
 
 export default function MoreToolsPage() {
+  const isMobile = useIsMobile();
   return (
     <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-12">
@@ -125,19 +116,26 @@ export default function MoreToolsPage() {
 
       <main className="flex-1 w-full">
         <motion.div 
-            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-md:flex max-md:flex-col max-md:gap-0.5"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
         >
-          {tools.map((tool) => (
+          {tools.map((tool, index) => (
             <motion.div key={tool.href} variants={itemVariants}>
               <Link href={tool.href} className="h-full block group relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card">
+                <Card className={cn(
+                  "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card",
+                   isMobile && {
+                        'rounded-none': index > 0 && index < tools.length - 1,
+                        'rounded-t-2xl rounded-b-none': index === 0,
+                        'rounded-b-2xl rounded-t-none': index === tools.length - 1,
+                    }
+                  )}>
                   <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
-                    <div className={`p-2 sm:p-3 rounded-lg ${tool.bgColor}`}>
-                      {tool.icon}
+                    <div className={cn(`p-2 sm:p-3 rounded-lg`, tool.bgColor)}>
+                       {React.cloneElement(tool.icon, { className: cn(tool.icon.props.className, "w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110") })}
                     </div>
                     <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug pt-1">
                       {tool.title}

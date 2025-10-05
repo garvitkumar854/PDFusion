@@ -118,7 +118,7 @@ export default function Header() {
       animate={scrollDirection === "down" ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
     >
-      <div className="container mx-auto px-4 flex items-center justify-between md:grid-cols-1 grid grid-cols-3">
+      <div className="container mx-auto px-4 flex items-center justify-between md:grid md:grid-cols-3">
         {/* Mobile Left */}
         <div className="md:hidden flex items-center justify-start">
            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -149,7 +149,7 @@ export default function Header() {
                           </div>
                           
                            <div className="w-full border-t pt-6 space-y-2">
-                              <MobileNavLink href="#services" label="Services" currentPath={pathname} onClick={() => setIsSheetOpen(false)} className="text-base" />
+                              <div className="text-base font-semibold text-foreground">Services</div>
                               <div className="grid grid-cols-1 gap-2 pt-2">
                                   {services.map((service) => {
                                       const isActive = pathname.startsWith(service.href);
@@ -172,8 +172,8 @@ export default function Header() {
                               </div>
                           </div>
                           <div className="w-full border-t pt-6 space-y-2">
-                                <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} className="text-base" />
-                              <div className="grid grid-cols-1 gap-2 pt-2">
+                                <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
+                              <div className="grid grid-cols-1 gap-2 mt-2">
                                   {moreTools.map((tool) => {
                                       const isActive = pathname.startsWith(tool.href);
                                       return (
@@ -204,7 +204,7 @@ export default function Header() {
         </div>
 
         {/* Desktop Logo & Nav */}
-        <div className="hidden md:flex flex-shrink-0 items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
               {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
               <h1 className="text-xl font-bold tracking-tight">
@@ -352,5 +352,3 @@ export default function Header() {
     </motion.header>
   );
 }
-
-    
