@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import InstallPWA from './InstallPWA';
-import { ThemeToggle } from './ThemeToggle';
+import InstallPWA from '@/components/InstallPWA';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useTheme } from 'next-themes';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
