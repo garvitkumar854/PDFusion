@@ -98,9 +98,14 @@ export default function Header() {
       { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
       { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
       { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
+<<<<<<< HEAD
       { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code /> },
       { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow /> },
       { href: '/invoice-generator', label: 'Invoice Generator', icon: <FileText /> },
+=======
+      { href: "/markdown-to-html", label: "Markdown to HTML", icon: <Code /> },
+      { href: "/text-summarizer", label: "Text Summarizer", icon: <Pencil /> },
+>>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');

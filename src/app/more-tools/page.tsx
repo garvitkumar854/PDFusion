@@ -3,7 +3,11 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+<<<<<<< HEAD
 import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow } from "lucide-react";
+=======
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, Pencil } from "lucide-react";
+>>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -52,6 +56,7 @@ const tools = [
       href: '/markdown-to-html',
     },
     {
+<<<<<<< HEAD
       icon: <Pilcrow className="w-8 h-8 text-indigo-500" />,
       bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
       title: 'Text Summarizer',
@@ -65,6 +70,14 @@ const tools = [
       description: 'Create and download professional invoices in seconds.',
       href: '/invoice-generator',
     },
+=======
+      icon: <Pencil className="w-8 h-8 text-yellow-500" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      title: 'Text Summarizer',
+      description: 'Get a quick, AI-powered summary of any text.',
+      href: '/text-summarizer',
+    },
+>>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
 ];
 
 const containerVariants = {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use server';
 /**
  * @fileOverview A server-side flow for summarizing text.
@@ -50,11 +51,48 @@ Text to summarize:
 const summarizeTextFlow = ai.defineFlow(
   {
     name: 'summarizeTextFlow',
+=======
+
+'use server';
+/**
+ * @fileOverview A server-side flow for summarizing text.
+ *
+ * - summarizeText - A function that takes a string of text and returns a summary.
+ */
+
+import {ai} from '@/ai/genkit';
+import {
+  SummarizeInput,
+  SummarizeInputSchema,
+  SummarizeOutput,
+  SummarizeOutputSchema,
+} from './summarize-types';
+
+export async function summarizeText(
+  input: SummarizeInput
+): Promise<SummarizeOutput> {
+  return summarizeFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'summarizePrompt',
+  input: {schema: SummarizeInputSchema},
+  output: {schema: SummarizeOutputSchema},
+  prompt: `Summarize the following text concisely.
+
+{{{text}}}`,
+});
+
+const summarizeFlow = ai.defineFlow(
+  {
+    name: 'summarizeFlow',
+>>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
     inputSchema: SummarizeInputSchema,
     outputSchema: SummarizeOutputSchema,
   },
   async (input) => {
     const {output} = await prompt(input);
+<<<<<<< HEAD
     if (!output?.summary) {
       throw new Error("The AI failed to generate a summary. The content may be too short or unclear. Please try again with a different text.");
     }
@@ -65,6 +103,11 @@ const summarizeTextFlow = ai.defineFlow(
       return { summary: htmlSummary };
     }
 
+=======
+    if (!output) {
+      throw new Error('No output from prompt');
+    }
+>>>>>>> 4d83a8a61579353434de1f8d218e0c57f9bc372f
     return output;
   }
 );
