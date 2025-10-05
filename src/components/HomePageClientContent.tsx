@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import AnimatedArrow from './AnimatedArrow';
+import AnimatedArrow from '@/components/AnimatedArrow';
 import {
   Accordion,
   AccordionContent,

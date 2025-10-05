@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/sheet"
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import InstallPWA from './InstallPWA';
-import { ThemeToggle } from './ThemeToggle';
+import InstallPWA from '@/components/InstallPWA';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useTheme } from 'next-themes';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -280,7 +280,7 @@ export default function Header() {
                                 </div>
                                 
                                 <div className="w-full border-t pt-2">
-                                    <div className="text-sm font-semibold text-foreground mb-2">Services</div>
+                                    <div className="text-base font-semibold text-foreground mb-2">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
