@@ -10,15 +10,15 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import AnimatedArrow from './AnimatedArrow';
+import { services as servicesData, Service } from '@/lib/services';
+import { ShieldCheck, Zap, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { services as servicesData, Service } from '@/lib/services';
-import { ShieldCheck, Zap, FileText } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 
 const whyChooseUsFeatures = [

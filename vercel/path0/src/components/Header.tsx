@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X } from 'lucide-react';
 import Image from 'next/image';
@@ -279,8 +279,8 @@ export default function Header() {
                                     <MobileNavLink href="/contact" label="Contact" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                 </div>
                                 
-                                <div className="w-full border-t pt-2">
-                                    <div className="text-sm font-semibold text-foreground mb-2">Services</div>
+                                <div className="w-full border-t pt-6 space-y-2">
+                                    <div className="text-base font-semibold text-foreground">Services</div>
                                     <div className="grid grid-cols-1 gap-2">
                                         {services.map((service) => {
                                             const isActive = pathname.startsWith(service.href);
@@ -302,7 +302,7 @@ export default function Header() {
                                         )})}
                                     </div>
                                 </div>
-                                <div className="w-full border-t pt-2">
+                                <div className="w-full border-t pt-6 space-y-2">
                                      <MobileNavLink href="/more-tools" label="More Tools" currentPath={pathname} onClick={() => setIsSheetOpen(false)} />
                                     <div className="grid grid-cols-1 gap-2 mt-2">
                                         {moreTools.map((tool) => {
