@@ -1,4 +1,5 @@
 
+import { FaThList } from 'react-icons/fa';
 import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
 
@@ -26,8 +27,8 @@ export const services: Service[] = [
       href: '/split-pdf'
     },
     {
-      icon: <ListOrdered className="text-cyan-500" />,
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
+      icon: <ListOrdered className="text-teal-500" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
@@ -47,8 +48,8 @@ export const services: Service[] = [
       href: '/jpg-to-pdf'
     },
      {
-      icon: <Droplets className="text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      icon: <Droplets className="text-gray-500" />,
+      bgColor: 'bg-gray-100 dark:bg-gray-900/20',
       title: 'Add Watermark',
       description: 'Stamp a text or image watermark over your PDF pages with custom styling.',
       href: '/add-watermark'
@@ -75,8 +76,8 @@ export const services: Service[] = [
       href: '/rotate-pdf'
     },
     {
-      icon: <Hash className="text-pink-500" />,
-      bgColor: 'bg-pink-100 dark:bg-pink-900/20',
+      icon: <Hash className="text-purple-500" />,
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
