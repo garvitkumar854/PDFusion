@@ -7,13 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { Pilcrow, Copy, Check, Wand2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const WordCounter = ({ text }: { text: string }) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -262,3 +262,5 @@ export function TextSummarizer() {
         </div>
     );
 }
+
+    
