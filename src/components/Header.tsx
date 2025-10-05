@@ -127,7 +127,7 @@ export default function Header() {
                       <span className="sr-only">Open menu</span>
                   </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 flex flex-col">
+              <SheetContent side="left" className="p-0 flex flex-col" showCloseButton={false}>
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <div className="p-6 pb-4 flex items-center justify-between border-b">
                       <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
@@ -139,9 +139,9 @@ export default function Header() {
                           </h1>
                       </Link>
                       <SheetClose asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full">
-                              <X className="h-5 w-5" />
-                          </Button>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                           <X className="h-5 w-5" />
+                        </Button>
                       </SheetClose>
                   </div>
                   <ScrollArea className="flex-1">
@@ -349,10 +349,6 @@ export default function Header() {
         <div className="flex items-center gap-2 justify-end">
             <InstallPWA />
             <ThemeToggle />
-             <div className="md:hidden">
-              {/* This is a placeholder to balance the grid, the actual menu trigger is in the left column */}
-              <div className="w-10 h-10" />
-            </div>
         </div>
       </div>
     </motion.header>
