@@ -1,3 +1,4 @@
+
 'use client';
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
@@ -6,7 +7,6 @@ import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -92,7 +92,6 @@ const itemVariants = {
 };
 
 export default function MoreToolsPage() {
-  const isMobile = useIsMobile();
   return (
     <div className="flex flex-col flex-1 py-8 sm:py-12">
       <section className="text-center mb-12">
@@ -115,7 +114,7 @@ export default function MoreToolsPage() {
 
       <main className="flex-1 w-full">
         <motion.div 
-            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-md:flex max-md:flex-col max-md:gap-0.5"
+            className="max-w-5xl mx-auto flex flex-col gap-0.5 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -126,11 +125,10 @@ export default function MoreToolsPage() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                 <Card className={cn(
                   "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card",
-                   isMobile && {
-                        'rounded-none': index > 0 && index < tools.length - 1,
-                        'rounded-t-2xl rounded-b-none': index === 0,
-                        'rounded-b-2xl rounded-t-none': index === tools.length - 1,
-                    }
+                  "md:rounded-2xl",
+                  index > 0 && index < tools.length - 1 ? 'rounded-none' : '',
+                  index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
+                  index === tools.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
                   )}>
                   <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                     <div className={cn(`p-2 sm:p-3 rounded-lg`, tool.bgColor)}>

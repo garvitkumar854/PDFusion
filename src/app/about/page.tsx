@@ -1,3 +1,4 @@
+
 'use client';
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedArrow from "@/components/AnimatedArrow";
@@ -9,7 +10,6 @@ import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, UploadCloud, Sett
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +116,6 @@ const CTAButton = () => {
 
 
 export default function AboutPage() {
-  const isMobile = useIsMobile();
   return (
     <>
       <section className="relative py-20 md:py-24 overflow-hidden">
@@ -164,7 +163,7 @@ export default function AboutPage() {
             </AnimateOnScroll>
 
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left max-md:flex max-md:flex-col max-md:gap-0.5"
+              className="flex flex-col gap-0.5 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 text-left"
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -184,11 +183,10 @@ export default function AboutPage() {
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                           <Card className={cn(
                             "relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card",
-                              isMobile && {
-                                'rounded-none': index > 0 && index < whyChooseUsFeatures.length - 1,
-                                'rounded-t-2xl rounded-b-none': index === 0,
-                                'rounded-b-2xl rounded-t-none': index === whyChooseUsFeatures.length - 1,
-                            }
+                            "md:rounded-2xl",
+                            index > 0 && index < whyChooseUsFeatures.length - 1 ? 'rounded-none' : '',
+                            index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
+                            index === whyChooseUsFeatures.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
                             )}>
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
@@ -227,7 +225,7 @@ export default function AboutPage() {
             </p>
           </AnimateOnScroll>
           <motion.div
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-lg:flex max-lg:flex-col max-lg:gap-0.5"
+            className="flex flex-col gap-0.5 lg:grid lg:grid-cols-3 lg:gap-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -237,11 +235,10 @@ export default function AboutPage() {
                 <motion.div key={index} variants={itemVariants} className="flex flex-col items-center h-full">
                   <div className={cn(
                       "relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col",
-                      isMobile ? {
-                          'rounded-none': index > 0 && index < howItWorksSteps.length - 1,
-                          'rounded-t-2xl rounded-b-none': index === 0,
-                          'rounded-b-2xl rounded-t-none': index === howItWorksSteps.length - 1,
-                      } : "rounded-2xl"
+                      "lg:rounded-2xl",
+                      index > 0 && index < howItWorksSteps.length - 1 ? 'rounded-none' : '',
+                      index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
+                      index === howItWorksSteps.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
                   )}>
                       <div className="flex flex-col items-center text-center flex-grow">
                           <motion.div
