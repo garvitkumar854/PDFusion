@@ -321,7 +321,7 @@ export function MergePdfs() {
             throw new Error(`Merge failed. ${skippedFiles > 0 ? 'All source PDFs were either corrupted or had incorrect passwords.' : 'No pages could be merged.'}`);
         }
 
-        const mergedPdfBytes = await mergedPdf.save();
+        const mergedPdfBytes = await mergedPdf.save({ useObjectStreams: false });
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
         
         if (operationId.current !== currentOperationId) {

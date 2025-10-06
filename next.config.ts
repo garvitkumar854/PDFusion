@@ -76,8 +76,7 @@ const withPWA = withPWAInit({
                 url.pathname.startsWith('/unit-converter') ||
                 url.pathname.startsWith('/markdown-to-html') ||
                 url.pathname.startsWith('/invoice-generator') ||
-                url.pathname.startsWith('/pdf-to-html') ||
-                url.pathname.startsWith('/compress-pdf')
+                url.pathname.startsWith('/pdf-to-html')
             )
         },
         handler: 'NetworkFirst',

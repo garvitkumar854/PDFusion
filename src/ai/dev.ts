@@ -8,4 +8,3 @@ config();
 import './flows/embed-flow';
 import './flows/currency-flow';
 import './flows/summarize-flow';
-import './flows/compress-pdf-flow';
