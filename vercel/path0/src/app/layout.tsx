@@ -1,4 +1,4 @@
-import './globals.css';
+import 'src/app/globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins, Inter } from 'next/font/google'
 import Header from '@/components/Header';
