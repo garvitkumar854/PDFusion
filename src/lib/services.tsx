@@ -87,5 +87,5 @@ export const services: Service[] = [
       title: 'More Tools',
       description: 'Explore a variety of other useful utilities to boost your productivity.',
       href: '/more-tools'
-    },
+    },  
 ];
