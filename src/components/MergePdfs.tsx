@@ -466,20 +466,24 @@ export function MergePdfs() {
                     </div>
                  )}
                 <div className={cn("space-y-2 max-h-[266px] overflow-y-auto pr-2", isMerging && "pointer-events-none")}>
+                    <AnimatePresence>
                     {files.map((pdfFile, index) => (
-                        <div
+                        <motion.div
                         key={pdfFile.id}
+                        layout
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0, x: -300, transition: { duration: 0.3 } }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 50, mass: 1 }}
                         draggable={!isMerging}
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
-                        style={{ willChange: 'transform, opacity, height, padding, margin' }}
                         className={cn(
                             'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-background transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
-                             isMerging ? 'cursor-not-allowed' : 'cursor-grab',
-                             removingFileId === pdfFile.id && 'opacity-0 scale-95 -translate-x-full h-0 !p-0 !my-0'
+                             isMerging ? 'cursor-not-allowed' : 'cursor-grab'
                         )}
                         >
                         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
@@ -516,8 +520,9 @@ export function MergePdfs() {
                             <X className="w-4 h-4" />
                             </Button>
                         </div>
-                        </div>
+                        </motion.div>
                     ))}
+                    </AnimatePresence>
                 </div>
             </CardContent>
           </Card>
@@ -589,3 +594,5 @@ export function MergePdfs() {
     </div>
   );
 }
+
+    
