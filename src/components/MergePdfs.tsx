@@ -40,7 +40,7 @@ if (typeof window !== 'undefined') {
 
 const MAX_FILES = 50;
 const MAX_FILE_SIZE_MB = 100;
-const MAX_TOTAL_SIZE_MB = 200;
+const MAX_TOTAL_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 

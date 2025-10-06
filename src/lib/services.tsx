@@ -19,6 +19,13 @@ export const services: Service[] = [
       href: '/merger'
     },
     {
+      icon: <FileArchive className="text-teal-500" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      title: 'Compress PDF',
+      description: 'Reduce the file size of your PDF while maintaining optimal quality.',
+      href: '/compress-pdf'
+    },
+    {
       icon: <Scissors className="text-green-500" />,
       bgColor: 'bg-green-100 dark:bg-green-900/20',
       title: 'Split PDF',
