@@ -184,9 +184,9 @@ export default function AboutPage() {
                           <Card className={cn(
                             "relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card",
                             "md:rounded-2xl",
-                            index > 0 && index < whyChooseUsFeatures.length - 1 ? 'rounded-none' : '',
-                            index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
-                            index === whyChooseUsFeatures.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
+                            index > 0 && index < whyChooseUsFeatures.length - 1 ? 'rounded-[2px]' : '',
+                            index === 0 ? 'rounded-t-2xl rounded-b-none md:rounded-b-2xl' : '',
+                            index === whyChooseUsFeatures.length - 1 ? 'rounded-b-2xl rounded-t-none md:rounded-t-2xl' : '',
                             )}>
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
@@ -236,9 +236,9 @@ export default function AboutPage() {
                   <div className={cn(
                       "relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col",
                       "lg:rounded-2xl",
-                      index > 0 && index < howItWorksSteps.length - 1 ? 'rounded-none' : '',
-                      index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
-                      index === howItWorksSteps.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
+                      index > 0 && index < howItWorksSteps.length - 1 ? 'rounded-[2px]' : '',
+                      index === 0 ? 'rounded-t-2xl rounded-b-none lg:rounded-b-2xl' : '',
+                      index === howItWorksSteps.length - 1 ? 'rounded-b-2xl rounded-t-none lg:rounded-t-2xl' : '',
                   )}>
                       <div className="flex flex-col items-center text-center flex-grow">
                           <motion.div

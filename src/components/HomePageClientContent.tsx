@@ -195,9 +195,9 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                              className={cn(
                                 "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card",
                                 "md:rounded-2xl",
-                                index > 0 && index < servicesData.length -1 ? 'rounded-none' : '',
-                                index === 0 ? 'rounded-t-2xl rounded-b-none' : '',
-                                index === servicesData.length - 1 ? 'rounded-b-2xl rounded-t-none' : '',
+                                index > 0 && index < servicesData.length -1 ? 'rounded-[2px]' : '',
+                                index === 0 ? 'rounded-t-2xl rounded-b-none md:rounded-b-2xl' : '',
+                                index === servicesData.length - 1 ? 'rounded-b-2xl rounded-t-none md:rounded-t-2xl' : '',
                              )}
                            >
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
