@@ -23,13 +23,14 @@ import { currencyList } from '@/lib/currency-data';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { hsnSacCodes } from '@/lib/hsn-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 import { Checkbox } from './ui/checkbox';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 
 const invoiceDetailsSchema = z.object({
@@ -78,6 +79,9 @@ const invoiceDetailsSchema = z.object({
         unit: z.string().optional(),
         type: z.string().optional(),
     })).min(1, "Please add at least one item."),
+
+    notes: z.string().optional(),
+    terms: z.string().optional(),
 });
 
 type InvoiceDetailsValues = z.infer<typeof invoiceDetailsSchema>;
@@ -209,13 +213,13 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                  <FormField control={control} name={`${prefix}Country`} render={({ field }) => (<CountrySelector field={field} label="Select country"/>)} />
                  <EditableField name={`${prefix}BusinessName`} placeholder={type === 'By' ? 'Your Business Name*' : "Client's Business Name*"} />
                 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className={cn(!showEmail && "col-span-2")}>
                       <EditableField name={`${prefix}Phone`} placeholder="Phone Number" />
                     </div>
                     {showEmail && <EditableField name={`${prefix}Email`} placeholder="Email Address" />}
                 </div>
-                 <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className={cn(!showPan && "col-span-2")}>
                         <EditableField name={`${prefix}Gstin`} placeholder="GSTIN" />
                     </div>
@@ -223,7 +227,7 @@ const BilledPartyForm = ({ type }: { type: 'By' | 'To' }) => {
                 </div>
 
                 <EditableField name={`${prefix}Address`} placeholder="Address" as="input"/>
-                 <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <EditableField name={`${prefix}City`} placeholder="City" />
                     <EditableField name={`${prefix}Zip`} placeholder="Postal Code / ZIP" />
                 </div>
@@ -271,6 +275,7 @@ const ItemRow = ({ index, onHsnOpen, currencySymbol, taxDetails }: { index: numb
     const { control, watch, setValue } = useFormContext<InvoiceDetailsValues>();
     const { fields, remove, insert, move } = useFieldArray({ control, name: "items" });
     const [showDescription, setShowDescription] = useState(false);
+    const isMobile = useIsMobile();
     
     const item = watch(`items.${index}`);
     const quantity = Number(item.quantity) || 0;
@@ -292,21 +297,105 @@ const ItemRow = ({ index, onHsnOpen, currencySymbol, taxDetails }: { index: numb
         multiple: false,
     });
     
-    const gridTemplateColumns = useMemo(() => {
-        let columns = "2fr 1fr 1fr 1fr 1fr 1fr"; // Item, HSN, Rate, Qty, Amount, Total
-        if(taxDetails.taxType !== 'none') {
-            if(taxDetails.gstType === 'cgst-sgst') {
-                columns = "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr"; // + CGST + SGST
-            } else {
-                columns = "2fr 1fr 1fr 1fr 1fr 1fr 1fr"; // + Tax
-            }
+    const itemTableHeader = useMemo(() => {
+        let headers: { key: string, label: string, className: string }[] = [
+            { key: "item", label: "Item", className: "text-left"},
+            { key: "hsn", label: "HSN/SAC", className: "text-right" },
+        ];
+        
+        const taxRateLabel = taxDetails.taxType === 'none' ? '' : `${taxDetails.taxType.toUpperCase()} Rate`;
+
+        if (taxDetails.taxType !== 'none') {
+            headers.push({ key: "taxRate", label: taxRateLabel, className: "text-right" });
         }
-        return columns;
+
+        headers.push(
+            { key: "qty", label: "Quantity", className: "text-right" },
+            { key: "rate", label: "Rate", className: "text-right" },
+            { key: "amount", label: "Amount", className: "text-right" }
+        );
+
+        if (taxDetails.taxType === 'gst' && taxDetails.gstType === 'cgst-sgst') {
+            headers.push({ key: "cgst", label: "CGST", className: "text-right" });
+            headers.push({ key: "sgst", label: "SGST", className: "text-right" });
+        } else if (taxDetails.taxType !== 'none') {
+            const taxLabel = taxDetails.taxType.toUpperCase();
+            headers.push({ key: "tax", label: taxLabel, className: "text-right" });
+        }
+        
+        headers.push({ key: "total", label: "Total", className: "text-right" });
+        
+        const gridTemplateColumns = {
+             'none': "2fr 1fr 1fr 1fr 1fr 1fr",
+             'gst-igst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'gst-cgst-sgst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'vat': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'ppn': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+             'sst': "2fr 1fr 1fr 1fr 1fr 1fr 1fr",
+        };
+        
+        let gridKey = taxDetails.taxType;
+        if(gridKey === 'gst') {
+            gridKey = `gst-${taxDetails.gstType || 'igst'}`;
+        }
+        
+        return { headers, gridTemplateColumns: gridTemplateColumns[gridKey as keyof typeof gridTemplateColumns] || "2fr 1fr 1fr 1fr 1fr 1fr" };
+
     }, [taxDetails]);
+
+    if (isMobile) {
+        return (
+             <Card className="p-4 bg-background/50 space-y-4">
+                 <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" className="text-left font-semibold text-base"/>
+                 {showDescription && (
+                    <div className="pr-8">
+                         <EditableField name={`items.${index}.description`} placeholder="Add a description..." as="textarea" className="h-12 resize-none text-sm" />
+                    </div>
+                )}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                        <Label>HSN/SAC</Label>
+                        <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-left border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
+                    </div>
+                    {taxDetails.taxType !== 'none' && <div className="space-y-2">
+                        <Label>Tax Rate</Label>
+                        <div className="flex items-center border-b"><EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-left border-none" type="number" /><Percent className="w-3 h-3 text-muted-foreground"/></div>
+                    </div>}
+                     <div className="space-y-2">
+                        <Label>Quantity</Label>
+                        <EditableField name={`items.${index}.quantity`} placeholder="Qty" className="text-left" type="number" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label>Rate</Label>
+                        <div className="flex items-center border-b"><span className="text-muted-foreground">{currencySymbol}</span><EditableField name={`items.${index}.rate`} placeholder="Rate" className="text-left border-none" type="number" /></div>
+                     </div>
+                </div>
+
+                 <div className="mt-4 pt-4 border-t text-sm space-y-2">
+                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount</span><span>{currencySymbol}{amount.toFixed(2)}</span></div>
+                    {taxDetails.taxType === 'gst' && taxDetails.gstType === 'cgst-sgst' && <><div className="flex justify-between items-center"><span className="text-muted-foreground">CGST</span><span>{(gstAmount / 2).toFixed(2)}</span></div><div className="flex justify-between items-center"><span className="text-muted-foreground">SGST</span><span>{(gstAmount / 2).toFixed(2)}</span></div></>}
+                    {taxDetails.taxType === 'gst' && taxDetails.gstType === 'igst' && <div className="flex justify-between items-center"><span className="text-muted-foreground">IGST</span><span>{gstAmount.toFixed(2)}</span></div>}
+                    {['vat', 'ppn', 'sst'].includes(taxDetails.taxType) && <div className="flex justify-between items-center"><span className="text-muted-foreground">{taxDetails.taxType.toUpperCase()}</span><span>{gstAmount.toFixed(2)}</span></div>}
+                    <div className="flex justify-between items-center font-bold text-base"><span className="text-foreground">Total</span><span>{currencySymbol}{total.toFixed(2)}</span></div>
+                 </div>
+
+                 <div className="grid grid-cols-2 items-center gap-x-4 gap-y-1 mt-2 text-xs border-t pt-4">
+                    <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary justify-start" onClick={() => setShowDescription(s => !s)}><Plus className="w-3 h-3 mr-1"/>{showDescription ? 'Hide' : 'Add'} Description</Button>
+                    <div {...getRootProps()}><Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary justify-start"><ImageIcon className="w-3 h-3 mr-1"/>Add Thumbnail</Button><input {...getInputProps()} /></div>
+                    <Button type="button" variant="link" size="sm" className="p-0 h-auto text-primary justify-start" onClick={() => insert(index + 1, item)}><Copy className="w-3 h-3 mr-1"/>Duplicate</Button>
+                     <div className="flex gap-1 justify-self-end">
+                        <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index - 1)} disabled={index === 0}><ArrowUp className="w-3 h-3"/></Button>
+                        <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => move(index, index + 1)} disabled={index === fields.length - 1}><ArrowDown className="w-3 h-3"/></Button>
+                        <Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={() => remove(index)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                     </div>
+                </div>
+            </Card>
+        )
+    }
 
     return (
         <Card className="p-2 bg-background/50">
-             <div className="grid gap-x-2 gap-y-1 items-start text-sm" style={{ gridTemplateColumns }}>
+             <div className="grid gap-x-2 gap-y-1 items-start text-sm" style={{ gridTemplateColumns: itemTableHeader.gridTemplateColumns }}>
                  <EditableField name={`items.${index}.name`} placeholder="Item Name" as="input" className="text-left"/>
                  <div className="flex items-center gap-1 border-b"><EditableField name={`items.${index}.hsn`} placeholder="HSN/SAC" className="text-right border-none" type="text" /><Button type="button" variant="ghost" size="icon" className="w-5 h-5" onClick={onHsnOpen}><HelpCircle className="w-3 h-3 text-muted-foreground"/></Button></div>
                  {taxDetails.taxType !== 'none' && <div className="flex items-center border-b"><EditableField name={`items.${index}.gstRate`} placeholder="%" className="text-right border-none" type="number" /><Percent className="w-3 h-3 text-muted-foreground"/></div>}
@@ -653,15 +742,35 @@ export function InvoiceGenerator() {
             billedToPan: undefined,
             billedToPhone: "",
             dueDate: undefined,
+            notes: "",
+            terms: "",
         }
     });
 
-    const { control, setValue, watch } = form;
+    const { control, setValue, watch, formState: { errors } } = form;
     const { fields: topLevelFields, append: appendTopLevel, remove: removeTopLevel } = useFieldArray({ control: form.control, name: "topLevelCustomFields" });
     const { fields: itemFields, append: appendItem } = useFieldArray({ control: form.control, name: "items" });
     
     const selectedCurrency = watch("currency");
+    const items = watch("items");
     const currencySymbol = useMemo(() => currencyList.find(c => c.code === selectedCurrency)?.symbol || '$', [selectedCurrency]);
+    
+    const totals = useMemo(() => {
+        const subtotal = items.reduce((acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0), 0);
+        let totalTax = 0;
+        
+        if (taxDetails.taxType !== 'none') {
+            totalTax = items.reduce((acc, item) => {
+                const amount = (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+                const gstRate = (Number(item.gstRate) || 0);
+                return acc + (amount * (gstRate / 100));
+            }, 0);
+        }
+        
+        const total = subtotal + totalTax;
+
+        return { subtotal, totalTax, total };
+    }, [items, taxDetails]);
 
     const onDrop = React.useCallback((acceptedFiles: File[]) => {
         const file = acceptedFiles[0];
@@ -828,7 +937,7 @@ export function InvoiceGenerator() {
                                 <FormLabel>Currency*</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                    <SelectTrigger className="w-[200px]">
+                                    <SelectTrigger className="w-full sm:w-[200px]">
                                         <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
                                     </FormControl>
@@ -843,8 +952,8 @@ export function InvoiceGenerator() {
                          <Button type="button" variant="outline"><NotebookText className="w-4 h-4 mr-2"/>Number and Currency Format</Button>
                     </div>
 
-                     <div className="bg-primary/10 p-4 rounded-lg">
-                        <div className="grid gap-x-2 text-sm font-bold text-primary mb-2 hidden sm:grid" style={{ gridTemplateColumns: itemTableHeader.gridTemplateColumns }}>
+                     <div className="bg-primary/5 p-2 sm:p-4 rounded-lg">
+                        <div className="hidden sm:grid gap-x-2 text-sm font-bold text-primary mb-2" style={{ gridTemplateColumns: itemTableHeader.gridTemplateColumns }}>
                            {itemTableHeader.headers.map(header => (
                                <span key={header.key} className={header.className}>{header.label}</span>
                            ))}
@@ -855,6 +964,29 @@ export function InvoiceGenerator() {
                         <Button type="button" variant="link" className="mt-4" onClick={() => appendItem({ name: "", quantity: 1, rate: 0, gstRate: 18, description: "", hsn: "", unit: "", type: "product", thumbnail: null })}><Plus className="w-4 h-4 mr-2"/>Add another line</Button>
                      </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-2">
+                        <Label className="font-semibold">Notes</Label>
+                        <EditableField name="notes" placeholder="Add notes here (e.g., payment instructions)" as="textarea" className="h-24"/>
+                    </div>
+                    <div className="space-y-2">
+                         <Label className="font-semibold">Terms & Conditions</Label>
+                        <EditableField name="terms" placeholder="Add your terms & conditions" as="textarea" className="h-24"/>
+                    </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                    <div className="md:w-1/2 order-2 md:order-1">
+                        {/* Placeholder for Signature */}
+                    </div>
+                    <div className="w-full md:w-1/2 order-1 md:order-2 space-y-2 text-sm sm:text-base">
+                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Subtotal</span><span>{currencySymbol}{totals.subtotal.toFixed(2)}</span></div>
+                        {taxDetails.taxType !== 'none' && <div className="flex justify-between items-center"><span className="text-muted-foreground">{taxDetails.taxType.toUpperCase()}</span><span>{currencySymbol}{totals.totalTax.toFixed(2)}</span></div>}
+                        <div className="flex justify-between items-center text-lg font-bold"><span className="text-foreground">Total</span><span>{currencySymbol}{totals.total.toFixed(2)}</span></div>
+                    </div>
+                </div>
+
 
                  <div className="flex justify-end pt-8 mt-8 border-t">
                     <Button type="submit" size="lg">
