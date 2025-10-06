@@ -28,43 +28,63 @@ const withPWA = withPWAInit({
       urlPattern: ({ url, sameOrigin }) => {
         return sameOrigin && url.pathname.startsWith('/_next/static/');
       },
-      handler: 'NetworkFirst',
+      handler: 'CacheFirst',
       options: {
         cacheName: 'static-assets',
         expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxEntries: 128,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
     },
     {
+      urlPattern: ({ url, sameOrigin }) => {
+        // These pages require network access and should fallback to offline page
+        const onlineOnlyPages = [
+          '/currency-converter',
+          '/text-summarizer',
+          '/html-to-pdf'
+        ];
+        return sameOrigin && onlineOnlyPages.some(p => url.pathname.startsWith(p));
+      },
+      handler: 'NetworkOnly',
+      options: {
+        cacheName: 'online-only-pages',
+      }
+    },
+    {
         urlPattern: ({url, sameOrigin}) => {
+            // Cache all other pages with a NetworkFirst strategy.
+            // This includes the homepage and all offline-capable tools.
             return sameOrigin && (
                 url.pathname === '/' ||
-                url.pathname.startsWith('/add-page-numbers') ||
-                url.pathname.startsWith('/jpg-to-pdf') ||
+                url.pathname.startsWith('/about') ||
+                url.pathname.startsWith('/contact') ||
                 url.pathname.startsWith('/merger') ||
-                url.pathname.startsWith('/organize-pdf') ||
-                url.pathname.startsWith('/pdf-to-html') ||
-                url.pathname.startsWith('/pdf-to-jpg') ||
-                url.pathname.startsWith('/rotate-pdf') ||
                 url.pathname.startsWith('/split-pdf') ||
-                url.pathname.startsWith('/html-to-pdf') ||
+                url.pathname.startsWith('/organize-pdf') ||
+                url.pathname.startsWith('/pdf-to-jpg') ||
+                url.pathname.startsWith('/jpg-to-pdf') ||
+                url.pathname.startsWith('/add-watermark') ||
+                url.pathname.startsWith('/rotate-pdf') ||
+                url.pathname.startsWith('/add-page-numbers') ||
+                url.pathname.startsWith('/privacy-policy') ||
                 url.pathname.startsWith('/more-tools') ||
                 url.pathname.startsWith('/calculator') ||
-                url.pathname.startsWith('/currency-converter') ||
                 url.pathname.startsWith('/qr-code-generator') ||
-                url.pathname.startsWith('/unit-converter') ||
                 url.pathname.startsWith('/password-generator') ||
-                url.pathname.startsWith('/markdown-to-html')
+                url.pathname.startsWith('/unit-converter') ||
+                url.pathname.startsWith('/markdown-to-html') ||
+                url.pathname.startsWith('/invoice-generator') ||
+                url.pathname.startsWith('/pdf-to-html')
             )
         },
         handler: 'NetworkFirst',
         options: {
-            cacheName: 'offline-pages',
+            cacheName: 'pages',
             expiration: {
-                maxEntries: 32,
-                maxAgeSeconds: 24 * 60 * 60,
+                maxEntries: 64,
+                maxAgeSeconds: 24 * 60 * 60, // 24 hours
             }
         }
     }
