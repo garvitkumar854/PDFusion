@@ -115,7 +115,7 @@ export default function MoreToolsPage() {
 
       <main className="flex-1 w-full">
         <motion.div 
-            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-md:flex max-md:flex-col max-md:gap-0.5"
+            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-sm:flex max-sm:flex-col max-sm:gap-0.5"
             variants={containerVariants}
             initial="hidden"
             animate="visible"

@@ -164,7 +164,7 @@ export default function AboutPage() {
             </AnimateOnScroll>
 
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left max-md:flex max-md:flex-col max-md:gap-0.5"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left max-sm:flex max-sm:flex-col max-sm:gap-0.5"
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -178,7 +178,7 @@ export default function AboutPage() {
                     >
                       <motion.div
                         className="group relative h-full"
-                        whileHover={{ scale: 1.03, rotateZ: 1, rotateY: -5 }}
+                        whileHover={{ scale: 1.03 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                       >
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
