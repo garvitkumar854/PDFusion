@@ -26,8 +26,8 @@ export const services: Service[] = [
       href: '/split-pdf'
     },
     {
-      icon: <ListOrdered className="text-cyan-500" />,
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
+      icon: <ListOrdered className="text-teal-500" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Organize PDF',
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
