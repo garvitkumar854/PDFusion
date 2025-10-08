@@ -28,7 +28,7 @@ const withPWA = withPWAInit({
       urlPattern: ({ url, sameOrigin }) => {
         return sameOrigin && url.pathname.startsWith('/_next/static/');
       },
-      handler: 'CacheFirst',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'static-assets',
         expiration: {
