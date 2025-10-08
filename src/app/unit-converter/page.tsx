@@ -67,7 +67,7 @@ export default function UnitConverterPage() {
               Unit Converter
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Instantly</span>
+                <span className="relative bg-gradient-to-r from-sky-400 to-fuchsia-500 bg-clip-text text-transparent">Instantly</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">

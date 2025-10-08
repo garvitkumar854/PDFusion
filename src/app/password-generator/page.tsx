@@ -68,7 +68,7 @@ export default function PasswordGeneratorPage() {
               Password Generator
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Securely</span>
+                <span className="relative bg-gradient-to-r from-red-600 to-violet-600 bg-clip-text text-transparent">Securely</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">

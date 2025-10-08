@@ -52,7 +52,7 @@ export default function JpgToPdfPage() {
               Convert JPG to PDF
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">With Full Control</span>
+                <span className="relative bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">With Full Control</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">

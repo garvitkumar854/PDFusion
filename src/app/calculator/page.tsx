@@ -5,7 +5,7 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
-import { ListChecks, ShieldCheck, Zap, Plus, Minus, Percent } from 'lucide-react';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const CalculatorLoader = dynamic(() => import('@/components/CalculatorLoader'), {
   ssr: false,
@@ -68,7 +68,7 @@ export default function CalculatorPage() {
               Calculator
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent">Simple & Elegant</span>
+                <span className="relative bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Simple & Elegant</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
