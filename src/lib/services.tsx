@@ -1,3 +1,4 @@
+
 import { FaThList } from 'react-icons/fa';
 import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
@@ -75,8 +76,8 @@ export const services: Service[] = [
       href: '/rotate-pdf'
     },
     {
-      icon: <Hash className="text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      icon: <Hash className="text-pink-500" />,
+      bgColor: 'bg-pink-100 dark:bg-pink-900/20',
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
