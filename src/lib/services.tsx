@@ -1,6 +1,6 @@
 
 import { FaThList } from 'react-icons/fa';
-import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, FileArchive, Pencil, LayoutGrid, Droplets } from 'lucide-react';
+import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, Pencil, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
 
 export interface Service {
@@ -13,8 +13,8 @@ export interface Service {
 
 export const services: Service[] = [
     {
-      icon: <Combine className="text-purple-500" />,
-      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
+      icon: <Combine className="text-fuchsia-500" />,
+      bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/20',
       title: 'Merge PDF',
       description: 'Combine multiple PDF files into a single, organized document with ease.',
       href: '/merger'

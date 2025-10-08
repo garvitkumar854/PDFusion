@@ -31,7 +31,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/markdown-to-html',
     '/text-summarizer',
     '/invoice-generator',
-    '/compress-pdf'
   ].map(route => ({
     url: `${baseUrl}${route}`,
     priority: 0.9,
