@@ -8,17 +8,17 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Flexible Splitting',
         description: 'Extract pages by providing custom ranges, setting a fixed number of pages per file, or selecting pages visually.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Completely Secure',
         description: 'Your PDF is processed directly in your browser. No files are ever uploaded, so your data remains 100% private.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant Results',
         description: 'No waiting for server uploads. Your new, split PDF files are generated and ready for download in seconds.',
     },

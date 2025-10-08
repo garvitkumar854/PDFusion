@@ -23,17 +23,17 @@ const WatermarkAdderLoader = dynamic(() => import('@/components/WatermarkAdderLo
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Full Customization',
         description: 'Choose between text or image watermarks. Customize text, font, color, opacity, position, and rotation to fit your needs perfectly.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure & Private',
         description: 'Your PDF is processed directly in your browser. No files are uploaded, keeping your documents confidential and secure.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Live Preview',
         description: 'Instantly see how your watermark will look on your PDF before you even apply it, ensuring a perfect result every time.',
     },

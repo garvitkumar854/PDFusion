@@ -8,17 +8,17 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Live Preview',
         description: 'Choose your rotation angle (90°, 180°, or 270°) and see an instant preview of the result before you apply it.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure & Private',
         description: 'All processing is done in your browser. Your PDF never leaves your computer, ensuring complete privacy.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant Rotation',
         description: 'No server uploads means no waiting. Your rotated PDF is generated and ready for download in just a few seconds.',
     },

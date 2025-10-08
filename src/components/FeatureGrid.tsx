@@ -78,7 +78,7 @@ export default function FeatureGrid({ title, description, features, steps, steps
                         <motion.div key={index} variants={itemVariants}>
                             <Card className="bg-transparent text-card-foreground p-6 h-full border-none shadow-none">
                                 <CardHeader className="p-0 flex flex-col items-center text-center gap-4">
-                                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4 shrink-0">
+                                    <div className="flex items-center justify-center mb-4 shrink-0">
                                         {feature.icon}
                                     </div>
                                     <CardTitle className="text-xl font-bold">{feature.title}</CardTitle>

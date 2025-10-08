@@ -8,17 +8,17 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Full Customization',
         description: 'Control page orientation, size (A4, Letter, Fit), and margins to create the perfect PDF from your images.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure & Private',
         description: 'Your images are processed entirely in your browser. No files are ever uploaded, ensuring your data remains confidential.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant Conversion',
         description: 'No server uploads means no waiting. Your PDF is generated in seconds, directly on your device, for free.',
     },

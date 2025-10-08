@@ -8,17 +8,17 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Simple Drag & Drop',
         description: 'Easily upload multiple PDF files and reorder them with a simple drag-and-drop interface before merging.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure & Private',
         description: 'All processing happens in your browser. Your files are never uploaded to a server, ensuring your data remains confidential.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Lightning Fast',
         description: 'No server uploads means no waiting. Your merged PDF is created in seconds, right on your device.',
     },

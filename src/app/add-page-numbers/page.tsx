@@ -23,17 +23,17 @@ const PageNumberAdderLoader = dynamic(() => import('@/components/PageNumberAdder
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Simple & Intuitive',
         description: 'Just upload your PDF, customize your settings, and see a live preview of the page numbers before you apply them.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure & Private',
         description: 'Your files are processed entirely in your browser. No data ever leaves your computer, ensuring your privacy is protected.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant Processing',
         description: 'No server uploads means no waiting. Your numbered PDF is generated in seconds, directly on your device.',
     },

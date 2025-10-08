@@ -23,17 +23,17 @@ const HtmlToPdfLoader = dynamic(() => import('@/components/HtmlToPdfLoader'), {
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Simple & Direct',
         description: 'Just paste the URL of the webpage you want to convert. Our tool handles the rest, turning it into a clean PDF.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Secure Conversion',
         description: 'The webpage content is fetched securely, and the PDF is generated without storing any data, ensuring your privacy.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant & Free',
         description: 'No server queues or waiting. Your PDF is generated quickly and is available for download immediately, completely free.',
     },

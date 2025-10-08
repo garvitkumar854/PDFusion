@@ -19,17 +19,17 @@ const MarkdownToHtmlLoader = dynamic(() => import('@/components/MarkdownToHtmlLo
 
 const features = [
     {
-        icon: <Pencil className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><Pencil className="w-8 h-8 text-blue-500" /></div>,
         title: 'Live Preview',
         description: 'See your HTML output update in real-time as you type your Markdown content.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Client-Side Conversion',
         description: 'Your data is processed entirely in your browser. Nothing is ever sent to our servers, ensuring your privacy.',
     },
     {
-        icon: <Code className="w-8 h-8 text-purple-500" />,
+        icon: <div className="p-4 rounded-lg bg-purple-100 dark:bg-purple-900/20"><Code className="w-8 h-8 text-purple-500" /></div>,
         title: 'Copy or Download',
         description: 'Quickly copy the generated HTML to your clipboard or download it as a complete .html file.',
     },

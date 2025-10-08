@@ -26,17 +26,17 @@ const PdfOrganizerLoader = dynamic(() => import('@/components/PdfOrganizerLoader
 
 const features = [
     {
-        icon: <ListChecks className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
         title: 'Visual Drag & Drop',
         description: 'Easily reorder pages with a simple drag-and-drop interface. Rotate or delete pages with a single click.',
     },
     {
-        icon: <ShieldCheck className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
         title: 'Completely Secure',
         description: 'Your PDF is processed directly in your browser. No files are uploaded to our servers, ensuring total privacy.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-yellow-500" />,
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
         title: 'Instant Organization',
         description: 'No waiting for uploads or server processing. Organize your PDF and download the new version instantly.',
     },

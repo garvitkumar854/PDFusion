@@ -19,17 +19,17 @@ const TextSummarizerLoader = dynamic(() => import('@/components/TextSummarizerLo
 
 const features = [
     {
-        icon: <BrainCircuit className="w-8 h-8 text-blue-500" />,
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><BrainCircuit className="w-8 h-8 text-blue-500" /></div>,
         title: 'AI-Powered Summaries',
         description: 'Our advanced AI reads and understands your text to provide accurate and concise summaries.',
     },
     {
-        icon: <Zap className="w-8 h-8 text-green-500" />,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><Zap className="w-8 h-8 text-green-500" /></div>,
         title: 'Instant Results',
         description: 'Get your summary in seconds. Just paste your text and click the button to see the magic happen.',
     },
     {
-        icon: <FileText className="w-8 h-8 text-purple-500" />,
+        icon: <div className="p-4 rounded-lg bg-purple-100 dark:bg-purple-900/20"><FileText className="w-8 h-8 text-purple-500" /></div>,
         title: 'Copy with a Click',
         description: 'Easily copy the generated summary to your clipboard to use wherever you need it.',
     },
