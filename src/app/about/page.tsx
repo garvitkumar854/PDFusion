@@ -163,7 +163,7 @@ export default function AboutPage() {
             </AnimateOnScroll>
 
             <motion.div
-              className="flex flex-col gap-0.5 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 text-left"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 text-left"
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -181,13 +181,7 @@ export default function AboutPage() {
                         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                       >
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className={cn(
-                            "relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card",
-                            "md:rounded-2xl",
-                            index > 0 && index < whyChooseUsFeatures.length - 1 ? 'rounded-[2px]' : '',
-                            index === 0 ? 'rounded-t-2xl rounded-b-none md:rounded-b-2xl' : '',
-                            index === whyChooseUsFeatures.length - 1 ? 'rounded-b-2xl rounded-t-none md:rounded-t-2xl' : '',
-                            )}>
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card rounded-2xl">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={cn(`p-2 sm:p-3 rounded-lg`, feature.bgColor)}>
@@ -225,7 +219,7 @@ export default function AboutPage() {
             </p>
           </AnimateOnScroll>
           <motion.div
-            className="flex flex-col gap-0.5 lg:grid lg:grid-cols-3 lg:gap-8"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -233,13 +227,7 @@ export default function AboutPage() {
           >
             {howItWorksSteps.map((step, index) => (
                 <motion.div key={index} variants={itemVariants} className="flex flex-col items-center h-full">
-                  <div className={cn(
-                      "relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col",
-                      "lg:rounded-2xl",
-                      index > 0 && index < howItWorksSteps.length - 1 ? 'rounded-[2px]' : '',
-                      index === 0 ? 'rounded-t-2xl rounded-b-none lg:rounded-b-2xl' : '',
-                      index === howItWorksSteps.length - 1 ? 'rounded-b-2xl rounded-t-none lg:rounded-t-2xl' : '',
-                  )}>
+                  <div className="relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col rounded-2xl">
                       <div className="flex flex-col items-center text-center flex-grow">
                           <motion.div
                             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -350,3 +338,5 @@ export default function AboutPage() {
     </>
   );
 }
+
+    

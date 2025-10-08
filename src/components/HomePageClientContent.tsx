@@ -177,7 +177,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                     </p>
                 </AnimateOnScroll>
                 <motion.div 
-                  className="flex flex-col gap-0.5 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.2 }}
@@ -191,15 +191,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                     >
                         <Link href={service.href} className="h-full block group relative">
                           <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                           <Card 
-                             className={cn(
-                                "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card",
-                                "md:rounded-2xl",
-                                index > 0 && index < servicesData.length -1 ? 'rounded-[2px]' : '',
-                                index === 0 ? 'rounded-t-2xl rounded-b-none md:rounded-b-2xl' : '',
-                                index === servicesData.length - 1 ? 'rounded-b-2xl rounded-t-none md:rounded-t-2xl' : '',
-                             )}
-                           >
+                           <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-2xl">
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                                   <div className={cn('p-2 sm:p-3 rounded-lg', service.bgColor)}>
                                     {React.cloneElement(service.icon, { className: cn(service.icon.props.className, "w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110") })}
@@ -289,3 +281,5 @@ export default function HomePageClientContent({ showServices }: { showServices?:
         </>
     );
 }
+
+    

@@ -1,3 +1,4 @@
+
 import 'src/app/globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins, Inter } from 'next/font/google'
@@ -99,11 +100,11 @@ export default function RootLayout({
     <html lang="en" className={cn(poppins.variable, inter.variable)} suppressHydrationWarning>
       <head>
         <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
-        <script
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
           crossOrigin="anonymous"
-        ></script>
+        ></Script>
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
@@ -120,3 +121,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

@@ -114,7 +114,7 @@ export default function MoreToolsPage() {
 
       <main className="flex-1 w-full">
         <motion.div 
-            className="max-w-5xl mx-auto flex flex-col gap-0.5 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6"
+            className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -123,13 +123,7 @@ export default function MoreToolsPage() {
             <motion.div key={tool.href} variants={itemVariants}>
               <Link href={tool.href} className="h-full block group relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                <Card className={cn(
-                  "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card",
-                  "md:rounded-2xl",
-                  index > 0 && index < tools.length - 1 ? 'rounded-[2px]' : '',
-                  index === 0 ? 'rounded-t-2xl rounded-b-none md:rounded-b-2xl' : '',
-                  index === tools.length - 1 ? 'rounded-b-2xl rounded-t-none md:rounded-t-2xl' : '',
-                  )}>
+                <Card className="relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-2xl">
                   <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
                     <div className={cn(`p-2 sm:p-3 rounded-lg`, tool.bgColor)}>
                        {React.cloneElement(tool.icon, { className: cn(tool.icon.props.className, "w-6 h-6 sm:w-8 sm:h-8 transition-transform duration-300 group-hover:scale-110") })}
@@ -177,3 +171,5 @@ export default function MoreToolsPage() {
     </div>
   );
 }
+
+    

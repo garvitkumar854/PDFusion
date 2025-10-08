@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A server-side flow for summarizing text.
@@ -61,10 +62,12 @@ const summarizeTextFlow = ai.defineFlow(
     
     // If bullet points are requested, convert markdown to HTML for rendering
     if (input.format === 'bullets') {
-      const htmlSummary = marked.parse(output.summary);
+      const htmlSummary = marked.parse(output.summary) as string;
       return { summary: htmlSummary };
     }
 
     return output;
   }
 );
+
+    
