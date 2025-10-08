@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap, Plus, Minus, Percent } from 'lucide-react';
 
 const CalculatorLoader = dynamic(() => import('@/components/CalculatorLoader'), {
   ssr: false,
@@ -19,6 +21,40 @@ const CalculatorLoader = dynamic(() => import('@/components/CalculatorLoader'), 
   )
 });
 
+const features = [
+    {
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
+        title: 'Sleek & Modern Interface',
+        description: 'Enjoy a clean, visually appealing layout that makes calculations a pleasure, not a chore.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
+        title: 'Complete History',
+        description: 'Never lose track of your work. Access a full history of your previous calculations with a single click.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
+        title: 'Instant & Responsive',
+        description: 'Get immediate results as you type, with a smooth and responsive experience on any device.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Enter Your Numbers',
+        description: 'Use the on-screen buttons to input the numbers for your calculation.',
+    },
+    {
+        title: 'Perform Operations',
+        description: 'Use the operator buttons (+, -, ×, ÷) to perform calculations. Use the "=" button to see the final result.',
+    },
+    {
+        title: 'View & Clear History',
+        description: 'Click the history icon to see your past calculations or "AC" to clear everything.',
+    },
+];
+
+
 export default function CalculatorPage() {
   return (
     <>
@@ -32,7 +68,7 @@ export default function CalculatorPage() {
               Calculator
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Simple & Elegant</span>
+                <span className="relative bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent">Simple & Elegant</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
@@ -46,6 +82,14 @@ export default function CalculatorPage() {
             <CalculatorLoader />
           </div>
         </main>
+
+        <FeatureGrid
+          title="A Calculator That Does More"
+          description="Experience a calculator that combines beautiful design with powerful functionality for your everyday tasks."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Use the Calculator"
+        />
       </div>
     </>
   );

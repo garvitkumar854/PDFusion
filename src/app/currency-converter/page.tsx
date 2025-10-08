@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const CurrencyConverterLoader = dynamic(() => import('@/components/CurrencyConverterLoader'), {
   ssr: false,
@@ -19,6 +21,39 @@ const CurrencyConverterLoader = dynamic(() => import('@/components/CurrencyConve
   )
 });
 
+const features = [
+    {
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
+        title: 'Live Exchange Rates',
+        description: 'Get the most up-to-date currency exchange rates powered by a reliable external API for accurate conversions.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
+        title: 'Wide Range of Currencies',
+        description: 'Convert between hundreds of different currencies from around the world with our extensive selection.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
+        title: 'Instant & Bidirectional',
+        description: 'Convert amounts instantly in either direction. Change the "From" or "To" value and see the other update automatically.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Enter Amount',
+        description: 'Enter the amount you wish to convert in the "From" or "To" field.',
+    },
+    {
+        title: 'Select Currencies',
+        description: 'Choose your desired "From" and "To" currencies from the dropdown lists.',
+    },
+    {
+        title: 'View Instant Result',
+        description: 'The converted amount will appear instantly in the other field, based on the latest exchange rates.',
+    },
+];
+
 export default function CurrencyConverterPage() {
   return (
     <>
@@ -32,7 +67,7 @@ export default function CurrencyConverterPage() {
               Currency Converter
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Instantly</span>
+                <span className="relative bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Live Rates</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
@@ -46,6 +81,15 @@ export default function CurrencyConverterPage() {
             <CurrencyConverterLoader />
           </div>
         </main>
+
+         <FeatureGrid
+          title="Fast & Accurate Conversions"
+          description="Our currency converter is designed for speed, accuracy, and ease of use, making it the perfect tool for your conversion needs."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Convert Currencies"
+        />
+
       </div>
     </>
   );

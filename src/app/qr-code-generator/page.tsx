@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const QrCodeGeneratorLoader = dynamic(() => import('@/components/QrCodeGeneratorLoader'), {
   ssr: false,
@@ -19,6 +21,40 @@ const QrCodeGeneratorLoader = dynamic(() => import('@/components/QrCodeGenerator
   )
 });
 
+const features = [
+    {
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
+        title: 'Multiple Data Types',
+        description: 'Create QR codes for URLs, plain text, contact cards (VCard), phone numbers, SMS messages, and email addresses.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
+        title: 'Complete Customization',
+        description: 'Adjust the size, foreground and background colors, and error correction level to match your branding.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
+        title: 'Live Preview',
+        description: 'See your QR code update in real-time as you type and change settings, ensuring it looks perfect before you download.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Select Content Type',
+        description: 'Choose what you want your QR code to do, such as open a URL or create a contact.',
+    },
+    {
+        title: 'Enter Your Data',
+        description: 'Fill in the required information for the selected content type. The QR code will update instantly.',
+    },
+    {
+        title: 'Customize & Download',
+        description: 'Fine-tune the styling options if needed, then click "Download PNG" to save your QR code.',
+    },
+];
+
+
 export default function QrCodeGeneratorPage() {
   return (
     <>
@@ -32,7 +68,7 @@ export default function QrCodeGeneratorPage() {
               QR Code Generator
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Instantly</span>
+                <span className="relative bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">Visually</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
@@ -46,6 +82,15 @@ export default function QrCodeGeneratorPage() {
             <QrCodeGeneratorLoader />
           </div>
         </main>
+        
+        <FeatureGrid
+          title="Create QR Codes in Seconds"
+          description="Our tool provides a fast, customizable, and user-friendly way to generate QR codes for any purpose."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Generate a QR Code"
+        />
+
       </div>
     </>
   );

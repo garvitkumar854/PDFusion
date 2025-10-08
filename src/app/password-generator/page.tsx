@@ -4,6 +4,8 @@
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureGrid from '@/components/FeatureGrid';
+import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 
 const PasswordGeneratorLoader = dynamic(() => import('@/components/PasswordGeneratorLoader'), {
   ssr: false,
@@ -19,6 +21,40 @@ const PasswordGeneratorLoader = dynamic(() => import('@/components/PasswordGener
   )
 });
 
+const features = [
+    {
+        icon: <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/20"><ListChecks className="w-8 h-8 text-blue-500" /></div>,
+        title: 'Multiple Password Types',
+        description: 'Generate random strings, memorable word-based passwords, or secure PINs to suit any need.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
+        title: 'Highly Secure',
+        description: 'All passwords are generated locally in your browser using a cryptographically secure random number generator. Nothing is ever sent to a server.',
+    },
+    {
+        icon: <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/20"><Zap className="w-8 h-8 text-yellow-500" /></div>,
+        title: 'Fully Customizable',
+        description: 'Easily adjust length, character types, capitalization, and separators to meet any security requirement.',
+    },
+];
+
+const howToSteps = [
+    {
+        title: 'Choose Password Type',
+        description: 'Select between Random, Memorable, or PIN based on your security needs.',
+    },
+    {
+        title: 'Customize Options',
+        description: 'Adjust the length and other settings like character inclusion or capitalization.',
+    },
+    {
+        title: 'Copy Your Password',
+        description: 'Your new, secure password will be generated instantly. Click the copy button to use it right away.',
+    },
+];
+
+
 export default function PasswordGeneratorPage() {
   return (
     <>
@@ -32,7 +68,7 @@ export default function PasswordGeneratorPage() {
               Password Generator
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Securely</span>
+                <span className="relative bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Securely</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
@@ -46,6 +82,15 @@ export default function PasswordGeneratorPage() {
             <PasswordGeneratorLoader />
           </div>
         </main>
+        
+        <FeatureGrid
+          title="Generate Passwords with Confidence"
+          description="Our password generator provides a flexible and secure way to create strong passwords for all your accounts."
+          features={features}
+          steps={howToSteps}
+          stepsTitle="How to Generate a Password"
+        />
+
       </div>
     </>
   );
