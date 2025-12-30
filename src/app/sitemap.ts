@@ -30,7 +30,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/currency-converter',
     '/markdown-to-html',
     '/text-summarizer',
-    '/invoice-generator',
   ].map(route => ({
     url: `${baseUrl}${route}`,
     priority: 0.9,
@@ -45,5 +44,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 }
-
-    
