@@ -3,6 +3,6 @@
 
 import ComingSoon from '@/components/ComingSoon';
 
-export default function HtmlToPdfPage() {
+export default function InvoiceGeneratorPage() {
   return <ComingSoon />;
 }
