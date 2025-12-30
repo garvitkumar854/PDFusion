@@ -20,8 +20,8 @@ export const services: Service[] = [
       href: '/merger'
     },
     {
-      icon: <Scissors className="text-green-500" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <Scissors className="text-cyan-500" />,
+      bgColor: 'bg-cyan-100 dark:bg-cyan-900/20',
       title: 'Split PDF',
       description: 'Extract specific pages or page ranges from a PDF into separate files.',
       href: '/split-pdf'
@@ -34,22 +34,22 @@ export const services: Service[] = [
       href: '/organize-pdf'
     },
     {
-      icon: <Image className="text-blue-500" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      icon: <Image className="text-indigo-500" />,
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
       title: 'PDF to JPG',
       description: 'Convert each page of a PDF into a high-quality JPG image.',
       href: '/pdf-to-jpg'
     },
      {
-      icon: <FileText className="text-red-500" />,
-      bgColor: 'bg-red-100 dark:bg-red-900/20',
+      icon: <FileText className="text-orange-500" />,
+      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
       title: 'JPG to PDF',
       description: 'Convert JPG images to a PDF file with orientation and margin options.',
       href: '/jpg-to-pdf'
     },
      {
-      icon: <Droplets className="text-gray-500" />,
-      bgColor: 'bg-gray-100 dark:bg-gray-900/20',
+      icon: <Droplets className="text-blue-500" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Add Watermark',
       description: 'Stamp a text or image watermark over your PDF pages with custom styling.',
       href: '/add-watermark'
@@ -69,8 +69,8 @@ export const services: Service[] = [
       href: '/html-to-pdf'
     },
     {
-      icon: <RotateCw className="text-indigo-500" />,
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
+      icon: <RotateCw className="text-purple-500" />,
+      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Rotate PDF',
       description: 'Rotate all pages in a PDF document by 90, 180, or 270 degrees.',
       href: '/rotate-pdf'
@@ -83,8 +83,8 @@ export const services: Service[] = [
       href: '/add-page-numbers'
     },
      {
-      icon: <LayoutGrid className="text-orange-500" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      icon: <LayoutGrid className="text-gray-500" />,
+      bgColor: 'bg-gray-100 dark:bg-gray-900/20',
       title: 'More Tools',
       description: 'Explore a variety of other useful utilities to boost your productivity.',
       href: '/more-tools'
