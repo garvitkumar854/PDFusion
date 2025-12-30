@@ -1,5 +1,3 @@
-
-import { FaThList } from 'react-icons/fa';
 import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, Pencil, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
 
@@ -60,13 +58,6 @@ export const services: Service[] = [
       title: 'PDF to HTML',
       description: 'Convert your PDF into a basic, editable HTML file.',
       href: '/pdf-to-html'
-    },
-    {
-      icon: <FileText className="text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
-      title: 'HTML to PDF',
-      description: 'Convert any webpage into a PDF document.',
-      href: '/html-to-pdf'
     },
     {
       icon: <RotateCw className="text-purple-500" />,

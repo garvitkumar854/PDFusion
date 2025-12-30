@@ -7,14 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Copy, Download, Check, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import Editor from "react-simple-code-editor";
-import Prism from "prismjs";
-import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-markup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
+import { Textarea } from "./ui/textarea";
 
 const defaultMarkdown = `# Welcome to Markdown to HTML!
 
@@ -23,7 +19,6 @@ This is a **live editor**. Start typing in the Markdown panel on the left, and y
 ## Features
 
 - **Live Preview**: See your changes as you type.
-- **Syntax Highlighting**: The editor is themed for readability.
 - **Copy & Download**: Easily grab your HTML code.
 
 ### Example List
@@ -135,81 +130,17 @@ export function MarkdownToHtmlConverter() {
         }
     };
     
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-      const textarea = e.target as HTMLTextAreaElement;
-      const { selectionStart, selectionEnd, value } = textarea;
-      
-      const currentLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
-      const currentLineEnd = value.indexOf('\n', selectionStart);
-      const currentLine = value.substring(currentLineStart, currentLineEnd === -1 ? value.length : currentLineEnd);
-
-      if (e.key === 'Tab' && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        const newValue = `${value.substring(0, selectionStart)}  ${value.substring(selectionEnd)}`;
-        setMarkdown(newValue);
-        setTimeout(() => {
-          textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
-        }, 0);
-      } else if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        const lineToDuplicate = currentLine + (currentLineEnd === -1 ? '' : '\n');
-        const nextLineStart = currentLineEnd === -1 ? value.length : currentLineEnd + 1;
-        const newValue = value.substring(0, nextLineStart) + lineToDuplicate + value.substring(nextLineStart);
-        
-        setMarkdown(newValue);
-        setTimeout(() => {
-           const newCursorPos = nextLineStart + lineToDuplicate.length;
-           textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-        }, 0);
-      } else if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-        e.preventDefault();
-        const lines = value.split('\n');
-        const currentLineIndex = value.substring(0, selectionStart).split('\n').length - 1;
-
-        if (e.key === "ArrowUp" && currentLineIndex > 0) {
-            [lines[currentLineIndex - 1], lines[currentLineIndex]] = [lines[currentLineIndex], lines[currentLineIndex - 1]];
-            const newCursorOffset = lines.slice(0, currentLineIndex -1).join('\n').length + (currentLineIndex > 1 ? 1 : 0);
-            setMarkdown(lines.join('\n'));
-            setTimeout(() => {
-              textarea.selectionStart = textarea.selectionEnd = newCursorOffset + value.substring(currentLineStart, selectionStart).length;
-            }, 0);
-        } else if (e.key === "ArrowDown" && currentLineIndex < lines.length - 1) {
-            [lines[currentLineIndex], lines[currentLineIndex + 1]] = [lines[currentLineIndex + 1], lines[currentLineIndex]];
-             const newCursorOffset = lines.slice(0, currentLineIndex).join('\n').length + 1;
-            setMarkdown(lines.join('\n'));
-            setTimeout(() => {
-               textarea.selectionStart = textarea.selectionEnd = newCursorOffset + lines[currentLineIndex].length + value.substring(currentLineStart, selectionStart).length;
-            }, 0);
-        }
-      } else if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-        e.preventDefault();
-        const selectedText = value.substring(selectionStart, selectionEnd);
-        const isCommented = selectedText.startsWith('<!-- ') && selectedText.endsWith(' -->');
-        
-        let newValue, newSelectionStart, newSelectionEnd;
-
-        if (isCommented) {
-          newValue = value.substring(0, selectionStart) + selectedText.slice(5, -4) + value.substring(selectionEnd);
-          newSelectionStart = selectionStart;
-          newSelectionEnd = selectionEnd - 9;
-        } else {
-          newValue = value.substring(0, selectionStart) + `<!-- ${selectedText} -->` + value.substring(selectionEnd);
-          newSelectionStart = selectionStart + 5;
-          newSelectionEnd = selectionEnd + 5;
-        }
-
-        setMarkdown(newValue);
-        setTimeout(() => {
-          textarea.selectionStart = newSelectionStart;
-          textarea.selectionEnd = newSelectionEnd;
-        });
-      }
-    };
-    
     const editorPanel = (
-        <div className="flex-1 flex overflow-hidden code-editor-container">
+        <div className="flex-1 flex overflow-hidden flex-col border rounded-lg">
+             <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
+                <span className="px-2">MARKDOWN</span>
+            </div>
             <ScrollArea className="w-full h-full">
-                <Editor value={markdown} onValueChange={setMarkdown} highlight={code => Prism.highlight(code, Prism.languages.markdown, 'markdown')} padding={16} onKeyDown={handleKeyDown} className="code-editor flex-1 min-h-full" />
+                <Textarea 
+                    value={markdown} 
+                    onChange={(e) => setMarkdown(e.target.value)}
+                    className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4"
+                />
             </ScrollArea>
         </div>
     );
@@ -223,9 +154,9 @@ export function MarkdownToHtmlConverter() {
     );
 
     const htmlRawPanel = (
-         <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0 code-editor-container">
+         <TabsContent value="raw" className="flex-1 overflow-y-auto mt-0">
             <ScrollArea className="h-full w-full">
-              <Editor value={html} onValueChange={() => {}} highlight={code => Prism.highlight(code, Prism.languages.markup, 'markup')} padding={16} readOnly className="code-editor flex-1 min-h-full" />
+              <pre className="p-4 text-sm"><code className="language-markup">{html}</code></pre>
             </ScrollArea>
           </TabsContent>
     );
@@ -264,17 +195,10 @@ export function MarkdownToHtmlConverter() {
         );
       }
       
-      const direction = "horizontal";
       return (
-        <ResizablePanelGroup direction={direction} className="flex-1">
-            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
-                <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
-                    <span className="px-2">MARKDOWN</span>
-                </div>
-                {editorPanel}
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={50} className="flex flex-col min-h-0">
+        <div className="grid md:grid-cols-2 gap-4 flex-1">
+            {editorPanel}
+             <div className="flex flex-col border rounded-lg">
                 <Tabs defaultValue="preview" className="flex flex-col h-full">
                     <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
                         <TabsList className="bg-transparent p-0 m-0 h-auto">
@@ -286,13 +210,13 @@ export function MarkdownToHtmlConverter() {
                     {htmlResultPanel}
                     {htmlRawPanel}
                 </Tabs>
-            </ResizablePanel>
-        </ResizablePanelGroup>
+            </div>
+        </div>
       );
     }
     
     return (
-        <div className={cn("border rounded-xl bg-card shadow-sm flex flex-col flex-1")}>
+        <div className={cn("bg-card flex flex-col flex-1")}>
             <input
                 type="file"
                 ref={fileInputRef}
