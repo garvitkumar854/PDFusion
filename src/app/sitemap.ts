@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -19,7 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/pdf-to-jpg',
     '/jpg-to-pdf',
     '/pdf-to-html',
-    '/html-to-pdf',
     '/rotate-pdf',
     '/add-page-numbers',
     '/add-watermark',
@@ -30,7 +28,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/currency-converter',
     '/markdown-to-html',
     '/text-summarizer',
-    '/invoice-generator',
   ].map(route => ({
     url: `${baseUrl}${route}`,
     priority: 0.9,
@@ -45,5 +42,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 }
-
-    

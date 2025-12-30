@@ -1,7 +1,6 @@
 
 'use client';
 
-import { usePwa } from '@/hooks/use-pwa';
 import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { Toaster } from '@/components/ui/toaster';
@@ -11,7 +10,6 @@ import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useEffect, useState } from 'react';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  usePwa();
   const pathname = usePathname();
   const isMobile = useIsMobile();
   const [isStandalone, setIsStandalone] = useState(false);

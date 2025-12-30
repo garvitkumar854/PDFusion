@@ -12,43 +12,43 @@ import React from "react";
 
 const tools = [
     {
-      icon: <Calculator className="w-8 h-8 text-blue-500" />,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+      icon: <Calculator className="w-8 h-8 text-teal-500" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
       title: 'Calculator',
       description: 'A simple and elegant calculator for your daily needs.',
       href: '/calculator',
     },
     {
-      icon: <Currency className="w-8 h-8 text-green-500" />,
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      icon: <Currency className="w-8 h-8 text-emerald-500" />,
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/20',
       title: 'Currency Converter',
       description: 'Convert between different currencies with live exchange rates.',
       href: '/currency-converter',
     },
     {
-      icon: <QrCode className="w-8 h-8 text-purple-500" />,
-      bgColor: 'bg-purple-100 dark:bg-purple-900/20',
+      icon: <QrCode className="w-8 h-8 text-violet-500" />,
+      bgColor: 'bg-violet-100 dark:bg-violet-900/20',
       title: 'QR Code Generator',
       description: 'Create QR codes for URLs, text, contacts, and more.',
       href: '/qr-code-generator',
     },
     {
-      icon: <SlidersHorizontal className="w-8 h-8 text-orange-500" />,
-      bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+      icon: <SlidersHorizontal className="w-8 h-8 text-fuchsia-500" />,
+      bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/20',
       title: 'Unit Converter',
       description: 'An all-in-one converter for various units of measurement.',
       href: '/unit-converter',
     },
     {
-      icon: <LockKeyhole className="w-8 h-8 text-red-500" />,
-      bgColor: 'bg-red-100 dark:bg-red-900/20',
+      icon: <LockKeyhole className="w-8 h-8 text-rose-500" />,
+      bgColor: 'bg-rose-100 dark:bg-rose-900/20',
       title: 'Password Generator',
       description: 'Generate strong and secure passwords for your accounts.',
       href: '/password-generator',
     },
     {
-      icon: <Code className="w-8 h-8 text-teal-500" />,
-      bgColor: 'bg-teal-100 dark:bg-teal-900/20',
+      icon: <Code className="w-8 h-8 text-blue-500" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
       title: 'Markdown to HTML',
       description: 'Convert Markdown to clean HTML with a live side-by-side editor.',
       href: '/markdown-to-html',
@@ -59,13 +59,6 @@ const tools = [
       title: 'Text Summarizer',
       description: 'Use AI to quickly summarize long articles or documents.',
       href: '/text-summarizer',
-    },
-    {
-      icon: <FileText className="w-8 h-8 text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
-      title: 'Invoice Generator',
-      description: 'Create and download professional invoices in seconds.',
-      href: '/invoice-generator',
     },
 ];
 
@@ -171,5 +164,3 @@ export default function MoreToolsPage() {
     </div>
   );
 }
-
-    
