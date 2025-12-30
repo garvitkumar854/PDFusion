@@ -118,16 +118,6 @@ const nextConfig: NextConfig = {
       type: "javascript/auto",
     });
     
-    config.module.rules.push({
-      test: /node_modules\/handlebars\/lib\/index\.js$/,
-      loader: 'string-replace-loader',
-      options: {
-        search: `require.extensions\\['.js'\\]`,
-        replace: '() => {}',
-        flags: 'g',
-      },
-    });
-
     config.resolve.alias['pdfjs-dist'] = path.join(__dirname, 'node_modules/pdfjs-dist');
 
 
