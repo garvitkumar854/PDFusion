@@ -226,8 +226,6 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleDeleteAssignment = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this assignment?')) return;
-
     try {
       await deleteDoc(doc(db, 'assignments', id));
       await fetchAssignments();

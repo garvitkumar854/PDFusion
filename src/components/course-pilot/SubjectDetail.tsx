@@ -1,5 +1,6 @@
 
 'use client';
+import { useState } from 'react';
 import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
 import {
   DndContext,
@@ -24,6 +25,17 @@ import AnimateOnScroll from '../AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Assignment {
   id: string;
@@ -84,9 +96,25 @@ const SortableAssignmentItem = ({
                         <Button variant="ghost" size="icon" onClick={onEdit} className="w-7 h-7">
                             <Edit className="w-4 h-4"/>
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={onDelete} className="w-7 h-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                            <Trash2 className="w-4 h-4"/>
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="w-7 h-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                                <Trash2 className="w-4 h-4"/>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the assignment. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 )}
             </div>
@@ -138,16 +166,18 @@ export const SubjectDetail = ({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
-                <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-                <div className="min-w-0 flex-1">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold break-words">{subjectName}</h1>
-                    <p className="text-muted-foreground">{assignments.length} assignments</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="min-w-0 flex-1">
+                      <h1 className="text-2xl/tight sm:text-3xl/tight md:text-4xl/tight font-bold break-words">{subjectName}</h1>
+                      <p className="text-muted-foreground">{assignments.length} assignments</p>
+                  </div>
                 </div>
                  {user && (
-                    <Button className="w-full sm:w-auto sm:ml-auto" onClick={onAddAssignment}>
+                    <Button className="w-full sm:w-auto" onClick={onAddAssignment}>
                         <Plus className="w-4 h-4 mr-2"/>
                         Add Assignment
                     </Button>
