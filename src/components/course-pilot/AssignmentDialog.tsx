@@ -13,6 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface AssignmentDialogProps {
   isOpen: boolean;
@@ -31,32 +37,35 @@ export const AssignmentDialog = ({
 }: AssignmentDialogProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
       setTitle(initialData?.title || '');
       setDescription(initialData?.description || '');
-      setDate(initialData?.date || new Date().toISOString().split('T')[0]);
-      setError('');
+      setDate(initialData?.date ? new Date(initialData.date) : new Date());
       setIsSaving(false);
     }
   }, [isOpen, initialData]);
 
   const handleSave = async () => {
-    if (!title || !date) {
-      setError('Title and date are required.');
-      return;
+    if (!title) {
+       toast({ variant: 'destructive', title: 'Title is required' });
+       return;
     }
-    setError('');
+     if (!date) {
+        toast({ variant: 'destructive', title: 'Date is required' });
+        return;
+    }
+
     setIsSaving(true);
     try {
-      await onSave({ title, description, date });
+      await onSave({ title, description, date: date.toISOString().split('T')[0] });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+       toast({ variant: 'destructive', title: 'Failed to save', description: err instanceof Error ? err.message : 'An unexpected error occurred.' });
     } finally {
       setIsSaving(false);
     }
@@ -84,20 +93,36 @@ export const AssignmentDialog = ({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </DialogFooter>
