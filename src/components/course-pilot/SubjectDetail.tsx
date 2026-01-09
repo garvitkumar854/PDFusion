@@ -73,11 +73,11 @@ const SortableAssignmentItem = ({
           !isFirst && "border-t-0"
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
-            <div className="flex-1 space-y-0.5 min-w-0">
+            <div className="flex-1 space-y-0.5 min-w-0 pr-4">
                 <CardTitle className="text-base font-bold">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
-            <div className="flex flex-col items-end ml-4 text-right">
+            <div className="flex flex-col items-end text-right shrink-0">
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
                 {user && (
                     <div className="flex items-center gap-1">
@@ -138,16 +138,16 @@ export const SubjectDetail = ({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-            <div className="flex items-center gap-4 mb-8">
-                <Button variant="outline" size="icon" onClick={onBack}>
-                <ArrowLeft className="w-4 h-4" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
+                <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
+                  <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-3xl sm:text-4xl font-bold break-words">{subjectName}</h1>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold break-words">{subjectName}</h1>
                     <p className="text-muted-foreground">{assignments.length} assignments</p>
                 </div>
                  {user && (
-                    <Button className="ml-auto shrink-0" onClick={onAddAssignment}>
+                    <Button className="w-full sm:w-auto sm:ml-auto" onClick={onAddAssignment}>
                         <Plus className="w-4 h-4 mr-2"/>
                         Add Assignment
                     </Button>
