@@ -374,15 +374,13 @@ export default function AssignmentTrackerPage() {
     <>
       <section className="text-center my-12">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
-            <BookCheck className="w-4 h-4" />
-            Course Pilot
-          </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
-            Assignment Tracker
+            Course Pilot
              <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">Stay Organized</span>
+                <span className="text-2xl sm:text-3xl md:text-5xl bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
+                    Your Intelligent Assignment Tracker
+                </span>
               </span>
           </h1>
           <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
