@@ -19,9 +19,12 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import { Button } from '@/components/ui/button';
+import { LogIn, LogOut, Plus } from 'lucide-react';
+import { BookCheck } from 'lucide-react';
 
 interface Subject {
   id: string;
@@ -42,7 +45,7 @@ interface Assignment {
 }
 
 export default function AssignmentTrackerPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -362,12 +365,12 @@ export default function AssignmentTrackerPage() {
     <>
       <section className="text-center my-12">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold py-1 px-3 rounded-full text-sm mb-6">
+            <BookCheck className="w-4 h-4" />
             Course Pilot
-            <br />
-            <span className="relative inline-block">
-              <span className="relative bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">Assignment Tracker</span>
-            </span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            Assignment Tracker
           </h1>
           <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
             Browse and manage all your course assignments.
@@ -385,6 +388,28 @@ export default function AssignmentTrackerPage() {
             {assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`}
           </div>
         </div>
+      </div>
+      
+      <div className="mb-6 flex justify-end gap-2">
+         {!authLoading && user && (
+            <Button onClick={() => { setEditingSubject(null); setIsSubjectDialogOpen(true); }}>
+                <Plus size={16} className="mr-2" />
+                Add Subject
+            </Button>
+         )}
+         {!authLoading && (
+            user ? (
+                <Button variant="outline" onClick={() => auth.signOut()}>
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                </Button>
+            ) : (
+                <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
+                    <LogIn size={16} className="mr-2" />
+                    Admin Login
+                </Button>
+            )
+         )}
       </div>
 
       {loading ? (
@@ -458,3 +483,5 @@ export default function AssignmentTrackerPage() {
     </>
   );
 }
+
+    

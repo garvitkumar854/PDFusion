@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useEffect, useState } from 'react';
+import { AuthProvider } from '@/hooks/use-auth';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,7 +25,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const isUnitConverterPwa = (pathname === '/unit-converter' && isMobile && isStandalone);
 
   return (
-    <>
+    <AuthProvider>
       <Header />
       <main className={cn(
         "flex-1", 
@@ -34,6 +35,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       </main>
       <FooterLoader />
       <Toaster />
-    </>
+    </AuthProvider>
   );
 }
+
+    
