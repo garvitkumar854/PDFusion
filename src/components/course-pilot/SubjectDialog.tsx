@@ -100,10 +100,7 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <DialogClose asChild>
-                <Button variant="outline" disabled={isSaving || isDeleting}>Cancel</Button>
-            </DialogClose>
+        <DialogFooter>
             <div className="flex justify-end gap-2">
               {isEdit && onDelete && (
                   <AlertDialog>
