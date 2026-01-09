@@ -86,8 +86,8 @@ const SortableAssignmentItem = ({
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
             <div className="flex-1 space-y-1 min-w-0 pr-4">
-                <CardTitle className="text-base font-bold text-sm md:text-base">{assignment.title}</CardTitle>
-                {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
+                <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
+                {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
             </div>
             <div className="flex flex-col items-end text-right shrink-0">
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
@@ -166,7 +166,7 @@ export const SubjectDetail = ({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
                   <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
                     <ArrowLeft className="w-4 h-4" />
