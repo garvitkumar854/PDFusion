@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -12,14 +12,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase
 let app;
-// Check if any Firebase apps have already been initialized
 if (!getApps().length) {
-  // If not, initialize a new app
   app = initializeApp(firebaseConfig);
 } else {
-  // Otherwise, use the existing app
-  app = getApps()[0];
+  app = getApp();
 }
 
 export const auth = getAuth(app);
