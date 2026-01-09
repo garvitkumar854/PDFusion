@@ -130,7 +130,7 @@ export function MarkdownToHtmlConverter() {
     };
     
     const editorPanel = (
-        <div className="flex-1 flex overflow-hidden flex-col border rounded-lg h-full">
+        <div className="flex-1 flex flex-col border rounded-lg overflow-hidden h-full">
              <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
                 <span className="px-2">MARKDOWN</span>
             </div>
@@ -139,7 +139,7 @@ export function MarkdownToHtmlConverter() {
                     <Textarea 
                         value={markdown} 
                         onChange={(e) => setMarkdown(e.target.value)}
-                        className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4"
+                        className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4 bg-transparent"
                     />
                 </ScrollArea>
             </div>
@@ -199,7 +199,7 @@ export function MarkdownToHtmlConverter() {
       return (
         <div className="grid md:grid-cols-2 gap-4 flex-1 min-h-0">
             {editorPanel}
-             <div className="flex flex-col border rounded-lg h-full">
+             <div className="flex flex-col border rounded-lg h-full overflow-hidden">
                 <Tabs defaultValue="preview" className="flex flex-col h-full">
                     <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
                         <TabsList className="bg-transparent p-0 m-0 h-auto">
