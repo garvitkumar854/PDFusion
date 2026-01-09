@@ -82,7 +82,7 @@ export const LoginDialog = ({
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <div className="relative">
+                <div className="relative flex items-center">
                     <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
@@ -90,13 +90,14 @@ export const LoginDialog = ({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        className="pr-10"
                     />
                      <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground"
+                        className="absolute right-1 h-8 w-8 text-muted-foreground"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                         {showPassword ? (
