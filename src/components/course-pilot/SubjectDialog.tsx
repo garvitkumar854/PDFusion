@@ -33,6 +33,7 @@ export const SubjectDialog = ({
 }: SubjectDialogProps) => {
   const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export const SubjectDialog = ({
       setName(initialName || '');
       setError('');
       setIsSaving(false);
+      setIsDeleting(false);
     }
   }, [isOpen, initialName]);
 
@@ -62,11 +64,14 @@ export const SubjectDialog = ({
 
   const handleDelete = async () => {
       if (onDelete && confirm('Are you sure you want to delete this subject? All associated assignments will also be deleted.')) {
+          setIsDeleting(true);
           try {
               await onDelete();
               onClose();
           } catch (err) {
               setError(err instanceof Error ? err.message : 'Failed to delete subject');
+          } finally {
+              setIsDeleting(false);
           }
       }
   }
@@ -84,11 +89,17 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <DialogFooter>
             {isEdit && onDelete && (
-                <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>Delete</Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={isSaving || isDeleting} className="mr-auto">
+                   {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                   {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
             )}
-            <Button onClick={handleSave} disabled={isSaving}>
+            <DialogClose asChild>
+                <Button variant="outline" disabled={isSaving || isDeleting}>Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSave} disabled={isSaving || isDeleting}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSaving ? 'Saving...' : 'Save'}
             </Button>

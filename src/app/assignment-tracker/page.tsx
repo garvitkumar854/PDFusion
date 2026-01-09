@@ -111,10 +111,10 @@ export default function AssignmentTrackerPage() {
       .filter((a) => a.subject_id === subjectId)
       .slice()
       .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
         const aOrder = a.order ?? Number.POSITIVE_INFINITY;
         const bOrder = b.order ?? Number.POSITIVE_INFINITY;
         if (aOrder !== bOrder) return aOrder - bOrder;
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.created_at.localeCompare(b.created_at);
       });
   };
@@ -149,7 +149,7 @@ export default function AssignmentTrackerPage() {
 
     await fetchSubjects();
     if (selectedSubject?.id === editingSubject.id) {
-      setSelectedSubject({ ...editingSubject, name });
+      setSelectedSubject((prev) => prev ? { ...prev, name } : null);
     }
     setEditingSubject(null);
   };
@@ -427,10 +427,17 @@ export default function AssignmentTrackerPage() {
         </div>
       ) : subjects.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-500 text-lg">No subjects yet</p>
-          <p className="text-gray-400 mt-2">
-            Click "Add Subject" to get started
-          </p>
+           <AnimateOnScroll animation="animate-in fade-in-0 zoom-in-95 duration-500">
+            <div className="inline-block bg-primary/10 p-4 rounded-full">
+                <BookCheck className="w-10 h-10 text-primary" />
+            </div>
+          </AnimateOnScroll>
+          <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12 duration-500 delay-100">
+            <p className="mt-4 text-lg font-semibold text-foreground">No subjects yet</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+                Click "Add Subject" to get started.
+            </p>
+          </AnimateOnScroll>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
