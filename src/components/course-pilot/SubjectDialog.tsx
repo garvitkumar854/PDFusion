@@ -90,9 +90,6 @@ export const SubjectDialog = ({
             )}
             </div>
             <div className="flex gap-2">
-                <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                </DialogClose>
                 <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? 'Saving...' : 'Save'}
                 </Button>

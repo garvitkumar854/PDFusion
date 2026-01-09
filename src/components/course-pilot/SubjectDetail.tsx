@@ -72,25 +72,25 @@ const SortableAssignmentItem = ({
           !isFirst && !isLast ? "rounded-none" : "",
           !isFirst && "border-t-0"
       )}>
-        <CardHeader className="flex flex-row justify-between items-start pb-2">
-            <div className="flex-1 space-y-0.5">
+        <div className="flex justify-between items-start p-3 sm:p-4">
+            <div className="flex-1 space-y-1">
                 <CardTitle className="text-base font-bold">{assignment.title}</CardTitle>
-                <CardDescription className="text-xs">{formattedDate}</CardDescription>
+                {assignment.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
-            {user && (
-                <div className="flex items-center gap-1 -mr-2 -mt-2">
-                    <Button variant="ghost" size="icon" onClick={onEdit}>
-                        <Edit className="w-4 h-4"/>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4"/>
-                    </Button>
-                </div>
-            )}
-        </CardHeader>
-        <CardContent className="pt-2">
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>
-        </CardContent>
+            <div className="flex flex-col items-end ml-4">
+                <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
+                {user && (
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={onEdit} className="w-7 h-7">
+                            <Edit className="w-4 h-4"/>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={onDelete} className="w-7 h-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                            <Trash2 className="w-4 h-4"/>
+                        </Button>
+                    </div>
+                )}
+            </div>
+        </div>
       </Card>
     </div>
   );
