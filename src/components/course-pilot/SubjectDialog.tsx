@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface SubjectDialogProps {
   isOpen: boolean;
@@ -83,17 +84,14 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter className="flex items-center justify-between w-full">
-            <div>
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
             {isEdit && onDelete && (
                 <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>Delete</Button>
             )}
-            </div>
-            <div className="flex justify-end gap-2">
-                <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save'}
-                </Button>
-            </div>
+            <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSaving ? 'Saving...' : 'Save'}
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
