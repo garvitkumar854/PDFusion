@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const contactMethods = [
   {
@@ -69,6 +70,11 @@ const formSchema = z.object({
 
 export default function ContactPage() {
   const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -169,7 +175,9 @@ ${values.message}
                         </Link>
                         <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                         <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                            <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={48} height={48} />
+                            {mounted ? (
+                               <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={48} height={48} />
+                            ) : <div className="w-12 h-12" />}
                         </div>
                         </Link>
                     </div>
