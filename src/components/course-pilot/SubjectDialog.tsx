@@ -83,13 +83,16 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter className="flex justify-between w-full">
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between w-full">
             <div>
             {isEdit && onDelete && (
                 <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>Delete</Button>
             )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex justify-end gap-2">
+                 <DialogClose asChild>
+                   <Button variant="outline">Cancel</Button>
+                 </DialogClose>
                 <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? 'Saving...' : 'Save'}
                 </Button>

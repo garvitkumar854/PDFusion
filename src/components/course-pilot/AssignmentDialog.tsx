@@ -117,7 +117,7 @@ export const AssignmentDialog = ({
             </Popover>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>

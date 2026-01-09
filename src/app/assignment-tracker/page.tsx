@@ -379,7 +379,7 @@ export default function AssignmentTrackerPage() {
              <br />
               <span className="relative inline-block">
                 <span className="text-2xl sm:text-3xl md:text-5xl bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
-                    Your Intelligent Assignment Tracker
+                    Track Your Coursework
                 </span>
               </span>
           </h1>

@@ -73,11 +73,11 @@ const SortableAssignmentItem = ({
           !isFirst && "border-t-0"
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 space-y-0.5">
                 <CardTitle className="text-base font-bold">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
-            <div className="flex flex-col items-end ml-4">
+            <div className="flex flex-col items-end ml-4 text-right">
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
                 {user && (
                     <div className="flex items-center gap-1">
@@ -142,12 +142,12 @@ export const SubjectDetail = ({
                 <Button variant="outline" size="icon" onClick={onBack}>
                 <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <div>
-                    <h1 className="text-3xl sm:text-4xl font-bold">{subjectName}</h1>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-3xl sm:text-4xl font-bold break-words">{subjectName}</h1>
                     <p className="text-muted-foreground">{assignments.length} assignments</p>
                 </div>
                  {user && (
-                    <Button className="ml-auto" onClick={onAddAssignment}>
+                    <Button className="ml-auto shrink-0" onClick={onAddAssignment}>
                         <Plus className="w-4 h-4 mr-2"/>
                         Add Assignment
                     </Button>
