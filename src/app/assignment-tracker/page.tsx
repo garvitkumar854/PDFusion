@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Navbar } from '@/components/course-pilot/Navbar';
 import { LoginDialog } from '@/components/course-pilot/LoginDialog';
 import { SubjectCard } from '@/components/course-pilot/SubjectCard';
 import { SubjectDetail } from '@/components/course-pilot/SubjectDetail';
 import { SubjectDialog } from '@/components/course-pilot/SubjectDialog';
 import { AssignmentDialog } from '@/components/course-pilot/AssignmentDialog';
-import { Toast, ToastProvider, ToastViewport, ToastTitle, ToastDescription, ToastClose } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   addDoc,
   collection,
@@ -22,7 +21,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 
 interface Subject {
@@ -43,15 +41,6 @@ interface Assignment {
   order?: number;
 }
 
-export type ToastKind = 'success' | 'error' | 'info';
-
-export interface Toast {
-  id: string;
-  title: string;
-  kind: ToastKind;
-  leaving: boolean;
-}
-
 export default function AssignmentTrackerPage() {
   const { user } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -63,20 +52,7 @@ export default function AssignmentTrackerPage() {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const dismissToast = (id: string) => {
-    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 200);
-  };
-
-  const showToast = (title: string, kind: ToastKind) => {
-    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setToasts((prev) => [...prev, { id, title, kind, leaving: false }]);
-    setTimeout(() => dismissToast(id), 3500);
-  };
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSubjects();
@@ -98,7 +74,7 @@ export default function AssignmentTrackerPage() {
       setSubjects(nextSubjects);
     } catch (err) {
       console.error('Error fetching subjects:', err);
-      showToast('Failed to load subjects', 'error');
+      toast({ title: 'Failed to load subjects', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -118,7 +94,7 @@ export default function AssignmentTrackerPage() {
       setAssignments(nextAssignments);
     } catch (err) {
       console.error('Error fetching assignments:', err);
-      showToast('Failed to load assignments', 'error');
+      toast({ title: 'Failed to load assignments', variant: 'destructive' });
     }
   };
 
@@ -251,10 +227,10 @@ export default function AssignmentTrackerPage() {
     try {
       await deleteDoc(doc(db, 'assignments', id));
       await fetchAssignments();
-      showToast('Assignment deleted', 'success');
+      toast({ title: 'Assignment deleted', variant: 'success' });
     } catch (err) {
       console.error('Error deleting assignment:', err);
-      showToast('Failed to delete assignment', 'error');
+      toast({ title: 'Failed to delete assignment', variant: 'destructive' });
     }
   };
 
@@ -279,36 +255,16 @@ export default function AssignmentTrackerPage() {
         batch.update(doc(db, 'assignments', id), { order: index, updated_at: now });
       });
       await batch.commit();
-      showToast('Assignments reordered', 'success');
+      toast({ title: 'Assignments reordered', variant: 'success' });
     } catch {
       setAssignments(previous);
-      showToast('Failed to reorder assignments', 'error');
+      toast({ title: 'Failed to reorder assignments', variant: 'destructive' });
     }
   };
 
-  const ToastViewportComponent = () => {
-    if (toasts.length === 0) return null;
-
-    return (
-        <ToastProvider>
-            {toasts.map((t) => {
-                const variant = t.kind === 'success' ? 'success' : t.kind === 'error' ? 'destructive' : 'info';
-                return (
-                    <Toast key={t.id} open={!t.leaving} onOpenChange={() => dismissToast(t.id)} variant={variant}>
-                        <ToastTitle>{t.title}</ToastTitle>
-                        <ToastClose />
-                    </Toast>
-                );
-            })}
-            <ToastViewport />
-        </ToastProvider>
-    );
-  };
-  
   if (selectedSubject) {
     return (
       <>
-        <ToastViewportComponent />
         <SubjectDetail
           subjectName={selectedSubject.name}
           assignments={getSubjectAssignments(selectedSubject.id)}
@@ -338,13 +294,13 @@ export default function AssignmentTrackerPage() {
             try {
               if (editingSubject) {
                 await handleUpdateSubject(name);
-                showToast('Subject updated', 'success');
+                toast({ title: 'Subject updated', variant: 'success' });
               } else {
                 await handleAddSubject(name);
-                showToast('Subject added', 'success');
+                toast({ title: 'Subject added', variant: 'success' });
               }
             } catch (err) {
-              showToast(err instanceof Error ? err.message : 'Failed to save subject', 'error');
+              toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
               throw err;
             }
           }}
@@ -353,12 +309,12 @@ export default function AssignmentTrackerPage() {
               ? async () => {
                   try {
                     await handleDeleteSubject();
-                    showToast('Subject deleted', 'success');
+                    toast({ title: 'Subject deleted', variant: 'success' });
                   } catch (err) {
-                    showToast(
-                      err instanceof Error ? err.message : 'Failed to delete subject',
-                      'error',
-                    );
+                    toast({
+                      title: err instanceof Error ? err.message : 'Failed to delete subject',
+                      variant: 'destructive',
+                    });
                     throw err;
                   }
                 }
@@ -377,13 +333,13 @@ export default function AssignmentTrackerPage() {
             try {
               if (editingAssignment) {
                 await handleUpdateAssignment(data);
-                showToast('Assignment updated', 'success');
+                toast({ title: 'Assignment updated', variant: 'success' });
               } else {
                 await handleAddAssignment(data);
-                showToast('Assignment added', 'success');
+                toast({ title: 'Assignment added', variant: 'success' });
               }
             } catch (err) {
-              showToast(err instanceof Error ? err.message : 'Failed to save assignment', 'error');
+              toast({ title: err instanceof Error ? err.message : 'Failed to save assignment', variant: 'destructive' });
               throw err;
             }
           }}
@@ -404,64 +360,63 @@ export default function AssignmentTrackerPage() {
 
   return (
     <>
-      <ToastViewportComponent />
-        <section className="text-center mb-12">
-            <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
-                Course Pilot
-                <br />
-                <span className="relative inline-block">
-                    <span className="relative bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">Assignment Tracker</span>
-                </span>
-                </h1>
-                <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-                Browse and manage all your course assignments.
-                </p>
-            </AnimateOnScroll>
-        </section>
+      <section className="text-center my-12">
+        <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            Course Pilot
+            <br />
+            <span className="relative inline-block">
+              <span className="relative bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">Assignment Tracker</span>
+            </span>
+          </h1>
+          <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
+            Browse and manage all your course assignments.
+          </p>
+        </AnimateOnScroll>
+      </section>
 
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-3xl font-bold text-foreground">Subjects</h2>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
-                {subjects.length === 1 ? '1 subject' : `${subjects.length} subjects`}
-              </div>
-              <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
-                {assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`}
-              </div>
-            </div>
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <h2 className="text-3xl font-bold text-foreground">Subjects</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
+            {subjects.length === 1 ? '1 subject' : `${subjects.length} subjects`}
           </div>
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
+            {assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`}
+          </div>
+        </div>
+      </div>
 
-          {loading ? (
-            <div className="text-center py-16">
-              <p className="text-gray-500 text-lg">Loading subjects...</p>
-            </div>
-          ) : subjects.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-500 text-lg">No subjects yet</p>
-              {user && (
-                <p className="text-gray-400 mt-2">
-                  Click "Add Subject" to get started
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-              {subjects.map((subject) => (
-                <SubjectCard
-                  key={subject.id}
-                  id={subject.id}
-                  name={subject.name}
-                  assignmentCount={getAssignmentCount(subject.id)}
-                  onView={() => setSelectedSubject(subject)}
-                  onEdit={() => {
-                    setEditingSubject(subject);
-                    setIsSubjectDialogOpen(true);
-                  }}
-                />
-              ))}
-            </div>
+      {loading ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">Loading subjects...</p>
+        </div>
+      ) : subjects.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">No subjects yet</p>
+          {user && (
+            <p className="text-gray-400 mt-2">
+              Click "Add Subject" to get started
+            </p>
           )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {subjects.map((subject) => (
+            <SubjectCard
+              key={subject.id}
+              id={subject.id}
+              name={subject.name}
+              assignmentCount={getAssignmentCount(subject.id)}
+              onView={() => setSelectedSubject(subject)}
+              onEdit={() => {
+                setEditingSubject(subject);
+                setIsSubjectDialogOpen(true);
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <SubjectDialog
@@ -474,13 +429,13 @@ export default function AssignmentTrackerPage() {
           try {
             if (editingSubject) {
               await handleUpdateSubject(name);
-              showToast('Subject updated', 'success');
+              toast({ title: 'Subject updated', variant: 'success' });
             } else {
               await handleAddSubject(name);
-              showToast('Subject added', 'success');
+              toast({ title: 'Subject added', variant: 'success' });
             }
           } catch (err) {
-            showToast(err instanceof Error ? err.message : 'Failed to save subject', 'error');
+            toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
             throw err;
           }
         }}
@@ -489,9 +444,9 @@ export default function AssignmentTrackerPage() {
             ? async () => {
                 try {
                   await handleDeleteSubject();
-                  showToast('Subject deleted', 'success');
+                  toast({ title: 'Subject deleted', variant: 'success' });
                 } catch (err) {
-                  showToast(err instanceof Error ? err.message : 'Failed to delete subject', 'error');
+                  toast({ title: err instanceof Error ? err.message : 'Failed to delete subject', variant: 'destructive' });
                   throw err;
                 }
               }
