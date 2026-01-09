@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X, BookCheck } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +91,7 @@ export default function Header() {
   ];
 
   const moreTools = [
+      { href: "/assignment-tracker", label: "CoursePilot", icon: <BookCheck /> },
       { href: "/calculator", label: "Calculator", icon: <Calculator /> },
       { href: "/currency-converter", label: "Currency Converter", icon: <Currency /> },
       { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },

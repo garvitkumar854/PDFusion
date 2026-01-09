@@ -2,7 +2,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow, BookCheck } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,13 @@ import { cn } from "@/lib/utils";
 import React from "react";
 
 const tools = [
+    {
+      icon: <BookCheck className="w-8 h-8 text-sky-500" />,
+      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      title: 'CoursePilot',
+      description: 'An intelligent assignment tracker to manage your coursework.',
+      href: '/assignment-tracker',
+    },
     {
       icon: <Calculator className="w-8 h-8 text-teal-500" />,
       bgColor: 'bg-teal-100 dark:bg-teal-900/20',
