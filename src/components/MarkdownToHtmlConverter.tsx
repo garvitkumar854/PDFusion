@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -131,17 +130,19 @@ export function MarkdownToHtmlConverter() {
     };
     
     const editorPanel = (
-        <div className="flex-1 flex overflow-hidden flex-col border rounded-lg">
+        <div className="flex-1 flex overflow-hidden flex-col border rounded-lg h-full">
              <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
                 <span className="px-2">MARKDOWN</span>
             </div>
-            <ScrollArea className="w-full h-full">
-                <Textarea 
-                    value={markdown} 
-                    onChange={(e) => setMarkdown(e.target.value)}
-                    className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4"
-                />
-            </ScrollArea>
+            <div className="flex-grow relative">
+                <ScrollArea className="absolute inset-0">
+                    <Textarea 
+                        value={markdown} 
+                        onChange={(e) => setMarkdown(e.target.value)}
+                        className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4"
+                    />
+                </ScrollArea>
+            </div>
         </div>
     );
     
@@ -196,9 +197,9 @@ export function MarkdownToHtmlConverter() {
       }
       
       return (
-        <div className="grid md:grid-cols-2 gap-4 flex-1">
+        <div className="grid md:grid-cols-2 gap-4 flex-1 h-full">
             {editorPanel}
-             <div className="flex flex-col border rounded-lg">
+             <div className="flex flex-col border rounded-lg h-full">
                 <Tabs defaultValue="preview" className="flex flex-col h-full">
                     <div className="p-1.5 border-b flex justify-between items-center flex-shrink-0 flex-wrap gap-2">
                         <TabsList className="bg-transparent p-0 m-0 h-auto">
@@ -216,7 +217,7 @@ export function MarkdownToHtmlConverter() {
     }
     
     return (
-        <div className={cn("bg-card flex flex-col flex-1")}>
+        <div className={cn("bg-card flex flex-col flex-1 h-full")}>
             <input
                 type="file"
                 ref={fileInputRef}

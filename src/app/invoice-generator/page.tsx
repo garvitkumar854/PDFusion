@@ -1,4 +1,3 @@
-
 'use client';
 
 import ComingSoon from '@/components/ComingSoon';
