@@ -8,6 +8,17 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,7 +74,7 @@ export const SubjectDialog = ({
   };
 
   const handleDelete = async () => {
-      if (onDelete && confirm('Are you sure you want to delete this subject? All associated assignments will also be deleted.')) {
+      if (onDelete) {
           setIsDeleting(true);
           try {
               await onDelete();
@@ -89,20 +100,38 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter>
-            {isEdit && onDelete && (
-                <Button variant="destructive" onClick={handleDelete} disabled={isSaving || isDeleting} className="mr-auto">
-                   {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                   {isDeleting ? 'Deleting...' : 'Delete'}
-                </Button>
-            )}
+        <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <DialogClose asChild>
                 <Button variant="outline" disabled={isSaving || isDeleting}>Cancel</Button>
             </DialogClose>
-            <Button onClick={handleSave} disabled={isSaving || isDeleting}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSaving ? 'Saving...' : 'Save'}
-            </Button>
+            <div className="flex justify-end gap-2">
+              {isEdit && onDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={isSaving || isDeleting}>
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the subject and all of its associated assignments.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+              )}
+              <Button onClick={handleSave} disabled={isSaving || isDeleting}>
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
