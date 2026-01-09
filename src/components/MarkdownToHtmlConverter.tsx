@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -130,19 +131,17 @@ export function MarkdownToHtmlConverter() {
     };
     
     const editorPanel = (
-        <div className="flex-1 flex flex-col border rounded-lg overflow-hidden h-full">
+        <div className="flex-1 flex flex-col border rounded-lg overflow-hidden">
              <div className="p-1.5 border-b flex justify-between items-center text-sm font-medium text-muted-foreground flex-shrink-0 flex-wrap">
                 <span className="px-2">MARKDOWN</span>
             </div>
-            <div className="flex-grow relative">
-                <ScrollArea className="absolute inset-0">
-                    <Textarea 
-                        value={markdown} 
-                        onChange={(e) => setMarkdown(e.target.value)}
-                        className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4 bg-transparent"
-                    />
-                </ScrollArea>
-            </div>
+            <ScrollArea className="flex-1">
+                <Textarea 
+                    value={markdown} 
+                    onChange={(e) => setMarkdown(e.target.value)}
+                    className="h-full w-full resize-none border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm leading-6 p-4 bg-transparent"
+                />
+            </ScrollArea>
         </div>
     );
     
