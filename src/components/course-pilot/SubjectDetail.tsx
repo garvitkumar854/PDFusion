@@ -93,28 +93,28 @@ const SortableAssignmentItem = ({
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
                 {user && (
                     <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={onEdit} className="w-8 h-8">
-                            <Edit className="w-4 h-4"/>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                                <Trash2 className="w-4 h-4"/>
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the assignment. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                       <Button variant="ghost" size="icon" onClick={onEdit} className="w-8 h-8">
+                          <Edit className="w-4 h-4"/>
+                       </Button>
+                       <AlertDialog>
+                         <AlertDialogTrigger asChild>
+                           <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                               <Trash2 className="w-4 h-4"/>
+                           </Button>
+                         </AlertDialogTrigger>
+                         <AlertDialogContent>
+                           <AlertDialogHeader>
+                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                             <AlertDialogDescription>
+                               This will permanently delete the assignment. This action cannot be undone.
+                             </AlertDialogDescription>
+                           </AlertDialogHeader>
+                           <AlertDialogFooter>
+                             <AlertDialogCancel>Cancel</AlertDialogCancel>
+                             <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                           </AlertDialogFooter>
+                         </AlertDialogContent>
+                       </AlertDialog>
                     </div>
                 )}
             </div>
