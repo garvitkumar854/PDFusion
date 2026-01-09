@@ -106,7 +106,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         ></Script>
       </head>
-      <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
+      <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning={true}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -121,5 +121,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
