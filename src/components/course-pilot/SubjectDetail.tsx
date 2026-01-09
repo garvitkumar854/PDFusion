@@ -86,19 +86,19 @@ const SortableAssignmentItem = ({
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
             <div className="flex-1 space-y-0.5 min-w-0 pr-4">
-                <CardTitle className="text-base font-bold">{assignment.title}</CardTitle>
-                {assignment.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
+                <CardTitle className="text-base font-bold text-sm md:text-base">{assignment.title}</CardTitle>
+                {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
             <div className="flex flex-col items-end text-right shrink-0">
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
                 {user && (
-                    <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={onEdit} className="w-7 h-7">
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" onClick={onEdit} className="w-8 h-8">
                             <Edit className="w-4 h-4"/>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-7 h-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                                 <Trash2 className="w-4 h-4"/>
                             </Button>
                           </AlertDialogTrigger>

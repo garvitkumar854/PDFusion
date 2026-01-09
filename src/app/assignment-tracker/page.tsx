@@ -400,10 +400,12 @@ export default function AssignmentTrackerPage() {
       </div>
       
       <div className="mb-6 flex justify-end gap-2">
-        <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })}>
-            <Plus size={16} className="mr-2" />
-            Add Subject
-        </Button>
+        {user && (
+          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })}>
+              <Plus size={16} className="mr-2" />
+              Add Subject
+          </Button>
+        )}
          {!authLoading && (
             user ? (
                 <Button variant="outline" onClick={() => auth.signOut()}>
