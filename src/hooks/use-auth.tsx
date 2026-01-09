@@ -58,6 +58,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
   };
 
+  if (loading) {
+    return null;
+  }
+
   return (
     <AuthContext.Provider value={value}>
       {children}
