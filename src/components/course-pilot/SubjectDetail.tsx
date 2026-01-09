@@ -1,3 +1,4 @@
+
 'use client';
 import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
 import {
@@ -20,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Assignment {
   id: string;
@@ -41,8 +43,10 @@ const SortableAssignmentItem = ({
   onEdit,
   onDelete,
 }: SortableAssignmentItemProps) => {
+  const { user } = useAuth();
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: assignment.id,
+    disabled: !canReorder,
   });
 
   const style = {
@@ -58,14 +62,16 @@ const SortableAssignmentItem = ({
                 <CardTitle>{assignment.title}</CardTitle>
                 <CardDescription>{new Date(assignment.date).toLocaleDateString()}</CardDescription>
             </div>
-            <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={onEdit}>
-                    <Edit className="w-4 h-4"/>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive hover:text-destructive">
-                    <Trash2 className="w-4 h-4"/>
-                </Button>
-            </div>
+            {user && (
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={onEdit}>
+                        <Edit className="w-4 h-4"/>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive hover:text-destructive">
+                        <Trash2 className="w-4 h-4"/>
+                    </Button>
+                </div>
+            )}
         </CardHeader>
         <CardContent>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>
@@ -96,6 +102,7 @@ export const SubjectDetail = ({
   canReorder,
   onReorderAssignments,
 }: SubjectDetailProps) => {
+  const { user } = useAuth();
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {

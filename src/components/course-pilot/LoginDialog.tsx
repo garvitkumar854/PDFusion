@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 
 export const LoginDialog = ({
@@ -27,32 +27,40 @@ export const LoginDialog = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
-      setError(signInError.message);
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: 'Please check your email and password.',
+        })
       setLoading(false);
     } else {
       setEmail('');
       setPassword('');
       onClose();
       setLoading(false);
+      toast({
+          variant: 'success',
+          title: 'Login Successful',
+          description: "You're now logged in.",
+      })
     }
   };
   
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Admin Login</DialogTitle>
           <DialogDescription>
@@ -61,13 +69,6 @@ export const LoginDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
-            {error && (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Login Failed</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
             <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

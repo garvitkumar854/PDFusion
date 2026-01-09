@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -264,6 +265,14 @@ export default function AssignmentTrackerPage() {
       toast({ title: 'Failed to reorder assignments', variant: 'destructive' });
     }
   };
+  
+  const handleProtectedAction = (callback: () => void) => {
+    if (user) {
+      callback();
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
 
   if (selectedSubject) {
     return (
@@ -272,14 +281,14 @@ export default function AssignmentTrackerPage() {
           subjectName={selectedSubject.name}
           assignments={getSubjectAssignments(selectedSubject.id)}
           onBack={() => setSelectedSubject(null)}
-          onAddAssignment={() => {
+          onAddAssignment={() => handleProtectedAction(() => {
             setEditingAssignment(null);
             setIsAssignmentDialogOpen(true);
-          }}
-          onEditAssignment={(assignment) => {
+          })}
+          onEditAssignment={(assignment) => handleProtectedAction(() => {
             setEditingAssignment(assignment);
             setIsAssignmentDialogOpen(true);
-          }}
+          })}
           canReorder={!!user}
           onReorderAssignments={async (orderedIds) => {
             await handleReorderAssignments(selectedSubject.id, orderedIds);
@@ -371,9 +380,13 @@ export default function AssignmentTrackerPage() {
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
             Assignment Tracker
+             <br />
+              <span className="relative inline-block">
+                <span className="relative bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">Stay Organized</span>
+              </span>
           </h1>
           <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-            Browse and manage all your course assignments.
+            A simple and effective way to manage your coursework and deadlines.
           </p>
         </AnimateOnScroll>
       </section>
@@ -391,12 +404,10 @@ export default function AssignmentTrackerPage() {
       </div>
       
       <div className="mb-6 flex justify-end gap-2">
-         {!authLoading && user && (
-            <Button onClick={() => { setEditingSubject(null); setIsSubjectDialogOpen(true); }}>
-                <Plus size={16} className="mr-2" />
-                Add Subject
-            </Button>
-         )}
+        <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })}>
+            <Plus size={16} className="mr-2" />
+            Add Subject
+        </Button>
          {!authLoading && (
             user ? (
                 <Button variant="outline" onClick={() => auth.signOut()}>
@@ -419,11 +430,9 @@ export default function AssignmentTrackerPage() {
       ) : subjects.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-500 text-lg">No subjects yet</p>
-          {user && (
-            <p className="text-gray-400 mt-2">
-              Click "Add Subject" to get started
-            </p>
-          )}
+          <p className="text-gray-400 mt-2">
+            Click "Add Subject" to get started
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -434,10 +443,10 @@ export default function AssignmentTrackerPage() {
               name={subject.name}
               assignmentCount={getAssignmentCount(subject.id)}
               onView={() => setSelectedSubject(subject)}
-              onEdit={() => {
+              onEdit={() => handleProtectedAction(() => {
                 setEditingSubject(subject);
                 setIsSubjectDialogOpen(true);
-              }}
+              })}
             />
           ))}
         </div>
@@ -483,5 +492,3 @@ export default function AssignmentTrackerPage() {
     </>
   );
 }
-
-    
