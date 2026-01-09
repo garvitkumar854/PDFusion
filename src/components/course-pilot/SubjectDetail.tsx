@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardDescription, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
@@ -85,7 +85,7 @@ const SortableAssignmentItem = ({
           !isFirst && "border-t-0"
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
-            <div className="flex-1 space-y-0.5 min-w-0 pr-4">
+            <div className="flex-1 space-y-1 min-w-0 pr-4">
                 <CardTitle className="text-base font-bold text-sm md:text-base">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
