@@ -1,7 +1,7 @@
 
 'use client';
 import { useState } from 'react';
-import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Trash2, GripVertical } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -62,7 +62,7 @@ const SortableAssignmentItem = ({
   isLast
 }: SortableAssignmentItemProps) => {
   const { user } = useAuth();
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, setActivatorNodeRef } = useSortable({
     id: assignment.id,
     disabled: !canReorder,
   });
@@ -75,7 +75,7 @@ const SortableAssignmentItem = ({
   const formattedDate = format(new Date(assignment.date), "MMM dd, yyyy");
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...(canReorder ? listeners : {})}>
+    <div ref={setNodeRef} style={style} {...attributes}>
       <Card className={cn(
           "transition-shadow duration-300",
           isFirst && isLast ? "rounded-xl" : "",
@@ -84,7 +84,12 @@ const SortableAssignmentItem = ({
           !isFirst && !isLast ? "rounded-none" : "",
           !isFirst && "border-t-0"
       )}>
-        <div className="flex justify-between items-start p-3 sm:p-4">
+        <div className="flex items-center p-3 sm:p-4">
+            {canReorder && (
+                 <div ref={setActivatorNodeRef} {...listeners} className="p-2 cursor-grab touch-none mr-2">
+                    <GripVertical className="w-5 h-5 text-muted-foreground/70" />
+                 </div>
+            )}
             <div className="flex-1 space-y-1 min-w-0 pr-4">
                 <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
@@ -93,12 +98,12 @@ const SortableAssignmentItem = ({
                 <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
                 {user && (
                     <div className="flex items-center">
-                       <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="w-8 h-8">
+                       <Button variant="ghost" size="icon" onClick={onEdit} className="w-8 h-8">
                           <Edit className="w-4 h-4"/>
                        </Button>
                        <AlertDialog>
                          <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()} className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                           <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                                <Trash2 className="w-4 h-4"/>
                            </Button>
                          </AlertDialogTrigger>
@@ -111,7 +116,7 @@ const SortableAssignmentItem = ({
                            </AlertDialogHeader>
                            <AlertDialogFooter>
                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                             <AlertDialogAction onClick={() => onDelete()}>Delete</AlertDialogAction>
+                             <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
                            </AlertDialogFooter>
                          </AlertDialogContent>
                        </AlertDialog>
