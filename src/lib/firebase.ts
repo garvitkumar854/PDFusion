@@ -13,9 +13,12 @@ const firebaseConfig = {
 };
 
 let app;
+// Check if any Firebase apps have already been initialized
 if (!getApps().length) {
+  // If not, initialize a new app
   app = initializeApp(firebaseConfig);
 } else {
+  // Otherwise, use the existing app
   app = getApps()[0];
 }
 
