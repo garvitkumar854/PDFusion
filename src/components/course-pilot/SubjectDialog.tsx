@@ -59,6 +59,17 @@ export const SubjectDialog = ({
     }
   };
 
+  const handleDelete = async () => {
+      if (onDelete && confirm('Are you sure you want to delete this subject? All associated assignments will also be deleted.')) {
+          try {
+              await onDelete();
+              onClose();
+          } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to delete subject');
+          }
+      }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -72,10 +83,10 @@ export const SubjectDialog = ({
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <DialogFooter className="flex justify-between">
+        <DialogFooter className="flex justify-between w-full">
             <div>
             {isEdit && onDelete && (
-                <Button variant="destructive" onClick={onDelete}>Delete</Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={isSaving}>Delete</Button>
             )}
             </div>
             <div className="flex gap-2">
