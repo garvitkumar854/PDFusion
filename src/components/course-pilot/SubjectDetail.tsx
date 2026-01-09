@@ -73,7 +73,7 @@ const SortableAssignmentItem = ({
           !isFirst && "border-t-0"
       )}>
         <div className="flex justify-between items-start p-3 sm:p-4">
-            <div className="flex-1 space-y-0.5">
+            <div className="flex-1 space-y-0.5 min-w-0">
                 <CardTitle className="text-base font-bold">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{assignment.description}</p>}
             </div>
