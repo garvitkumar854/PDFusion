@@ -197,7 +197,7 @@ export function MarkdownToHtmlConverter() {
       }
       
       return (
-        <div className="grid md:grid-cols-2 gap-4 flex-1 h-full">
+        <div className="grid md:grid-cols-2 gap-4 flex-1 min-h-0">
             {editorPanel}
              <div className="flex flex-col border rounded-lg h-full">
                 <Tabs defaultValue="preview" className="flex flex-col h-full">

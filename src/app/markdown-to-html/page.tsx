@@ -53,7 +53,7 @@ const howToSteps = [
 export default function MarkdownToHtmlPage() {
   return (
     <>
-      <div className="flex flex-col flex-1 py-8 sm:py-12">
+      <div className="flex flex-col flex-1 py-8 sm:py-12 h-full">
         <section className="text-center mb-12">
           <AnimateOnScroll
               animation="animate-in fade-in-0 slide-in-from-bottom-12"
@@ -72,7 +72,7 @@ export default function MarkdownToHtmlPage() {
           </AnimateOnScroll>
         </section>
         
-        <main className="flex-1 w-full flex flex-col">
+        <main className="flex-1 w-full flex flex-col min-h-0">
           <MarkdownToHtmlLoader />
         </main>
         
