@@ -86,6 +86,7 @@ export default function Header() {
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
       { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
+       { href: "/assignment-tracker", label: "CoursePilot", icon: <BookCheck /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
       { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
       { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
@@ -93,7 +94,6 @@ export default function Header() {
   ];
 
   const moreTools = [
-      { href: "/assignment-tracker", label: "CoursePilot", icon: <BookCheck /> },
       { href: "/calculator", label: "Calculator", icon: <Calculator /> },
       { href: "/currency-converter", label: "Currency Converter", icon: <Currency /> },
       { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },

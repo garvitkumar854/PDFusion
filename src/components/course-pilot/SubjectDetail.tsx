@@ -1,24 +1,7 @@
 
 'use client';
 import { useState } from 'react';
-import { ArrowLeft, Edit, Plus, Trash2, GripVertical } from 'lucide-react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardDescription, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
@@ -44,38 +27,25 @@ interface Assignment {
   date: string;
 }
 
-interface SortableAssignmentItemProps {
+interface AssignmentItemProps {
   assignment: Assignment;
-  canReorder: boolean;
   onEdit: () => void;
   onDelete: () => void;
   isFirst: boolean;
   isLast: boolean;
 }
 
-const SortableAssignmentItem = ({
+const AssignmentItem = ({
   assignment,
-  canReorder,
   onEdit,
   onDelete,
   isFirst,
   isLast
-}: SortableAssignmentItemProps) => {
+}: AssignmentItemProps) => {
   const { user } = useAuth();
-  const { attributes, listeners, setNodeRef, transform, transition, setActivatorNodeRef } = useSortable({
-    id: assignment.id,
-    disabled: !canReorder,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const formattedDate = format(new Date(assignment.date), "MMM dd, yyyy");
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
       <Card className={cn(
           "transition-shadow duration-300",
           isFirst && isLast ? "rounded-xl" : "",
@@ -85,11 +55,6 @@ const SortableAssignmentItem = ({
           !isFirst && "border-t-0"
       )}>
         <div className="flex items-center p-3 sm:p-4">
-            {canReorder && (
-                 <div ref={setActivatorNodeRef} {...listeners} className="p-2 cursor-grab touch-none mr-2">
-                    <GripVertical className="w-5 h-5 text-muted-foreground/70" />
-                 </div>
-            )}
             <div className="flex-1 space-y-1 min-w-0 pr-4">
                 <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
@@ -125,7 +90,6 @@ const SortableAssignmentItem = ({
             </div>
         </div>
       </Card>
-    </div>
   );
 };
 
@@ -136,8 +100,8 @@ interface SubjectDetailProps {
   onAddAssignment: () => void;
   onEditAssignment: (assignment: Assignment) => void;
   onDeleteAssignment: (id: string) => void;
-  canReorder: boolean;
-  onReorderAssignments: (orderedIds: string[]) => void;
+  canReorder: boolean; // Kept for prop compatibility, but not used.
+  onReorderAssignments: (orderedIds: string[]) => void; // Kept for prop compatibility
 }
 
 export const SubjectDetail = ({
@@ -147,27 +111,9 @@ export const SubjectDetail = ({
   onAddAssignment,
   onEditAssignment,
   onDeleteAssignment,
-  canReorder,
-  onReorderAssignments,
 }: SubjectDetailProps) => {
   const { user } = useAuth();
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = assignments.findIndex((a) => a.id === active.id);
-      const newIndex = assignments.findIndex((a) => a.id === over.id);
-      const newOrder = arrayMove(assignments, oldIndex, newIndex);
-      onReorderAssignments(newOrder.map((a) => a.id));
-    }
-  };
-
+  
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
@@ -190,23 +136,18 @@ export const SubjectDetail = ({
             </div>
 
             {assignments.length > 0 ? (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={assignments.map((a) => a.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-0">
-                    {assignments.map((assignment, index) => (
-                        <SortableAssignmentItem
-                        key={assignment.id}
-                        assignment={assignment}
-                        canReorder={canReorder}
-                        onEdit={() => onEditAssignment(assignment)}
-                        onDelete={() => onDeleteAssignment(assignment.id)}
-                        isFirst={index === 0}
-                        isLast={index === assignments.length - 1}
-                        />
-                    ))}
-                    </div>
-                </SortableContext>
-                </DndContext>
+                <div className="space-y-0">
+                {assignments.map((assignment, index) => (
+                    <AssignmentItem
+                    key={assignment.id}
+                    assignment={assignment}
+                    onEdit={() => onEditAssignment(assignment)}
+                    onDelete={() => onDeleteAssignment(assignment.id)}
+                    isFirst={index === 0}
+                    isLast={index === assignments.length - 1}
+                    />
+                ))}
+                </div>
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No assignments yet</h3>

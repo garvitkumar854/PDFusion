@@ -114,13 +114,7 @@ export default function AssignmentTrackerPage() {
     return assignments
       .filter((a) => a.subject_id === subjectId)
       .slice()
-      .sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        const aOrder = a.order ?? Number.POSITIVE_INFINITY;
-        const bOrder = b.order ?? Number.POSITIVE_INFINITY;
-        if (aOrder !== bOrder) return aOrder - bOrder;
-        return a.created_at.localeCompare(b.created_at);
-      });
+      .sort((a, b) => a.date.localeCompare(b.date));
   };
 
   const handleAddSubject = async (name: string) => {
@@ -196,12 +190,9 @@ export default function AssignmentTrackerPage() {
     if (!selectedSubject || !db) return;
 
     const now = new Date().toISOString();
-    const subjectAssignments = getSubjectAssignments(selectedSubject.id);
-    const maxOrder = Math.max(-1, ...subjectAssignments.map((a) => a.order ?? -1));
     const newAssignmentBase = {
         subject_id: selectedSubject.id,
         ...data,
-        order: maxOrder + 1,
         created_at: now,
         updated_at: now,
     };
@@ -249,35 +240,6 @@ export default function AssignmentTrackerPage() {
       toast({ title: 'Failed to delete assignment', variant: 'destructive' });
     }
   };
-
-  const handleReorderAssignments = async (subjectId: string, orderedAssignmentIds: string[]) => {
-    if (!db) return;
-    const idToOrder = new Map<string, number>();
-    orderedAssignmentIds.forEach((id, index) => idToOrder.set(id, index));
-
-    const previous = assignments;
-    setAssignments((prev) =>
-      prev.map((a) => {
-        if (a.subject_id !== subjectId) return a;
-        const nextOrder = idToOrder.get(a.id);
-        if (nextOrder === undefined) return a;
-        return { ...a, order: nextOrder };
-      }),
-    );
-
-    const now = new Date().toISOString();
-    try {
-      const batch = writeBatch(db);
-      orderedAssignmentIds.forEach((id, index) => {
-        batch.update(doc(db, 'assignments', id), { order: index, updated_at: now });
-      });
-      await batch.commit();
-      toast({ title: 'Assignments reordered', variant: 'success' });
-    } catch {
-      setAssignments(previous);
-      toast({ title: 'Failed to reorder assignments', variant: 'destructive' });
-    }
-  };
   
   const handleProtectedAction = (callback: () => void) => {
     if (user) {
@@ -302,11 +264,9 @@ export default function AssignmentTrackerPage() {
             setEditingAssignment(assignment);
             setIsAssignmentDialogOpen(true);
           })}
-          canReorder={!!user}
-          onReorderAssignments={async (orderedIds) => {
-            await handleReorderAssignments(selectedSubject.id, orderedIds);
-          }}
           onDeleteAssignment={handleDeleteAssignment}
+          canReorder={false} // Feature removed
+          onReorderAssignments={() => {}} // No-op
         />
         <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
         <SubjectDialog
@@ -512,5 +472,3 @@ export default function AssignmentTrackerPage() {
     </>
   );
 }
-
-    
