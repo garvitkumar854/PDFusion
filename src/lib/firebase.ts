@@ -6,25 +6,22 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
+// Statically defined Firebase configuration as provided
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: "AIzaSyDOr3isTqTHoUxdX189ZULuDKVNjOxRJOE",
+    authDomain: "pdfusion-qqsk7.firebaseapp.com",
+    projectId: "pdfusion-qqsk7",
+    storageBucket: "pdfusion-qqsk7.firebasestorage.app",
+    messagingSenderId: "44006442739",
+    appId: "1:44006442739:web:7986d77344253443af9986",
+    measurementId: "G-MWFFW61FJP"
 };
 
 function getFirebaseInstances() {
-  if (app && auth && db) {
-    return { app, auth, db };
-  }
-
+  // Ensure this only runs on the client
   if (typeof window !== 'undefined') {
-    if (!firebaseConfig.apiKey) {
-      console.error("Firebase API Key is missing. Please check your environment variables.");
-    } else {
-      if (!getApps().length) {
+    if (!app) { // Initialize only if not already initialized
+      if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
       } else {
         app = getApp();
@@ -33,8 +30,6 @@ function getFirebaseInstances() {
       db = getFirestore(app);
     }
   }
-  
-  // This might return nulls during SSR, which is expected
   return { app, auth, db };
 }
 

@@ -23,26 +23,31 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [auth, setAuth] = useState<Auth | null>(null);
+  const [authInstance, setAuthInstance] = useState<Auth | null>(null);
 
   useEffect(() => {
-    const { auth: authInstance } = getFirebaseInstances();
+    const { auth } = getFirebaseInstances();
+    setAuthInstance(auth);
+  }, []);
+
+
+  useEffect(() => {
     if (authInstance) {
-      setAuth(authInstance);
       const unsubscribe = onAuthStateChanged(authInstance, (firebaseUser) => {
         setUser(firebaseUser as User);
         setLoading(false);
       });
       return () => unsubscribe();
     } else {
+      // If auth is not available, we are not in a loading state from Firebase.
       setLoading(false);
     }
-  }, []);
+  }, [authInstance]);
 
   const signIn = async (email: string, password: string) => {
-    if (!auth) return { user: null, error: new Error("Firebase is not configured.") };
+    if (!authInstance) return { user: null, error: new Error("Firebase is not configured.") };
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
       return { user: userCredential.user as User, error: null };
     } catch (error) {
       return { user: null, error };
@@ -50,9 +55,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    if (!auth) return { error: new Error("Firebase is not configured.") };
+    if (!authInstance) return { error: new Error("Firebase is not configured.") };
     try {
-      await firebaseSignOut(auth);
+      await firebaseSignOut(authInstance);
       return { error: null };
     } catch (error) {
       return { error };

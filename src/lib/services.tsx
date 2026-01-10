@@ -73,7 +73,7 @@ export const services: Service[] = [
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
     },
-     {
+    {
       icon: <BookCheck className="text-sky-500" />,
       bgColor: 'bg-sky-100 dark:bg-sky-900/20',
       title: 'CoursePilot',
