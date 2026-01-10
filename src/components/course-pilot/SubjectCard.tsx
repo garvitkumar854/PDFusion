@@ -6,6 +6,7 @@ import { Pencil } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import AnimatedArrow from '../AnimatedArrow';
+import { cn } from '@/lib/utils';
 
 interface SubjectCardProps {
   id: string;
@@ -35,11 +36,14 @@ export const SubjectCard = ({
         </p>
         <div className="flex items-center gap-1">
             <Button 
-                variant="ghost" 
+                variant="secondary"
                 onClick={onView}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="font-semibold"
+                className={cn("font-semibold", 
+                  "bg-primary/10 text-primary hover:bg-primary/20",
+                  "dark:bg-primary/20 dark:text-primary-foreground dark:hover:bg-primary/30"
+                )}
             >
                 View
                 <AnimatedArrow isHovered={isHovered} />
@@ -54,3 +58,5 @@ export const SubjectCard = ({
     </Card>
   );
 };
+
+    

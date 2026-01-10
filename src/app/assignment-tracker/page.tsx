@@ -127,40 +127,47 @@ export default function AssignmentTrackerPage() {
     if (!db) return;
     const now = new Date().toISOString();
     try {
-      await addDoc(collection(db, 'subjects'), {
+      const docRef = await addDoc(collection(db, 'subjects'), {
         name,
         created_at: now,
         updated_at: now,
       });
+       setSubjects(prev => [{ id: docRef.id, name, created_at: now, updated_at: now }, ...prev]);
     } catch (err) {
+      await fetchSubjects(); // Fallback on error
       throw err instanceof Error ? err : new Error('Failed to add subject');
     }
-
-    await fetchSubjects();
   };
 
   const handleUpdateSubject = async (name: string) => {
     if (!editingSubject || !db) return;
+    
+    setSubjects(prev => prev.map(s => s.id === editingSubject.id ? { ...s, name } : s));
+    if (selectedSubject?.id === editingSubject.id) {
+        setSelectedSubject(prev => prev ? { ...prev, name } : null);
+    }
 
-    const now = new Date().toISOString();
     try {
       await updateDoc(doc(db, 'subjects', editingSubject.id), {
         name,
-        updated_at: now,
+        updated_at: new Date().toISOString(),
       });
     } catch (err) {
+      await fetchSubjects(); // Fallback on error
       throw err instanceof Error ? err : new Error('Failed to update subject');
+    } finally {
+        setEditingSubject(null);
     }
-
-    await fetchSubjects();
-    if (selectedSubject?.id === editingSubject.id) {
-      setSelectedSubject((prev) => prev ? { ...prev, name } : null);
-    }
-    setEditingSubject(null);
   };
 
   const handleDeleteSubject = async () => {
     if (!editingSubject || !db) return;
+
+    setSubjects(prev => prev.filter(s => s.id !== editingSubject.id));
+    setAssignments(prev => prev.filter(a => a.subject_id !== editingSubject.id));
+     if (selectedSubject?.id === editingSubject.id) {
+        setSelectedSubject(null);
+    }
 
     try {
       const batch = writeBatch(db);
@@ -173,15 +180,12 @@ export default function AssignmentTrackerPage() {
       batch.delete(doc(db, 'subjects', editingSubject.id));
       await batch.commit();
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Failed to delete subject');
+        await fetchSubjects(); // Fallback
+        await fetchAssignments();
+        throw err instanceof Error ? err : new Error('Failed to delete subject');
+    } finally {
+        setEditingSubject(null);
     }
-
-    await fetchSubjects();
-    await fetchAssignments();
-    if (selectedSubject?.id === editingSubject.id) {
-      setSelectedSubject(null);
-    }
-    setEditingSubject(null);
   };
 
   const handleAddAssignment = async (data: {
@@ -191,22 +195,24 @@ export default function AssignmentTrackerPage() {
   }) => {
     if (!selectedSubject || !db) return;
 
+    const now = new Date().toISOString();
     const subjectAssignments = getSubjectAssignments(selectedSubject.id);
     const maxOrder = Math.max(-1, ...subjectAssignments.map((a) => a.order ?? -1));
-    const now = new Date().toISOString();
-    try {
-      await addDoc(collection(db, 'assignments'), {
+    const newAssignmentBase = {
         subject_id: selectedSubject.id,
         ...data,
         order: maxOrder + 1,
         created_at: now,
         updated_at: now,
-      });
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, 'assignments'), newAssignmentBase);
+      setAssignments(prev => [...prev, { ...newAssignmentBase, id: docRef.id }]);
     } catch (err) {
+      await fetchAssignments(); // Fallback
       throw err instanceof Error ? err : new Error('Failed to add assignment');
     }
-
-    await fetchAssignments();
   };
 
   const handleUpdateAssignment = async (data: {
@@ -215,28 +221,30 @@ export default function AssignmentTrackerPage() {
     date: string;
   }) => {
     if (!editingAssignment || !db) return;
+    
+    setAssignments(prev => prev.map(a => a.id === editingAssignment.id ? { ...a, ...data } : a));
 
-    const now = new Date().toISOString();
     try {
       await updateDoc(doc(db, 'assignments', editingAssignment.id), {
         ...data,
-        updated_at: now,
+        updated_at: new Date().toISOString(),
       });
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Failed to update assignment');
+       await fetchAssignments(); // Fallback
+       throw err instanceof Error ? err : new Error('Failed to update assignment');
+    } finally {
+      setEditingAssignment(null);
     }
-
-    await fetchAssignments();
-    setEditingAssignment(null);
   };
 
   const handleDeleteAssignment = async (id: string) => {
     if (!db) return;
+     setAssignments(prev => prev.filter(a => a.id !== id));
+     toast({ title: 'Assignment deleted', variant: 'success' });
     try {
       await deleteDoc(doc(db, 'assignments', id));
-      await fetchAssignments();
-      toast({ title: 'Assignment deleted', variant: 'success' });
     } catch (err) {
+      await fetchAssignments();
       console.error('Error deleting assignment:', err);
       toast({ title: 'Failed to delete assignment', variant: 'destructive' });
     }
@@ -422,7 +430,7 @@ export default function AssignmentTrackerPage() {
             ) : (
                 <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
                     <LogIn size={16} className="mr-2" />
-                    Admin Login
+                    Login
                 </Button>
             )
          )}
@@ -504,3 +512,5 @@ export default function AssignmentTrackerPage() {
     </>
   );
 }
+
+    
