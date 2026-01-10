@@ -86,11 +86,11 @@ export default function Header() {
       { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
       { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
-       { href: "/assignment-tracker", label: "CoursePilot", icon: <BookCheck /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
       { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
       { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
       { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
+      { href: "/assignment-tracker", label: "CoursePilot", icon: <BookCheck /> },
   ];
 
   const moreTools = [

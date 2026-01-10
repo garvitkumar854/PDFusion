@@ -32,13 +32,6 @@ export const services: Service[] = [
       description: 'Visually reorder, rotate, and delete pages in your PDF document.',
       href: '/organize-pdf'
     },
-     {
-      icon: <BookCheck className="text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
-      title: 'CoursePilot',
-      description: 'An intelligent assignment tracker to manage your coursework.',
-      href: '/assignment-tracker'
-    },
     {
       icon: <Image className="text-indigo-500" />,
       bgColor: 'bg-indigo-100 dark:bg-indigo-900/20',
@@ -80,6 +73,13 @@ export const services: Service[] = [
       title: 'Add Page Numbers',
       description: 'Easily insert page numbers into your PDF with custom positions.',
       href: '/add-page-numbers'
+    },
+    {
+      icon: <BookCheck className="text-sky-500" />,
+      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
+      title: 'CoursePilot',
+      description: 'An intelligent assignment tracker to manage your coursework.',
+      href: '/assignment-tracker'
     },
      {
       icon: <LayoutGrid className="text-gray-500" />,
