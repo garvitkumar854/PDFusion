@@ -179,7 +179,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                     </p>
                 </AnimateOnScroll>
                 <motion.div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 md:grid max-md:flex max-md:flex-col max-md:gap-0.5"
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.2 }}
@@ -196,6 +196,11 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                            <Card 
                              className={cn(
                                 "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-2xl",
+                                isMobile && {
+                                  'rounded-none': index > 0 && index < servicesData.length - 1,
+                                  'rounded-t-2xl rounded-b-none': index === 0,
+                                  'rounded-b-2xl rounded-t-none': index === servicesData.length - 1,
+                                }
                              )}
                            >
                               <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">
@@ -287,7 +292,3 @@ export default function HomePageClientContent({ showServices }: { showServices?:
         </>
     );
 }
-
-    
-
-    
