@@ -25,15 +25,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser as User);
+    // Ensure auth object exists before subscribing
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        setUser(firebaseUser as User);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // If auth is not initialized (e.g. missing API keys), stop loading
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!auth) return { user: null, error: new Error("Firebase is not configured.") };
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return { user: userCredential.user as User, error: null };
@@ -43,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (!auth) return { error: new Error("Firebase is not configured.") };
     try {
       await firebaseSignOut(auth);
       return { error: null };
@@ -57,10 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signOut,
   };
-
-  if (loading) {
-    return null;
-  }
 
   return (
     <AuthContext.Provider value={value}>
