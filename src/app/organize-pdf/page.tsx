@@ -75,7 +75,7 @@ export default function OrganizePdfPage() {
                   Organize PDF Pages
                   <br />
                   <span className="relative inline-block">
-                    <span className="relative bg-gradient-to-r from-teal-400 to-lime-500 bg-clip-text text-transparent">Visually</span>
+                    <span className="relative bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">Visually</span>
                   </span>
                 </h1>
                 <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">

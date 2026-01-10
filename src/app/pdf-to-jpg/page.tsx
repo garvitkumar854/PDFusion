@@ -52,7 +52,7 @@ export default function PdfToJpgPage() {
               Convert PDF to JPG
               <br />
               <span className="relative inline-block">
-                <span className="relative bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">Effortlessly</span>
+                <span className="relative bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">Effortlessly</span>
               </span>
             </h1>
             <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
