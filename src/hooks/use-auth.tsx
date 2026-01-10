@@ -1,8 +1,8 @@
 
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, signOut as firebaseSignOut, type Auth } from 'firebase/auth';
+import { getFirebaseInstances } from '@/lib/firebase';
 
 interface User extends FirebaseUser {}
 
@@ -23,17 +23,18 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [auth, setAuth] = useState<Auth | null>(null);
 
   useEffect(() => {
-    // Ensure auth object exists before subscribing
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const { auth: authInstance } = getFirebaseInstances();
+    if (authInstance) {
+      setAuth(authInstance);
+      const unsubscribe = onAuthStateChanged(authInstance, (firebaseUser) => {
         setUser(firebaseUser as User);
         setLoading(false);
       });
       return () => unsubscribe();
     } else {
-      // If auth is not initialized (e.g. missing API keys), stop loading
       setLoading(false);
     }
   }, []);

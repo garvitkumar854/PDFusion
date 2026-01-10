@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -86,6 +87,7 @@ export default function Header() {
       { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
       { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
       { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
+      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
       { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
       { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
   ];

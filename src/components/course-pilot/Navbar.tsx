@@ -4,6 +4,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '../ui/button';
 import { LogIn, LogOut, Plus } from 'lucide-react';
+import { getFirebaseInstances } from '@/lib/firebase';
 
 export const Navbar = ({
   onLoginClick,
@@ -13,6 +14,7 @@ export const Navbar = ({
   onAddSubjectClick: () => void;
 }) => {
   const { user, loading } = useAuth();
+  const { auth } = getFirebaseInstances();
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b">
@@ -28,7 +30,7 @@ export const Navbar = ({
                 Add Subject
               </Button>
             )}
-            {!loading &&
+            {!loading && auth &&
               (user ? (
                 <Button size="sm" variant="ghost" onClick={() => auth.signOut()}>
                   <LogOut size={16} className="mr-2" />
@@ -46,6 +48,3 @@ export const Navbar = ({
     </nav>
   );
 };
-
-// Dummy auth for Navbar to work
-import { auth } from '@/lib/firebase';
