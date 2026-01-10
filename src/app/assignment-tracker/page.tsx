@@ -59,11 +59,14 @@ export default function AssignmentTrackerPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchSubjects();
-    fetchAssignments();
+    if (db) {
+      fetchSubjects();
+      fetchAssignments();
+    }
   }, []);
 
   const fetchSubjects = async () => {
+    if (!db) return;
     setLoading(true);
     try {
       const subjectsQuery = query(
@@ -85,6 +88,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const fetchAssignments = async () => {
+    if (!db) return;
     try {
       const assignmentsQuery = query(
         collection(db, 'assignments'),
@@ -120,6 +124,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleAddSubject = async (name: string) => {
+    if (!db) return;
     const now = new Date().toISOString();
     try {
       await addDoc(collection(db, 'subjects'), {
@@ -135,7 +140,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleUpdateSubject = async (name: string) => {
-    if (!editingSubject) return;
+    if (!editingSubject || !db) return;
 
     const now = new Date().toISOString();
     try {
@@ -155,7 +160,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleDeleteSubject = async () => {
-    if (!editingSubject) return;
+    if (!editingSubject || !db) return;
 
     try {
       const batch = writeBatch(db);
@@ -184,7 +189,7 @@ export default function AssignmentTrackerPage() {
     description: string;
     date: string;
   }) => {
-    if (!selectedSubject) return;
+    if (!selectedSubject || !db) return;
 
     const subjectAssignments = getSubjectAssignments(selectedSubject.id);
     const maxOrder = Math.max(-1, ...subjectAssignments.map((a) => a.order ?? -1));
@@ -209,7 +214,7 @@ export default function AssignmentTrackerPage() {
     description: string;
     date: string;
   }) => {
-    if (!editingAssignment) return;
+    if (!editingAssignment || !db) return;
 
     const now = new Date().toISOString();
     try {
@@ -226,6 +231,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleDeleteAssignment = async (id: string) => {
+    if (!db) return;
     try {
       await deleteDoc(doc(db, 'assignments', id));
       await fetchAssignments();
@@ -237,6 +243,7 @@ export default function AssignmentTrackerPage() {
   };
 
   const handleReorderAssignments = async (subjectId: string, orderedAssignmentIds: string[]) => {
+    if (!db) return;
     const idToOrder = new Map<string, number>();
     orderedAssignmentIds.forEach((id, index) => idToOrder.set(id, index));
 
@@ -406,7 +413,7 @@ export default function AssignmentTrackerPage() {
               Add Subject
           </Button>
         )}
-         {!authLoading && (
+         {!authLoading && auth && (
             user ? (
                 <Button variant="outline" onClick={() => auth.signOut()}>
                     <LogOut size={16} className="mr-2" />

@@ -1,12 +1,8 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
-
-// Statically defined Firebase configuration as provided
 const firebaseConfig = {
     apiKey: "AIzaSyDOr3isTqTHoUxdX189ZULuDKVNjOxRJOE",
     authDomain: "pdfusion-qqsk7.firebaseapp.com",
@@ -17,20 +13,19 @@ const firebaseConfig = {
     measurementId: "G-MWFFW61FJP"
 };
 
-function getFirebaseInstances() {
-  // Ensure this only runs on the client
-  if (typeof window !== 'undefined') {
-    if (!app) { // Initialize only if not already initialized
-      if (getApps().length === 0) {
-        app = initializeApp(firebaseConfig);
-      } else {
-        app = getApp();
-      }
-      auth = getAuth(app);
-      db = getFirestore(app);
-    }
-  }
-  return { app, auth, db };
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+
+if (typeof window !== 'undefined' && getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+} else if (typeof window !== 'undefined') {
+  app = getApp();
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
 
-export { getFirebaseInstances };
+// @ts-ignore
+export { app, auth, db };

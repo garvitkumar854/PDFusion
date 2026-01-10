@@ -2,7 +2,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User as FirebaseUser, signInWithEmailAndPassword, signOut as firebaseSignOut, type Auth } from 'firebase/auth';
-import { getFirebaseInstances } from '@/lib/firebase';
+import { auth as authInstance } from '@/lib/firebase';
 
 interface User extends FirebaseUser {}
 
@@ -23,13 +23,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authInstance, setAuthInstance] = useState<Auth | null>(null);
-
-  useEffect(() => {
-    const { auth } = getFirebaseInstances();
-    setAuthInstance(auth);
-  }, []);
-
 
   useEffect(() => {
     if (authInstance) {
@@ -42,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // If auth is not available, we are not in a loading state from Firebase.
       setLoading(false);
     }
-  }, [authInstance]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     if (!authInstance) return { user: null, error: new Error("Firebase is not configured.") };
