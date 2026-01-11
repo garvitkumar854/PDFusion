@@ -6,18 +6,21 @@ import { Pencil, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
+
 
 interface SubjectCardProps {
   id: string;
   name: string;
   assignmentCount: number;
+  updatedAt: string;
   onView: () => void;
   onEdit: () => void;
 }
 
 const cardVariants = {
   initial: { y: 0 },
-  hover: { y: -5, transition: { type: 'spring', stiffness: 300, damping: 15 } }
+  hover: { y: -5 }
 }
 
 const arrowVariants = {
@@ -28,11 +31,13 @@ const arrowVariants = {
 export const SubjectCard = ({
   name,
   assignmentCount,
+  updatedAt,
   onView,
   onEdit,
 }: SubjectCardProps) => {
   const { user } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
+  const lastUpdated = formatDistanceToNow(new Date(updatedAt), { addSuffix: true });
 
   return (
     <div 
@@ -46,7 +51,7 @@ export const SubjectCard = ({
         variants={cardVariants}
         initial="initial"
         animate={isHovered ? "hover" : "initial"}
-        className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-lg transition-all duration-300"
+        className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-lg"
       >
         <div className="flex justify-between items-start">
             <h2 className="text-xl font-bold text-foreground transition-colors duration-300 group-hover:text-primary pr-8">{name}</h2>
@@ -58,6 +63,9 @@ export const SubjectCard = ({
         </div>
         <p className="text-sm text-muted-foreground mt-2">
             {assignmentCount} {assignmentCount === 1 ? 'assignment' : 'assignments'}
+        </p>
+         <p className="text-xs text-muted-foreground mt-1">
+            Last updated: {lastUpdated}
         </p>
 
         <div className="mt-auto pt-6 flex justify-end">

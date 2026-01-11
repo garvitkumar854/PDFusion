@@ -421,6 +421,7 @@ export default function AssignmentTrackerPage() {
               id={subject.id}
               name={subject.name}
               assignmentCount={getAssignmentCount(subject.id)}
+              updatedAt={subject.updated_at}
               onView={() => setSelectedSubject(subject)}
               onEdit={() => handleProtectedAction(() => {
                 setEditingSubject(subject);
