@@ -1,7 +1,7 @@
 
 'use client';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardFooter, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Pencil, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -16,8 +16,8 @@ interface SubjectCardProps {
 }
 
 const cardVariants = {
-  initial: { scale: 1, rotateZ: 0, rotateY: 0 },
-  hover: { scale: 1.03, rotateZ: 1, rotateY: -5, transition: { type: 'spring', stiffness: 300, damping: 15 } }
+  initial: { y: 0 },
+  hover: { y: -5, transition: { type: 'spring', stiffness: 300, damping: 15 } }
 }
 
 const arrowVariants = {
