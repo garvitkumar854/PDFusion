@@ -29,6 +29,7 @@ interface Assignment {
 
 interface AssignmentItemProps {
   assignment: Assignment;
+  index: number;
   onEdit: () => void;
   onDelete: () => void;
   isFirst: boolean;
@@ -37,6 +38,7 @@ interface AssignmentItemProps {
 
 const AssignmentItem = ({
   assignment,
+  index,
   onEdit,
   onDelete,
   isFirst,
@@ -54,7 +56,12 @@ const AssignmentItem = ({
           !isFirst && !isLast ? "rounded-none" : "",
           !isFirst && "border-t-0"
       )}>
-        <div className="flex items-center p-3 sm:p-4">
+        <div className="flex items-start p-3 sm:p-4">
+            <div className="flex h-5 items-center">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0 mr-4">
+                  {index + 1}
+              </div>
+            </div>
             <div className="flex-1 space-y-1 min-w-0 pr-4">
                 <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
@@ -141,6 +148,7 @@ export const SubjectDetail = ({
                     <AssignmentItem
                     key={assignment.id}
                     assignment={assignment}
+                    index={index}
                     onEdit={() => onEditAssignment(assignment)}
                     onDelete={() => onDeleteAssignment(assignment.id)}
                     isFirst={index === 0}
