@@ -244,22 +244,15 @@ export default function AssignmentTrackerPage() {
     date: string;
   }) => {
     if (!editingAssignment || !db) return;
-    
-    const originalAssignments = assignments;
-    const updatedAssignment = { ...editingAssignment, ...data, updated_at: new Date().toISOString() };
-    
-    // Optimistic update
-    setAssignments(prev => prev.map(a => a.id === editingAssignment.id ? updatedAssignment : a));
-    setEditingAssignment(null);
 
     try {
       await updateDoc(doc(db, 'assignments', editingAssignment.id), {
         ...data,
         updated_at: new Date().toISOString(),
       });
+      await fetchAssignments(); // Re-fetch assignments to update UI
     } catch (err) {
-       // Revert on error
-       setAssignments(originalAssignments);
+       console.error('Error updating assignment:', err);
        throw err instanceof Error ? err : new Error('Failed to update assignment');
     }
   };
@@ -366,6 +359,8 @@ export default function AssignmentTrackerPage() {
             } catch (err) {
               toast({ title: err instanceof Error ? err.message : 'Failed to save assignment', variant: 'destructive' });
               throw err;
+            } finally {
+                setEditingAssignment(null);
             }
           }}
           initialData={
