@@ -365,10 +365,10 @@ export default function AssignmentTrackerPage() {
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h2 className="text-3xl font-bold text-foreground">Subjects</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground capitalize">
             {subjects.length} {subjects.length === 1 ? 'Subject' : 'Subjects'}
           </div>
-          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground capitalize">
             {assignments.length} {assignments.length === 1 ? 'Assignment' : 'Assignments'}
           </div>
         </div>
@@ -376,9 +376,9 @@ export default function AssignmentTrackerPage() {
       
       <div className="mb-6 flex justify-end gap-2">
         {user && (
-          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })}>
-              <Plus size={16} className="mr-2" />
-              Add Subject
+          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2 sm:w-auto" variant="default">
+              <Plus size={16} className="sm:mr-2" />
+              <span className="hidden sm:inline">Add Subject</span>
           </Button>
         )}
          {!authLoading && auth && (
@@ -415,20 +415,28 @@ export default function AssignmentTrackerPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {subjects.map((subject) => (
-            <SubjectCard
-              key={subject.id}
-              id={subject.id}
-              name={subject.name}
-              assignments={getSubjectAssignments(subject.id)}
-              updatedAt={subject.updated_at}
-              onView={() => setSelectedSubject(subject)}
-              onEdit={() => handleProtectedAction(() => {
-                setEditingSubject(subject);
-                setIsSubjectDialogOpen(true);
-              })}
-            />
-          ))}
+          {subjects.map((subject) => {
+            const subjectAssignments = getSubjectAssignments(subject.id);
+            const assignmentTimestamps = subjectAssignments.map(a => new Date(a.updated_at).getTime());
+            const subjectTimestamp = new Date(subject.updated_at).getTime();
+            const latestTimestamp = Math.max(subjectTimestamp, ...assignmentTimestamps);
+            const lastUpdatedAt = new Date(latestTimestamp).toISOString();
+
+            return (
+              <SubjectCard
+                key={subject.id}
+                id={subject.id}
+                name={subject.name}
+                assignments={subjectAssignments}
+                updatedAt={lastUpdatedAt}
+                onView={() => setSelectedSubject(subject)}
+                onEdit={() => handleProtectedAction(() => {
+                  setEditingSubject(subject);
+                  setIsSubjectDialogOpen(true);
+                })}
+              />
+            )
+          })}
         </div>
       )}
 
