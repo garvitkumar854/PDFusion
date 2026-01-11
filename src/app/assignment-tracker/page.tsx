@@ -366,10 +366,10 @@ export default function AssignmentTrackerPage() {
         <h2 className="text-3xl font-bold text-foreground">Subjects</h2>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
-            {subjects.length === 1 ? '1 subject' : `${subjects.length} subjects`}
+            {subjects.length} {subjects.length === 1 ? 'Subject' : 'Subjects'}
           </div>
           <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground">
-            {assignments.length === 1 ? '1 assignment' : `${assignments.length} assignments`}
+            {assignments.length} {assignments.length === 1 ? 'Assignment' : 'Assignments'}
           </div>
         </div>
       </div>
@@ -388,9 +388,8 @@ export default function AssignmentTrackerPage() {
                     Logout
                 </Button>
             ) : (
-                <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
-                    <LogIn size={16} className="mr-2" />
-                    Login
+                <Button variant="outline" size="icon" onClick={() => setIsLoginOpen(true)}>
+                    <LogIn size={16} />
                 </Button>
             )
          )}

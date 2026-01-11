@@ -124,7 +124,7 @@ export const SubjectDialog = ({
                     </AlertDialogContent>
                   </AlertDialog>
               )}
-              <Button onClick={handleSave} disabled={isSaving || isDeleting}>
+              <Button onClick={handleSave} disabled={isSaving || isDeleting} className="bg-green-600 hover:bg-green-700 text-white">
                   {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSaving ? 'Saving...' : 'Save'}
               </Button>
