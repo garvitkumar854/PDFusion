@@ -34,7 +34,7 @@ interface Subject {
   updated_at: string;
 }
 
-interface Assignment {
+export interface Assignment {
   id: string;
   subject_id: string;
   title: string;
@@ -420,7 +420,7 @@ export default function AssignmentTrackerPage() {
               key={subject.id}
               id={subject.id}
               name={subject.name}
-              assignmentCount={getAssignmentCount(subject.id)}
+              assignments={getSubjectAssignments(subject.id)}
               updatedAt={subject.updated_at}
               onView={() => setSelectedSubject(subject)}
               onEdit={() => handleProtectedAction(() => {
