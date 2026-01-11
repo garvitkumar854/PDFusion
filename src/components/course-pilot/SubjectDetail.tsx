@@ -1,7 +1,7 @@
 
 'use client';
 import { useState } from 'react';
-import { ArrowLeft, Edit, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardDescription, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
@@ -19,6 +19,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 interface Assignment {
   id: string;
@@ -56,43 +64,50 @@ const AssignmentItem = ({
           !isFirst && !isLast ? "rounded-none" : "",
           !isFirst && "border-t-0"
       )}>
-        <div className="flex items-start p-3 sm:p-4">
-            <div className="flex h-5 items-center">
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0 mr-4">
-                  {index + 1}
-              </div>
+        <div className="flex items-center p-3 sm:p-4">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs shrink-0 mr-4">
+                {index + 1}
             </div>
-            <div className="flex-1 space-y-1 min-w-0 pr-4">
+            <div className="flex-1 space-y-1 min-w-0">
                 <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
             </div>
-            <div className="flex flex-col items-end text-right shrink-0">
-                <CardDescription className="text-xs font-semibold whitespace-nowrap mb-1">{formattedDate}</CardDescription>
+            <div className="flex items-center gap-2 text-right shrink-0 ml-4">
+                <CardDescription className="text-xs font-semibold whitespace-nowrap">{formattedDate}</CardDescription>
                 {user && (
-                    <div className="flex items-center">
-                       <Button variant="ghost" size="icon" onClick={onEdit} className="w-8 h-8">
-                          <Edit className="w-4 h-4"/>
-                       </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="w-8 h-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={onEdit}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
                        <AlertDialog>
-                         <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                               <Trash2 className="w-4 h-4"/>
-                           </Button>
-                         </AlertDialogTrigger>
-                         <AlertDialogContent>
-                           <AlertDialogHeader>
-                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                             <AlertDialogDescription>
-                               This will permanently delete the assignment. This action cannot be undone.
-                             </AlertDialogDescription>
-                           </AlertDialogHeader>
-                           <AlertDialogFooter>
-                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                             <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
-                           </AlertDialogFooter>
-                         </AlertDialogContent>
-                       </AlertDialog>
-                    </div>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the assignment. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
             </div>
         </div>
