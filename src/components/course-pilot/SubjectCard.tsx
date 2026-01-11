@@ -26,7 +26,7 @@ export const SubjectCard = ({
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <Card className="flex flex-col group">
+    <Card className="flex flex-col group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <CardHeader className="flex-grow">
         <CardTitle className="text-xl group-hover:text-primary transition-colors">{name}</CardTitle>
       </CardHeader>
