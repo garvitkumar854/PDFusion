@@ -26,6 +26,7 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, Plus } from 'lucide-react';
 import { BookCheck } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface Subject {
   id: string;
@@ -123,7 +124,6 @@ export default function AssignmentTrackerPage() {
     const tempId = `temp-${Date.now()}`;
     const newSubject = { id: tempId, name, created_at: now, updated_at: now };
     
-    // Optimistic update
     setSubjects(prev => [newSubject, ...prev]);
 
     try {
@@ -132,10 +132,8 @@ export default function AssignmentTrackerPage() {
         created_at: now,
         updated_at: now,
       });
-      // Replace temp ID with real ID
       setSubjects(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
     } catch (err) {
-      // Revert on error
       setSubjects(prev => prev.filter(s => s.id !== tempId));
       throw err instanceof Error ? err : new Error('Failed to add subject');
     }
@@ -147,7 +145,6 @@ export default function AssignmentTrackerPage() {
     const originalSubjects = subjects;
     const updatedSubject = { ...editingSubject, name, updated_at: new Date().toISOString() };
 
-    // Optimistic update
     setSubjects(prev => prev.map(s => s.id === editingSubject.id ? updatedSubject : s));
     if (selectedSubject?.id === editingSubject.id) {
         setSelectedSubject(updatedSubject);
@@ -161,7 +158,6 @@ export default function AssignmentTrackerPage() {
         updated_at: new Date().toISOString(),
       });
     } catch (err) {
-      // Revert on error
       setSubjects(originalSubjects);
       if (selectedSubject?.id === editingSubject.id) {
         setSelectedSubject(originalSubjects.find(s => s.id === editingSubject.id) || null);
@@ -176,7 +172,6 @@ export default function AssignmentTrackerPage() {
     const originalSubjects = subjects;
     const originalAssignments = assignments;
 
-    // Optimistic update
     setSubjects(prev => prev.filter(s => s.id !== editingSubject.id));
     setAssignments(prev => prev.filter(a => a.subject_id !== editingSubject.id));
      if (selectedSubject?.id === editingSubject.id) {
@@ -195,7 +190,6 @@ export default function AssignmentTrackerPage() {
       batch.delete(doc(db, 'subjects', editingSubject.id));
       await batch.commit();
     } catch (err) {
-        // Revert on error
         setSubjects(originalSubjects);
         setAssignments(originalAssignments);
         throw err instanceof Error ? err : new Error('Failed to delete subject');
@@ -219,7 +213,6 @@ export default function AssignmentTrackerPage() {
         updated_at: now,
     };
     
-    // Optimistic update
     setAssignments(prev => [...prev, newAssignment]);
 
     try {
@@ -229,10 +222,8 @@ export default function AssignmentTrackerPage() {
           created_at: now,
           updated_at: now,
       });
-      // Replace temp ID
       setAssignments(prev => prev.map(a => a.id === tempId ? { ...a, id: docRef.id } : a));
     } catch (err) {
-      // Revert on error
       setAssignments(prev => prev.filter(a => a.id !== tempId));
       throw err instanceof Error ? err : new Error('Failed to add assignment');
     }
@@ -244,13 +235,13 @@ export default function AssignmentTrackerPage() {
     date: string;
   }) => {
     if (!editingAssignment || !db) return;
-
     try {
-      await updateDoc(doc(db, 'assignments', editingAssignment.id), {
-        ...data,
-        updated_at: new Date().toISOString(),
-      });
-      await fetchAssignments(); // Re-fetch assignments to update UI
+        await updateDoc(doc(db, 'assignments', editingAssignment.id), {
+            ...data,
+            updated_at: new Date().toISOString(),
+        });
+        // Refetch to ensure UI consistency after update
+        await fetchAssignments();
     } catch (err) {
        console.error('Error updating assignment:', err);
        throw err instanceof Error ? err : new Error('Failed to update assignment');
@@ -261,13 +252,11 @@ export default function AssignmentTrackerPage() {
     if (!db) return;
     const originalAssignments = assignments;
 
-    // Optimistic update
     setAssignments(prev => prev.filter(a => a.id !== id));
     toast({ title: 'Assignment deleted', variant: 'success' });
     try {
       await deleteDoc(doc(db, 'assignments', id));
     } catch (err) {
-      // Revert on error
       setAssignments(originalAssignments);
       console.error('Error deleting assignment:', err);
       toast({ title: 'Failed to delete assignment', variant: 'destructive' });
@@ -298,81 +287,79 @@ export default function AssignmentTrackerPage() {
             setIsAssignmentDialogOpen(true);
           })}
           onDeleteAssignment={handleDeleteAssignment}
-          canReorder={false} // Feature removed
-          onReorderAssignments={() => {}} // No-op
+          canReorder={false} 
+          onReorderAssignments={() => {}}
         />
         <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
         <SubjectDialog
-          isOpen={isSubjectDialogOpen}
-          onClose={() => {
-            setIsSubjectDialogOpen(false);
-            setEditingSubject(null);
-          }}
-          onSave={async (name) => {
-            try {
-              if (editingSubject) {
-                await handleUpdateSubject(name);
-                toast({ title: 'Subject updated', variant: 'success' });
-              } else {
-                await handleAddSubject(name);
-                toast({ title: 'Subject added', variant: 'success' });
-              }
-            } catch (err) {
-              toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
-              throw err;
-            }
-          }}
-          onDelete={
-            editingSubject
-              ? async () => {
-                  try {
-                    await handleDeleteSubject();
-                    toast({ title: 'Subject deleted', variant: 'success' });
-                  } catch (err) {
-                    toast({
-                      title: err instanceof Error ? err.message : 'Failed to delete subject',
-                      variant: 'destructive',
-                    });
-                    throw err;
-                  }
+            isOpen={isSubjectDialogOpen}
+            onClose={() => {
+                setIsSubjectDialogOpen(false);
+                setEditingSubject(null);
+            }}
+            onSave={async (name) => {
+                try {
+                if (editingSubject) {
+                    await handleUpdateSubject(name);
+                    toast({ title: 'Subject updated', variant: 'success' });
+                } else {
+                    await handleAddSubject(name);
+                    toast({ title: 'Subject added', variant: 'success' });
                 }
-              : undefined
-          }
-          initialName={editingSubject?.name}
-          isEdit={!!editingSubject}
+                } catch (err) {
+                toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
+                throw err;
+                }
+            }}
+            onDelete={
+                editingSubject
+                ? async () => {
+                    try {
+                        await handleDeleteSubject();
+                        toast({ title: 'Subject deleted', variant: 'success' });
+                    } catch (err) {
+                        toast({
+                        title: err instanceof Error ? err.message : 'Failed to delete subject',
+                        variant: 'destructive',
+                        });
+                        throw err;
+                    }
+                    }
+                : undefined
+            }
+            initialName={editingSubject?.name}
+            isEdit={!!editingSubject}
         />
-        <AssignmentDialog
-          isOpen={isAssignmentDialogOpen}
-          onClose={() => {
-            setIsAssignmentDialogOpen(false);
-            setEditingAssignment(null);
-          }}
-          onSave={async (data) => {
-            try {
-              if (editingAssignment) {
-                await handleUpdateAssignment(data);
-                toast({ title: 'Assignment updated', variant: 'success' });
-              } else {
-                await handleAddAssignment(data);
-                toast({ title: 'Assignment added', variant: 'success' });
-              }
-            } catch (err) {
-              toast({ title: err instanceof Error ? err.message : 'Failed to save assignment', variant: 'destructive' });
-              throw err;
-            } finally {
+       <AssignmentDialog
+            isOpen={isAssignmentDialogOpen}
+            onClose={() => {
+                setIsAssignmentDialogOpen(false);
                 setEditingAssignment(null);
-            }
-          }}
-          initialData={
-            editingAssignment
-              ? {
-                  title: editingAssignment.title,
-                  description: editingAssignment.description,
-                  date: editingAssignment.date,
+            }}
+            onSave={async (data) => {
+                try {
+                if (editingAssignment) {
+                    await handleUpdateAssignment(data);
+                    toast({ title: 'Assignment updated', variant: 'success' });
+                } else {
+                    await handleAddAssignment(data);
+                    toast({ title: 'Assignment added', variant: 'success' });
                 }
-              : undefined
-          }
-          isEdit={!!editingAssignment}
+                } catch (err) {
+                toast({ title: err instanceof Error ? err.message : 'Failed to save assignment', variant: 'destructive' });
+                throw err;
+                }
+            }}
+            initialData={
+                editingAssignment
+                ? {
+                    title: editingAssignment.title,
+                    description: editingAssignment.description,
+                    date: editingAssignment.date,
+                    }
+                : undefined
+            }
+            isEdit={!!editingAssignment}
         />
       </>
     );
@@ -411,7 +398,7 @@ export default function AssignmentTrackerPage() {
       
       <div className="mb-6 flex justify-end gap-2">
         {user && (
-          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2 sm:w-auto" variant="default">
+          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2" variant="default">
               <Plus size={16} className="sm:mr-2" />
               <span className="hidden sm:inline">Add Subject</span>
           </Button>
@@ -455,7 +442,7 @@ export default function AssignmentTrackerPage() {
             const assignmentTimestamps = subjectAssignments.map(a => new Date(a.updated_at).getTime());
             const subjectTimestamp = new Date(subject.updated_at).getTime();
             const latestTimestamp = Math.max(subjectTimestamp, ...assignmentTimestamps);
-            const lastUpdatedAt = new Date(latestTimestamp).toISOString();
+            const lastUpdatedAt = isNaN(latestTimestamp) ? subject.updated_at : new Date(latestTimestamp).toISOString();
 
             return (
               <SubjectCard

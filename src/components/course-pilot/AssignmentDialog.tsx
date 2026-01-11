@@ -45,10 +45,9 @@ export const AssignmentDialog = ({
     if (isOpen) {
       setTitle(initialData?.title || '');
       setDescription(initialData?.description || '');
-      // Treat date as local by adding timezone offset to make it UTC
-      const initialDate = initialData?.date ? new Date(initialData.date) : new Date();
-      const userTimezoneOffset = initialDate.getTimezoneOffset() * 60000;
-      setDate(new Date(initialDate.getTime() + userTimezoneOffset));
+      // Ensure date is handled consistently. Create date from YYYY-MM-DD string as UTC.
+      const initialDate = initialData?.date ? new Date(`${initialData.date}T00:00:00Z`) : new Date();
+      setDate(initialDate);
       setIsSaving(false);
     }
   }, [isOpen, initialData]);
@@ -65,9 +64,8 @@ export const AssignmentDialog = ({
 
     setIsSaving(true);
     try {
-      // Format date as YYYY-MM-DD in local time to avoid timezone shift issues
-      const localDate = new Date(date);
-      const formattedDate = format(localDate, 'yyyy-MM-dd');
+      // Format date as YYYY-MM-DD for database consistency
+      const formattedDate = format(date, 'yyyy-MM-dd');
       await onSave({ title, description, date: formattedDate });
       onClose();
     } catch (err) {
