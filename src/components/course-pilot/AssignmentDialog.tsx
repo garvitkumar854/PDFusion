@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,7 +45,10 @@ export const AssignmentDialog = ({
     if (isOpen) {
       setTitle(initialData?.title || '');
       setDescription(initialData?.description || '');
-      setDate(initialData?.date ? new Date(initialData.date) : new Date());
+      // Treat date as local by adding timezone offset to make it UTC
+      const initialDate = initialData?.date ? new Date(initialData.date) : new Date();
+      const userTimezoneOffset = initialDate.getTimezoneOffset() * 60000;
+      setDate(new Date(initialDate.getTime() + userTimezoneOffset));
       setIsSaving(false);
     }
   }, [isOpen, initialData]);
@@ -62,7 +65,10 @@ export const AssignmentDialog = ({
 
     setIsSaving(true);
     try {
-      await onSave({ title, description, date: date.toISOString().split('T')[0] });
+      // Format date as YYYY-MM-DD in local time to avoid timezone shift issues
+      const localDate = new Date(date);
+      const formattedDate = format(localDate, 'yyyy-MM-dd');
+      await onSave({ title, description, date: formattedDate });
       onClose();
     } catch (err) {
        toast({ variant: 'destructive', title: 'Failed to save', description: err instanceof Error ? err.message : 'An unexpected error occurred.' });
