@@ -48,8 +48,8 @@ export const SubjectCard = ({
     e.stopPropagation();
     const indexText = assignments
       .map((assignment, index) => {
-        const description = assignment.description ? ` - ${assignment.description}` : '';
-        return `[${index + 1}] ${assignment.title}${description}`;
+        const description = assignment.description ? ` ${assignment.description}` : '';
+        return `${index + 1}. ${assignment.title}${description}`;
       })
       .join('\n');
 
