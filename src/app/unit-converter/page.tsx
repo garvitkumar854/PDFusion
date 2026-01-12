@@ -6,6 +6,13 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'All-in-One Unit Converter',
+  description: 'Instantly convert between various units for length, mass, temperature, time, volume, speed, area, and more. Free and easy to use.',
+  keywords: ['unit converter', 'metric conversion', 'imperial conversion', 'measurement converter', 'online converter'],
+};
 
 const UnitConverterLoader = dynamic(() => import('@/components/UnitConverterLoader'), {
   ssr: false,

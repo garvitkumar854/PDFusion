@@ -6,6 +6,13 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { FileText, Zap, BrainCircuit } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'AI Text Summarizer',
+  description: 'Our AI-powered tool helps you quickly summarize long articles, documents, and other texts to get the main points, fast.',
+  keywords: ['text summarizer', 'ai summarizer', 'summarize text', 'article summarizer', 'free summarizer'],
+};
 
 const TextSummarizerLoader = dynamic(() => import('@/components/TextSummarizerLoader'), {
   ssr: false,

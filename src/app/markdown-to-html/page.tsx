@@ -1,10 +1,18 @@
+
 'use client';
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
-import { ListChecks, ShieldCheck, Zap, Code, FileDown, Pencil } from 'lucide-react';
+import { Code, FileDown, Pencil } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Markdown to HTML Converter',
+  description: 'Instantly convert your Markdown into clean, formatted HTML with a side-by-side live preview. Copy or download the result for free.',
+  keywords: ['markdown to html', 'md to html', 'markdown converter', 'live markdown editor', 'html converter'],
+};
 
 const MarkdownToHtmlLoader = dynamic(() => import('@/components/MarkdownToHtmlLoader'), {
   ssr: false,
@@ -23,12 +31,12 @@ const features = [
         description: 'See your HTML output update in real-time as you type your Markdown content.',
     },
     {
-        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><ShieldCheck className="w-8 h-8 text-green-500" /></div>,
+        icon: <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/20"><Code className="w-8 h-8 text-green-500" /></div>,
         title: 'Client-Side Conversion',
         description: 'Your data is processed entirely in your browser. Nothing is ever sent to our servers, ensuring your privacy.',
     },
     {
-        icon: <div className="p-4 rounded-lg bg-purple-100 dark:bg-purple-900/20"><Code className="w-8 h-8 text-purple-500" /></div>,
+        icon: <div className="p-4 rounded-lg bg-purple-100 dark:bg-purple-900/20"><FileDown className="w-8 h-8 text-purple-500" /></div>,
         title: 'Copy or Download',
         description: 'Quickly copy the generated HTML to your clipboard or download it as a complete .html file.',
     },

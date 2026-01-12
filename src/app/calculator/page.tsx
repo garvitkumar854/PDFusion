@@ -6,6 +6,14 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Simple & Elegant Calculator',
+  description: 'A beautifully designed, easy-to-use calculator for all your daily needs, featuring a clean interface and calculation history.',
+  keywords: ['calculator', 'online calculator', 'simple calculator', 'math tool', 'free calculator'],
+};
+
 
 const CalculatorLoader = dynamic(() => import('@/components/CalculatorLoader'), {
   ssr: false,

@@ -6,6 +6,13 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Secure Password Generator',
+  description: 'Create strong, random, memorable, or PIN passwords with customizable options. All passwords generated securely in your browser.',
+  keywords: ['password generator', 'strong password', 'secure password', 'random password', 'memorable password', 'pin generator'],
+};
 
 const PasswordGeneratorLoader = dynamic(() => import('@/components/PasswordGeneratorLoader'), {
   ssr: false,

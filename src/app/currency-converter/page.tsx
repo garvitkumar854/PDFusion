@@ -6,6 +6,13 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Live Currency Converter',
+  description: 'Convert between hundreds of currencies with live, up-to-the-minute exchange rates. Fast, accurate, and easy to use.',
+  keywords: ['currency converter', 'exchange rates', 'live currency rates', 'money converter', 'forex'],
+};
 
 const CurrencyConverterLoader = dynamic(() => import('@/components/CurrencyConverterLoader'), {
   ssr: false,
