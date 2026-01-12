@@ -400,24 +400,25 @@ export default function AssignmentTrackerPage() {
       </div>
       
       <div className="mb-6 flex justify-end gap-2">
-        {user && (
-          <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2" variant="default">
-              <Plus size={16} className="sm:mr-2" />
-              <span className="hidden sm:inline">Add Subject</span>
-          </Button>
+        {!authLoading && (
+          user ? (
+            <>
+              <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2" variant="default">
+                <Plus size={16} className="sm:mr-2" />
+                <span className="hidden sm:inline">Add Subject</span>
+              </Button>
+              <Button variant="outline" onClick={() => auth.signOut()}>
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
+              <LogIn size={16} className="mr-2" />
+              Admin Login
+            </Button>
+          )
         )}
-         {!authLoading && auth && (
-            user ? (
-                <Button variant="outline" onClick={() => auth.signOut()}>
-                    <LogOut size={16} className="mr-2" />
-                    Logout
-                </Button>
-            ) : (
-                <Button variant="outline" size="icon" onClick={() => setIsLoginOpen(true)}>
-                    <LogIn size={16} />
-                </Button>
-            )
-         )}
       </div>
 
       {loading ? (
