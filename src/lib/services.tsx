@@ -77,7 +77,7 @@ export const services: Service[] = [
     {
       icon: <BookCheck className="text-sky-500" />,
       bgColor: 'bg-sky-100 dark:bg-sky-900/20',
-      title: 'CoursePilot',
+      title: 'Course Pilot',
       description: 'An intelligent assignment tracker to manage your coursework.',
       href: '/assignment-tracker'
     },
