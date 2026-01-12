@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
     DropdownMenu,
@@ -25,7 +24,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Reorder, useDragControls } from 'framer-motion';
+import { Reorder, useDragControls, motion } from 'framer-motion';
 
 interface Assignment {
   id: string;
@@ -65,7 +64,16 @@ const AssignmentItem = ({
       )}>
         <div className="flex items-center p-3 sm:p-4">
             <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
-              {user && <GripVertical className="cursor-grab" onPointerDown={(e) => controls.start(e)}/>}
+              {user && (
+                  <motion.div
+                    onPointerDown={(e) => controls.start(e)}
+                    className="cursor-grab"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                   >
+                     <GripVertical />
+                   </motion.div>
+              )}
               <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                 {index + 1}
               </div>
@@ -152,46 +160,41 @@ export const SubjectDetail = ({
   const handleReorder = (newOrder: Assignment[]) => {
     // Find the item that was moved and its new index
     const movedItemIndex = newOrder.findIndex((item, index) => item.id !== orderedAssignments[index]?.id);
+    if (movedItemIndex === -1) return; // No change detected
+    
     const movedItem = newOrder[movedItemIndex];
 
-    if (movedItem) {
-        // Find the date of the item it was dropped next to
-        const previousItem = newOrder[movedItemIndex - 1];
-        const nextItem = newOrder[movedItemIndex + 1];
+    // Determine target date based on surrounding items in the new visual order
+    const previousItem = newOrder[movedItemIndex - 1];
+    const nextItem = newOrder[movedItemIndex + 1];
 
-        // Default to its own date
-        let targetDate = movedItem.date;
-
-        // Determine target date based on surrounding items
-        if (previousItem && new Date(previousItem.date).getTime() !== new Date(movedItem.date).getTime()) {
-            targetDate = previousItem.date;
-        } else if (nextItem && new Date(nextItem.date).getTime() !== new Date(movedItem.date).getTime()) {
-            targetDate = nextItem.date;
-        }
-        
-        // Update the date of the moved item
-        const updatedMovedItem = { ...movedItem, date: targetDate };
-
-        // Create a new array with the updated item
-        const updatedOrder = newOrder.map(item => item.id === movedItem.id ? updatedMovedItem : item);
-        
-        // Re-sort the entire list by date first, then apply new visual order as `order` property
-        const finalOrderedAssignments = updatedOrder
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map((item, index) => ({
-                ...item,
-                order: index,
-            }));
-        
-        setOrderedAssignments(finalOrderedAssignments);
-        setHasReordered(true);
-    } else {
-        // Fallback for simple reorder within the same date group
-        const finalOrderedAssignments = newOrder.map((item, index) => ({ ...item, order: index }));
-        setOrderedAssignments(finalOrderedAssignments);
-        setHasReordered(true);
+    let targetDate = movedItem.date;
+    if (previousItem && new Date(previousItem.date).getTime() > new Date(movedItem.date).getTime()) {
+      targetDate = previousItem.date;
+    } else if (nextItem && new Date(nextItem.date).getTime() < new Date(movedItem.date).getTime()) {
+      targetDate = nextItem.date;
+    } else if (previousItem && new Date(previousItem.date).getTime() < new Date(movedItem.date).getTime()) {
+      // Intentionally do nothing, keep current date
+    } else if (previousItem) {
+      targetDate = previousItem.date;
     }
-  }
+
+    // Create a new array with the updated date for the moved item
+    const updatedOrder = newOrder.map(item => 
+      item.id === movedItem.id ? { ...item, date: targetDate } : item
+    );
+      
+    // Re-sort the entire list by date first, then apply new visual order as `order` property
+    const finalOrderedAssignments = updatedOrder
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((item, index) => ({
+        ...item,
+        order: index,
+      }));
+        
+    setOrderedAssignments(finalOrderedAssignments);
+    setHasReordered(true);
+  };
 
 
   const handleSaveOrder = () => {
@@ -241,7 +244,7 @@ export const SubjectDetail = ({
                  <Reorder.Group
                       axis="y"
                       values={orderedAssignments}
-                      onReorder={handleReorder}
+                      onReorder={user ? handleReorder : () => {}}
                       className="space-y-6"
                     >
                       {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
@@ -251,7 +254,7 @@ export const SubjectDetail = ({
                             </div>
                            <div className="space-y-px">
                             {assignmentsInGroup.map((assignment, index) => (
-                                <Reorder.Item value={assignment} key={assignment.id}>
+                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined}>
                                    <AssignmentItem
                                       assignment={assignment}
                                       index={orderedAssignments.findIndex(a => a.id === assignment.id)}
