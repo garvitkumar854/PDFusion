@@ -64,11 +64,8 @@ const AssignmentItem = ({
         !isFirstInGroup && !isLastInGroup ? 'rounded-none' : ''
       )}>
         <div className="flex items-center p-3 sm:p-4">
-            <div 
-              className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2"
-              onPointerDown={(e) => controls.start(e)}
-            >
-              <GripVertical className="cursor-grab"/>
+            <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
+              {user && <GripVertical className="cursor-grab" onPointerDown={(e) => controls.start(e)}/>}
               <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                 {index + 1}
               </div>
@@ -153,36 +150,49 @@ export const SubjectDetail = ({
   }, [assignments]);
   
   const handleReorder = (newOrder: Assignment[]) => {
-    // Find the item that was moved
-    const movedItem = newOrder.find((item, index) => item.id !== orderedAssignments[index]?.id);
-    const movedIndex = newOrder.findIndex(item => item.id === movedItem?.id);
+    // Find the item that was moved and its new index
+    const movedItemIndex = newOrder.findIndex((item, index) => item.id !== orderedAssignments[index]?.id);
+    const movedItem = newOrder[movedItemIndex];
 
     if (movedItem) {
         // Find the date of the item it was dropped next to
-        const previousItem = newOrder[movedIndex - 1];
-        const nextItem = newOrder[movedIndex + 1];
-        
+        const previousItem = newOrder[movedItemIndex - 1];
+        const nextItem = newOrder[movedItemIndex + 1];
+
+        // Default to its own date
         let targetDate = movedItem.date;
+
+        // Determine target date based on surrounding items
         if (previousItem && new Date(previousItem.date).getTime() !== new Date(movedItem.date).getTime()) {
             targetDate = previousItem.date;
         } else if (nextItem && new Date(nextItem.date).getTime() !== new Date(movedItem.date).getTime()) {
             targetDate = nextItem.date;
         }
+        
+        // Update the date of the moved item
+        const updatedMovedItem = { ...movedItem, date: targetDate };
 
-        movedItem.date = targetDate;
+        // Create a new array with the updated item
+        const updatedOrder = newOrder.map(item => item.id === movedItem.id ? updatedMovedItem : item);
+        
+        // Re-sort the entire list by date first, then apply new visual order as `order` property
+        const finalOrderedAssignments = updatedOrder
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map((item, index) => ({
+                ...item,
+                order: index,
+            }));
+        
+        setOrderedAssignments(finalOrderedAssignments);
+        setHasReordered(true);
+    } else {
+        // Fallback for simple reorder within the same date group
+        const finalOrderedAssignments = newOrder.map((item, index) => ({ ...item, order: index }));
+        setOrderedAssignments(finalOrderedAssignments);
+        setHasReordered(true);
     }
-
-    // Re-sort the entire list by date first, then apply new order
-    const finalOrderedAssignments = newOrder
-      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((item, index) => ({
-        ...item,
-        order: index,
-      }));
-    
-    setOrderedAssignments(finalOrderedAssignments);
-    setHasReordered(true);
   }
+
 
   const handleSaveOrder = () => {
     onReorderAssignments(orderedAssignments);
@@ -236,7 +246,7 @@ export const SubjectDetail = ({
                     >
                       {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
                         <div key={date}>
-                           <div className="font-semibold text-lg md:text-xl text-foreground mb-3 pb-2 border-b-2 border-primary/20">
+                           <div className="font-semibold text-base sm:text-lg md:text-xl text-foreground mb-3 pb-2 border-b-2 border-primary/20">
                                 {format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
                             </div>
                            <div className="space-y-px">
