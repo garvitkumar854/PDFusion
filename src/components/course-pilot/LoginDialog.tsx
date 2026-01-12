@@ -36,14 +36,13 @@ export const LoginDialog = ({
   const { signIn } = useAuth();
   const { toast } = useToast();
 
-  // 🔐 Email/Password Login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading('email');
 
-    const { error } = await signIn(email, password);
+    const { user, error } = await signIn(email, password);
 
-    if (error) {
+    if (error || !user) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
@@ -65,7 +64,6 @@ export const LoginDialog = ({
     onClose();
   };
 
-  // 🔵 Google Login
   const handleGoogleLogin = async () => {
     setLoading('google');
     try {
@@ -101,7 +99,6 @@ export const LoginDialog = ({
         </DialogHeader>
         
         <div className="py-4 space-y-4">
-             {/* Google Login */}
             <Button
               type="button"
               variant="outline"
@@ -117,7 +114,6 @@ export const LoginDialog = ({
               Continue with Google
             </Button>
             
-            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -130,7 +126,6 @@ export const LoginDialog = ({
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email */}
                 <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -144,7 +139,6 @@ export const LoginDialog = ({
                 />
                 </div>
 
-                {/* Password */}
                 <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative flex items-center">

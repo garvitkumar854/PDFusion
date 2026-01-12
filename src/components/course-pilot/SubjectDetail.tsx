@@ -7,7 +7,7 @@ import { Card, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,16 +59,16 @@ const AssignmentItem = ({
       <Card className={cn(
         "transition-shadow duration-300 w-full bg-card/50",
         isFirstInGroup && isLastInGroup ? 'rounded-xl' : '',
-        isFirstInGroup && !isLastInGroup ? 'rounded-t-xl rounded-b-none' : '',
+        isFirstInGroup && !isLastInGroup ? 'rounded-t-xl rounded-b-none border-b-0' : '',
         !isFirstInGroup && isLastInGroup ? 'rounded-b-xl rounded-t-none' : '',
-        !isFirstInGroup && !isLastInGroup ? 'rounded-none' : ''
+        !isFirstInGroup && !isLastInGroup ? 'rounded-none border-b-0 border-t-0' : ''
       )}>
         <div className="flex items-center p-3 sm:p-4">
-            <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
+             <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
               {user && (
                   <motion.div
                     onPointerDown={(e) => controls.start(e)}
-                    className="cursor-grab"
+                    className="cursor-grab touch-none"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                    >
@@ -159,41 +159,36 @@ export const SubjectDetail = ({
   }, [assignments]);
   
   const handleReorder = (newOrder: Assignment[]) => {
-    // Find the item that was moved and its new index
     const movedItemIndex = newOrder.findIndex((item, index) => item.id !== orderedAssignments[index]?.id);
-    if (movedItemIndex === -1) return; // No change detected
-    
+    if (movedItemIndex === -1) return;
+
     const movedItem = newOrder[movedItemIndex];
+    const prevItem = newOrder[movedItemIndex - 1];
+    
+    let targetDate: string;
 
-    // Determine target date based on surrounding items in the new visual order
-    const previousItem = newOrder[movedItemIndex - 1];
-    const nextItem = newOrder[movedItemIndex + 1];
-
-    let targetDate = movedItem.date;
-    if (previousItem && new Date(previousItem.date).getTime() > new Date(movedItem.date).getTime()) {
-      targetDate = previousItem.date;
-    } else if (nextItem && new Date(nextItem.date).getTime() < new Date(movedItem.date).getTime()) {
-      targetDate = nextItem.date;
-    } else if (previousItem && new Date(previousItem.date).getTime() < new Date(movedItem.date).getTime()) {
-      // Intentionally do nothing, keep current date
-    } else if (previousItem) {
-      targetDate = previousItem.date;
+    if (prevItem) {
+        targetDate = prevItem.date;
+    } else {
+        // If it's the very first item, keep its date but check if it's different from the next one
+        const nextItem = newOrder[movedItemIndex + 1];
+        if (nextItem && !isSameDay(parseISO(movedItem.date), parseISO(nextItem.date))) {
+             // Heuristic: If it's moved to the top and its date is different, it likely started a new group.
+             // This is complex; for now, we just keep its date. A better approach might be needed if this is buggy.
+             targetDate = movedItem.date;
+        } else if (nextItem) {
+             targetDate = nextItem.date;
+        } else {
+            targetDate = movedItem.date;
+        }
     }
+    
+    const finalOrder = newOrder.map(item =>
+        item.id === movedItem.id ? { ...item, date: targetDate } : item
+    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+     .map((item, index) => ({ ...item, order: index }));
 
-    // Create a new array with the updated date for the moved item
-    const updatedOrder = newOrder.map(item => 
-      item.id === movedItem.id ? { ...item, date: targetDate } : item
-    );
-      
-    // Re-sort the entire list by date first, then apply new visual order as `order` property
-    const finalOrderedAssignments = updatedOrder
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((item, index) => ({
-        ...item,
-        order: index,
-      }));
-        
-    setOrderedAssignments(finalOrderedAssignments);
+    setOrderedAssignments(finalOrder);
     setHasReordered(true);
   };
 
@@ -255,7 +250,7 @@ export const SubjectDetail = ({
                             </div>
                            <div className="space-y-px">
                             {assignmentsInGroup.map((assignment, index) => (
-                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined}>
+                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined} dragControls={useDragControls()}>
                                    <AssignmentItem
                                       assignment={assignment}
                                       index={orderedAssignments.findIndex(a => a.id === assignment.id)}
