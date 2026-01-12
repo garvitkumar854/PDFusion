@@ -1,6 +1,4 @@
 
-'use client';
-
 import JpgToPdfLoader from '@/components/JpgToPdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';

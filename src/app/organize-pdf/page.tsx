@@ -1,12 +1,7 @@
 
-'use client';
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -66,39 +61,31 @@ const howToSteps = [
 ];
 
 export default function OrganizePdfPage() {
-  const [isFileUploaded, setIsFileUploaded] = useState(false);
-  const isMobile = useIsMobile();
-  const showHeader = !isMobile || !isFileUploaded;
-
   return (
     <>
-      <div className={cn("flex flex-col flex-1", showHeader ? "py-8 sm:py-12" : "pt-4")}>
-        {showHeader && (
-           <section className="text-center mb-12">
-              <AnimateOnScroll
-                  animation="animate-in fade-in-0 slide-in-from-bottom-12"
-                  className="duration-500"
-              >
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
-                  Organize PDF Pages
-                  <br />
-                  <span className="relative inline-block">
-                    <span className="relative bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">Visually</span>
-                  </span>
-                </h1>
-                <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
-                  Easily reorder, rotate, and delete pages from your PDF with a simple drag-and-drop interface.
-                </p>
-              </AnimateOnScroll>
-            </section>
-        )}
-        
+      <div className="flex flex-col flex-1 py-8 sm:py-12">
+        <section className="text-center mb-12">
+          <AnimateOnScroll
+              animation="animate-in fade-in-0 slide-in-from-bottom-12"
+              className="duration-500"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+              Organize PDF Pages
+              <br />
+              <span className="relative inline-block">
+                <span className="relative bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">Visually</span>
+              </span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
+              Easily reorder, rotate, and delete pages from your PDF with a simple drag-and-drop interface.
+            </p>
+          </AnimateOnScroll>
+        </section>
         <main className="flex-1 w-full">
           <div className="max-w-full mx-auto">
-            <PdfOrganizerLoader onFileChange={setIsFileUploaded} />
+            <PdfOrganizerLoader/>
           </div>
         </main>
-
         <FeatureGrid
             title="The Easiest Way to Organize PDFs"
             description="Our tool provides a powerful, secure, and user-friendly solution for managing your PDF pages."
@@ -106,7 +93,6 @@ export default function OrganizePdfPage() {
             steps={howToSteps}
             stepsTitle="How to Organize a PDF"
         />
-
       </div>
     </>
   );

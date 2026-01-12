@@ -27,7 +27,10 @@ import { motion } from "framer-motion";
 
 
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).toString();
 }
 
 const MAX_FILE_SIZE_MB = 100;
@@ -550,10 +553,3 @@ const PageCard = React.memo(({ page, index, onVisible, onRotate, onDelete, onPag
     );
 });
 PageCard.displayName = 'PageCard';
-
-
-
-    
-
-    
-

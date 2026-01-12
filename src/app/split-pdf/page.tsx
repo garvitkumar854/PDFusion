@@ -1,6 +1,4 @@
 
-'use client';
-
 import PdfSplitterLoader from '@/components/PdfSplitterLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';

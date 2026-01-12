@@ -1,6 +1,4 @@
 
-'use client';
-
 import PdfRotatorLoader from '@/components/PdfRotatorLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';

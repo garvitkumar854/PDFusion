@@ -1,6 +1,4 @@
 
-'use client';
-
 import PdfLoader from '@/components/PdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
