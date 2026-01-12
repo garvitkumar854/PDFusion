@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Edit, MoreVertical, Plus, Trash2, GripVertical, Check } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardDescription, CardTitle } from '../ui/card';
+import { Card, CardTitle } from '../ui/card';
 import AnimateOnScroll from '../AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
@@ -25,32 +25,44 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 
 interface Assignment {
   id: string;
   title: string;
   description: string;
   date: string;
-  order?: number;
+  order: number;
 }
 
 interface AssignmentItemProps {
   assignment: Assignment;
+  index: number;
   onEdit: () => void;
   onDelete: () => void;
 }
 
 const AssignmentItem = ({
   assignment,
+  index,
   onEdit,
   onDelete,
 }: AssignmentItemProps) => {
   const { user } = useAuth();
+  const controls = useDragControls();
   
   return (
-      <Card className="transition-shadow duration-300 rounded-xl w-full">
+      <Card className="transition-shadow duration-300 rounded-xl w-full bg-card/50">
         <div className="flex items-center p-3 sm:p-4">
+            <div 
+              className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2"
+              onPointerDown={(e) => controls.start(e)}
+            >
+              <GripVertical className="cursor-grab"/>
+              <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                {index + 1}
+              </div>
+            </div>
             <div className="flex-1 space-y-1 min-w-0">
                 <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
                 {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
@@ -91,7 +103,6 @@ const AssignmentItem = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
-                <GripVertical className="cursor-grab text-muted-foreground" />
             </div>
         </div>
       </Card>
@@ -108,17 +119,6 @@ interface SubjectDetailProps {
   onReorderAssignments: (orderedAssignments: Assignment[]) => void;
 }
 
-const groupAssignmentsByDate = (assignments: Assignment[]) => {
-  if (!assignments) return {};
-  return assignments.reduce((acc, assignment) => {
-    const date = assignment.date;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(assignment);
-    return acc;
-  }, {} as Record<string, Assignment[]>);
-};
 
 export const SubjectDetail = ({
   subjectName,
@@ -134,47 +134,42 @@ export const SubjectDetail = ({
   const [hasReordered, setHasReordered] = useState(false);
   
   useEffect(() => {
-    setOrderedAssignments(assignments);
+    const sortedAssignments = [...assignments].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
+    setOrderedAssignments(sortedAssignments);
   }, [assignments]);
   
-  const groupedAssignments = groupAssignmentsByDate(orderedAssignments);
-  const sortedDates = Object.keys(groupedAssignments).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  const handleReorder = (newOrder: Assignment[]) => {
+    let reorderedList = [...newOrder];
 
-  const handleReorderGroup = (date: string, newOrder: Assignment[]) => {
-    const newOrderedAssignments = [...orderedAssignments];
-    const groupIds = new Set(newOrder.map(a => a.id));
-    
-    // Filter out the old items from the group
-    const withoutGroup = newOrderedAssignments.filter(a => !groupIds.has(a.id));
-    
-    // Find the insertion index
-    const firstItemIdInGroup = newOrder[0]?.id;
-    let insertionIndex = newOrderedAssignments.findIndex(a => a.id === firstItemIdInGroup);
-    if(insertionIndex === -1) {
-       // if for some reason we can't find it, append at the end of the date group
-       const lastItemOfPreviousDate = [...newOrderedAssignments].reverse().find(a => new Date(a.date) < new Date(date));
-       if (lastItemOfPreviousDate) {
-         insertionIndex = newOrderedAssignments.findIndex(a => a.id === lastItemOfPreviousDate.id) + 1;
-       } else {
-         insertionIndex = 0;
-       }
+    // When an item is moved, find its new date group and update its date
+    const movedItem = reorderedList.find(item => assignments.find(a => a.id === item.id)?.order !== item.order);
+    if(movedItem) {
+        const movedIndex = reorderedList.findIndex(item => item.id === movedItem.id);
+        const prevItem = reorderedList[movedIndex - 1];
+        if (prevItem && prevItem.date !== movedItem.date) {
+            movedItem.date = prevItem.date;
+        }
     }
     
-    // Re-insert the reordered group
-    const finalOrderedList = [
-      ...withoutGroup.slice(0, insertionIndex),
-      ...newOrder,
-      ...withoutGroup.slice(insertionIndex)
-    ];
-
-    setOrderedAssignments(finalOrderedList);
+    // After potential date changes, re-sort the entire list by date first
+    reorderedList.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // Then, assign new order values based on the final position
+    const finalOrderedAssignments = reorderedList.map((item, index) => ({
+      ...item,
+      order: index,
+    }));
+    
+    setOrderedAssignments(finalOrderedAssignments);
     setHasReordered(true);
-  };
-  
+  }
+
   const handleSaveOrder = () => {
     onReorderAssignments(orderedAssignments);
     setHasReordered(false);
   }
+  
+  let lastDate: string | null = null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -206,31 +201,34 @@ export const SubjectDetail = ({
             </div>
 
             {assignments.length > 0 ? (
-                <div className="space-y-6">
-                {sortedDates.map((date) => (
-                  <div key={date}>
-                     <div className="font-semibold text-lg text-foreground mb-3 pb-2 border-b-2 border-primary/20">
-                      {format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
-                    </div>
-                    <Reorder.Group
+                 <Reorder.Group
                       axis="y"
-                      values={groupedAssignments[date]}
-                      onReorder={(newOrder) => handleReorderGroup(date, newOrder)}
+                      values={orderedAssignments}
+                      onReorder={handleReorder}
                       className="space-y-2"
                     >
-                      {groupedAssignments[date].map((assignment, index) => (
-                        <Reorder.Item key={assignment.id} value={assignment}>
-                           <AssignmentItem
-                              assignment={assignment}
-                              onEdit={() => onEditAssignment(assignment)}
-                              onDelete={() => onDeleteAssignment(assignment.id)}
-                            />
-                        </Reorder.Item>
-                      ))}
+                      {orderedAssignments.map((assignment, index) => {
+                        const showDateHeader = assignment.date !== lastDate;
+                        lastDate = assignment.date;
+                        return (
+                          <div key={assignment.id}>
+                            {showDateHeader && (
+                              <div className="font-semibold text-lg md:text-xl text-foreground my-3 pb-2 border-b-2 border-primary/20">
+                                {format(parseISO(`${assignment.date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
+                              </div>
+                            )}
+                            <Reorder.Item value={assignment}>
+                               <AssignmentItem
+                                  assignment={assignment}
+                                  index={index}
+                                  onEdit={() => onEditAssignment(assignment)}
+                                  onDelete={() => onDeleteAssignment(assignment.id)}
+                                />
+                            </Reorder.Item>
+                          </div>
+                        )
+                      })}
                     </Reorder.Group>
-                  </div>
-                ))}
-                </div>
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No assignments yet</h3>

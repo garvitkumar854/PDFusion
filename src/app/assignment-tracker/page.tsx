@@ -43,7 +43,7 @@ export interface Assignment {
   date: string;
   created_at: string;
   updated_at: string;
-  order?: number;
+  order: number;
 }
 
 export default function AssignmentTrackerPage() {
@@ -107,16 +107,38 @@ export default function AssignmentTrackerPage() {
     }
   };
 
-  const getAssignmentCount = (subjectId: string) => {
-    return assignments.filter((a) => a.subject_id === subjectId).length;
-  };
-
   const getSubjectAssignments = (subjectId: string) => {
     return assignments
       .filter((a) => a.subject_id === subjectId)
       .slice()
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
   };
+  
+  const handleReorderAssignments = async (orderedAssignments: Assignment[]) => {
+    if (!db) return;
+    const batch = writeBatch(db);
+    orderedAssignments.forEach(assignment => {
+      const docRef = doc(db, 'assignments', assignment.id);
+      batch.update(docRef, { order: assignment.order, date: assignment.date });
+    });
+    
+    try {
+      await batch.commit();
+      // Optimistically update local state while refetching for consistency
+      setAssignments(prev => {
+        const updatedIds = new Set(orderedAssignments.map(a => a.id));
+        const unchanged = prev.filter(a => !updatedIds.has(a.id));
+        return [...unchanged, ...orderedAssignments];
+      });
+      toast({ title: 'Order saved!', variant: 'success' });
+      // Refetch to ensure data is consistent
+      await fetchAssignments();
+    } catch(err) {
+      console.error("Failed to save order:", err);
+      toast({ title: 'Failed to save order', variant: 'destructive' });
+    }
+  }
+
 
   const handleAddSubject = async (name: string) => {
     if (!db) return;
@@ -142,7 +164,7 @@ export default function AssignmentTrackerPage() {
   const handleUpdateSubject = async (name: string) => {
     if (!editingSubject || !db) return;
     
-    const originalSubjects = subjects;
+    const originalSubjects = [...subjects];
     const updatedSubject = { ...editingSubject, name, updated_at: new Date().toISOString() };
 
     setSubjects(prev => prev.map(s => s.id === editingSubject.id ? updatedSubject : s));
@@ -150,8 +172,6 @@ export default function AssignmentTrackerPage() {
         setSelectedSubject(updatedSubject);
     }
     
-    setEditingSubject(null);
-
     try {
       await updateDoc(doc(db, 'subjects', editingSubject.id), {
         name,
@@ -203,30 +223,20 @@ export default function AssignmentTrackerPage() {
   }) => {
     if (!selectedSubject || !db) return;
 
+    const subjectAssignments = getSubjectAssignments(selectedSubject.id);
+    const maxOrder = subjectAssignments.reduce((max, a) => Math.max(max, a.order), -1);
+
     const now = new Date().toISOString();
-    const tempId = `temp-${Date.now()}`;
-    const newAssignment = {
-        id: tempId,
+    const newAssignmentData = {
         subject_id: selectedSubject.id,
         ...data,
         created_at: now,
         updated_at: now,
+        order: maxOrder + 1,
     };
     
-    setAssignments(prev => [...prev, newAssignment]);
-
-    try {
-      const docRef = await addDoc(collection(db, 'assignments'), {
-          subject_id: selectedSubject.id,
-          ...data,
-          created_at: now,
-          updated_at: now,
-      });
-      setAssignments(prev => prev.map(a => a.id === tempId ? { ...a, id: docRef.id } : a));
-    } catch (err) {
-      setAssignments(prev => prev.filter(a => a.id !== tempId));
-      throw err instanceof Error ? err : new Error('Failed to add assignment');
-    }
+    const docRef = await addDoc(collection(db, 'assignments'), newAssignmentData);
+    setAssignments(prev => [...prev, { ...newAssignmentData, id: docRef.id }]);
   };
 
   const handleUpdateAssignment = async (data: {
@@ -240,8 +250,7 @@ export default function AssignmentTrackerPage() {
             ...data,
             updated_at: new Date().toISOString(),
         });
-        // Refetch to ensure UI consistency after update
-        await fetchAssignments();
+        await fetchAssignments(); // Refetch to get fresh data
     } catch (err) {
        console.error('Error updating assignment:', err);
        throw err instanceof Error ? err : new Error('Failed to update assignment');
@@ -287,8 +296,7 @@ export default function AssignmentTrackerPage() {
             setIsAssignmentDialogOpen(true);
           })}
           onDeleteAssignment={handleDeleteAssignment}
-          canReorder={false} 
-          onReorderAssignments={() => {}}
+          onReorderAssignments={handleReorderAssignments}
         />
         <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
         <SubjectDialog
@@ -298,17 +306,12 @@ export default function AssignmentTrackerPage() {
                 setEditingSubject(null);
             }}
             onSave={async (name) => {
-                try {
                 if (editingSubject) {
                     await handleUpdateSubject(name);
                     toast({ title: 'Subject updated', variant: 'success' });
                 } else {
                     await handleAddSubject(name);
                     toast({ title: 'Subject added', variant: 'success' });
-                }
-                } catch (err) {
-                toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
-                throw err;
                 }
             }}
             onDelete={
