@@ -1,47 +1,51 @@
 
-import { MetadataRoute } from 'next'
- 
+import { MetadataRoute } from 'next';
+
+const baseUrl = 'https://pdf-fusion.vercel.app';
+
+const staticPages = [
+  { url: '/', priority: 1.0 },
+  { url: '/about', priority: 0.8 },
+  { url: '/contact', priority: 0.8 },
+  { url: '/privacy-policy', priority: 0.5 },
+  { url: '/more-tools', priority: 0.7 },
+];
+
+const toolPages = [
+  '/merger',
+  '/split-pdf',
+  '/organize-pdf',
+  '/pdf-to-jpg',
+  '/jpg-to-pdf',
+  '/pdf-to-html',
+  '/html-to-pdf',
+  '/rotate-pdf',
+  '/add-page-numbers',
+  '/add-watermark',
+  '/qr-code-generator',
+  '/password-generator',
+  '/unit-converter',
+  '/calculator',
+  '/currency-converter',
+  '/markdown-to-html',
+  '/text-summarizer',
+  '/assignment-tracker',
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://pdf-fusion.vercel.app';
+  const staticRoutes = staticPages.map(page => ({
+    url: `${baseUrl}${page.url}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: page.priority,
+  }));
 
-  const staticRoutes = [
-    { url: `${baseUrl}/`, priority: 1.0 },
-    { url: `${baseUrl}/about`, priority: 0.8 },
-    { url: `${baseUrl}/contact`, priority: 0.8 },
-    { url: `${baseUrl}/privacy-policy`, priority: 0.5 },
-    { url: `${baseUrl}/more-tools`, priority: 0.7 },
-  ];
-
-  const toolRoutes = [
-    '/merger',
-    '/split-pdf',
-    '/organize-pdf',
-    '/pdf-to-jpg',
-    '/jpg-to-pdf',
-    '/pdf-to-html',
-    '/html-to-pdf',
-    '/rotate-pdf',
-    '/add-page-numbers',
-    '/add-watermark',
-    '/qr-code-generator',
-    '/password-generator',
-    '/unit-converter',
-    '/calculator',
-    '/currency-converter',
-    '/markdown-to-html',
-    '/text-summarizer',
-    '/assignment-tracker',
-  ].map(route => ({
+  const toolRoutes = toolPages.map(route => ({
     url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
     priority: 0.9,
   }));
 
-  const allRoutes = [...staticRoutes, ...toolRoutes];
- 
-  return allRoutes.map(route => ({
-    url: route.url,
-    lastModified: new Date(),
-    changeFrequency: 'monthly',
-    priority: route.priority,
-  }));
+  return [...staticRoutes, ...toolRoutes];
 }

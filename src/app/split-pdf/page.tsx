@@ -5,6 +5,14 @@ import PdfSplitterLoader from '@/components/PdfSplitterLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Split PDF',
+  description: 'Extract pages from your PDF file by selecting ranges, specific pages, or splitting into fixed-size files. Fast, secure, and completely free.',
+  keywords: ['split pdf', 'pdf splitter', 'extract pdf pages', 'pdf separator', 'free pdf tool'],
+};
+
 
 const features = [
     {

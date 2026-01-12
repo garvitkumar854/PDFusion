@@ -5,6 +5,14 @@ import JpgToPdfLoader from '@/components/JpgToPdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Convert JPG to PDF',
+  description: 'Turn your JPG images into a single PDF document with custom orientation, margins, and page size. Fast, secure, and entirely free.',
+  keywords: ['jpg to pdf', 'image to pdf', 'convert jpg to pdf', 'png to pdf', 'images to pdf'],
+};
+
 
 const features = [
     {

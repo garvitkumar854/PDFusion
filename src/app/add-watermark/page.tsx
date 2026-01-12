@@ -6,6 +6,14 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Add Watermark to PDF',
+  description: 'Easily stamp a text or image watermark over your PDF pages. Customize position, transparency, and style with an instant live preview. Secure and free.',
+  keywords: ['add watermark to pdf', 'pdf watermark', 'watermark pdf', 'pdf editor', 'online pdf tool'],
+};
+
 
 const WatermarkAdderLoader = dynamic(() => import('@/components/WatermarkAdderLoader'), {
   ssr: false,

@@ -6,6 +6,14 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Add Page Numbers to PDF',
+  description: 'Easily insert and customize page numbers on your PDF. Adjust position, format, style, and more with an instant live preview. Secure and free.',
+  keywords: ['add page numbers to pdf', 'pdf page numbers', 'number pdf pages', 'pdf editor', 'online pdf tool'],
+};
+
 
 const PageNumberAdderLoader = dynamic(() => import('@/components/PageNumberAdderLoader'), {
   ssr: false,

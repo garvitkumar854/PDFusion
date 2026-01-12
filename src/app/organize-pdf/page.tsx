@@ -9,6 +9,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Organize PDF Pages',
+  description: 'Easily reorder, rotate, and delete pages from your PDF with a simple, visual drag-and-drop interface. Fast, secure, and free.',
+  keywords: ['organize pdf', 'reorder pdf pages', 'delete pdf pages', 'rotate pdf pages', 'pdf editor'],
+};
+
 
 const PdfOrganizerLoader = dynamic(() => import('@/components/PdfOrganizerLoader'), {
   ssr: false,

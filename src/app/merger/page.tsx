@@ -5,6 +5,14 @@ import PdfLoader from '@/components/PdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Merge PDFs',
+  description: 'Combine multiple PDF files into one document quickly and securely. No file size limits, no watermarks, completely free.',
+  keywords: ['merge pdf', 'combine pdf', 'pdf merger', 'join pdf', 'pdf editor', 'free pdf tool'],
+};
+
 
 const features = [
     {
