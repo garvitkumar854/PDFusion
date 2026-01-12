@@ -1,6 +1,6 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
+import PdfToHtmlLoader from '@/components/PdfToHtmlLoader';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -10,12 +10,6 @@ export const metadata: Metadata = {
   description: 'Quickly extract text and basic structure from your PDF into a simple, clean HTML file. Fast, secure, and free.',
   keywords: ['pdf to html', 'convert pdf to html', 'pdf extractor', 'pdf text extractor', 'pdf to web'],
 };
-
-
-const PdfToHtmlLoader = dynamic(() => import('@/components/PdfToHtmlLoader'), {
-  ssr: false,
-  loading: () => <div className="flex justify-center items-center h-96"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>
-});
 
 const features = [
     {
