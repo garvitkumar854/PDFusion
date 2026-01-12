@@ -40,6 +40,8 @@ interface AssignmentItemProps {
   index: number;
   onEdit: () => void;
   onDelete: () => void;
+  isFirstInGroup: boolean;
+  isLastInGroup: boolean;
 }
 
 const AssignmentItem = ({
@@ -47,12 +49,20 @@ const AssignmentItem = ({
   index,
   onEdit,
   onDelete,
+  isFirstInGroup,
+  isLastInGroup,
 }: AssignmentItemProps) => {
   const { user } = useAuth();
   const controls = useDragControls();
   
   return (
-      <Card className="transition-shadow duration-300 rounded-xl w-full bg-card/50">
+      <Card className={cn(
+        "transition-shadow duration-300 w-full bg-card/50",
+        isFirstInGroup && isLastInGroup ? 'rounded-xl' : '',
+        isFirstInGroup && !isLastInGroup ? 'rounded-t-xl rounded-b-none' : '',
+        !isFirstInGroup && isLastInGroup ? 'rounded-b-xl rounded-t-none' : '',
+        !isFirstInGroup && !isLastInGroup ? 'rounded-none' : ''
+      )}>
         <div className="flex items-center p-3 sm:p-4">
             <div 
               className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2"
@@ -119,6 +129,10 @@ interface SubjectDetailProps {
   onReorderAssignments: (orderedAssignments: Assignment[]) => void;
 }
 
+interface GroupedAssignments {
+    [date: string]: Assignment[];
+}
+
 
 export const SubjectDetail = ({
   subjectName,
@@ -139,26 +153,32 @@ export const SubjectDetail = ({
   }, [assignments]);
   
   const handleReorder = (newOrder: Assignment[]) => {
-    let reorderedList = [...newOrder];
+    // Find the item that was moved
+    const movedItem = newOrder.find((item, index) => item.id !== orderedAssignments[index]?.id);
+    const movedIndex = newOrder.findIndex(item => item.id === movedItem?.id);
 
-    // When an item is moved, find its new date group and update its date
-    const movedItem = reorderedList.find(item => assignments.find(a => a.id === item.id)?.order !== item.order);
-    if(movedItem) {
-        const movedIndex = reorderedList.findIndex(item => item.id === movedItem.id);
-        const prevItem = reorderedList[movedIndex - 1];
-        if (prevItem && prevItem.date !== movedItem.date) {
-            movedItem.date = prevItem.date;
+    if (movedItem) {
+        // Find the date of the item it was dropped next to
+        const previousItem = newOrder[movedIndex - 1];
+        const nextItem = newOrder[movedIndex + 1];
+        
+        let targetDate = movedItem.date;
+        if (previousItem && new Date(previousItem.date).getTime() !== new Date(movedItem.date).getTime()) {
+            targetDate = previousItem.date;
+        } else if (nextItem && new Date(nextItem.date).getTime() !== new Date(movedItem.date).getTime()) {
+            targetDate = nextItem.date;
         }
+
+        movedItem.date = targetDate;
     }
-    
-    // After potential date changes, re-sort the entire list by date first
-    reorderedList.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-    // Then, assign new order values based on the final position
-    const finalOrderedAssignments = reorderedList.map((item, index) => ({
-      ...item,
-      order: index,
-    }));
+
+    // Re-sort the entire list by date first, then apply new order
+    const finalOrderedAssignments = newOrder
+      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((item, index) => ({
+        ...item,
+        order: index,
+      }));
     
     setOrderedAssignments(finalOrderedAssignments);
     setHasReordered(true);
@@ -168,9 +188,16 @@ export const SubjectDetail = ({
     onReorderAssignments(orderedAssignments);
     setHasReordered(false);
   }
-  
-  let lastDate: string | null = null;
 
+  const groupedAssignments = orderedAssignments.reduce((acc: GroupedAssignments, assignment) => {
+    const date = assignment.date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(assignment);
+    return acc;
+  }, {});
+  
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
@@ -205,29 +232,29 @@ export const SubjectDetail = ({
                       axis="y"
                       values={orderedAssignments}
                       onReorder={handleReorder}
-                      className="space-y-2"
+                      className="space-y-6"
                     >
-                      {orderedAssignments.map((assignment, index) => {
-                        const showDateHeader = assignment.date !== lastDate;
-                        lastDate = assignment.date;
-                        return (
-                          <div key={assignment.id}>
-                            {showDateHeader && (
-                              <div className="font-semibold text-lg md:text-xl text-foreground my-3 pb-2 border-b-2 border-primary/20">
-                                {format(parseISO(`${assignment.date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
-                              </div>
-                            )}
-                            <Reorder.Item value={assignment}>
-                               <AssignmentItem
-                                  assignment={assignment}
-                                  index={index}
-                                  onEdit={() => onEditAssignment(assignment)}
-                                  onDelete={() => onDeleteAssignment(assignment.id)}
-                                />
-                            </Reorder.Item>
-                          </div>
-                        )
-                      })}
+                      {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
+                        <div key={date}>
+                           <div className="font-semibold text-lg md:text-xl text-foreground mb-3 pb-2 border-b-2 border-primary/20">
+                                {format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
+                            </div>
+                           <div className="space-y-px">
+                            {assignmentsInGroup.map((assignment, index) => (
+                                <Reorder.Item value={assignment} key={assignment.id}>
+                                   <AssignmentItem
+                                      assignment={assignment}
+                                      index={orderedAssignments.findIndex(a => a.id === assignment.id)}
+                                      onEdit={() => onEditAssignment(assignment)}
+                                      onDelete={() => onDeleteAssignment(assignment.id)}
+                                      isFirstInGroup={index === 0}
+                                      isLastInGroup={index === assignmentsInGroup.length - 1}
+                                    />
+                                </Reorder.Item>
+                            ))}
+                           </div>
+                        </div>
+                      ))}
                     </Reorder.Group>
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
