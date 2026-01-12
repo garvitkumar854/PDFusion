@@ -1,8 +1,6 @@
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import PasswordGeneratorLoader from '@/components/PasswordGeneratorLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -11,20 +9,6 @@ export const metadata: Metadata = {
   description: 'Create strong, random, memorable, or PIN passwords with customizable options. All passwords generated securely in your browser.',
   keywords: ['password generator', 'strong password', 'secure password', 'random password', 'memorable password', 'pin generator'],
 };
-
-const PasswordGeneratorLoader = dynamic(() => import('@/components/PasswordGeneratorLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed">
-        <Skeleton className="w-12 h-12 rounded-full" />
-        <Skeleton className="h-6 w-48 mt-4" />
-        <Skeleton className="h-4 w-64 mt-2" />
-        <Skeleton className="h-10 w-32 mt-4" />
-      </div>
-    </div>
-  )
-});
 
 const features = [
     {

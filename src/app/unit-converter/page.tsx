@@ -1,8 +1,6 @@
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import UnitConverterLoader from '@/components/UnitConverterLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -11,20 +9,6 @@ export const metadata: Metadata = {
   description: 'Instantly convert between various units for length, mass, temperature, time, volume, speed, area, and more. Free and easy to use.',
   keywords: ['unit converter', 'metric conversion', 'imperial conversion', 'measurement converter', 'online converter'],
 };
-
-const UnitConverterLoader = dynamic(() => import('@/components/UnitConverterLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed">
-        <Skeleton className="w-12 h-12 rounded-full" />
-        <Skeleton className="h-6 w-48 mt-4" />
-        <Skeleton className="h-4 w-64 mt-2" />
-        <Skeleton className="h-10 w-32 mt-4" />
-      </div>
-    </div>
-  )
-});
 
 const features = [
     {

@@ -1,8 +1,6 @@
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import CurrencyConverterLoader from '@/components/CurrencyConverterLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -11,20 +9,6 @@ export const metadata: Metadata = {
   description: 'Convert between hundreds of currencies with live, up-to-the-minute exchange rates. Fast, accurate, and easy to use.',
   keywords: ['currency converter', 'exchange rates', 'live currency rates', 'money converter', 'forex'],
 };
-
-const CurrencyConverterLoader = dynamic(() => import('@/components/CurrencyConverterLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed">
-        <Skeleton className="w-12 h-12 rounded-full" />
-        <Skeleton className="h-6 w-48 mt-4" />
-        <Skeleton className="h-4 w-64 mt-2" />
-        <Skeleton className="h-10 w-32 mt-4" />
-      </div>
-    </div>
-  )
-});
 
 const features = [
     {

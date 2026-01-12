@@ -1,10 +1,6 @@
-
-'use client';
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import QrCodeGeneratorLoader from '@/components/QrCodeGeneratorLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -13,21 +9,6 @@ export const metadata: Metadata = {
   description: 'Create custom QR codes for URLs, text, contacts (VCard), and more. Customize colors and download your QR code instantly for free.',
   keywords: ['qr code generator', 'create qr code', 'free qr code', 'vcard qr code', 'text to qr'],
 };
-
-
-const QrCodeGeneratorLoader = dynamic(() => import('@/components/QrCodeGeneratorLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="space-y-6">
-        <div className="flex flex-col items-center justify-center p-6 sm:p-10 rounded-lg border-2 border-dashed">
-             <Skeleton className="w-12 h-12 rounded-full" />
-             <Skeleton className="h-6 w-48 mt-4" />
-             <Skeleton className="h-4 w-64 mt-2" />
-             <Skeleton className="h-10 w-32 mt-4" />
-        </div>
-    </div>
-  )
-});
 
 const features = [
     {

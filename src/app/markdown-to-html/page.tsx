@@ -1,8 +1,6 @@
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import MarkdownToHtmlLoader from '@/components/MarkdownToHtmlLoader';
 import { Code, FileDown, Pencil } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -11,16 +9,6 @@ export const metadata: Metadata = {
   description: 'Instantly convert your Markdown into clean, formatted HTML with a side-by-side live preview. Copy or download the result for free.',
   keywords: ['markdown to html', 'md to html', 'markdown converter', 'live markdown editor', 'html converter'],
 };
-
-const MarkdownToHtmlLoader = dynamic(() => import('@/components/MarkdownToHtmlLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="grid md:grid-cols-2 gap-4 h-[70vh]">
-        <Skeleton className="w-full h-full" />
-        <Skeleton className="w-full h-full" />
-    </div>
-  )
-});
 
 const features = [
     {

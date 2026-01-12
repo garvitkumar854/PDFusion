@@ -1,8 +1,6 @@
-
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
 import FeatureGrid from '@/components/FeatureGrid';
+import TextSummarizerLoader from '@/components/TextSummarizerLoader';
 import { FileText, Zap, BrainCircuit } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -11,16 +9,6 @@ export const metadata: Metadata = {
   description: 'Our AI-powered tool helps you quickly summarize long articles, documents, and other texts to get the main points, fast.',
   keywords: ['text summarizer', 'ai summarizer', 'summarize text', 'article summarizer', 'free summarizer'],
 };
-
-const TextSummarizerLoader = dynamic(() => import('@/components/TextSummarizerLoader'), {
-  ssr: false,
-  loading: () => (
-    <div className="grid md:grid-cols-2 gap-4 h-[70vh]">
-        <Skeleton className="w-full h-full" />
-        <Skeleton className="w-full h-full" />
-    </div>
-  )
-});
 
 const features = [
     {
