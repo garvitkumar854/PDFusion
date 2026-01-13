@@ -20,6 +20,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useTheme } from 'next-themes';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { services as servicesData } from '@/lib/services';
+
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -79,28 +81,16 @@ export default function Header() {
     setMounted(true);
   }, []);
   
-  const services = [
-      { href: "/merger", label: "Merge PDF", icon: <Combine /> },
-      { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
-      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
-      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
-      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
-      { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
-      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
-      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
-      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
-      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
-      { href: "/assignment-tracker", label: "Course Pilot", icon: <BookCheck /> },
-  ];
+  const services = servicesData.filter(s => s.href !== '/more-tools').map(s => ({...s, label: s.title}));
 
   const moreTools = [
-      { href: "/calculator", label: "Calculator", icon: <Calculator /> },
-      { href: "/currency-converter", label: "Currency Converter", icon: <Currency /> },
-      { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
-      { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
-      { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
-      { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code /> },
-      { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow /> },
+      { href: "/calculator", label: "Calculator", icon: <Calculator className="text-blue-500" /> },
+      { href: "/currency-converter", label: "Currency Converter", icon: <Currency className="text-green-500" /> },
+      { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode className="text-purple-500" /> },
+      { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal className="text-orange-500" /> },
+      { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole className="text-red-500" /> },
+      { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code className="text-teal-500" /> },
+      { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow className="text-indigo-500" /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
@@ -163,7 +153,7 @@ export default function Header() {
                                           )}
                                       >
                                           <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                              {React.cloneElement(service.icon, { className: "w-5 h-5" })}
+                                              {React.cloneElement(service.icon, { className: cn("w-5 h-5", service.icon.props.className) })}
                                           </div>
                                           <span className="text-sm font-medium">{service.label}</span>
                                       </Link>
@@ -196,7 +186,7 @@ export default function Header() {
                       </nav>
                   </ScrollArea>
                   <div className="p-6 mt-auto border-t">
-                      <InstallPWA inSheet={true} />
+                      <InstallPWA />
                   </div>
               </SheetContent>
           </Sheet>
@@ -278,7 +268,7 @@ export default function Header() {
                            onMouseEnter={() => setIsMoreToolsMenuOpen(false)}
                         >
                           <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
-                            {service.icon}
+                            {React.cloneElement(service.icon, { className: cn("w-5 h-5", service.icon.props.className) })}
                           </div>
                           <span className="text-sm font-medium">{service.label}</span>
                         </Link>
@@ -292,7 +282,7 @@ export default function Header() {
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
                         >
-                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
+                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110 text-gray-500">
                            <LayoutGrid />
                           </div>
                           <span className="text-sm font-medium">More Tools</span>
@@ -322,7 +312,7 @@ export default function Header() {
                                 )}
                               >
                                <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
-                                {tool.icon}
+                                {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
                                </div>
                                 <span className="text-sm font-medium">{tool.label}</span>
                               </Link>
