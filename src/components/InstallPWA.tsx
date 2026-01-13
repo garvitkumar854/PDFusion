@@ -117,7 +117,7 @@ const InstallPWA = ({ inSheet = false }: { inSheet?: boolean }) => {
         disabled={isInstalling}
       >
         {isInstalling ? <Loader2 className={cn("w-4 h-4 animate-spin", !inSheet && "sm:mr-2")} /> : <ArrowDownToLine className={cn("w-4 h-4", !inSheet && "sm:mr-2")} />}
-        <span className={cn(inSheet ? "inline-block" : "hidden sm:inline-block")}>{isInstalling ? 'Installing...' : 'Install App'}</span>
+        <span className={cn(inSheet ? "inline-block" : "inline-block")}>{isInstalling ? 'Installing...' : 'Install App'}</span>
       </Button>
     );
   }

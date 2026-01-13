@@ -6,14 +6,13 @@ import Header from '@/components/Header';
 import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
-import Script from 'next/script';
 import type { Metadata, Viewport } from 'next';
 import ClientLayout from '@/components/ClientLayout';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '800']
+  weight: ['400', '500', '700']
 })
 
 const inter = Inter({
@@ -99,12 +98,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(poppins.variable, inter.variable)} suppressHydrationWarning>
       <head>
-        <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
-        <Script
-          strategy="lazyOnload"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
-          crossOrigin="anonymous"
-        ></Script>
       </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider

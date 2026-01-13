@@ -13,7 +13,18 @@ const withPWA = withPWAInit({
   sw: 'service-worker.js',
   runtimeCaching: [
     {
-      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+      urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'google-fonts-webfonts',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24 * 365,
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'google-fonts',

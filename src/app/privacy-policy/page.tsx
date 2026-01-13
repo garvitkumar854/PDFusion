@@ -2,7 +2,7 @@
 'use client';
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, ShieldCheck, FileLock, BarChart, Cookie, Mail } from "lucide-react";
+import { Sparkles, ShieldCheck, FileLock, Cookie, Mail } from "lucide-react";
 import Link from 'next/link';
 
 const policyPoints = [
@@ -17,14 +17,9 @@ const policyPoints = [
         description: "We do not require you to sign up or provide any personal information like your name, email address, or other contact details to use our services. PDFusion is free to use anonymously."
     },
     {
-        icon: <BarChart className="w-8 h-8 text-purple-500" />,
-        title: "Third-Party Advertisements (Google AdSense)",
-        description: "We use Google AdSense to display ads on our website, which helps us keep our tools free. Google may use cookies to serve ads based on a user's prior visits to our website or other websites. You can opt out of personalized advertising by visiting Google's Ad Settings."
-    },
-    {
         icon: <Cookie className="w-8 h-8 text-orange-500" />,
         title: "Cookies",
-        description: "Our website uses a minimal number of cookies for essential functionality, such as theme preferences (light/dark mode). We do not use cookies to track your activity across other sites. Third-party services like Google AdSense may use their own cookies for advertising purposes."
+        description: "Our website uses a minimal number of cookies for essential functionality, such as theme preferences (light/dark mode). We do not use cookies to track your activity across other sites."
     },
     {
         icon: <Mail className="w-8 h-8 text-red-500" />,
