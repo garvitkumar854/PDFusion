@@ -49,9 +49,8 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/192x192.png",
-    shortcut: "/icons/192x192.png",
-    apple: "/icons/192x192.png",
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
   },
   openGraph: {
     type: "website",
@@ -102,12 +101,12 @@ export default function RootLayout({
       <head>
         <meta name="google-adsense-account" content="ca-pub-4853497722580911" />
         <Script
-          async
+          strategy="lazyOnload"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4853497722580911"
           crossOrigin="anonymous"
         ></Script>
       </head>
-      <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen" suppressHydrationWarning={true}>
+      <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
