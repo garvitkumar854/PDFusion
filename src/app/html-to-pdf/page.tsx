@@ -1,6 +1,3 @@
-
-'use client';
-
 import ComingSoon from '@/components/ComingSoon';
 import type { Metadata } from 'next';
 
