@@ -61,7 +61,7 @@ const AssignmentItem = ({
         isFirstInGroup && isLastInGroup ? 'rounded-xl' : '',
         isFirstInGroup && !isLastInGroup ? 'rounded-t-xl rounded-b-none border-b-0' : '',
         !isFirstInGroup && isLastInGroup ? 'rounded-b-xl rounded-t-none' : '',
-        !isFirstInGroup && !isLastInGroup ? 'rounded-none border-b-0 border-t-0' : ''
+        !isFirstInGroup && !isLastInGroup ? 'rounded-none border-t-0 border-b-0' : ''
       )}>
         <div className="flex items-center p-3 sm:p-4">
              <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
@@ -160,33 +160,33 @@ export const SubjectDetail = ({
   
   const handleReorder = (newOrder: Assignment[]) => {
     const movedItemIndex = newOrder.findIndex((item, index) => item.id !== orderedAssignments[index]?.id);
-    if (movedItemIndex === -1) return;
+    if (movedItemIndex === -1) return; // No change in order
 
     const movedItem = newOrder[movedItemIndex];
     const prevItem = newOrder[movedItemIndex - 1];
-    
-    let targetDate: string;
+    const nextItem = newOrder[movedItemIndex + 1];
 
-    if (prevItem) {
-        targetDate = prevItem.date;
-    } else {
-        // If it's the very first item, keep its date but check if it's different from the next one
-        const nextItem = newOrder[movedItemIndex + 1];
-        if (nextItem && !isSameDay(parseISO(movedItem.date), parseISO(nextItem.date))) {
-             // Heuristic: If it's moved to the top and its date is different, it likely started a new group.
-             // This is complex; for now, we just keep its date. A better approach might be needed if this is buggy.
-             targetDate = movedItem.date;
-        } else if (nextItem) {
-             targetDate = nextItem.date;
-        } else {
-            targetDate = movedItem.date;
-        }
+    let targetDate = movedItem.date;
+
+    // Determine the date of the group it was dropped into
+    if (prevItem && !isSameDay(parseISO(movedItem.date), parseISO(prevItem.date))) {
+      // Dropped into a new group, adopt the previous item's date
+      targetDate = prevItem.date;
+    } else if (!prevItem && nextItem && !isSameDay(parseISO(movedItem.date), parseISO(nextItem.date))) {
+      // Dropped at the very top of the list, adopt the next item's date if it's different
+      // This is a heuristic that assumes moving to the top means joining the next group
+      targetDate = nextItem.date;
     }
-    
-    const finalOrder = newOrder.map(item =>
-        item.id === movedItem.id ? { ...item, date: targetDate } : item
-    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-     .map((item, index) => ({ ...item, order: index }));
+
+    // Create a new array with the updated date for the moved item
+    const updatedOrderWithDate = newOrder.map(item => 
+      item.id === movedItem.id ? { ...item, date: targetDate } : item
+    );
+
+    // Re-sort the entire list by the new dates and then assign order
+    const finalOrder = updatedOrderWithDate
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((item, index) => ({ ...item, order: index }));
 
     setOrderedAssignments(finalOrder);
     setHasReordered(true);
@@ -241,7 +241,7 @@ export const SubjectDetail = ({
                       axis="y"
                       values={orderedAssignments}
                       onReorder={user ? handleReorder : () => {}}
-                      className="space-y-6"
+                      className="space-y-4"
                     >
                       {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
                         <div key={date}>
@@ -250,7 +250,10 @@ export const SubjectDetail = ({
                             </div>
                            <div className="space-y-px">
                             {assignmentsInGroup.map((assignment, index) => (
-                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined} dragControls={useDragControls()}>
+                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined} dragControls={useDragControls()}
+                                  className="z-10 relative"
+                                  whileDrag={{scale: 1.03, boxShadow: "0px 4px 20px rgba(0,0,0,0.1)", zIndex: 20}}
+                                >
                                    <AssignmentItem
                                       assignment={assignment}
                                       index={orderedAssignments.findIndex(a => a.id === assignment.id)}
