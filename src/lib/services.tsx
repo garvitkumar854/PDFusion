@@ -61,6 +61,13 @@ export const services: Service[] = [
       href: '/pdf-to-html'
     },
     {
+      icon: <FileText className="text-lime-500" />,
+      bgColor: 'bg-lime-100 dark:bg-lime-900/20',
+      title: 'HTML to PDF',
+      description: 'Convert webpages to high-quality PDF files for offline viewing.',
+      href: '/html-to-pdf',
+    },
+    {
       icon: <RotateCw className="text-purple-500" />,
       bgColor: 'bg-purple-100 dark:bg-purple-900/20',
       title: 'Rotate PDF',
