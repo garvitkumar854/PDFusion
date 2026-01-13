@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X } from 'lucide-react';
+import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X, BookCheck } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollDirection } from '@/hooks/use-scroll-direction';
 import { useTheme } from 'next-themes';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { services as servicesData } from '@/lib/services';
+
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -79,18 +81,7 @@ export default function Header() {
     setMounted(true);
   }, []);
   
-  const services = [
-      { href: "/merger", label: "Merge PDF", icon: <Combine /> },
-      { href: "/split-pdf", label: "Split PDF", icon: <Scissors /> },
-      { href: "/organize-pdf", label: "Organize PDF", icon: <ListOrdered /> },
-      { href: "/pdf-to-jpg", label: "PDF to JPG", icon: <ImageIcon /> },
-      { href: "/jpg-to-pdf", label: "JPG to PDF", icon: <FileText /> },
-      { href: "/add-watermark", label: "Add Watermark", icon: <Droplets /> },
-      { href: "/pdf-to-html", label: "PDF to HTML", icon: <Code /> },
-      { href: "/html-to-pdf", label: "HTML to PDF", icon: <FileText /> },
-      { href: "/rotate-pdf", label: "Rotate PDF", icon: <RotateCw /> },
-      { href: "/add-page-numbers", label: "Add Page Numbers", icon: <Hash /> },
-  ];
+  const services = servicesData.filter(s => s.href !== '/more-tools').map(s => ({...s, label: s.title}));
 
   const moreTools = [
       { href: "/calculator", label: "Calculator", icon: <Calculator /> },
@@ -100,7 +91,6 @@ export default function Header() {
       { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
       { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code /> },
       { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow /> },
-      { href: '/invoice-generator', label: 'Invoice Generator', icon: <FileText /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
