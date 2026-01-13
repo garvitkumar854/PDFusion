@@ -1,14 +1,14 @@
 
-import PdfRotatorLoader from '@/components/PdfRotatorLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import PdfRotatorLoader from '@/components/PdfRotatorLoader';
 
 export const metadata: Metadata = {
-  title: 'Rotate PDF',
-  description: 'Rotate all pages in your PDF by 90, 180, or 270 degrees. See a live preview before applying the changes. Secure, fast, and free.',
-  keywords: ['rotate pdf', 'pdf rotator', 'fix pdf orientation', 'pdf editor', 'online pdf tool'],
+  title: 'Rotate PDF Free - Fix PDF Orientation Online | PDFusion',
+  description: 'Easily rotate all pages in your PDF by 90, 180, or 270 degrees. See a live preview before applying changes. Secure, fast, and completely free.',
+  keywords: ['rotate pdf', 'pdf rotator', 'fix pdf orientation', 'pdf editor', 'online pdf tool', 'rotate pdf free'],
 };
 
 

@@ -6,9 +6,9 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Merge PDFs',
-  description: 'Combine multiple PDF files into one document quickly and securely. No file size limits, no watermarks, completely free.',
-  keywords: ['merge pdf', 'combine pdf', 'pdf merger', 'join pdf', 'pdf editor', 'free pdf tool'],
+  title: 'Merge PDF Files Free - Unlimited PDF Combiner | PDFusion',
+  description: 'Combine multiple PDF files into one single document for free. Our online PDF merger is fast, secure, and requires no uploads. Drag, drop, and merge in seconds.',
+  keywords: ['merge pdf', 'combine pdf', 'pdf merger', 'join pdf', 'unlimited pdf merger', 'free pdf combiner', 'online pdf tool'],
 };
 
 

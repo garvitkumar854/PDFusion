@@ -1,14 +1,14 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import PdfToHtmlLoader from '@/components/PdfToHtmlLoader';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import PdfToHtmlLoader from '@/components/PdfToHtmlLoader';
 
 export const metadata: Metadata = {
-  title: 'Convert PDF to HTML',
-  description: 'Quickly extract text and basic structure from your PDF into a simple, clean HTML file. Fast, secure, and free.',
-  keywords: ['pdf to html', 'convert pdf to html', 'pdf extractor', 'pdf text extractor', 'pdf to web'],
+  title: 'PDF to HTML Converter - Free & Secure | PDFusion',
+  description: 'Quickly convert your PDF into a clean, simple HTML file. Our tool extracts text and basic structure securely in your browser. Fast, free, and no uploads needed.',
+  keywords: ['pdf to html', 'convert pdf to html', 'pdf extractor', 'pdf text extractor', 'pdf to web', 'free pdf converter'],
 };
 
 const features = [

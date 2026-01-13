@@ -1,14 +1,14 @@
 
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import PdfOrganizerLoader from '@/components/PdfOrganizerLoader';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import PdfOrganizerLoader from '@/components/PdfOrganizerLoader';
 
 export const metadata: Metadata = {
-  title: 'Organize PDF Pages',
-  description: 'Easily reorder, rotate, and delete pages from your PDF with a simple, visual drag-and-drop interface. Fast, secure, and free.',
-  keywords: ['organize pdf', 'reorder pdf pages', 'delete pdf pages', 'rotate pdf pages', 'pdf editor'],
+  title: 'Organize PDF Pages Free - Reorder, Rotate & Delete | PDFusion',
+  description: 'Visually reorder, rotate, and delete PDF pages with our free online organizer. Secure drag-and-drop interface works in your browser. No uploads required.',
+  keywords: ['organize pdf', 'reorder pdf pages', 'delete pdf pages', 'rotate pdf pages', 'pdf page manager', 'free pdf organizer'],
 };
 
 const features = [

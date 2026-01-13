@@ -6,9 +6,9 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Convert PDF to JPG',
-  description: 'Turn each page of your PDF into high-quality JPG images. Select all pages or specific ones. Fast, secure, and entirely free.',
-  keywords: ['pdf to jpg', 'convert pdf to jpg', 'pdf to image', 'pdf converter', 'online pdf tool'],
+  title: 'PDF to JPG Converter - Free & High Quality | PDFusion',
+  description: 'Convert each page of your PDF into high-quality JPG images for free. Select specific pages or convert the entire document. Secure, fast, and works in your browser.',
+  keywords: ['pdf to jpg', 'convert pdf to jpg', 'pdf to image', 'pdf to jpeg', 'free pdf converter', 'online pdf tool'],
 };
 
 

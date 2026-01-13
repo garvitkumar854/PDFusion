@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import QrCodeGeneratorLoader from '@/components/QrCodeGeneratorLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import QrCodeGeneratorLoader from '@/components/QrCodeGeneratorLoader';
 
 export const metadata: Metadata = {
-  title: 'QR Code Generator',
-  description: 'Create custom QR codes for URLs, text, contacts (VCard), and more. Customize colors and download your QR code instantly for free.',
-  keywords: ['qr code generator', 'create qr code', 'free qr code', 'vcard qr code', 'text to qr'],
+  title: 'Free QR Code Generator - Create Custom QR Codes | PDFusion',
+  description: 'Create custom QR codes for URLs, text, contacts (VCard), and more. Customize colors, size, and download your QR code instantly for free. Live preview included.',
+  keywords: ['qr code generator', 'create qr code', 'free qr code', 'vcard qr code', 'text to qr', 'custom qr code'],
 };
 
 const features = [

@@ -1,14 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
-import dynamic from 'next/dynamic';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 import PageNumberAdderLoader from '@/components/PageNumberAdderLoader';
 
 export const metadata: Metadata = {
-  title: 'Add Page Numbers to PDF',
-  description: 'Easily insert and customize page numbers on your PDF. Adjust position, format, style, and more with an instant live preview. Secure and free.',
-  keywords: ['add page numbers to pdf', 'pdf page numbers', 'number pdf pages', 'pdf editor', 'online pdf tool'],
+  title: 'Add Page Numbers to PDF Free - Online Page Numbering | PDFusion',
+  description: 'Easily insert and customize page numbers in your PDF for free. Adjust position, format, style, and page range with an instant live preview. Secure and client-side.',
+  keywords: ['add page numbers to pdf', 'pdf page numbers', 'number pdf pages', 'free pdf page numbering', 'online pdf tool'],
 };
 
 const features = [

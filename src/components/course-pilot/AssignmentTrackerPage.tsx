@@ -1,0 +1,507 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { LoginDialog } from '@/components/course-pilot/LoginDialog';
+import { SubjectCard } from '@/components/course-pilot/SubjectCard';
+import { SubjectDetail } from '@/components/course-pilot/SubjectDetail';
+import { SubjectDialog } from '@/components/course-pilot/SubjectDialog';
+import { AssignmentDialog } from '@/components/course-pilot/AssignmentDialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
+import AnimateOnScroll from '@/components/AnimateOnScroll';
+import { Button } from '@/components/ui/button';
+import { LogIn, LogOut, Plus } from 'lucide-react';
+import { BookCheck } from 'lucide-react';
+
+interface Subject {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Assignment {
+  id: string;
+  subject_id: string;
+  title: string;
+  description: string;
+  date: string;
+  created_at: string;
+  updated_at: string;
+  order: number;
+}
+
+export default function AssignmentTrackerPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (db) {
+      fetchSubjects();
+      fetchAssignments();
+    }
+  }, []);
+
+  const fetchSubjects = async () => {
+    if (!db) return;
+    setLoading(true);
+    try {
+      const subjectsQuery = query(
+        collection(db, 'subjects'),
+        orderBy('created_at', 'desc'),
+      );
+      const snapshot = await getDocs(subjectsQuery);
+      const nextSubjects = snapshot.docs.map((d) => {
+        const data = d.data() as Omit<Subject, 'id'>;
+        return { id: d.id, ...data };
+      });
+      setSubjects(nextSubjects);
+    } catch (err) {
+      console.error('Error fetching subjects:', err);
+      toast({ title: 'Failed to load subjects', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAssignments = async () => {
+    if (!db) return;
+    try {
+      const assignmentsQuery = query(
+        collection(db, 'assignments'),
+        orderBy('date', 'asc'),
+      );
+      const snapshot = await getDocs(assignmentsQuery);
+      const nextAssignments = snapshot.docs.map((d) => {
+        const data = d.data() as Omit<Assignment, 'id'>;
+        return { id: d.id, ...data };
+      });
+      setAssignments(nextAssignments);
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+      toast({ title: 'Failed to load assignments', variant: 'destructive' });
+    }
+  };
+
+  const getSubjectAssignments = (subjectId: string) => {
+    return assignments
+      .filter((a) => a.subject_id === subjectId)
+      .slice()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
+  };
+  
+  const handleReorderAssignments = async (orderedAssignments: Assignment[]) => {
+    if (!db) return;
+    const batch = writeBatch(db);
+    orderedAssignments.forEach(assignment => {
+      const docRef = doc(db, 'assignments', assignment.id);
+      batch.update(docRef, { order: assignment.order, date: assignment.date });
+    });
+    
+    try {
+      await batch.commit();
+      // Optimistically update local state while refetching for consistency
+      setAssignments(prev => {
+        const updatedIds = new Set(orderedAssignments.map(a => a.id));
+        const unchanged = prev.filter(a => !updatedIds.has(a.id));
+        return [...unchanged, ...orderedAssignments];
+      });
+      toast({ title: 'Order saved!', variant: 'success' });
+      // Refetch to ensure data is consistent
+      await fetchAssignments();
+    } catch(err) {
+      console.error("Failed to save order:", err);
+      toast({ title: 'Failed to save order', variant: 'destructive' });
+    }
+  }
+
+
+  const handleAddSubject = async (name: string) => {
+    if (!db) return;
+    const now = new Date().toISOString();
+    const tempId = `temp-${Date.now()}`;
+    const newSubject = { id: tempId, name, created_at: now, updated_at: now };
+    
+    setSubjects(prev => [newSubject, ...prev]);
+
+    try {
+      const docRef = await addDoc(collection(db, 'subjects'), {
+        name,
+        created_at: now,
+        updated_at: now,
+      });
+      setSubjects(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
+    } catch (err) {
+      setSubjects(prev => prev.filter(s => s.id !== tempId));
+      throw err instanceof Error ? err : new Error('Failed to add subject');
+    }
+  };
+
+  const handleUpdateSubject = async (name: string) => {
+    if (!editingSubject || !db) return;
+    
+    const originalSubjects = [...subjects];
+    const updatedSubject = { ...editingSubject, name, updated_at: new Date().toISOString() };
+
+    setSubjects(prev => prev.map(s => s.id === editingSubject.id ? updatedSubject : s));
+    if (selectedSubject?.id === editingSubject.id) {
+        setSelectedSubject(updatedSubject);
+    }
+    
+    try {
+      await updateDoc(doc(db, 'subjects', editingSubject.id), {
+        name,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      setSubjects(originalSubjects);
+      if (selectedSubject?.id === editingSubject.id) {
+        setSelectedSubject(originalSubjects.find(s => s.id === editingSubject.id) || null);
+      }
+      throw err instanceof Error ? err : new Error('Failed to update subject');
+    }
+  };
+
+  const handleDeleteSubject = async () => {
+    if (!editingSubject || !db) return;
+
+    const originalSubjects = subjects;
+    const originalAssignments = assignments;
+
+    setSubjects(prev => prev.filter(s => s.id !== editingSubject.id));
+    setAssignments(prev => prev.filter(a => a.subject_id !== editingSubject.id));
+     if (selectedSubject?.id === editingSubject.id) {
+        setSelectedSubject(null);
+    }
+    setEditingSubject(null);
+
+    try {
+      const batch = writeBatch(db);
+      const assignmentsQuery = query(
+        collection(db, 'assignments'),
+        where('subject_id', '==', editingSubject.id),
+      );
+      const assignmentSnapshot = await getDocs(assignmentsQuery);
+      assignmentSnapshot.docs.forEach((d) => batch.delete(d.ref));
+      batch.delete(doc(db, 'subjects', editingSubject.id));
+      await batch.commit();
+    } catch (err) {
+        setSubjects(originalSubjects);
+        setAssignments(originalAssignments);
+        throw err instanceof Error ? err : new Error('Failed to delete subject');
+    }
+  };
+
+  const handleAddAssignment = async (data: {
+    title: string;
+    description: string;
+    date: string;
+  }) => {
+    if (!selectedSubject || !db) return;
+
+    const subjectAssignments = getSubjectAssignments(selectedSubject.id);
+    const maxOrder = subjectAssignments.reduce((max, a) => Math.max(max, a.order), -1);
+
+    const now = new Date().toISOString();
+    const newAssignmentData = {
+        subject_id: selectedSubject.id,
+        ...data,
+        created_at: now,
+        updated_at: now,
+        order: maxOrder + 1,
+    };
+    
+    const docRef = await addDoc(collection(db, 'assignments'), newAssignmentData);
+    setAssignments(prev => [...prev, { ...newAssignmentData, id: docRef.id }]);
+  };
+
+  const handleUpdateAssignment = async (data: {
+    title: string;
+    description: string;
+    date: string;
+  }) => {
+    if (!editingAssignment || !db) return;
+    try {
+        await updateDoc(doc(db, 'assignments', editingAssignment.id), {
+            ...data,
+            updated_at: new Date().toISOString(),
+        });
+        await fetchAssignments(); // Refetch to get fresh data
+    } catch (err) {
+       console.error('Error updating assignment:', err);
+       throw err instanceof Error ? err : new Error('Failed to update assignment');
+    }
+  };
+
+  const handleDeleteAssignment = async (id: string) => {
+    if (!db) return;
+    const originalAssignments = assignments;
+
+    setAssignments(prev => prev.filter(a => a.id !== id));
+    toast({ title: 'Assignment deleted', variant: 'success' });
+    try {
+      await deleteDoc(doc(db, 'assignments', id));
+    } catch (err) {
+      setAssignments(originalAssignments);
+      console.error('Error deleting assignment:', err);
+      toast({ title: 'Failed to delete assignment', variant: 'destructive' });
+    }
+  };
+  
+  const handleProtectedAction = (callback: () => void) => {
+    if (user) {
+      callback();
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
+
+  if (selectedSubject) {
+    return (
+      <>
+        <SubjectDetail
+          subjectName={selectedSubject.name}
+          assignments={getSubjectAssignments(selectedSubject.id)}
+          onBack={() => setSelectedSubject(null)}
+          onAddAssignment={() => handleProtectedAction(() => {
+            setEditingAssignment(null);
+            setIsAssignmentDialogOpen(true);
+          })}
+          onEditAssignment={(assignment) => handleProtectedAction(() => {
+            setEditingAssignment(assignment);
+            setIsAssignmentDialogOpen(true);
+          })}
+          onDeleteAssignment={handleDeleteAssignment}
+          onReorderAssignments={handleReorderAssignments}
+        />
+        <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+        <SubjectDialog
+            isOpen={isSubjectDialogOpen}
+            onClose={() => {
+                setIsSubjectDialogOpen(false);
+                setEditingSubject(null);
+            }}
+            onSave={async (name) => {
+                if (editingSubject) {
+                    await handleUpdateSubject(name);
+                    toast({ title: 'Subject updated', variant: 'success' });
+                } else {
+                    await handleAddSubject(name);
+                    toast({ title: 'Subject added', variant: 'success' });
+                }
+            }}
+            onDelete={
+                editingSubject
+                ? async () => {
+                    try {
+                        await handleDeleteSubject();
+                        toast({ title: 'Subject deleted', variant: 'success' });
+                    } catch (err) {
+                        toast({
+                        title: err instanceof Error ? err.message : 'Failed to delete subject',
+                        variant: 'destructive',
+                        });
+                        throw err;
+                    }
+                    }
+                : undefined
+            }
+            initialName={editingSubject?.name}
+            isEdit={!!editingSubject}
+        />
+       <AssignmentDialog
+            isOpen={isAssignmentDialogOpen}
+            onClose={() => {
+                setIsAssignmentDialogOpen(false);
+                setEditingAssignment(null);
+            }}
+            onSave={async (data) => {
+                try {
+                if (editingAssignment) {
+                    await handleUpdateAssignment(data);
+                    toast({ title: 'Assignment updated', variant: 'success' });
+                } else {
+                    await handleAddAssignment(data);
+                    toast({ title: 'Assignment added', variant: 'success' });
+                }
+                } catch (err) {
+                toast({ title: err instanceof Error ? err.message : 'Failed to save assignment', variant: 'destructive' });
+                throw err;
+                }
+            }}
+            initialData={
+                editingAssignment
+                ? {
+                    title: editingAssignment.title,
+                    description: editingAssignment.description,
+                    date: editingAssignment.date,
+                    }
+                : undefined
+            }
+            isEdit={!!editingAssignment}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <section className="text-center my-12">
+        <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-4">
+            Course Pilot
+             <br />
+              <span className="relative inline-block">
+                <span className="text-2xl sm:text-3xl md:text-5xl bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
+                    Track Your Coursework
+                </span>
+              </span>
+          </h1>
+          <p className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg">
+            A simple and effective way to manage your coursework and deadlines.
+          </p>
+        </AnimateOnScroll>
+      </section>
+
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <h2 className="text-3xl font-bold text-foreground">Subjects</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground capitalize">
+            {subjects.length} {subjects.length === 1 ? 'Subject' : 'Subjects'}
+          </div>
+          <div className="px-4 py-2 rounded-full border border-border bg-card text-sm font-semibold text-card-foreground capitalize">
+            {assignments.length} {assignments.length === 1 ? 'Assignment' : 'Assignments'}
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6 flex justify-end gap-2">
+        {!authLoading && (
+          user ? (
+            <>
+              <Button onClick={() => handleProtectedAction(() => { setEditingSubject(null); setIsSubjectDialogOpen(true); })} className="sm:w-auto w-10 p-0 sm:px-4 sm:py-2" variant="default">
+                <Plus size={16} className="sm:mr-2" />
+                <span className="hidden sm:inline">Add Subject</span>
+              </Button>
+              <Button variant="outline" onClick={() => auth.signOut()}>
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" onClick={() => setIsLoginOpen(true)}>
+              <LogIn size={16} className="mr-2" />
+              Admin Login
+            </Button>
+          )
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">Loading subjects...</p>
+        </div>
+      ) : subjects.length === 0 ? (
+        <div className="text-center py-16">
+           <AnimateOnScroll animation="animate-in fade-in-0 zoom-in-95 duration-500">
+            <div className="inline-block bg-primary/10 p-4 rounded-full">
+                <BookCheck className="w-10 h-10 text-primary" />
+            </div>
+          </AnimateOnScroll>
+          <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12 duration-500 delay-100">
+            <p className="mt-4 text-lg font-semibold text-foreground">No subjects yet</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+                Click "Add Subject" to get started.
+            </p>
+          </AnimateOnScroll>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {subjects.map((subject) => {
+            const subjectAssignments = getSubjectAssignments(subject.id);
+            const assignmentTimestamps = subjectAssignments.map(a => new Date(a.updated_at).getTime());
+            const subjectTimestamp = new Date(subject.updated_at).getTime();
+            const latestTimestamp = Math.max(subjectTimestamp, ...assignmentTimestamps);
+            const lastUpdatedAt = isNaN(latestTimestamp) ? subject.updated_at : new Date(latestTimestamp).toISOString();
+
+            return (
+              <SubjectCard
+                key={subject.id}
+                id={subject.id}
+                name={subject.name}
+                assignments={subjectAssignments}
+                updatedAt={lastUpdatedAt}
+                onView={() => setSelectedSubject(subject)}
+                onEdit={() => handleProtectedAction(() => {
+                  setEditingSubject(subject);
+                  setIsSubjectDialogOpen(true);
+                })}
+              />
+            )
+          })}
+        </div>
+      )}
+
+      <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <SubjectDialog
+        isOpen={isSubjectDialogOpen}
+        onClose={() => {
+          setIsSubjectDialogOpen(false);
+          setEditingSubject(null);
+        }}
+        onSave={async (name) => {
+          try {
+            if (editingSubject) {
+              await handleUpdateSubject(name);
+              toast({ title: 'Subject updated', variant: 'success' });
+            } else {
+              await handleAddSubject(name);
+              toast({ title: 'Subject added', variant: 'success' });
+            }
+          } catch (err) {
+            toast({ title: err instanceof Error ? err.message : 'Failed to save subject', variant: 'destructive' });
+            throw err;
+          }
+        }}
+        onDelete={
+          editingSubject
+            ? async () => {
+                try {
+                  await handleDeleteSubject();
+                  toast({ title: 'Subject deleted', variant: 'success' });
+                } catch (err) {
+                  toast({ title: err instanceof Error ? err.message : 'Failed to delete subject', variant: 'destructive' });
+                  throw err;
+                }
+              }
+            : undefined
+        }
+        initialName={editingSubject?.name}
+        isEdit={!!editingSubject}
+      />
+    </>
+  );
+}

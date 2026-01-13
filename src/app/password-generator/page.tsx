@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import PasswordGeneratorLoader from '@/components/PasswordGeneratorLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import PasswordGeneratorLoader from '@/components/PasswordGeneratorLoader';
 
 export const metadata: Metadata = {
-  title: 'Secure Password Generator',
-  description: 'Create strong, random, memorable, or PIN passwords with customizable options. All passwords generated securely in your browser.',
-  keywords: ['password generator', 'strong password', 'secure password', 'random password', 'memorable password', 'pin generator'],
+  title: 'Secure Password Generator - Create Strong, Random Passwords | PDFusion',
+  description: 'Generate strong, random, memorable, or PIN passwords with customizable options. All passwords are generated securely in your browser. Copy your new password in one click.',
+  keywords: ['password generator', 'strong password generator', 'secure password', 'random password', 'memorable password', 'pin generator', 'free password tool'],
 };
 
 const features = [

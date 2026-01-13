@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import MarkdownToHtmlLoader from '@/components/MarkdownToHtmlLoader';
 import { Code, FileDown, Pencil } from 'lucide-react';
 import type { Metadata } from 'next';
+import MarkdownToHtmlLoader from '@/components/MarkdownToHtmlLoader';
 
 export const metadata: Metadata = {
-  title: 'Markdown to HTML Converter',
-  description: 'Instantly convert your Markdown into clean, formatted HTML with a side-by-side live preview. Copy or download the result for free.',
-  keywords: ['markdown to html', 'md to html', 'markdown converter', 'live markdown editor', 'html converter'],
+  title: 'Markdown to HTML Converter - Live Preview | PDFusion',
+  description: 'Instantly convert your Markdown into clean, formatted HTML with a side-by-side live preview. Copy or download the result for free. Secure and client-side.',
+  keywords: ['markdown to html', 'md to html', 'markdown converter', 'live markdown editor', 'html converter', 'markdown previewer'],
 };
 
 const features = [

@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import CurrencyConverterLoader from '@/components/CurrencyConverterLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import CurrencyConverterLoader from '@/components/CurrencyConverterLoader';
 
 export const metadata: Metadata = {
-  title: 'Live Currency Converter',
-  description: 'Convert between hundreds of currencies with live, up-to-the-minute exchange rates. Fast, accurate, and easy to use.',
-  keywords: ['currency converter', 'exchange rates', 'live currency rates', 'money converter', 'forex'],
+  title: 'Live Currency Converter - Real-Time Exchange Rates | PDFusion',
+  description: 'Convert between hundreds of currencies with live, up-to-the-minute exchange rates. Our free currency calculator is fast, accurate, and easy to use.',
+  keywords: ['currency converter', 'exchange rates', 'live currency rates', 'money converter', 'forex calculator', 'currency calculator'],
 };
 
 const features = [

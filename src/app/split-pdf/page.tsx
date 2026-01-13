@@ -6,9 +6,9 @@ import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Split PDF',
-  description: 'Extract pages from your PDF file by selecting ranges, specific pages, or splitting into fixed-size files. Fast, secure, and completely free.',
-  keywords: ['split pdf', 'pdf splitter', 'extract pdf pages', 'pdf separator', 'free pdf tool'],
+  title: 'Split PDF - Extract Pages from PDF Free | PDFusion',
+  description: 'Easily split a PDF into multiple files or extract specific pages. Our online PDF splitter works in your browser, ensuring your files remain private. Free and fast.',
+  keywords: ['split pdf', 'pdf splitter', 'extract pdf pages', 'pdf separator', 'pdf cutter', 'free pdf splitter', 'online pdf tool'],
 };
 
 

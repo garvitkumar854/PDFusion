@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import UnitConverterLoader from '@/components/UnitConverterLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import UnitConverterLoader from '@/components/UnitConverterLoader';
 
 export const metadata: Metadata = {
-  title: 'All-in-One Unit Converter',
-  description: 'Instantly convert between various units for length, mass, temperature, time, volume, speed, area, and more. Free and easy to use.',
-  keywords: ['unit converter', 'metric conversion', 'imperial conversion', 'measurement converter', 'online converter'],
+  title: 'All-in-One Unit Converter - Free & Online | PDFusion',
+  description: 'Instantly convert between various units for length, mass, temperature, time, volume, speed, area, and more. Our free unit converter is easy to use and provides real-time results.',
+  keywords: ['unit converter', 'metric conversion', 'imperial conversion', 'measurement converter', 'online converter', 'length converter', 'mass converter', 'temperature converter'],
 };
 
 const features = [

@@ -1,14 +1,14 @@
 
-import JpgToPdfLoader from '@/components/JpgToPdfLoader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import JpgToPdfLoader from '@/components/JpgToPdfLoader';
 
 export const metadata: Metadata = {
-  title: 'Convert JPG to PDF',
-  description: 'Turn your JPG images into a single PDF document with custom orientation, margins, and page size. Fast, secure, and entirely free.',
-  keywords: ['jpg to pdf', 'image to pdf', 'convert jpg to pdf', 'png to pdf', 'images to pdf'],
+  title: 'JPG to PDF Converter - Convert Images to PDF Free | PDFusion',
+  description: 'Turn JPG, PNG, and other images into a single PDF document. Customize page orientation, margins, and size. Fast, secure, and entirely free. No uploads required.',
+  keywords: ['jpg to pdf', 'image to pdf', 'convert jpg to pdf', 'png to pdf', 'images to pdf', 'free image converter'],
 };
 
 

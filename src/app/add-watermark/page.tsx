@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import WatermarkAdderLoader from '@/components/WatermarkAdderLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import WatermarkAdderLoader from '@/components/WatermarkAdderLoader';
 
 export const metadata: Metadata = {
-  title: 'Add Watermark to PDF',
-  description: 'Easily stamp a text or image watermark over your PDF pages. Customize position, transparency, and style with an instant live preview. Secure and free.',
-  keywords: ['add watermark to pdf', 'pdf watermark', 'watermark pdf', 'pdf editor', 'online pdf tool'],
+  title: 'Add Watermark to PDF Free - Text & Image Watermarking | PDFusion',
+  description: 'Easily stamp a text or image watermark onto your PDF. Customize position, opacity, rotation, and style with a live preview. 100% free, secure, and client-side.',
+  keywords: ['add watermark to pdf', 'pdf watermark', 'watermark pdf free', 'image watermark pdf', 'text watermark pdf', 'online pdf tool'],
 };
 
 const features = [

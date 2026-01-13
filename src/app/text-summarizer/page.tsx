@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import TextSummarizerLoader from '@/components/TextSummarizerLoader';
 import { FileText, Zap, BrainCircuit } from 'lucide-react';
 import type { Metadata } from 'next';
+import TextSummarizerLoader from '@/components/TextSummarizerLoader';
 
 export const metadata: Metadata = {
-  title: 'AI Text Summarizer',
-  description: 'Our AI-powered tool helps you quickly summarize long articles, documents, and other texts to get the main points, fast.',
-  keywords: ['text summarizer', 'ai summarizer', 'summarize text', 'article summarizer', 'free summarizer'],
+  title: 'AI Text Summarizer - Free Article Summarizer | PDFusion',
+  description: 'Our free AI-powered tool helps you quickly summarize long articles, documents, and other texts to get the main points, fast. Customize length, format, and tone.',
+  keywords: ['text summarizer', 'ai summarizer', 'summarize text', 'article summarizer', 'free summarizer', 'tl;dr generator'],
 };
 
 const features = [

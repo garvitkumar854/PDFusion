@@ -1,13 +1,14 @@
+
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
-import CalculatorLoader from '@/components/CalculatorLoader';
 import { ListChecks, ShieldCheck, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
+import CalculatorLoader from '@/components/CalculatorLoader';
 
 export const metadata: Metadata = {
-  title: 'Simple & Elegant Calculator',
-  description: 'A beautifully designed, easy-to-use calculator for all your daily needs, featuring a clean interface and calculation history.',
-  keywords: ['calculator', 'online calculator', 'simple calculator', 'math tool', 'free calculator'],
+  title: 'Free Online Calculator - Simple & Elegant | PDFusion',
+  description: 'A beautifully designed, easy-to-use calculator for all your daily needs. Features a clean interface, large buttons, and calculation history. Perfect for desktop and mobile.',
+  keywords: ['calculator', 'online calculator', 'simple calculator', 'math tool', 'free calculator', 'web calculator'],
 };
 
 const features = [
