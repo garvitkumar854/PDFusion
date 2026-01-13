@@ -176,7 +176,7 @@ export default function Header() {
                                           )}
                                       >
                                           <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                              {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
+                                              {React.cloneElement(tool.icon, { className: cn("w-5 h-5", tool.icon.props.className) })}
                                           </div>
                                           <span className="text-sm font-medium">{tool.label}</span>
                                       </Link>
@@ -186,7 +186,7 @@ export default function Header() {
                       </nav>
                   </ScrollArea>
                   <div className="p-6 mt-auto border-t">
-                      <InstallPWA />
+                      <InstallPWA inSheet={true} />
                   </div>
               </SheetContent>
           </Sheet>
@@ -312,7 +312,7 @@ export default function Header() {
                                 )}
                               >
                                <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
-                                {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
+                                {React.cloneElement(tool.icon, { className: cn("w-5 h-5", tool.icon.props.className) })}
                                </div>
                                 <span className="text-sm font-medium">{tool.label}</span>
                               </Link>
@@ -332,9 +332,7 @@ export default function Header() {
 
         {/* Right side controls (Desktop & Mobile) */}
         <div className="flex items-center gap-2 justify-end">
-            <div className="hidden sm:block">
-              <InstallPWA />
-            </div>
+            <InstallPWA />
             <ThemeToggle />
         </div>
       </div>

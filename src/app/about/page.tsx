@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import { useState } from "react";
 import React from "react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const whyChooseUsFeatures = [
     {
@@ -95,24 +97,28 @@ const itemVariants = {
   },
 };
 
-const CTAButton = () => {
-    const [isHovered, setIsHovered] = useState(false);
-
-    return (
+const CTAButton = dynamic(
+  () => import('../components/AnimatedArrow').then(
+    (mod) => () => {
+      const [isHovered, setIsHovered] = useState(false);
+      return (
         <Button
-            asChild
-            size="lg"
-            className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+          asChild
+          size="lg"
+          className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-            <Link href="/#services">
-                Start Exploring Now
-                <AnimatedArrow isHovered={isHovered} />
-            </Link>
+          <Link href="/#services">
+            Start Exploring Now
+            <AnimatedArrow isHovered={isHovered} />
+          </Link>
         </Button>
-    );
-};
+      );
+    }
+  ),
+  { ssr: false, loading: () => <Skeleton className="h-11 w-48" /> }
+);
 
 
 export default function AboutPage() {
@@ -338,5 +344,3 @@ export default function AboutPage() {
     </>
   );
 }
-
-    

@@ -3,7 +3,19 @@ import AnimateOnScroll from '@/components/AnimateOnScroll';
 import FeatureGrid from '@/components/FeatureGrid';
 import { FileText, Zap, BrainCircuit } from 'lucide-react';
 import type { Metadata } from 'next';
-import TextSummarizerLoader from '@/components/TextSummarizerLoader';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const TextSummarizerLoader = dynamic(() => import('@/components/TextSummarizerLoader'), {
+  ssr: false,
+  loading: () => (
+    <div className="grid md:grid-cols-2 gap-4 h-[70vh]">
+        <Skeleton className="w-full h-full" />
+        <Skeleton className="w-full h-full" />
+    </div>
+  )
+});
+
 
 export const metadata: Metadata = {
   title: 'AI Text Summarizer - Free Article Summarizer | PDFusion',
