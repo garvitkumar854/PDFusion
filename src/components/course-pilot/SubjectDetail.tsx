@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Edit, MoreVertical, Plus, Trash2, GripVertical, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardTitle } from '../ui/card';
@@ -25,7 +25,23 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Reorder, useDragControls, motion } from 'framer-motion';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Assignment {
   id: string;
@@ -35,7 +51,7 @@ interface Assignment {
   order: number;
 }
 
-interface AssignmentItemProps {
+interface SortableAssignmentItemProps {
   assignment: Assignment;
   index: number;
   onEdit: () => void;
@@ -44,18 +60,18 @@ interface AssignmentItemProps {
   isLastInGroup: boolean;
 }
 
-const AssignmentItem = ({
-  assignment,
-  index,
-  onEdit,
-  onDelete,
-  isFirstInGroup,
-  isLastInGroup,
-}: AssignmentItemProps) => {
+const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstInGroup, isLastInGroup }: SortableAssignmentItemProps) => {
   const { user } = useAuth();
-  const controls = useDragControls();
-  
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: assignment.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 'auto',
+  };
+
   return (
+    <div ref={setNodeRef} style={style} {...attributes}>
       <Card className={cn(
         "transition-shadow duration-300 w-full bg-card/50",
         isFirstInGroup && isLastInGroup ? 'rounded-xl' : '',
@@ -64,16 +80,11 @@ const AssignmentItem = ({
         !isFirstInGroup && !isLastInGroup ? 'rounded-none border-t-0 border-b-0' : ''
       )}>
         <div className="flex items-center p-3 sm:p-4">
-             <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
+            <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
               {user && (
-                  <motion.div
-                    onPointerDown={(e) => controls.start(e)}
-                    className="cursor-grab touch-none"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                   >
+                  <div {...listeners} className="cursor-grab touch-none p-1">
                      <GripVertical />
-                   </motion.div>
+                   </div>
               )}
               <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                 {index + 1}
@@ -122,8 +133,10 @@ const AssignmentItem = ({
             </div>
         </div>
       </Card>
+    </div>
   );
 };
+
 
 interface SubjectDetailProps {
   subjectName: string;
@@ -138,7 +151,6 @@ interface SubjectDetailProps {
 interface GroupedAssignments {
     [date: string]: Assignment[];
 }
-
 
 export const SubjectDetail = ({
   subjectName,
@@ -158,55 +170,70 @@ export const SubjectDetail = ({
     setOrderedAssignments(sortedAssignments);
   }, [assignments]);
   
-  const handleReorder = (newOrder: Assignment[]) => {
-    const movedItemIndex = newOrder.findIndex((item, index) => item.id !== orderedAssignments[index]?.id);
-    if (movedItemIndex === -1) return; // No change in order
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    const movedItem = newOrder[movedItemIndex];
-    const prevItem = newOrder[movedItemIndex - 1];
-    const nextItem = newOrder[movedItemIndex + 1];
-
-    let targetDate = movedItem.date;
-
-    // Determine the date of the group it was dropped into
-    if (prevItem && !isSameDay(parseISO(movedItem.date), parseISO(prevItem.date))) {
-      // Dropped into a new group, adopt the previous item's date
-      targetDate = prevItem.date;
-    } else if (!prevItem && nextItem && !isSameDay(parseISO(movedItem.date), parseISO(nextItem.date))) {
-      // Dropped at the very top of the list, adopt the next item's date if it's different
-      // This is a heuristic that assumes moving to the top means joining the next group
-      targetDate = nextItem.date;
-    }
-
-    // Create a new array with the updated date for the moved item
-    const updatedOrderWithDate = newOrder.map(item => 
-      item.id === movedItem.id ? { ...item, date: targetDate } : item
-    );
-
-    // Re-sort the entire list by the new dates and then assign order
-    const finalOrder = updatedOrderWithDate
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((item, index) => ({ ...item, order: index }));
-
-    setOrderedAssignments(finalOrder);
-    setHasReordered(true);
-  };
-
-
-  const handleSaveOrder = () => {
-    onReorderAssignments(orderedAssignments);
-    setHasReordered(false);
-  }
-
-  const groupedAssignments = orderedAssignments.reduce((acc: GroupedAssignments, assignment) => {
+  const groupedAssignments = useMemo(() => orderedAssignments.reduce((acc: GroupedAssignments, assignment) => {
     const date = assignment.date;
     if (!acc[date]) {
       acc[date] = [];
     }
     acc[date].push(assignment);
     return acc;
-  }, {});
-  
+  }, {}), [orderedAssignments]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = orderedAssignments.findIndex((item) => item.id === active.id);
+      const newIndex = orderedAssignments.findIndex((item) => item.id === over.id);
+      
+      const activeItem = orderedAssignments[oldIndex];
+      const overItem = orderedAssignments[newIndex];
+
+      let newAssignments: Assignment[];
+
+      if (activeItem.date === overItem.date) {
+        // Reordering within the same group
+        const groupDate = activeItem.date;
+        const groupItems = orderedAssignments.filter(item => item.date === groupDate);
+        const oldGroupIndex = groupItems.findIndex(item => item.id === active.id);
+        const newGroupIndex = groupItems.findIndex(item => item.id === over.id);
+
+        const reorderedGroup = arrayMove(groupItems, oldGroupIndex, newGroupIndex);
+        
+        newAssignments = orderedAssignments.map(item => {
+          const reorderedItem = reorderedGroup.find(ri => ri.id === item.id);
+          return reorderedItem || item;
+        });
+
+      } else {
+        // Moving to a different group
+        activeItem.date = overItem.date; // Adopt the date of the new group
+        newAssignments = arrayMove(orderedAssignments, oldIndex, newIndex);
+      }
+      
+      // Re-index all items based on their new visual order
+      const finalAssignments = newAssignments.map((item, index) => ({
+          ...item,
+          order: index,
+      }));
+
+      setOrderedAssignments(finalAssignments);
+      setHasReordered(true);
+    }
+  }
+
+  const handleSaveOrder = () => {
+    onReorderAssignments(orderedAssignments);
+    setHasReordered(false);
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
@@ -237,37 +264,32 @@ export const SubjectDetail = ({
             </div>
 
             {assignments.length > 0 ? (
-                 <Reorder.Group
-                      axis="y"
-                      values={orderedAssignments}
-                      onReorder={user ? handleReorder : () => {}}
-                      className="space-y-4"
-                    >
-                      {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
-                        <div key={date}>
-                           <div className="font-semibold text-base sm:text-lg md:text-xl text-foreground mb-3 pb-2 border-b-2 border-primary/20">
-                                {format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
-                            </div>
-                           <div className="space-y-px">
-                            {assignmentsInGroup.map((assignment, index) => (
-                                <Reorder.Item value={assignment} key={assignment.id} dragListener={!user ? false : undefined} dragControls={useDragControls()}
-                                  className="z-10 relative"
-                                  whileDrag={{scale: 1.03, boxShadow: "0px 4px 20px rgba(0,0,0,0.1)", zIndex: 20}}
-                                >
-                                   <AssignmentItem
-                                      assignment={assignment}
-                                      index={orderedAssignments.findIndex(a => a.id === assignment.id)}
-                                      onEdit={() => onEditAssignment(assignment)}
-                                      onDelete={() => onDeleteAssignment(assignment.id)}
-                                      isFirstInGroup={index === 0}
-                                      isLastInGroup={index === assignmentsInGroup.length - 1}
-                                    />
-                                </Reorder.Item>
-                            ))}
-                           </div>
-                        </div>
-                      ))}
-                    </Reorder.Group>
+                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                      <div className="space-y-4">
+                        {Object.entries(groupedAssignments).map(([date, assignmentsInGroup]) => (
+                          <div key={date}>
+                             <div className="font-semibold text-base sm:text-lg md:text-xl text-foreground mb-3 pb-2 border-b-2 border-primary/20">
+                                  {format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
+                              </div>
+                             <SortableContext items={assignmentsInGroup.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                                 <div className="space-y-px">
+                                  {assignmentsInGroup.map((assignment, index) => (
+                                      <SortableAssignmentItem
+                                        key={assignment.id}
+                                        assignment={assignment}
+                                        index={orderedAssignments.findIndex(a => a.id === assignment.id)}
+                                        onEdit={() => onEditAssignment(assignment)}
+                                        onDelete={() => onDeleteAssignment(assignment.id)}
+                                        isFirstInGroup={index === 0}
+                                        isLastInGroup={index === assignmentsInGroup.length - 1}
+                                      />
+                                  ))}
+                                 </div>
+                             </SortableContext>
+                          </div>
+                        ))}
+                      </div>
+                 </DndContext>
             ) : (
                 <div className="text-center py-16 border-2 border-dashed rounded-lg">
                     <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No assignments yet</h3>
