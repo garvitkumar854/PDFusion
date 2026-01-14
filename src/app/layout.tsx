@@ -1,4 +1,3 @@
-
 import 'src/app/globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins, Inter } from 'next/font/google'
@@ -49,6 +48,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192x192.png",
+    shortcut: "/icons/icon-192x192.png",
     apple: "/icons/icon-192x192.png",
   },
   openGraph: {
