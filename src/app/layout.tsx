@@ -47,9 +47,9 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192x192.png",
-    shortcut: "/icons/icon-192x192.png",
-    apple: "/icons/icon-192x192.png",
+    icon: "/icons/192x192.png",
+    shortcut: "/icons/192x192.png",
+    apple: "/icons/192x192.png",
   },
   openGraph: {
     type: "website",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     url: new URL('https://pdf-fusion.vercel.app'),
     images: [
       {
-        url: "/og-image.png",
+        url: "/512x512.png",
         width: 1200,
         height: 630,
         alt: "PDFusion Logo and Title",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     description: APP_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
+        url: "/512x512.png",
         alt: "PDFusion Logo and Title",
       },
     ],
