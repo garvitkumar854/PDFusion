@@ -2,9 +2,9 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Edit, MoreVertical, Plus, Trash2, GripVertical, Check } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Card, CardTitle } from '../ui/card';
-import AnimateOnScroll from '../AnimateOnScroll';
+import { Button } from '@/components/ui/button';
+import { Card, CardTitle } from '@/components/ui/card';
+import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -74,11 +74,9 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
   
   const cardElement = (
       <Card className={cn(
-        "transition-shadow duration-300 w-full bg-card/50",
-        isFirstInGroup && isLastInGroup ? 'rounded-xl' : '',
-        isFirstInGroup && !isLastInGroup ? 'rounded-t-xl rounded-b-none border-b-0' : '',
-        !isFirstInGroup && isLastInGroup ? 'rounded-b-xl rounded-t-none' : '',
-        !isFirstInGroup && !isLastInGroup ? 'rounded-none border-t-0 border-b-0' : '',
+        "transition-shadow duration-300 w-full bg-card/50 border-t",
+        isFirstInGroup ? 'rounded-t-xl border-t-0' : 'rounded-t-none',
+        isLastInGroup ? 'rounded-b-xl' : 'rounded-b-none',
         isDragging && "shadow-2xl opacity-50"
       )}>
         <div className="flex items-center p-3 sm:p-4">
