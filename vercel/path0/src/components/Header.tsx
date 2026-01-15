@@ -84,13 +84,13 @@ export default function Header() {
   const services = servicesData.filter(s => s.href !== '/more-tools').map(s => ({...s, label: s.title}));
 
   const moreTools = [
-      { href: "/calculator", label: "Calculator", icon: <Calculator /> },
-      { href: "/currency-converter", label: "Currency Converter", icon: <Currency /> },
-      { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode /> },
-      { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal /> },
-      { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole /> },
-      { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code /> },
-      { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow /> },
+      { href: "/calculator", label: "Calculator", icon: <Calculator className="text-blue-500" /> },
+      { href: "/currency-converter", label: "Currency Converter", icon: <Currency className="text-green-500" /> },
+      { href: "/qr-code-generator", label: "QR Code Generator", icon: <QrCode className="text-purple-500" /> },
+      { href: "/unit-converter", label: "Unit Converter", icon: <SlidersHorizontal className="text-orange-500" /> },
+      { href: "/password-generator", label: "Password Generator", icon: <LockKeyhole className="text-red-500" /> },
+      { href: '/markdown-to-html', label: 'Markdown to HTML', icon: <Code className="text-teal-500" /> },
+      { href: '/text-summarizer', label: 'Text Summarizer', icon: <Pilcrow className="text-indigo-500" /> },
   ];
   
   const isServicesActive = services.some(s => pathname.startsWith(s.href)) || moreTools.some(s => pathname.startsWith(s.href)) || pathname.startsWith('/more-tools');
@@ -153,7 +153,7 @@ export default function Header() {
                                           )}
                                       >
                                           <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                              {React.cloneElement(service.icon, { className: "w-5 h-5" })}
+                                              {React.cloneElement(service.icon, { className: cn("w-5 h-5", service.icon.props.className) })}
                                           </div>
                                           <span className="text-sm font-medium">{service.label}</span>
                                       </Link>
@@ -176,7 +176,7 @@ export default function Header() {
                                           )}
                                       >
                                           <div className="h-5 w-5 flex items-center justify-center mr-3 shrink-0">
-                                              {React.cloneElement(tool.icon, { className: "w-5 h-5" })}
+                                              {React.cloneElement(tool.icon, { className: cn("w-5 h-5", tool.icon.props.className) })}
                                           </div>
                                           <span className="text-sm font-medium">{tool.label}</span>
                                       </Link>
@@ -268,7 +268,7 @@ export default function Header() {
                            onMouseEnter={() => setIsMoreToolsMenuOpen(false)}
                         >
                           <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
-                            {service.icon}
+                            {React.cloneElement(service.icon, { className: cn("w-5 h-5", service.icon.props.className) })}
                           </div>
                           <span className="text-sm font-medium">{service.label}</span>
                         </Link>
@@ -282,7 +282,7 @@ export default function Header() {
                           )}
                           onMouseEnter={() => setIsMoreToolsMenuOpen(true)}
                         >
-                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
+                          <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110 text-gray-500">
                            <LayoutGrid />
                           </div>
                           <span className="text-sm font-medium">More Tools</span>
@@ -312,7 +312,7 @@ export default function Header() {
                                 )}
                               >
                                <div className="flex h-5 w-5 items-center justify-center mr-3 shrink-0 transition-transform duration-300 group-hover:scale-110">
-                                {tool.icon}
+                                {React.cloneElement(tool.icon, { className: cn("w-5 h-5", tool.icon.props.className) })}
                                </div>
                                 <span className="text-sm font-medium">{tool.label}</span>
                               </Link>
@@ -332,9 +332,7 @@ export default function Header() {
 
         {/* Right side controls (Desktop & Mobile) */}
         <div className="flex items-center gap-2 justify-end">
-            <div className="hidden sm:block">
-              <InstallPWA />
-            </div>
+            <InstallPWA />
             <ThemeToggle />
         </div>
       </div>
