@@ -74,9 +74,9 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
   
   const cardElement = (
       <Card className={cn(
-        "transition-shadow duration-300 w-full bg-card/50 border-t",
-        isFirstInGroup ? 'rounded-t-xl border-t-0' : 'rounded-t-none',
-        isLastInGroup ? 'rounded-b-xl' : 'rounded-b-none',
+        "transition-shadow duration-300 w-full bg-card/50",
+        isFirstInGroup ? 'rounded-t-xl border-t' : 'rounded-t-none border-t',
+        isLastInGroup ? 'rounded-b-xl border-b' : 'rounded-b-none',
         isDragging && "shadow-2xl opacity-50"
       )}>
         <div className="flex items-center p-3 sm:p-4">
