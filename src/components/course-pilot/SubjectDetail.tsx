@@ -308,3 +308,5 @@ export const SubjectDetail = ({
     </div>
   );
 };
+
+    
