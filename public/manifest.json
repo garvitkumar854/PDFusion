@@ -1,159 +1,162 @@
 {
-    "name": "PDFusion",
-    "short_name": "PDFusion",
-    "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
-    "start_url": "/",
-    "scope": "/",
-    "display": "standalone",
-    "background_color": "#040B1D",
-    "theme_color": "#5e4dff",
-    "orientation": "portrait-primary",
-    "lang": "en-US",
-    "dir": "ltr",
-  
-    "categories": ["productivity", "utilities", "business"],
-  
-    "prefer_related_applications": false,
-  
-    "display_override": ["window-controls-overlay"],
-  
-    "icons": [
-      {
-        "src": "/72x72.png",
-        "sizes": "72x72",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/96x96.png",
-        "sizes": "96x96",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/128x128.png",
-        "sizes": "128x128",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/144x144.png",
-        "sizes": "144x144",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/152x152.png",
-        "sizes": "152x152",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/192x192.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/384x384.png",
-        "sizes": "384x384",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/512x512.png",
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/maskable_icon_x512.png",
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "maskable"
-      }
-    ],
-  
-    "shortcuts": [
-      {
-        "name": "Merge PDF",
-        "short_name": "Merge",
-        "description": "Combine multiple PDF files into one.",
-        "url": "/merger",
-        "icons": [
-          {
-            "src": "/icons/merge.svg",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      },
-      {
-        "name": "Split PDF",
-        "short_name": "Split",
-        "description": "Extract pages from a PDF file.",
-        "url": "/split-pdf",
-        "icons": [
-          {
-            "src": "/icons/split.svg",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      },
-      {
-        "name": "Course Pilot",
-        "short_name": "Course Pilot",
-        "description": "Track your course assignments and deadlines.",
-        "url": "/assignment-tracker",
-        "icons": [
-          {
-            "src": "/icons/coursepilot.svg",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      },
-      {
-        "name": "More Tools",
-        "short_name": "More",
-        "description": "Explore all available tools and utilities.",
-        "url": "/more-tools",
-        "icons": [
-          {
-            "src": "/icons/192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      }
-    ],
-  
-    "file_handlers": [
-      {
-        "action": "/merger",
-        "accept": {
-          "application/pdf": [".pdf"]
-        },
-        "launch_type": "single-client"
-      }
-    ],
-  
-    "screenshots": [
-      {
-        "src": "/screenshots/screenshot-desktop.png",
-        "sizes": "1280x720",
-        "type": "image/png",
-        "form_factor": "wide",
-        "label": "PDFusion on Desktop"
-      },
-      {
-        "src": "/screenshots/screenshot-mobile.png",
-        "sizes": "540x720",
-        "type": "image/png",
-        "form_factor": "narrow",
-        "label": "PDFusion on Mobile"
-      }
-    ]
-  }
-  
+  "theme_color": "#5e4dff",
+  "background_color": "#040B1D",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "PDFusion: Your All-in-One PDF Toolkit",
+  "short_name": "PDFusion",
+  "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
+  "lang": "en-US",
+  "dir": "ltr",
+  "id": "/",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "note_taking": {
+    "new_note_url": "/text-summarizer",
+    "needs_account": false
+  },
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "share_target": {
+    "action": "/merger",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/pdf"
+          ]
+        }
+      ]
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Merge PDF Files",
+      "short_name": "Merge",
+      "description": "Combine multiple PDFs into one document",
+      "url": "/merger",
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Split a PDF",
+      "short_name": "Split",
+      "description": "Extract pages from a PDF file",
+      "url": "/split-pdf",
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Course Pilot",
+      "short_name": "Course Pilot",
+      "description": "Track your course assignments and deadlines",
+      "url": "/assignment-tracker",
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Explore More Tools",
+      "short_name": "More Tools",
+      "description": "Discover other useful utilities",
+      "url": "/more-tools",
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-desktop.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide",
+      "label": "PDFusion Desktop View"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow",
+      "label": "PDFusion Mobile View"
+    }
+  ]
+}
