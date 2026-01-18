@@ -75,10 +75,12 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
   const cardElement = (
       <Card className={cn(
         "transition-shadow duration-300 w-full bg-card/50",
-        isFirstInGroup ? 'rounded-t-xl' : 'rounded-t-none border-t-0',
-        isLastInGroup ? 'rounded-b-xl' : 'rounded-b-none',
         !isFirstInGroup && 'border-t',
-        isDragging && "shadow-2xl opacity-50"
+        isDragging && "shadow-2xl opacity-50",
+        isFirstInGroup && isLastInGroup ? "rounded-xl" : "",
+        isFirstInGroup && !isLastInGroup ? "rounded-t-xl rounded-b-none border-b-0" : "",
+        !isFirstInGroup && isLastInGroup ? "rounded-b-xl rounded-t-none" : "",
+        !isFirstInGroup && !isLastInGroup ? "rounded-none" : ""
       )}>
         <div className="flex items-center p-3 sm:p-4">
             <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
