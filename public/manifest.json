@@ -1,3 +1,4 @@
+
 {
   "name": "PDFusion: Your All-in-One PDF Toolkit",
   "short_name": "PDFusion",
@@ -6,15 +7,10 @@
   "display": "standalone",
   "background_color": "#040B1D",
   "theme_color": "#5e4dff",
-  "orientation": "portrait-primary",
-  "scope": "/",
   "lang": "en-US",
   "dir": "ltr",
-  "categories": [
-    "business",
-    "productivity",
-    "utilities"
-  ],
+  "scope": "/",
+  "categories": ["productivity", "utilities", "education"],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -59,20 +55,34 @@
       "type": "image/png"
     }
   ],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "/screenshots/screenshot-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "PDFusion Homepage"
+      "name": "Merge PDF",
+      "short_name": "Merge",
+      "description": "Combine multiple PDF files into one.",
+      "url": "/merger",
+      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
     },
     {
-      "src": "/screenshots/screenshot-mobile.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "PDFusion on Mobile"
+      "name": "Split PDF",
+      "short_name": "Split",
+      "description": "Extract pages from a PDF.",
+      "url": "/split-pdf",
+      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Course Pilot",
+      "short_name": "Course Pilot",
+      "description": "Track your course assignments and deadlines.",
+      "url": "/assignment-tracker",
+      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "More Tools",
+      "short_name": "Tools",
+      "description": "Explore more productivity tools.",
+      "url": "/more-tools",
+      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
     }
   ]
 }

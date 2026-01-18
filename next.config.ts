@@ -79,6 +79,44 @@ const withPWA = withPWAInit({
     },
     {
       urlPattern: ({ url, sameOrigin }) => {
+        return sameOrigin && (
+            url.pathname === '/' ||
+            [
+              '/merger',
+              '/split-pdf',
+              '/organize-pdf',
+              '/pdf-to-jpg',
+              '/jpg-to-pdf',
+              '/add-watermark',
+              '/pdf-to-html',
+              '/rotate-pdf',
+              '/add-page-numbers',
+              '/assignment-tracker',
+              '/more-tools',
+              '/calculator',
+              '/currency-converter',
+              '/qr-code-generator',
+              '/unit-converter',
+              '/password-generator',
+              '/markdown-to-html',
+              '/text-summarizer',
+              '/about',
+              '/contact',
+              '/privacy-policy'
+            ].includes(url.pathname)
+        );
+      },
+      handler: 'StaleWhileRevalidate',
+      options: {
+          cacheName: 'pages',
+          expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+          },
+      },
+    },
+    {
+      urlPattern: ({ url, sameOrigin }) => {
         return sameOrigin && url.pathname.startsWith('/_next/data/');
       },
       handler: 'StaleWhileRevalidate',
