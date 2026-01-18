@@ -77,6 +77,7 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
         "transition-shadow duration-300 w-full bg-card/50",
         isFirstInGroup ? 'rounded-t-xl' : 'rounded-t-none border-t-0',
         isLastInGroup ? 'rounded-b-xl' : 'rounded-b-none',
+        !isFirstInGroup && 'border-t',
         isDragging && "shadow-2xl opacity-50"
       )}>
         <div className="flex items-center p-3 sm:p-4">
