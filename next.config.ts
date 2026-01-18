@@ -12,54 +12,32 @@ const withPWA = withPWAInit({
   sw: 'service-worker.js',
   runtimeCaching: [
     {
-      urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'google-fonts-webfonts',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365,
-        },
-      },
-    },
-    {
-      urlPattern: /^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,
+      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'google-fonts',
         expiration: {
           maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 365 days
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
         },
       },
     },
     {
-      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
+      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css|jpg|jpeg|gif|png|svg|ico|webp)$/i,
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'static-font-assets',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 365 days
-        },
-      },
-    },
-    {
-      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-image-assets',
+        cacheName: 'static-assets',
         expiration: {
           maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
     },
     {
-      urlPattern: /\.(?:js)$/i,
+      urlPattern: /\.(?:js|css)$/i,
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'static-js-assets',
+        cacheName: 'static-js-css',
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
@@ -67,61 +45,8 @@ const withPWA = withPWAInit({
       },
     },
     {
-      urlPattern: /\.(?:css)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-style-assets',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-      },
-    },
-    {
-      urlPattern: ({ request, url, sameOrigin }) => {
-        if (request.mode !== 'navigate' || !sameOrigin) {
-            return false;
-        }
-        const onlineOnlyPages = [
-          '/assignment-tracker',
-          '/currency-converter',
-          '/text-summarizer',
-        ];
-        return !onlineOnlyPages.includes(url.pathname);
-      },
-      handler: 'StaleWhileRevalidate',
-      options: {
-          cacheName: 'offline-first-pages',
-          expiration: {
-              maxEntries: 50,
-              maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-          },
-      },
-    },
-    {
-      urlPattern: ({ url, sameOrigin }) => {
-        return sameOrigin && (
-          [
-            '/assignment-tracker',
-            '/currency-converter',
-            '/text-summarizer',
-          ].includes(url.pathname)
-        );
-      },
-      handler: 'NetworkFirst',
-      options: {
-          cacheName: 'online-only-pages',
-          networkTimeoutSeconds: 10,
-          expiration: {
-              maxEntries: 32,
-              maxAgeSeconds: 24 * 60 * 60, // 24 hours
-          },
-      },
-    },
-    {
-      urlPattern: ({ url, sameOrigin }) => {
-        return sameOrigin && url.pathname.startsWith('/_next/data/');
-      },
+      urlPattern: ({url, sameOrigin}) =>
+        sameOrigin && url.pathname.startsWith('/_next/data/'),
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'next-data',
@@ -132,15 +57,32 @@ const withPWA = withPWAInit({
       },
     },
     {
-      urlPattern: /\/.*$/i,
+      urlPattern: ({request, url, sameOrigin}) =>
+        request.mode === 'navigate' &&
+        sameOrigin &&
+        (url.pathname.startsWith('/assignment-tracker') ||
+          url.pathname.startsWith('/currency-converter') ||
+          url.pathname.startsWith('/text-summarizer')),
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'others',
+        cacheName: 'online-only-pages',
+        networkTimeoutSeconds: 10,
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
         },
-        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: ({request, sameOrigin}) =>
+        request.mode === 'navigate' && sameOrigin,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'offline-first-pages',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        },
       },
     },
   ],
