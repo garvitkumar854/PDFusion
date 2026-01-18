@@ -51,7 +51,7 @@
       "url": "/merger",
       "icons": [
         {
-          "src": "/192x192.png",
+          "src": "/icons/merge.svg",
           "sizes": "192x192"
         }
       ]
@@ -63,7 +63,7 @@
       "url": "/split-pdf",
       "icons": [
         {
-          "src": "/192x192.png",
+          "src": "/icons/split.svg",
           "sizes": "192x192"
         }
       ]
@@ -75,7 +75,7 @@
       "url": "/assignment-tracker",
       "icons": [
         {
-          "src": "/192x192.png",
+          "src": "/icons/coursepilot.svg",
           "sizes": "192x192"
         }
       ]
@@ -141,6 +141,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/maskable_icon_x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
