@@ -6,10 +6,9 @@ import path from 'path';
 const withPWA = withPWAInit({
   dest: 'public',
   register: true,
-  skipWaiting: true,
+  skipWaiting: false,
   disable: process.env.NODE_ENV === 'development',
   scope: '/',
-  cacheStartUrl: true,
   sw: 'service-worker.js',
   runtimeCaching: [
     {

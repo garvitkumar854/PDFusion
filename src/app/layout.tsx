@@ -37,19 +37,11 @@ export const metadata: Metadata = {
   keywords: [
     "PDF", "PDF tools", "Merge PDF", "Split PDF", "Compress PDF", "PDF to JPG", "JPG to PDF", "Rotate PDF", "Add page numbers", "free pdf editor", "online pdf tools"
   ],
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: APP_DEFAULT_TITLE,
-  },
-  formatDetection: {
-    telephone: false,
-  },
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/192x192.png",
     shortcut: "/icons/192x192.png",
-    apple: "/icons/192x192.png",
+    apple: "/icons/icon-192x192.png",
   },
   openGraph: {
     type: "website",
