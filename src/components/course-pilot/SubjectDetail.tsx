@@ -75,15 +75,8 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
   const cardElement = (
       <Card className={cn(
         "transition-shadow duration-300 w-full bg-card/50",
-<<<<<<< HEAD
-        isFirstInGroup ? 'rounded-t-xl border-t' : 'rounded-t-none border-t',
-        isLastInGroup ? 'rounded-b-xl border-b' : 'rounded-b-none',
-=======
-        isFirstInGroup && isLastInGroup ? "rounded-xl" : "",
-        isFirstInGroup && !isLastInGroup ? "rounded-t-xl rounded-b-none border-b-0" : "",
-        !isFirstInGroup && isLastInGroup ? "rounded-b-xl rounded-t-none" : "",
-        !isFirstInGroup && !isLastInGroup ? "rounded-none border-t-0" : "",
->>>>>>> 653f1840b40247f3303c26caebb2d6087fb9f88e
+        isFirstInGroup ? 'rounded-t-xl' : 'rounded-t-none border-t-0',
+        isLastInGroup ? 'rounded-b-xl' : 'rounded-b-none',
         isDragging && "shadow-2xl opacity-50"
       )}>
         <div className="flex items-center p-3 sm:p-4">
@@ -313,5 +306,3 @@ export const SubjectDetail = ({
     </div>
   );
 };
-
-    
