@@ -2,9 +2,9 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Edit, MoreVertical, Plus, Trash2, GripVertical, Check } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Card, CardTitle } from '../ui/card';
-import AnimateOnScroll from '../AnimateOnScroll';
+import { Button } from '@/components/ui/button';
+import { Card, CardTitle } from '@/components/ui/card';
+import AnimateOnScroll from '@/components/AnimateOnScroll';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';

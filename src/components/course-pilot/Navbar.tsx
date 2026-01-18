@@ -2,7 +2,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, Plus } from 'lucide-react';
 import { getFirebaseInstances } from '@/lib/firebase';
 
