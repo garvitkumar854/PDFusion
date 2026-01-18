@@ -78,30 +78,16 @@ const withPWA = withPWAInit({
       },
     },
     {
-      urlPattern: ({ url, sameOrigin }) => {
-        return sameOrigin && (
-            url.pathname === '/' ||
-            [
-              '/merger',
-              '/split-pdf',
-              '/organize-pdf',
-              '/pdf-to-jpg',
-              '/jpg-to-pdf',
-              '/add-watermark',
-              '/pdf-to-html',
-              '/rotate-pdf',
-              '/add-page-numbers',
-              '/more-tools',
-              '/calculator',
-              '/qr-code-generator',
-              '/unit-converter',
-              '/password-generator',
-              '/markdown-to-html',
-              '/about',
-              '/contact',
-              '/privacy-policy'
-            ].includes(url.pathname)
-        );
+      urlPattern: ({ request, url, sameOrigin }) => {
+        if (request.mode !== 'navigate' || !sameOrigin) {
+            return false;
+        }
+        const onlineOnlyPages = [
+          '/assignment-tracker',
+          '/currency-converter',
+          '/text-summarizer',
+        ];
+        return !onlineOnlyPages.includes(url.pathname);
       },
       handler: 'StaleWhileRevalidate',
       options: {
