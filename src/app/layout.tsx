@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   ],
   manifest: "/manifest.json",
   icons: {
-    icon: "//192x192.png",
+    icon: "/192x192.png",
     shortcut: "/192x192.png",
     apple: "/192x192.png",
   },

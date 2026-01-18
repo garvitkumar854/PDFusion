@@ -18,7 +18,6 @@ const toolPages = [
   '/pdf-to-jpg',
   '/jpg-to-pdf',
   '/pdf-to-html',
-  '/html-to-pdf',
   '/rotate-pdf',
   '/add-page-numbers',
   '/add-watermark',

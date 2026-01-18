@@ -3,16 +3,17 @@
   "short_name": "PDFusion",
   "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#040B1D",
   "theme_color": "#5e4dff",
-  "lang": "en",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
   "dir": "ltr",
   "categories": [
+    "business",
     "productivity",
-    "utilities",
-    "tools"
+    "utilities"
   ],
   "prefer_related_applications": false,
   "icons": [
