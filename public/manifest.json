@@ -46,7 +46,7 @@
             "url": "/merger",
             "icons": [
                 {
-                    "src": "/192x192.png",
+                    "src": "/icons/merge.png",
                     "sizes": "192x192"
                 }
             ]
@@ -58,7 +58,7 @@
             "url": "/split-pdf",
             "icons": [
                 {
-                    "src": "/192x192.png",
+                    "src": "/icons/split.png",
                     "sizes": "192x192"
                 }
             ]
@@ -70,7 +70,7 @@
             "url": "/assignment-tracker",
             "icons": [
                 {
-                    "src": "/192x192.png",
+                    "src": "/icons/coursepilot.png",
                     "sizes": "192x192"
                 }
             ]
