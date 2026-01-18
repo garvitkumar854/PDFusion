@@ -6,8 +6,11 @@ declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: any };
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, NetworkFirst } from 'workbox-strategies';
-import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { clientsClaim } from 'workbox-core';
+
+self.skipWaiting();
+clientsClaim();
 
 // Make sure the precache manifest is injected by next-pwa.
 // The `self.__WB_MANIFEST` will be replaced by the list of files to precache.
@@ -123,8 +126,4 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.openWindow('/')
   );
-});
-
-self.addEventListener('install', () => {
-    self.skipWaiting();
 });
