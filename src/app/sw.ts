@@ -13,7 +13,6 @@ self.skipWaiting();
 clientsClaim();
 
 // Make sure the precache manifest is injected by next-pwa.
-// The `self.__WB_MANIFEST` will be replaced by the list of files to precache.
 precacheAndRoute(self.__WB_MANIFEST || []);
 
 // Cache Google Fonts
@@ -72,40 +71,43 @@ registerRoute(
   })
 );
 
-// Network-first for online-only pages
+// Single, robust routing rule for all navigation requests
 registerRoute(
-  ({ request, url, sameOrigin }) =>
-    request.mode === 'navigate' &&
-    sameOrigin &&
-    (
+  ({ request, url, sameOrigin }) => request.mode === 'navigate' && sameOrigin,
+  ({ url }) => {
+    const isOnlineOnlyPage = 
       url.pathname.startsWith('/assignment-tracker') ||
       url.pathname.startsWith('/currency-converter') ||
-      url.pathname.startsWith('/text-summarizer')
-    ),
-  new NetworkFirst({
-    cacheName: 'online-only-pages',
-    networkTimeoutSeconds: 10,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 32,
-        maxAgeSeconds: 24 * 60 * 60, // 24 hours
-      }),
-    ],
-  })
-);
+      url.pathname.startsWith('/text-summarizer');
 
-// Stale-while-revalidate for all other navigation requests (offline-first)
-registerRoute(
-  ({ request, sameOrigin }) => request.mode === 'navigate' && sameOrigin,
-  new StaleWhileRevalidate({
-    cacheName: 'offline-first-pages',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
+    if (isOnlineOnlyPage) {
+      // For online-only pages, try the network first.
+      // If the network fails, it will automatically fall back to the offline page.
+      return new NetworkFirst({
+        cacheName: 'online-only-pages',
+        networkTimeoutSeconds: 10, // Timeout to prevent long waits on poor networks
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 32,
+            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          }),
+        ],
+      });
+    }
+
+    // For all other pages, use a stale-while-revalidate strategy.
+    // This serves content from cache immediately for a fast experience,
+    // and updates it in the background if a new version is available.
+    return new StaleWhileRevalidate({
+      cacheName: 'offline-first-pages',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        }),
+      ],
+    });
+  }
 );
 
 
