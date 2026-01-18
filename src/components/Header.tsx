@@ -30,7 +30,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="group relative pt-2 pb-1 font-semibold transition-colors text-muted-foreground hover:text-primary"
+      className="group relative pt-2 pb-1 font-semibold transition-colors text-muted-foreground hover:text-primary non-draggable"
     >
       <span className={cn(isActive && "text-primary")}>{children}</span>
       <span
@@ -99,7 +99,8 @@ export default function Header() {
 
   return (
     <motion.header 
-      className="py-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg"
+      className="pb-4 border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-lg draggable"
+      style={{ paddingTop: 'calc(env(titlebar-area-height, 0px) + 1rem)'}}
       variants={{
         visible: { y: 0 },
         hidden: { y: "-100%" },
@@ -109,7 +110,7 @@ export default function Header() {
     >
       <div className="container mx-auto px-4 flex items-center justify-between md:grid md:grid-cols-3">
         {/* Mobile Left */}
-        <div className="md:hidden flex items-center justify-start">
+        <div className="md:hidden flex items-center justify-start non-draggable">
            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -193,7 +194,7 @@ export default function Header() {
         </div>
 
         {/* Desktop Logo & Nav */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4 non-draggable">
             <Link href="/" className="flex items-center gap-2">
               {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
               <h1 className="text-xl font-bold tracking-tight">
@@ -205,7 +206,7 @@ export default function Header() {
         </div>
         
         {/* Mobile Center (Logo) */}
-         <div className="md:hidden flex items-center justify-center">
+         <div className="md:hidden flex items-center justify-center non-draggable">
              <Link href="/" className="flex items-center gap-2">
               {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
               <h1 className="text-xl font-bold tracking-tight">
@@ -219,7 +220,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6 justify-center">
             <NavLink href="/">Home</NavLink>
             <motion.div
-              className="relative"
+              className="relative non-draggable"
               onHoverStart={() => setIsServicesMenuOpen(true)}
               onHoverEnd={() => {
                 setIsServicesMenuOpen(false);
@@ -331,7 +332,7 @@ export default function Header() {
         </nav>
 
         {/* Right side controls (Desktop & Mobile) */}
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center gap-2 justify-end non-draggable">
             <InstallPWA />
             <ThemeToggle />
         </div>

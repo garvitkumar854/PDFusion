@@ -62,6 +62,14 @@
 }
 
 @layer components {
+    .draggable {
+        -webkit-app-region: drag;
+        app-region: drag;
+    }
+    .non-draggable {
+        -webkit-app-region: no-drag;
+        app-region: no-drag;
+    }
      .html-preview {
         padding: 1rem 1.5rem;
         line-height: 1.7;

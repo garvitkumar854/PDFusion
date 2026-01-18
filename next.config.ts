@@ -91,15 +91,12 @@ const withPWA = withPWAInit({
               '/pdf-to-html',
               '/rotate-pdf',
               '/add-page-numbers',
-              '/assignment-tracker',
               '/more-tools',
               '/calculator',
-              '/currency-converter',
               '/qr-code-generator',
               '/unit-converter',
               '/password-generator',
               '/markdown-to-html',
-              '/text-summarizer',
               '/about',
               '/contact',
               '/privacy-policy'
@@ -108,10 +105,30 @@ const withPWA = withPWAInit({
       },
       handler: 'StaleWhileRevalidate',
       options: {
-          cacheName: 'pages',
+          cacheName: 'offline-first-pages',
           expiration: {
               maxEntries: 50,
               maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+          },
+      },
+    },
+    {
+      urlPattern: ({ url, sameOrigin }) => {
+        return sameOrigin && (
+          [
+            '/assignment-tracker',
+            '/currency-converter',
+            '/text-summarizer',
+          ].includes(url.pathname)
+        );
+      },
+      handler: 'NetworkFirst',
+      options: {
+          cacheName: 'online-only-pages',
+          networkTimeoutSeconds: 10,
+          expiration: {
+              maxEntries: 32,
+              maxAgeSeconds: 24 * 60 * 60, // 24 hours
           },
       },
     },
