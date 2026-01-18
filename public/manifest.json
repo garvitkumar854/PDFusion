@@ -1,16 +1,20 @@
-
 {
-  "name": "PDFusion: Your All-in-One PDF Toolkit",
+  "name": "PDFusion",
   "short_name": "PDFusion",
-  "description": "Merge, split, compress, convert, and manage your PDF files with ease. Our tools run securely in your browser to protect your privacy. No uploads required.",
+  "description": "Your All-in-One PDF Toolkit. Secure, reliable, and completely free.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#040B1D",
   "theme_color": "#5e4dff",
+  "orientation": "portrait-primary",
+  "categories": [
+    "productivity",
+    "utilities",
+    "education"
+  ],
   "lang": "en-US",
   "dir": "ltr",
   "scope": "/",
-  "categories": ["productivity", "utilities", "education"],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -55,34 +59,68 @@
       "type": "image/png"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-desktop.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Merge PDF",
       "short_name": "Merge",
       "description": "Combine multiple PDF files into one.",
       "url": "/merger",
-      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Split PDF",
       "short_name": "Split",
       "description": "Extract pages from a PDF.",
       "url": "/split-pdf",
-      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Course Pilot",
       "short_name": "Course Pilot",
       "description": "Track your course assignments and deadlines.",
       "url": "/assignment-tracker",
-      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "More Tools",
-      "short_name": "Tools",
-      "description": "Explore more productivity tools.",
+      "short_name": "More",
+      "description": "Explore all available tools and utilities.",
       "url": "/more-tools",
-      "icons": [{ "src": "/192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
