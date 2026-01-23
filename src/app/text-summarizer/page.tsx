@@ -7,7 +7,6 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const TextSummarizerLoader = dynamic(() => import('@/components/TextSummarizerLoader'), {
-  ssr: false,
   loading: () => (
     <div className="grid md:grid-cols-2 gap-4 h-[70vh]">
         <Skeleton className="w-full h-full" />
