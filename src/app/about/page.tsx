@@ -1,5 +1,4 @@
-
-'use client';
+import type { Metadata } from 'next';
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import AnimatedArrow from "@/components/AnimatedArrow";
 import BorderBeam from "@/components/BorderBeam";
@@ -9,11 +8,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Users, Zap, Shield, FileText, Code2, Heart, UploadCloud, Settings, Download } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+
+export const metadata: Metadata = {
+  title: 'About PDFusion | Our Mission and Values',
+  description: 'Learn about PDFusion, our mission to provide simple, secure, and accessible PDF tools for free, and our commitment to user privacy.',
+};
 
 const whyChooseUsFeatures = [
     {
@@ -97,31 +100,33 @@ const itemVariants = {
   },
 };
 
-const CTAButton = dynamic(
-  () => import('../components/AnimatedArrow').then(
-    (mod) => () => {
-      const [isHovered, setIsHovered] = useState(false);
-      return (
-        <Button
-          asChild
-          size="lg"
-          className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <Link href="/#services">
-            Start Exploring Now
-            <AnimatedArrow isHovered={isHovered} />
-          </Link>
-        </Button>
-      );
-    }
-  ),
-  { ssr: false, loading: () => <Skeleton className="h-11 w-48" /> }
-);
+function AboutPageClient() {
+  'use client';
+
+  const CTAButton = dynamic(
+    () => import('../components/AnimatedArrow').then(
+      (mod) => () => {
+        const [isHovered, setIsHovered] = useState(false);
+        return (
+          <Button
+            asChild
+            size="lg"
+            className="btn-animated-gradient font-bold text-base shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <Link href="/#services">
+              Start Exploring Now
+              <AnimatedArrow isHovered={isHovered} />
+            </Link>
+          </Button>
+        );
+      }
+    ),
+    { ssr: false, loading: () => <Skeleton className="h-11 w-48" /> }
+  );
 
 
-export default function AboutPage() {
   return (
     <>
       <section className="relative py-20 md:py-24 overflow-hidden">
@@ -343,4 +348,9 @@ export default function AboutPage() {
       </section>
     </>
   );
+}
+
+
+export default function AboutPage() {
+  return <AboutPageClient />;
 }
