@@ -17,6 +17,7 @@ const toolPages = [
   '/organize-pdf',
   '/pdf-to-jpg',
   '/jpg-to-pdf',
+  '/docx-to-pdf',
   '/pdf-to-html',
   '/rotate-pdf',
   '/add-page-numbers',

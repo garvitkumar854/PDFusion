@@ -46,6 +46,13 @@ export const services: Service[] = [
       description: 'Convert JPG images to a PDF file with orientation and margin options.',
       href: '/jpg-to-pdf'
     },
+    {
+      icon: <FileText className="text-lime-500" />,
+      bgColor: 'bg-lime-100 dark:bg-lime-900/20',
+      title: 'DOCX to PDF',
+      description: 'Convert DOCX files to PDF documents seamlessly in your browser.',
+      href: '/docx-to-pdf'
+    },
      {
       icon: <Droplets className="text-blue-500" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900/20',
