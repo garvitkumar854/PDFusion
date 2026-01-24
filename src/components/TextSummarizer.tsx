@@ -63,7 +63,11 @@ export function TextSummarizer() {
             setSummary(result.summary);
             toast({ variant: 'success', title: 'Summary Generated!', description: 'Your text has been successfully summarized.' });
         } catch(e: any) {
-            toast({ variant: 'destructive', title: 'Summarization Failed', description: e.message || 'An unexpected error occurred.' });
+            let errorMessage = e.message || 'An unexpected error occurred.';
+            if (e.message && (e.message.includes('quota') || e.message.includes('rate-limits'))) {
+                errorMessage = "You have exceeded the API usage quota. Please check your Google AI platform account or try again later.";
+            }
+            toast({ variant: 'destructive', title: 'Summarization Failed', description: errorMessage });
         } finally {
             setIsSummarizing(false);
         }
