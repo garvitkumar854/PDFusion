@@ -105,8 +105,41 @@ export function DocxToPdfConverter() {
         if (operationId.current !== currentOperationId) return;
         
         const element = document.createElement('div');
-        element.innerHTML = html;
-        element.className = 'html-preview';
+        
+        const style = document.createElement('style');
+        style.innerHTML = `
+           @import url('https://fonts.googleapis.com/css2?family=Arial:wght@400;700&family=Times+New+Roman&display=swap');
+            .docx-preview {
+                font-family: 'Times New Roman', serif;
+                line-height: 1.5;
+                color: #000;
+            }
+            .docx-preview h1, .docx-preview h2, .docx-preview h3, .docx-preview h4, .docx-preview h5, .docx-preview h6 {
+                font-family: 'Arial', sans-serif;
+                margin-top: 1.2em;
+                margin-bottom: 0.5em;
+                font-weight: bold;
+            }
+            .docx-preview h1 { font-size: 24pt; }
+            .docx-preview h2 { font-size: 18pt; }
+            .docx-preview h3 { font-size: 14pt; }
+            .docx-preview h4 { font-size: 12pt; }
+            .docx-preview p { margin-bottom: 1em; text-align: justify; }
+            .docx-preview ul, .docx-preview ol { margin-bottom: 1em; padding-left: 40px; }
+            .docx-preview li { margin-bottom: 0.5em; }
+            .docx-preview table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+            .docx-preview td, .docx-preview th { border: 1px solid #ccc; padding: 8px; }
+            .docx-preview th { background-color: #f2f2f2; }
+            .docx-preview blockquote { border-left: 4px solid #ccc; padding-left: 1rem; margin-left: 0; color: #666; }
+            .docx-preview a { color: #0000EE; text-decoration: underline; }
+        `;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'docx-preview';
+        contentDiv.innerHTML = html;
+
+        element.appendChild(style);
+        element.appendChild(contentDiv);
         
         const opt = {
           margin:       1,
