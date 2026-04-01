@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "./ui/progress";
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { motion, AnimatePresence } from "framer-motion";
 
 if (typeof window !== 'undefined') {
@@ -349,3 +349,4 @@ export function PdfToHtmlConverter() {
     </div>
   );
 }
+

@@ -18,7 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth, googleProvider } from '@/lib/firebase';
 
 export const LoginDialog = ({
@@ -35,6 +36,27 @@ export const LoginDialog = ({
 
   const { signIn } = useAuth();
   const { toast } = useToast();
+
+  const getGoogleErrorMessage = (error: unknown) => {
+    if (!(error instanceof FirebaseError)) {
+      return 'Please try again.';
+    }
+
+    switch (error.code) {
+      case 'auth/popup-closed-by-user':
+        return 'Google sign-in popup was closed before completion.';
+      case 'auth/popup-blocked':
+        return 'Popup was blocked by your browser. Redirect sign-in will be used.';
+      case 'auth/unauthorized-domain':
+        return 'This domain is not authorized in Firebase. Add it in Firebase Console > Authentication > Settings > Authorized domains.';
+      case 'auth/operation-not-allowed':
+        return 'Google sign-in is not enabled in Firebase Authentication providers.';
+      case 'auth/account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in method for this email.';
+      default:
+        return error.message || 'Please try again.';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,10 +100,16 @@ export const LoginDialog = ({
       onClose();
     } catch (error) {
       console.error(error);
+
+      if (error instanceof FirebaseError && error.code === 'auth/popup-blocked') {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       toast({
         variant: 'destructive',
         title: 'Google Login Failed',
-        description: 'Please try again.',
+        description: getGoogleErrorMessage(error),
       });
     } finally {
       setLoading(false);

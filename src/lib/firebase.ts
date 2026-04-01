@@ -9,8 +9,7 @@ const firebaseConfig = {
   projectId: "pdfusion-qqsk7",
   storageBucket: "pdfusion-qqsk7.firebasestorage.app",
   messagingSenderId: "44006442739",
-  appId: "1:44006442739:web:7986d77344253443af9986",
-  measurementId: "G-MWFFW61FJP"
+  appId: "1:44006442739:web:7986d77344253443af9986"
 };
 
 let app: FirebaseApp;

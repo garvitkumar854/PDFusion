@@ -1,7 +1,6 @@
 
 import type {NextConfig} from 'next';
 import withPWAInit from '@ducanh2912/next-pwa';
-import path from 'path';
 
 const withPWA = withPWAInit({
   dest: 'public',
@@ -34,12 +33,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    config.resolve.alias['pdfjs-dist'] = path.join(__dirname, 'node_modules/pdfjs-dist');
-    config.module.rules.push({
-      test: /pdf\.mjs$/,
-      type: "javascript/auto",
-    });
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /pdfjs-dist[\\/]legacy[\\/]build[\\/]pdf\.mjs$/,
+        message: /topLevelAwait|target environment does not appear to support 'async\/await'/,
+      },
+    ];
     return config;
   },
 };

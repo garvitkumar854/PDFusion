@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { Progress } from "./ui/progress";
 import JSZip from "jszip";
 import { Label } from "./ui/label";
@@ -621,3 +621,4 @@ export function PdfToJpgConverter() {
     </div>
   );
 }
+

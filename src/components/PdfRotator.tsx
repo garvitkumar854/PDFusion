@@ -23,7 +23,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { PDFDocument, degrees } from 'pdf-lib';
 import { Progress } from "./ui/progress";
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { motion, AnimatePresence } from "framer-motion";
 
 if (typeof window !== 'undefined') {
@@ -429,3 +429,4 @@ export function PdfRotator() {
     </div>
   );
 }
+
