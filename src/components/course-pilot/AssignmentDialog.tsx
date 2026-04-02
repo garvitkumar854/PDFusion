@@ -77,7 +77,7 @@ export const AssignmentDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="rounded-[40px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Assignment' : 'Add Assignment'}</DialogTitle>
         </DialogHeader>

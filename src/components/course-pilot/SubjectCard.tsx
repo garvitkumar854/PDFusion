@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import type { Assignment } from '@/app/assignment-tracker/page';
+import type { Assignment } from './AssignmentTrackerPage';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -74,12 +74,12 @@ export const SubjectCard = ({
     <div 
         className="group relative h-full" 
     >
-      <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary to-blue-400 opacity-0 blur transition-all duration-300 group-hover:opacity-75"></div>
+      <div className="absolute -inset-0.5 rounded-[40px] bg-gradient-to-r from-primary to-blue-400 opacity-0 blur transition-all duration-300 group-hover:opacity-75"></div>
       <motion.div
         variants={cardVariants}
         initial="initial"
         whileHover="hover"
-        className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-lg"
+        className="relative flex h-full flex-col overflow-hidden rounded-[40px] bg-card p-6 shadow-lg"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

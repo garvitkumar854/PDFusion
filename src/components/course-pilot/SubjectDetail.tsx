@@ -1,7 +1,7 @@
-
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Edit, MoreVertical, Plus, Trash2, GripVertical, Check } from 'lucide-react';
+
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Check, ChevronDown, Edit, GripVertical, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
@@ -20,11 +20,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   DndContext,
   closestCenter,
@@ -41,15 +41,18 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable
+  useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface Assignment {
   id: string;
+  subject_id: string;
   title: string;
   description: string;
   date: string;
+  created_at: string;
+  updated_at: string;
   order: number;
 }
 
@@ -62,6 +65,12 @@ interface SortableAssignmentItemProps {
   isLastInGroup: boolean;
 }
 
+type AssignmentGroup = {
+  date: string;
+  label: string;
+  assignments: Assignment[];
+};
+
 const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstInGroup, isLastInGroup }: SortableAssignmentItemProps) => {
   const { user } = useAuth();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: assignment.id });
@@ -71,80 +80,86 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
     transition,
     zIndex: isDragging ? 10 : 'auto',
   };
-  
-  const cardElement = (
-      <Card className={cn(
-        "transition-shadow duration-300 w-full bg-card/50",
-        !isFirstInGroup && 'border-t',
-        isDragging && "shadow-2xl opacity-50",
-        isFirstInGroup && isLastInGroup ? "rounded-xl" : "",
-        isFirstInGroup && !isLastInGroup ? "rounded-t-xl rounded-b-none border-b-0" : "",
-        !isFirstInGroup && isLastInGroup ? "rounded-b-xl rounded-t-none" : "",
-        !isFirstInGroup && !isLastInGroup ? "rounded-none" : ""
-      )}>
-        <div className="flex items-center p-3 sm:p-4">
-            <div className="text-muted-foreground mr-3 sm:mr-4 shrink-0 flex items-center gap-2">
-              {user && (
-                  <div {...listeners} className="cursor-grab touch-none p-1">
-                     <GripVertical />
-                   </div>
-              )}
-              <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-                {index + 1}
-              </div>
-            </div>
-            <div className="flex-1 space-y-1 min-w-0">
-                <CardTitle className="text-base font-bold text-sm md:text-base break-words">{assignment.title}</CardTitle>
-                {assignment.description && <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">{assignment.description}</p>}
-            </div>
-            <div className="flex items-center gap-2 text-right shrink-0 ml-4">
-                {user && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="w-8 h-8">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       <DropdownMenuItem onClick={onEdit}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>Edit</span>
-                      </DropdownMenuItem>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the assignment. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-            </div>
-        </div>
-      </Card>
-  )
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-        {cardElement}
+      <Card
+        className={cn(
+          'w-full border border-slate-400/90 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 dark:border-slate-700/90 dark:bg-card/80',
+          isDragging && 'scale-[1.01] opacity-70 shadow-xl',
+          isFirstInGroup && isLastInGroup && 'rounded-[28px]',
+          isFirstInGroup && !isLastInGroup && 'rounded-t-[28px] rounded-b-none',
+          !isFirstInGroup && isLastInGroup && 'rounded-b-[28px] rounded-t-none',
+          !isFirstInGroup && !isLastInGroup && 'rounded-none'
+        )}
+      >
+        <div className="flex items-start gap-3 p-4 sm:p-5">
+          <div className="flex shrink-0 items-center gap-2 pt-0.5 text-muted-foreground">
+            {user && (
+              <div {...listeners} className="cursor-grab touch-none rounded-md p-1 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/60">
+                <GripVertical />
+              </div>
+            )}
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {index + 1}
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
+            <CardTitle className="break-words text-[15px] font-semibold leading-tight text-foreground md:text-base">
+              {assignment.title}
+            </CardTitle>
+            {assignment.description && (
+              <p className="break-words whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground/90">
+                {assignment.description}
+              </p>
+            )}
+          </div>
+
+          <div className="ml-2 flex shrink-0 items-center gap-2 text-right">
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full transition-colors hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
+                  </DropdownMenuItem>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete the assignment. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
-
 
 interface SubjectDetailProps {
   subjectName: string;
@@ -169,12 +184,33 @@ export const SubjectDetail = ({
   const [orderedAssignments, setOrderedAssignments] = useState(assignments);
   const [hasReordered, setHasReordered] = useState(false);
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
-  
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
-    const sortedAssignments = [...assignments].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
+    const sortedAssignments = [...assignments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
     setOrderedAssignments(sortedAssignments);
   }, [assignments]);
-  
+
+  const groupedAssignments = useMemo<AssignmentGroup[]>(() => {
+    const groups = new Map<string, Assignment[]>();
+
+    orderedAssignments.forEach((assignment) => {
+      const existing = groups.get(assignment.date) ?? [];
+      groups.set(assignment.date, [...existing, assignment]);
+    });
+
+    return Array.from(groups.entries()).map(([date, groupAssignments]) => ({
+      date,
+      label: format(parseISO(`${date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy'),
+      assignments: groupAssignments,
+    }));
+  }, [orderedAssignments]);
+
+  const visibleAssignments = useMemo(
+    () => groupedAssignments.flatMap((group) => (collapsedDates[group.date] ? [] : group.assignments)),
+    [groupedAssignments, collapsedDates]
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -184,128 +220,145 @@ export const SubjectDetail = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveAssignment(orderedAssignments.find(a => a.id === active.id) || null);
+    setActiveAssignment(orderedAssignments.find((a) => a.id === active.id) || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveAssignment(null);
+
     if (over && active.id !== over.id) {
       const oldIndex = orderedAssignments.findIndex((item) => item.id === active.id);
       const newIndex = orderedAssignments.findIndex((item) => item.id === over.id);
 
       if (oldIndex === -1 || newIndex === -1) return;
-      
-      const activeItem = orderedAssignments[oldIndex];
-      const overItem = orderedAssignments[newIndex];
-      
-      const items = arrayMove(orderedAssignments, oldIndex, newIndex);
 
-      // Determine the new date for the dragged item
-      const newDate = overItem.date;
-      
+      const items = arrayMove(orderedAssignments, oldIndex, newIndex);
+      const newDate = orderedAssignments[newIndex].date;
+
       const finalAssignments = items.map((item, index) => ({
         ...item,
-        date: item.id === active.id ? newDate : item.date, // Apply new date to dragged item
+        date: item.id === active.id ? newDate : item.date,
         order: index,
       }));
-      
-      const sorted = finalAssignments.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order);
-      
+
+      const sorted = finalAssignments.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.order - b.order
+      );
+
       setOrderedAssignments(sorted);
       setHasReordered(true);
     }
-  }
+  };
 
   const handleSaveOrder = () => {
     onReorderAssignments(orderedAssignments);
     setHasReordered(false);
-  }
+  };
 
-  let lastDate: string | null = null;
+  const toggleDateCollapse = (date: string) => {
+    setCollapsedDates((prev) => ({ ...prev, [date]: !prev[date] }));
+  };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
-             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                  <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
-                    <ArrowLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="min-w-0 flex-1">
-                      <h1 className="text-2xl/tight sm:text-3xl/tight md:text-4xl/tight font-bold break-words">{subjectName}</h1>
-                      <p className="text-muted-foreground">{assignments.length} assignments</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 items-center">
-                  {hasReordered && user && (
-                    <Button variant="secondary" onClick={handleSaveOrder}>
-                      <Check className="w-4 h-4 mr-2" />
-                      Save Order
-                    </Button>
-                  )}
-                  {user && (
-                      <Button className="w-full sm:w-auto" onClick={onAddAssignment}>
-                          <Plus className="w-4 h-4 mr-2"/>
-                          Add Assignment
-                      </Button>
-                  )}
-                </div>
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <AnimateOnScroll animation="animate-in fade-in-0 slide-in-from-bottom-12" className="duration-500">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={onBack} className="shrink-0 rounded-full border-slate-200 bg-white shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground dark:border-slate-800 dark:bg-card dark:hover:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0 flex-1">
+              <h1 className="break-words text-2xl/tight font-bold sm:text-3xl/tight md:text-4xl/tight">{subjectName}</h1>
+              <p className="text-muted-foreground">{assignments.length} assignments</p>
             </div>
+          </div>
 
-            {assignments.length > 0 ? (
-                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                    <SortableContext items={orderedAssignments.map(a => a.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-px">
-                        {orderedAssignments.map((assignment, index) => {
-                          const showDateHeading = assignment.date !== lastDate;
-                          lastDate = assignment.date;
+          <div className="flex items-center gap-2">
+            {hasReordered && user && (
+              <Button variant="secondary" onClick={handleSaveOrder} className="rounded-full shadow-sm">
+                <Check className="mr-2 h-4 w-4" />
+                Save Order
+              </Button>
+            )}
+            {user && (
+              <Button onClick={onAddAssignment} className="rounded-full shadow-sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Assignment
+              </Button>
+            )}
+          </div>
+        </div>
 
-                          // Find all items in the current group to determine the last one
-                          const groupItems = orderedAssignments.filter(a => a.date === assignment.date);
-                          const isLastInGroup = groupItems[groupItems.length - 1].id === assignment.id;
-                          const isFirstInGroup = groupItems[0].id === assignment.id;
-                          
-                          return (
-                            <div key={assignment.id}>
-                              {showDateHeading && (
-                                <div className="font-semibold text-base sm:text-lg md:text-xl text-foreground mt-6 mb-3 pb-2 border-b-2 border-primary/20">
-                                  {format(parseISO(`${assignment.date}T00:00:00.000Z`), 'EEEE, MMM dd, yyyy')}
-                                </div>
-                              )}
+        {assignments.length > 0 ? (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <SortableContext items={orderedAssignments.map((a) => a.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {groupedAssignments.map((group) => {
+                  const isCollapsed = !!collapsedDates[group.date];
+                  const groupItems = group.assignments;
+
+                  return (
+                    <div key={group.date} className="space-y-2">
+                      <div className="flex items-center justify-between gap-4 px-1 sm:px-2">
+                        <h3 className="truncate text-lg font-semibold text-foreground">{group.label}</h3>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleDateCollapse(group.date)}
+                          className="h-9 w-9 shrink-0 rounded-full border border-slate-300/80 bg-white shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground dark:border-slate-700 dark:bg-card dark:hover:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground"
+                          aria-label={isCollapsed ? 'Expand assignments' : 'Collapse assignments'}
+                        >
+                          <ChevronDown className={cn('h-5 w-5 transition-transform duration-300', isCollapsed && '-rotate-90')} />
+                        </Button>
+                      </div>
+
+                      {!isCollapsed && (
+                        <div className="space-y-[2px]">
+                          {groupItems.map((assignment) => {
+                            const isFirstInGroup = groupItems[0]?.id === assignment.id;
+                            const isLastInGroup = groupItems[groupItems.length - 1]?.id === assignment.id;
+
+                            return (
                               <SortableAssignmentItem
+                                key={assignment.id}
                                 assignment={assignment}
-                                index={index}
+                                index={orderedAssignments.findIndex((item) => item.id === assignment.id)}
                                 onEdit={() => onEditAssignment(assignment)}
                                 onDelete={() => onDeleteAssignment(assignment.id)}
                                 isFirstInGroup={isFirstInGroup}
                                 isLastInGroup={isLastInGroup}
                               />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </SortableContext>
-                     <DragOverlay>
-                        {activeAssignment ? (
-                          <SortableAssignmentItem
-                            assignment={activeAssignment}
-                            index={orderedAssignments.findIndex(a => a.id === activeAssignment.id)}
-                            onEdit={() => {}}
-                            onDelete={() => {}}
-                            isFirstInGroup={true}
-                            isLastInGroup={true}
-                          />
-                        ) : null}
-                    </DragOverlay>
-                 </DndContext>
-            ) : (
-                <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No assignments yet</h3>
-                    <p className="text-muted-foreground mt-2">Click "Add Assignment" to get started.</p>
-                </div>
-            )}
-        </AnimateOnScroll>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </SortableContext>
+            <DragOverlay>
+              {activeAssignment ? (
+                <SortableAssignmentItem
+                  assignment={activeAssignment}
+                  index={orderedAssignments.findIndex((a) => a.id === activeAssignment.id)}
+                  onEdit={() => {}}
+                  onDelete={() => {}}
+                  isFirstInGroup={true}
+                  isLastInGroup={true}
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/80 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-card/60">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300">No assignments yet</h3>
+            <p className="mt-2 text-muted-foreground">Click "Add Assignment" to get started.</p>
+          </div>
+        )}
+      </AnimateOnScroll>
     </div>
   );
 };

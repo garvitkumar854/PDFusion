@@ -22,6 +22,11 @@ import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { auth, googleProvider } from '@/lib/firebase';
 
+type AuthLikeError = {
+  code?: string;
+  message?: string;
+};
+
 export const LoginDialog = ({
   isOpen,
   onClose,
@@ -40,6 +45,11 @@ export const LoginDialog = ({
   const getGoogleErrorMessage = (error: unknown) => {
     if (!(error instanceof FirebaseError)) {
       return 'Please try again.';
+    }
+
+    const rawMessage = (error.message || '').toLowerCase();
+    if (rawMessage.includes('deleted_client') || rawMessage.includes('error 401: deleted_client')) {
+      return 'Google OAuth client for this Firebase project was deleted. Re-enable Google provider in Firebase Authentication to recreate it.';
     }
 
     switch (error.code) {
@@ -99,12 +109,19 @@ export const LoginDialog = ({
 
       onClose();
     } catch (error) {
-      console.error(error);
+      const authError = error as AuthLikeError;
+      const errorCode = authError?.code;
 
-      if (error instanceof FirebaseError && error.code === 'auth/popup-blocked') {
+      if (errorCode === 'auth/popup-closed-by-user') {
+        return;
+      }
+
+      if (errorCode === 'auth/popup-blocked') {
         await signInWithRedirect(auth, googleProvider);
         return;
       }
+
+      console.error('Google login failed:', errorCode ?? 'unknown', authError?.message ?? error);
 
       toast({
         variant: 'destructive',
@@ -118,7 +135,7 @@ export const LoginDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="rounded-[40px] sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Admin Login</DialogTitle>
           <DialogDescription>

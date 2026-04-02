@@ -89,7 +89,7 @@ export const SubjectDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="rounded-[40px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Subject' : 'Add Subject'}</DialogTitle>
         </DialogHeader>
@@ -110,7 +110,7 @@ export const SubjectDialog = ({
                         {isDeleting ? 'Deleting...' : 'Delete'}
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-[40px]">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>

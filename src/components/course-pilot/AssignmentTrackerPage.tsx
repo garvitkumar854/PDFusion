@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { LoginDialog } from '@/components/course-pilot/LoginDialog';
 import { SubjectCard } from '@/components/course-pilot/SubjectCard';
-import { SubjectDetail } from '@/components/course-pilot/SubjectDetail';
+import { SubjectDetail } from './SubjectDetail';
 import { SubjectDialog } from '@/components/course-pilot/SubjectDialog';
 import { AssignmentDialog } from '@/components/course-pilot/AssignmentDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -439,7 +439,7 @@ export default function AssignmentTrackerPage() {
           </AnimateOnScroll>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        <div className="mb-14 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {subjects.map((subject) => {
             const subjectAssignments = getSubjectAssignments(subject.id);
             const assignmentTimestamps = subjectAssignments.map(a => new Date(a.updated_at).getTime());
