@@ -157,8 +157,8 @@ function AboutPageClient() {
                         whileHover={{ scale: 1.03 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                       >
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
-                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card rounded-2xl">
+                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-[40px] blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                          <Card className="relative text-card-foreground shadow-sm hover:shadow-xl transition-shadow duration-300 p-4 md:p-6 flex flex-col h-full bg-card rounded-[40px]">
                               <CardContent className="p-0 flex-grow">
                                   <div className="flex flex-col items-start gap-4 h-full">
                                       <div className={cn(`p-2 sm:p-3 rounded-lg`, feature.bgColor)}>
@@ -204,7 +204,7 @@ function AboutPageClient() {
           >
             {howItWorksSteps.map((step, index) => (
                 <motion.div key={index} variants={itemVariants} className="flex flex-col items-center h-full">
-                  <div className="relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col rounded-2xl">
+                  <div className="relative w-full p-6 sm:p-8 overflow-hidden bg-card border border-border/20 shadow-lg h-full flex flex-col rounded-[40px]">
                       <div className="flex flex-col items-center text-center flex-grow">
                           <motion.div
                             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -287,7 +287,7 @@ function AboutPageClient() {
 
       <section className="pb-20 md:pb-24">
         <div className="container mx-auto px-4">
-              <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
+              <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-[40px]">
                 <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                 <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                     <AnimateOnScroll

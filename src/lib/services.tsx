@@ -3,7 +3,7 @@ import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, 
 import React from 'react';
 
 export interface Service {
-    icon: React.ReactElement;
+  icon: React.ReactElement<{ className?: string }>;
     bgColor: string;
     title: string;
     description: string;

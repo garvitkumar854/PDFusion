@@ -21,14 +21,14 @@ export const GlowingCard = React.forwardRef<HTMLDivElement, GlowingCardProps>(
       : {};
       
     return (
-      <div className={cn("group relative rounded-2xl", className)}>
+      <div className={cn("group relative rounded-[40px]", className)}>
         <div className={cn(
-          "absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary/50 to-blue-500/50 opacity-0 blur-lg transition-opacity duration-300",
+          "absolute -inset-0.5 rounded-[40px] bg-gradient-to-r from-primary/50 to-blue-500/50 opacity-0 blur-lg transition-opacity duration-300",
           glowing && "group-hover:opacity-75"
         )} />
         <motion.div
           ref={ref}
-          className="relative h-full w-full rounded-2xl border border-border/20 bg-card text-card-foreground shadow-sm p-4 sm:p-6 cursor-pointer overflow-hidden"
+          className="relative h-full w-full rounded-[40px] border border-border/20 bg-card text-card-foreground shadow-sm p-4 sm:p-6 cursor-pointer overflow-hidden"
           whileHover={hoverProps}
           transition={{ duration: 0.3 }}
           {...props}

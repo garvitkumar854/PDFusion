@@ -85,32 +85,32 @@ const SortableAssignmentItem = ({ assignment, index, onEdit, onDelete, isFirstIn
     <div ref={setNodeRef} style={style} {...attributes}>
       <Card
         className={cn(
-          'w-full border border-slate-400/90 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 dark:border-slate-700/90 dark:bg-card/80',
+          'w-full border border-border/70 bg-white/95 shadow-sm backdrop-blur-sm transition-all duration-300 dark:border-slate-700/60 dark:bg-card/80',
           isDragging && 'scale-[1.01] opacity-70 shadow-xl',
-          isFirstInGroup && isLastInGroup && 'rounded-[28px]',
-          isFirstInGroup && !isLastInGroup && 'rounded-t-[28px] rounded-b-none',
-          !isFirstInGroup && isLastInGroup && 'rounded-b-[28px] rounded-t-none',
+          isFirstInGroup && isLastInGroup && 'rounded-[40px]',
+          isFirstInGroup && !isLastInGroup && 'rounded-t-[40px] rounded-b-none',
+          !isFirstInGroup && isLastInGroup && 'rounded-b-[40px] rounded-t-none',
           !isFirstInGroup && !isLastInGroup && 'rounded-none'
         )}
       >
         <div className="flex items-start gap-3 p-4 sm:p-5">
-          <div className="flex shrink-0 items-center gap-2 pt-0.5 text-muted-foreground">
+          <div className="flex shrink-0 self-stretch items-center gap-2 text-muted-foreground">
             {user && (
               <div {...listeners} className="cursor-grab touch-none rounded-md p-1 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/60">
                 <GripVertical />
               </div>
             )}
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary sm:text-xs">
               {index + 1}
             </div>
           </div>
 
           <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
-            <CardTitle className="break-words text-[15px] font-semibold leading-tight text-foreground md:text-base">
+            <CardTitle className="break-words text-[14px] font-semibold leading-snug text-foreground sm:text-[15px] md:text-base">
               {assignment.title}
             </CardTitle>
             {assignment.description && (
-              <p className="break-words whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground/90">
+              <p className="break-words whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground/90 sm:text-sm">
                 {assignment.description}
               </p>
             )}
@@ -315,7 +315,7 @@ export const SubjectDetail = ({
                       </div>
 
                       {!isCollapsed && (
-                        <div className="space-y-[2px]">
+                        <div className="space-y-[1px]">
                           {groupItems.map((assignment) => {
                             const isFirstInGroup = groupItems[0]?.id === assignment.id;
                             const isLastInGroup = groupItems[groupItems.length - 1]?.id === assignment.id;

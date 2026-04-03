@@ -10,7 +10,15 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 
-const tools = [
+type Tool = {
+  icon: React.ReactElement<{ className?: string }>;
+  bgColor: string;
+  title: string;
+  description: string;
+  href: string;
+};
+
+const tools: Tool[] = [
     {
       icon: <Calculator className="w-8 h-8 text-teal-500" />,
       bgColor: 'bg-teal-100 dark:bg-teal-900/20',
@@ -116,13 +124,13 @@ export default function MoreToolsPage() {
           {tools.map((tool, index) => (
             <motion.div key={tool.href} variants={itemVariants}>
               <Link href={tool.href} className="h-full block group relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-[40px] blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                 <Card className={cn(
-                    "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-2xl",
+                    "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-[40px]",
                     isMobile && {
                       'rounded-none': index > 0 && index < tools.length - 1,
-                      'rounded-t-2xl rounded-b-none': index === 0,
-                      'rounded-b-2xl rounded-t-none': index === tools.length - 1,
+                      'rounded-t-[40px] rounded-b-none': index === 0,
+                      'rounded-b-[40px] rounded-t-none': index === tools.length - 1,
                     }
                  )}>
                   <CardHeader className="flex-row items-start gap-4 p-4 pb-2 md:p-6 md:pb-2">

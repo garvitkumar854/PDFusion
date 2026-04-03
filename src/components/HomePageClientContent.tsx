@@ -178,8 +178,8 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         Choose from our growing list of tools to handle your PDF tasks.
                     </p>
                 </AnimateOnScroll>
-                <motion.div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 md:grid max-md:flex max-md:flex-col max-md:gap-0.5"
+                                <motion.div 
+                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 md:grid max-md:flex max-md:flex-col max-md:gap-[1px]"
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.2 }}
@@ -192,14 +192,14 @@ export default function HomePageClientContent({ showServices }: { showServices?:
                         className="h-full"
                     >
                         <Link href={service.href} className="h-full block group relative">
-                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
+                          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-[40px] blur opacity-0 group-hover:opacity-75 transition duration-300"></div>
                            <Card 
                              className={cn(
-                                "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-2xl",
+                                                                "relative text-left shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full flex flex-col bg-card rounded-[40px] border-border/70 dark:border-slate-700/60",
                                 isMobile && {
-                                  'rounded-none': index > 0 && index < servicesData.length - 1,
-                                  'rounded-t-2xl rounded-b-none': index === 0,
-                                  'rounded-b-2xl rounded-t-none': index === servicesData.length - 1,
+                                                                    'rounded-none': index > 0 && index < servicesData.length - 1,
+                                                                    'rounded-t-[40px] rounded-b-none': index === 0,
+                                                                    'rounded-b-[40px] rounded-t-none': index === servicesData.length - 1,
                                 }
                              )}
                            >
@@ -264,7 +264,7 @@ export default function HomePageClientContent({ showServices }: { showServices?:
 
             <section className="pb-20 md:pb-24">
                 <div className="container mx-auto px-4">
-                    <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-2xl">
+                    <div className="relative bg-card p-8 lg:p-12 overflow-hidden shadow-xl border border-primary/20 rounded-[40px]">
                         <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15),transparent_60%)] -z-0" aria-hidden="true"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
                             <AnimateOnScroll
