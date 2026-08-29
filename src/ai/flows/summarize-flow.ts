@@ -9,7 +9,7 @@ import {z} from 'zod';
 import { marked } from 'marked';
 
 const SummarizeInputSchema = z.object({
-  text: z.string().min(20, {message: 'Please enter at least 20 characters to summarize.'}).describe('The text to be summarized.'),
+  text: z.string().min(20, {message: 'Please enter at least 20 characters to summarize.'}).max(100000, {message: 'The text is too long to summarize. Please shorten it and try again.'}).describe('The text to be summarized.'),
   length: z.enum(['short', 'medium', 'long']).default('medium').describe("The desired length of the summary."),
   format: z.enum(['paragraph', 'bullets']).default('paragraph').describe("The desired format of the summary."),
   tone: z.enum(['professional', 'casual', 'confident', 'friendly', 'neutral']).default('neutral').describe("The desired tone of the summary."),

@@ -21,17 +21,10 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PDFDocument, degrees } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createPdfBlob } from '@/lib/pdf-blob';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { Skeleton } from "./ui/skeleton";
 import { motion } from "framer-motion";
-
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString();
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -317,7 +310,7 @@ export function PdfOrganizer({ onFileChange }: { onFileChange?: (isFile: boolean
       });
       
       const newPdfBytes = await newPdfDoc.save();
-      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const blob = createPdfBlob(newPdfBytes);
       const url = URL.createObjectURL(blob);
       
       const link = document.createElement('a');

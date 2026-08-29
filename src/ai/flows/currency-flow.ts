@@ -28,7 +28,18 @@ const getExchangeRateTool = ai.defineTool(
     outputSchema: GetRatesOutputSchema,
   },
   async (input) => {
-    const response = await fetch(`https://open.er-api.com/v6/latest/${input.baseCurrency}`);
+    // baseCurrency comes straight from the client, so validate it before it is
+    // interpolated into a URL.
+    const baseCurrency = input.baseCurrency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(baseCurrency)) {
+      throw new Error('Base currency must be a 3 letter ISO code (e.g. "USD").');
+    }
+
+    const response = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`, {
+      // Rates only change once a day; reuse the response server-side instead of
+      // hitting the upstream API on every page load.
+      next: { revalidate: 3600 },
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch exchange rates from the API.');
     }

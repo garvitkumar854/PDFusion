@@ -26,16 +26,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createPdfBlob } from '@/lib/pdf-blob';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { motion, AnimatePresence } from 'framer-motion';
-
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString();
-}
 
 
 const MAX_FILES = 50;
@@ -252,6 +245,8 @@ export function MergePdfs() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
+    // Firefox refuses to start a drag unless some data is attached.
+    e.dataTransfer.setData('text/plain', String(index));
     setTimeout(() => {
         setIsDragging(true);
     }, 0);
@@ -322,10 +317,11 @@ export function MergePdfs() {
         }
 
         const mergedPdfBytes = await mergedPdf.save({ useObjectStreams: false });
-        const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        const blob = createPdfBlob(mergedPdfBytes);
         
         if (operationId.current !== currentOperationId) {
-            URL.revokeObjectURL(URL.createObjectURL(blob));
+            // A newer operation replaced this one; the blob was never exposed via
+            // an object URL, so there is nothing to revoke.
             return;
         }
 
@@ -468,6 +464,9 @@ export function MergePdfs() {
                 <div className={cn("space-y-2 max-h-[266px] overflow-y-auto pr-2", isMerging && "pointer-events-none")}>
                     <AnimatePresence>
                     {files.map((pdfFile, index) => (
+                        // The motion.div is an animation-only wrapper: framer-motion
+                        // swallows onDragStart/onDragEnd for its own pan gestures, so the
+                        // native HTML5 drag-and-drop handlers live on the inner div.
                         <motion.div
                         key={pdfFile.id}
                         layout
@@ -475,11 +474,14 @@ export function MergePdfs() {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0, x: -300, transition: { duration: 0.3 } }}
                         transition={{ type: 'spring', stiffness: 500, damping: 50, mass: 1 }}
+                        >
+                        <div
                         draggable={!isMerging}
                         onDragStart={(e) => handleDragStart(e, index)}
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragEnd={handleDragEnd}
-                        onDragOver={(e) => e.preventDefault()}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDragOver}
                         className={cn(
                             'group flex items-center justify-between p-2 sm:p-3 rounded-lg border bg-background transition-all duration-300 ease-in-out',
                              isDragging && dragItem.current === index ? 'shadow-lg scale-105 opacity-50' : 'shadow-sm',
@@ -519,6 +521,7 @@ export function MergePdfs() {
                             >
                             <X className="w-4 h-4" />
                             </Button>
+                        </div>
                         </div>
                         </motion.div>
                     ))}

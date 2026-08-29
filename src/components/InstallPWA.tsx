@@ -13,8 +13,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import Image from 'next/image';
-import { useTheme } from 'next-themes';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -26,7 +24,6 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const IOSInstallGuide = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
-  const { resolvedTheme } = useTheme();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -36,18 +33,20 @@ const IOSInstallGuide = ({ open, onOpenChange }: { open: boolean, onOpenChange: 
             Follow these simple steps to add PDFusion to your Home Screen.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-4 text-sm">
-          <p>1. Tap the <span className="font-bold">Share</span> button in Safari's toolbar.</p>
-          <p>2. Scroll down and tap on <span className="font-bold">"Add to Home Screen"</span>.</p>
-          <p>3. Confirm by tapping <span className="font-bold">"Add"</span> in the top right corner.</p>
-          <Image
-            src={resolvedTheme === 'dark' ? '/ios-install-dark.png' : '/ios-install-light.png'}
-            alt="iOS installation guide"
-            width={300}
-            height={150}
-            className="rounded-lg border mx-auto mt-4"
-          />
-        </div>
+        <ol className="py-4 space-y-3 text-sm">
+          {[
+            <>Tap the <span className="font-bold">Share</span> button in Safari&apos;s toolbar.</>,
+            <>Scroll down and tap <span className="font-bold">&quot;Add to Home Screen&quot;</span>.</>,
+            <>Confirm by tapping <span className="font-bold">&quot;Add&quot;</span> in the top right corner.</>,
+          ].map((step, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {index + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
       </DialogContent>
     </Dialog>
   );

@@ -1,8 +1,5 @@
 import 'src/app/globals.css';
-import { Toaster } from "@/components/ui/toaster"
 import { Poppins, Inter } from 'next/font/google'
-import Header from '@/components/Header';
-import FooterLoader from '@/components/FooterLoader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 import type { Metadata, Viewport } from 'next';
@@ -92,8 +89,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(poppins.variable, inter.variable)} suppressHydrationWarning>
-      <head>
-      </head>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
           <ThemeProvider
             attribute="class"

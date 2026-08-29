@@ -269,7 +269,7 @@ function AboutPageClient() {
             >
               <Card className="max-w-2xl mx-auto p-8 shadow-lg text-left flex flex-col sm:flex-row items-center gap-8 bg-card">
                 <Avatar className="w-24 h-24 border-4 border-primary/50">
-                  <AvatarImage src="/creator-image.png" alt="Creator Garvit Kumar" />
+                  <AvatarImage src="/creator-image.webp" alt="Creator Garvit Kumar" />
                   <AvatarFallback>GK</AvatarFallback>
                 </Avatar>
                 <div className="text-center sm:text-left">

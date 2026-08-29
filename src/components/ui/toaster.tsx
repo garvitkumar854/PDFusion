@@ -2,7 +2,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useIsMobile } from "@/hooks/use-is-mobile"
 import {
   Toast,
   ToastClose,

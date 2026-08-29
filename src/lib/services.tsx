@@ -1,5 +1,5 @@
 
-import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, Pencil, LayoutGrid, Droplets, BookCheck } from 'lucide-react';
+import { Combine, Scissors, ListOrdered, Image, FileText, Code, RotateCw, Hash, LayoutGrid, Droplets } from 'lucide-react';
 import React from 'react';
 
 export interface Service {
@@ -82,13 +82,6 @@ export const services: Service[] = [
       href: '/add-page-numbers'
     },
     {
-      icon: <BookCheck className="text-sky-500" />,
-      bgColor: 'bg-sky-100 dark:bg-sky-900/20',
-      title: 'Course Pilot',
-      description: 'An intelligent assignment tracker to manage your coursework.',
-      href: '/assignment-tracker'
-    },
-     {
       icon: <LayoutGrid className="text-gray-500" />,
       bgColor: 'bg-gray-100 dark:bg-gray-900/20',
       title: 'More Tools',

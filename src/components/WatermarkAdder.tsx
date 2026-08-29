@@ -27,20 +27,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createPdfBlob } from '@/lib/pdf-blob';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "./ui/slider";
 import { Textarea } from "./ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString();
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -376,7 +369,7 @@ export function WatermarkAdder() {
       if (operationId.current !== currentOperationId) return;
 
       const newPdfBytes = await pdfDoc.save();
-      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const blob = createPdfBlob(newPdfBytes);
       const url = URL.createObjectURL(blob);
       const originalName = file.file.name.replace(/\.pdf$/i, '');
       

@@ -3,7 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import LoadingDots from './LoadingDots';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useEffect, useState } from 'react';
 
 const UnitConverter = dynamic(() => import('@/components/UnitConverter').then(mod => mod.UnitConverter), {

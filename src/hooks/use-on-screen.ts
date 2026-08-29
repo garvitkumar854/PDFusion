@@ -5,13 +5,16 @@ export function useOnScreen(ref: RefObject<HTMLElement>) {
   const [isIntersecting, setIntersecting] = useState(false);
 
   useEffect(() => {
+    // Capture the node: React can null out ref.current before this effect's
+    // cleanup runs, which would leave the observer attached.
+    const node = ref.current;
+    if (!node) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIntersecting(true);
-          if (ref.current) {
-            observer.unobserve(ref.current);
-          }
+          observer.unobserve(node);
         }
       },
       {
@@ -19,15 +22,9 @@ export function useOnScreen(ref: RefObject<HTMLElement>) {
       }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
+    observer.observe(node);
 
-    return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
-    };
+    return () => observer.disconnect();
   }, [ref]);
 
   return isIntersecting;

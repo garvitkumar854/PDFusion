@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { marked } from "marked";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Check, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +69,8 @@ export function MarkdownToHtmlConverter() {
 
     useEffect(() => {
         const parsedHtml = marked.parse(markdown) as string;
-        setHtml(parsedHtml);
+        // marked forwards raw HTML untouched, so sanitize before it is injected.
+        setHtml(sanitizeHtml(parsedHtml));
     }, [markdown]);
 
     const handleCopy = useCallback(() => {

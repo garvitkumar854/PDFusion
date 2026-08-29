@@ -22,13 +22,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { PDFDocument, degrees } from 'pdf-lib';
+import { createPdfBlob } from '@/lib/pdf-blob';
 import { Progress } from "./ui/progress";
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { motion, AnimatePresence } from "framer-motion";
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -209,7 +206,7 @@ export function PdfRotator() {
         if (operationId.current !== currentOperationId) return;
         
         const newPdfBytes = await pdfDoc.save();
-        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+        const blob = createPdfBlob(newPdfBytes);
         const url = URL.createObjectURL(blob);
         
         if (operationId.current !== currentOperationId) {

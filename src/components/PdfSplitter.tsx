@@ -28,16 +28,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createPdfBlob } from '@/lib/pdf-blob';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import JSZip from "jszip";
 import { motion, AnimatePresence } from 'framer-motion';
-
-
-// Set worker path for pdf.js
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -78,24 +73,21 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
     const { onVisible } = usePageVisibility();
 
     useEffect(() => {
+        // Capture the node: React can null out ref.current before this effect's
+        // cleanup runs, which would leak the observer on unmounted pages.
+        const node = ref.current;
+        if (!node) return;
+
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && !dataUrl) {
                 onVisible(pageNumber);
-                 if (ref.current) {
-                   observer.unobserve(ref.current);
-                }
+                observer.unobserve(node);
             }
         }, { threshold: 0.1 });
 
-        if (ref.current) {
-            observer.observe(ref.current);
-        }
+        observer.observe(node);
 
-        return () => {
-            if (ref.current) {
-                observer.unobserve(ref.current);
-            }
-        };
+        return () => observer.disconnect();
     }, [pageNumber, onVisible, dataUrl]);
     
     return (
@@ -124,7 +116,7 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
             )}
             {showCheckbox && onToggle && (
                 <div className="absolute top-1 right-1">
-                    <Checkbox checked={isSelected} className="bg-white/80" readOnly disabled={disabled} />
+                    <Checkbox checked={isSelected} className="bg-white/80" disabled={disabled} />
                 </div>
             )}
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5 font-medium">
@@ -417,7 +409,7 @@ export function PdfSplitter() {
         if (pageGroups.length > 1) {
             zip.file(filename, newPdfBytes);
         } else {
-             const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+             const blob = createPdfBlob(newPdfBytes);
              const url = URL.createObjectURL(blob);
              results.push({ filename, url });
         }

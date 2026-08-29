@@ -29,17 +29,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createPdfBlob } from '@/lib/pdf-blob';
+import * as pdfjsLib from '@/lib/pdfjs';
 import { Progress } from "./ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "./ui/checkbox";
-
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString();
-}
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -489,7 +483,7 @@ export function PageNumberAdder() {
       if (operationId.current !== currentOperationId) return;
 
       const newPdfBytes = await pdfDoc.save();
-      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const blob = createPdfBlob(newPdfBytes);
       const url = URL.createObjectURL(blob);
       
       if (operationId.current !== currentOperationId) {

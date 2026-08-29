@@ -20,12 +20,23 @@ type ExchangeRates = {
     [key: string]: number;
 };
 
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 4,
-    }).format(value);
-};
+const amountFormatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+    useGrouping: false,
+});
+
+const rateFormatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+});
+
+// Values written back into a <input type="number"> must not contain thousands
+// separators — the browser silently discards them and the field renders empty.
+const formatAmount = (value: number) => amountFormatter.format(value);
+
+// The 1x rate line is plain text, so grouping makes it easier to read.
+const formatRate = (value: number) => rateFormatter.format(value);
 
 const CurrencySelector = React.memo(({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled?: boolean }) => {
     const [open, setOpen] = useState(false);
@@ -139,7 +150,7 @@ export function CurrencyConverter() {
         const result = convert(amount, sourceCurrency, targetCurrency, rates);
         
         if (result !== null) {
-            const formattedResult = formatCurrency(result);
+            const formattedResult = formatAmount(result);
             if (lastEdited === 'from') {
                 setToAmount(formattedResult);
             } else {
@@ -180,7 +191,7 @@ export function CurrencyConverter() {
         const fromSymbol = currencyList.find(c => c.code === fromCurrency)?.symbol || fromCurrency;
         const toSymbol = currencyList.find(c => c.code === toCurrency)?.symbol || toCurrency;
         
-        return `1 ${fromSymbol} = ${formatCurrency(rate)} ${toSymbol}`;
+        return `1 ${fromSymbol} = ${formatRate(rate)} ${toSymbol}`;
 
     }, [rates, fromCurrency, toCurrency, isLoading]);
 

@@ -28,7 +28,6 @@ const toolPages = [
   '/currency-converter',
   '/markdown-to-html',
   '/text-summarizer',
-  '/assignment-tracker',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
