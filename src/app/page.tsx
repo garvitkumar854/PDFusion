@@ -5,6 +5,8 @@ import HomePageLoader from '@/components/HomePageLoader';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import AdSlot from '@/components/AdSlot';
+import { ADSENSE_SLOT_HOME } from '@/lib/adsense';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -83,6 +85,11 @@ export default function Home() {
             </motion.div>
         </motion.div>
       </section>
+
+      {/* Homepage ad between the hero and the tool grid. */}
+      <div className="container mx-auto px-4 pb-12">
+        <AdSlot slot={ADSENSE_SLOT_HOME} minHeight={90} />
+      </div>
 
       <HomePageLoader showServices={true} />
     </>

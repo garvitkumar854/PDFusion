@@ -3,7 +3,9 @@ import { Poppins, Inter } from 'next/font/google'
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import ClientLayout from '@/components/ClientLayout';
+import { isAdSenseEnabled, ADSENSE_SCRIPT_SRC } from '@/lib/adsense';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -90,6 +92,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(poppins.variable, inter.variable)} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground flex flex-col min-h-screen">
+          {isAdSenseEnabled && (
+            <Script
+              src={ADSENSE_SCRIPT_SRC}
+              strategy="afterInteractive"
+              crossOrigin="anonymous"
+              async
+            />
+          )}
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

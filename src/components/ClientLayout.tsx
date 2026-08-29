@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
+import AdSlot from '@/components/AdSlot';
+import { ADSENSE_SLOT_CONTENT } from '@/lib/adsense';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -35,6 +37,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       )}>
         {children}
       </main>
+      {/* Site-wide responsive ad above the footer; renders nothing until a
+          client + slot are configured via env. */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <AdSlot slot={ADSENSE_SLOT_CONTENT} minHeight={90} />
+      </div>
       <FooterLoader />
       <Toaster />
     </>
