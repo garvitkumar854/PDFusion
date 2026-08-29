@@ -130,12 +130,13 @@ type CustomRangePreview = {
  * Renders the first (and last) page of a range as paper-shaped cards, with an
  * ellipsis between them when the span covers more than those two.
  */
-const RangeThumbRow = ({ pages, previewByPage, thumbClass }: {
+const RangeThumbRow = ({ pages, previewByPage, thumbMaxClass }: {
     pages: number[];
     previewByPage: Map<number, PagePreview>;
-    thumbClass: string;
+    /** Upper bound on each page's width; pages shrink to fit the container. */
+    thumbMaxClass: string;
 }) => (
-    <div className="flex items-center justify-center gap-3 sm:gap-5">
+    <div className="flex w-full items-center justify-center gap-2 sm:gap-3">
         {pages.map((pageNumber, i) => {
             const preview = previewByPage.get(pageNumber);
             return (
@@ -143,7 +144,8 @@ const RangeThumbRow = ({ pages, previewByPage, thumbClass }: {
                     {i > 0 && (
                         <span aria-hidden="true" className="shrink-0 text-xl font-bold leading-none text-muted-foreground/60">&hellip;</span>
                     )}
-                    <div className={cn("shrink-0", thumbClass)}>
+                    {/* min-w-0 lets the page shrink instead of overflowing the tile. */}
+                    <div className={cn("min-w-0 flex-1 basis-0", thumbMaxClass)}>
                         <PagePreviewCard
                             pageNumber={pageNumber}
                             dataUrl={preview?.dataUrl || null}
@@ -973,16 +975,16 @@ export function PdfSplitter() {
                                         <RangeThumbRow
                                             pages={customRangePreviews[0].pages}
                                             previewByPage={previewByPage}
-                                            thumbClass={customRangePreviews[0].pages.length > 1
-                                                ? "w-36 sm:w-48 md:w-56 lg:w-64"
-                                                : "w-44 sm:w-60 md:w-72 lg:w-80"}
+                                            thumbMaxClass={customRangePreviews[0].pages.length > 1
+                                                ? "max-w-[9rem] sm:max-w-[11rem]"
+                                                : "max-w-[11rem] sm:max-w-[13rem]"}
                                         />
                                     </div>
                                 ) : (
                                     /* Several ranges: columns reflow to fit the width and the count. */
-                                    <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))]">
+                                    <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(12rem,1fr))]">
                                         {customRangePreviews.map((preview, index) => (
-                                            <div key={index} className="rounded-lg border bg-muted/40 p-3">
+                                            <div key={index} className="min-w-0 overflow-hidden rounded-lg border bg-muted/40 p-3">
                                                 <div className="mb-3 flex items-center justify-between gap-2">
                                                     <span className="truncate font-mono text-xs font-semibold">{preview.label}</span>
                                                     <span className="shrink-0 text-[11px] text-muted-foreground">
@@ -992,7 +994,7 @@ export function PdfSplitter() {
                                                 <RangeThumbRow
                                                     pages={preview.pages}
                                                     previewByPage={previewByPage}
-                                                    thumbClass={preview.pages.length > 1 ? "w-20 sm:w-24" : "w-24 sm:w-28"}
+                                                    thumbMaxClass={preview.pages.length > 1 ? "max-w-[6.5rem]" : "max-w-[7.5rem]"}
                                                 />
                                             </div>
                                         ))}
