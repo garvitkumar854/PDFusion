@@ -71,7 +71,9 @@ export default function SplitPdfPage() {
         </section>
         
         <main className="flex-1 w-full">
-          <div className="max-w-4xl mx-auto">
+          {/* Same container as the FeatureGrid sections below, so the tool and
+              "Why Choose Us" line up edge to edge. */}
+          <div className="container mx-auto px-4">
             <PdfSplitterLoader />
           </div>
         </main>

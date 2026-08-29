@@ -17,6 +17,8 @@ import {
   Ban,
   Lock,
   ShieldAlert,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -53,8 +55,59 @@ type SplitResult = {
 type PagePreview = {
   pageNumber: number;
   dataUrl: string | null;
-  isVisible: boolean;
 };
+
+/** Suggests a default for a new range row: the first page not covered yet. */
+function suggestNextRange(entries: string[], max: number): string {
+  let highestCovered = 0;
+  for (const entry of entries) {
+    for (const token of entry.split(',')) {
+      const part = token.trim();
+      if (!part) continue;
+      const endStr = part.includes('-') ? part.split('-')[1] : part;
+      const end = parseInt(endStr, 10);
+      if (!isNaN(end) && end > highestCovered) highestCovered = end;
+    }
+  }
+  if (highestCovered >= max) return "";
+  return String(highestCovered + 1);
+}
+
+/**
+ * Turns range entries such as ["1-3", "5", "8-10"] into groups of 0-based page
+ * indices. Commas inside an entry are accepted too. Returns null when any
+ * entry is out of bounds or malformed.
+ */
+function parseRangeEntries(entries: string[], max: number): number[][] | null {
+  const groups: number[][] = [];
+
+  for (const entry of entries) {
+    for (const token of entry.split(',')) {
+      const part = token.trim();
+      if (!part) continue;
+
+      if (part.includes('-')) {
+        const [startStr, endStr] = part.split('-');
+        const start = parseInt(startStr, 10);
+        const end = parseInt(endStr, 10);
+        if (isNaN(start) || isNaN(end) || start < 1 || end > max || start > end) {
+          return null;
+        }
+        const range: number[] = [];
+        for (let i = start; i <= end; i++) range.push(i - 1);
+        groups.push(range);
+      } else {
+        const pageNum = parseInt(part, 10);
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > max) {
+          return null;
+        }
+        groups.push([pageNum - 1]);
+      }
+    }
+  }
+
+  return groups;
+}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -139,7 +192,8 @@ export function PdfSplitter() {
   const [rangeMode, setRangeMode] = useState<"custom" | "fixed">("custom");
   const [extractMode, setExtractMode] = useState<"all" | "select">("select");
 
-  const [customRanges, setCustomRanges] = useState("");
+  const [customRanges, setCustomRanges] = useState<string[]>([]);
+  const [mergeCustomRanges, setMergeCustomRanges] = useState(false);
   const [fixedRangeSize, setFixedRangeSize] = useState(1);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
 
@@ -149,6 +203,9 @@ export function PdfSplitter() {
   const { toast } = useToast();
   
   const operationId = useRef<number>(0);
+  // Pages we have already asked the renderer for, so scrolling back and forth
+  // (or React StrictMode re-running an effect) cannot queue the same page twice.
+  const requestedPages = useRef<Set<number>>(new Set());
 
   const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
     if (operationId.current !== currentOperationId) return null;
@@ -168,8 +225,12 @@ export function PdfSplitter() {
                 viewport: viewport
             };
             await page.render(renderContext).promise;
-             if (operationId.current !== currentOperationId) return null;
-            return canvas.toDataURL('image/jpeg', 0.8);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            // Release the backing store; the data URL has already copied it out.
+            canvas.width = 0;
+            canvas.height = 0;
+            if (operationId.current !== currentOperationId) return null;
+            return dataUrl;
         }
     } catch (e) {
         if (operationId.current === currentOperationId) {
@@ -195,14 +256,14 @@ export function PdfSplitter() {
         }
 
         setFile({ id: `${fileToLoad.name}-${Date.now()}`, file: fileToLoad, totalPages, pdfjsDoc, isEncrypted: false });
-        setCustomRanges(`1-${totalPages}`);
+        setCustomRanges([`1-${totalPages}`]);
+        setMergeCustomRanges(false);
         setFixedRangeSize(1);
         setSelectedPages(new Set());
         setSplitResults([]);
         setSplitError(null);
-        
-        const previews: PagePreview[] = Array(totalPages).fill(null).map((_, i) => ({ pageNumber: i + 1, dataUrl: null, isVisible: false }));
-        setPagePreviews(previews);
+        requestedPages.current.clear();
+        setPagePreviews(Array.from({ length: totalPages }, (_, i) => ({ pageNumber: i + 1, dataUrl: null })));
         toast({
           variant: 'success',
           title: "File Uploaded",
@@ -240,35 +301,36 @@ export function PdfSplitter() {
   );
   
   const onPageVisible = useCallback((pageNumber: number) => {
-    if (!file || !file.pdfjsDoc) return;
+    const pdfjsDoc = file?.pdfjsDoc;
+    if (!pdfjsDoc || requestedPages.current.has(pageNumber)) return;
+
+    requestedPages.current.add(pageNumber);
     const currentOperationId = operationId.current;
 
-    setPagePreviews(prev => {
-        const pageIndex = prev.findIndex(p => p.pageNumber === pageNumber);
-        if (pageIndex === -1 || prev[pageIndex].dataUrl || prev[pageIndex].isVisible) {
-            return prev;
-        }
-
-        const newPreviews = [...prev];
-        newPreviews[pageIndex] = { ...newPreviews[pageIndex], isVisible: true };
-        
-        renderPdfPage(file.pdfjsDoc!, pageNumber, currentOperationId).then(dataUrl => {
-            if (dataUrl && operationId.current === currentOperationId) {
-                setPagePreviews(currentPreviews => {
-                    const latestIndex = currentPreviews.findIndex(p => p.pageNumber === pageNumber);
-                    if (latestIndex > -1) {
-                       const finalPreviews = [...currentPreviews];
-                       finalPreviews[latestIndex] = { ...finalPreviews[latestIndex], dataUrl };
-                       return finalPreviews;
-                    }
-                    return currentPreviews;
-                });
-            }
-        });
-        
-        return newPreviews;
+    renderPdfPage(pdfjsDoc, pageNumber, currentOperationId).then((dataUrl) => {
+      if (!dataUrl || operationId.current !== currentOperationId) return;
+      setPagePreviews(prev =>
+        prev.map(p => (p.pageNumber === pageNumber ? { ...p, dataUrl } : p))
+      );
     });
   }, [file, renderPdfPage]);
+
+  // A mount-only effect would close over the first render's values, so the
+  // resources to release are tracked in a ref and read at teardown time.
+  const teardownRef = useRef<{ results: SplitResult[]; pdfjsDoc: pdfjsLib.PDFDocumentProxy | null }>({
+    results: [],
+    pdfjsDoc: null,
+  });
+  teardownRef.current.results = splitResults;
+  teardownRef.current.pdfjsDoc = file?.pdfjsDoc ?? null;
+
+  useEffect(() => {
+    return () => {
+      operationId.current++;
+      teardownRef.current.results.forEach(r => URL.revokeObjectURL(r.url));
+      teardownRef.current.pdfjsDoc?.destroy();
+    };
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -286,44 +348,17 @@ export function PdfSplitter() {
     if (file?.pdfjsDoc) file.pdfjsDoc.destroy();
     setFile(null);
     setIsProcessing(false);
-    setCustomRanges("");
+    setCustomRanges([]);
+    setMergeCustomRanges(false);
     setSplitResults([]);
     setPagePreviews([]);
     setSplitError(null);
+    requestedPages.current.clear();
     if (fileName) {
       toast({ variant: 'info', title: `Removed "${fileName}"` });
     }
   };
   
-  const parseCustomRanges = (ranges: string, max: number): number[][] | null => {
-    const result: number[][] = [];
-    if (!ranges.trim()) return [];
-    const parts = ranges.split(',').map(part => part.trim());
-
-    for (const part of parts) {
-      if (part.includes('-')) {
-        const [startStr, endStr] = part.split('-');
-        const start = parseInt(startStr, 10);
-        const end = parseInt(endStr, 10);
-        if (isNaN(start) || isNaN(end) || start < 1 || end > max || start > end) {
-          return null;
-        }
-        const range = [];
-        for (let i = start; i <= end; i++) {
-          range.push(i - 1);
-        }
-        result.push(range);
-      } else {
-        const pageNum = parseInt(part, 10);
-        if (isNaN(pageNum) || pageNum < 1 || pageNum > max) {
-          return null;
-        }
-        result.push([pageNum - 1]);
-      }
-    }
-    return result;
-  };
-
   const handleSplit = async () => {
     if (!file || !file.pdfjsDoc) return;
 
@@ -338,17 +373,23 @@ export function PdfSplitter() {
     setSplitResults([]);
 
     let pageGroups: number[][] = [];
+    let mergedIntoOne = false;
     
     try {
       if (splitMode === 'range') {
         if (rangeMode === 'custom') {
-          const parsed = parseCustomRanges(customRanges, file.totalPages);
+          const parsed = parseRangeEntries(customRanges, file.totalPages);
           if (!parsed) {
             setSplitError("Invalid page ranges. Please use formats like '1-3', '5', '7-9'.");
             setIsSplitting(false);
             return;
           }
           pageGroups = parsed;
+          if (mergeCustomRanges && pageGroups.length > 1) {
+            // Ranges keep the order the user listed them in.
+            pageGroups = [pageGroups.flat()];
+            mergedIntoOne = true;
+          }
         } else { // fixed range
           if (fixedRangeSize < 1) {
             setSplitError("Fixed range size must be at least 1.");
@@ -404,7 +445,9 @@ export function PdfSplitter() {
         const firstPage = group[0] + 1;
         const lastPage = group[group.length - 1] + 1;
         const rangeText = firstPage === lastPage ? `page_${firstPage}` : `pages_${firstPage}-${lastPage}`;
-        const filename = `${originalName}_${rangeText}.pdf`
+        const filename = mergedIntoOne
+            ? `${originalName}_merged.pdf`
+            : `${originalName}_${rangeText}.pdf`;
 
         if (pageGroups.length > 1) {
             zip.file(filename, newPdfBytes);
@@ -484,6 +527,21 @@ export function PdfSplitter() {
     setSplitError(null);
   };
 
+  const updateCustomRange = (index: number, value: string) => {
+    setCustomRanges(prev => prev.map((entry, i) => (i === index ? value : entry)));
+    setSplitError(null);
+  };
+
+  const addCustomRange = () => {
+    setCustomRanges(prev => [...prev, suggestNextRange(prev, file?.totalPages ?? 0)]);
+    setSplitError(null);
+  };
+
+  const removeCustomRange = (index: number) => {
+    setCustomRanges(prev => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+    setSplitError(null);
+  };
+
   const toggleSelectAllPages = (checked: boolean) => {
     if (checked) {
       setSelectedPages(new Set(Array.from({ length: file?.totalPages || 0 }, (_, i) => i + 1)));
@@ -492,30 +550,56 @@ export function PdfSplitter() {
     }
   };
 
-  const customRangePreviewPages = React.useMemo(() => {
-    if (!file || splitMode !== 'range' || rangeMode !== 'custom') return [];
-    
-    const firstPart = customRanges.split(',')[0].trim();
-    if (firstPart.includes('-')) {
-        const [startStr, endStr] = firstPart.split('-');
-        const start = parseInt(startStr, 10);
-        const end = parseInt(endStr, 10);
-        if (!isNaN(start) && start >= 1 && start <= file.totalPages) {
-            const pages = [start];
-            if (!isNaN(end) && end >= 1 && end <= file.totalPages && end > start) {
-                pages.push(end);
-            }
-            return pages;
+  const previewByPage = React.useMemo(() => {
+    const map = new Map<number, PagePreview>();
+    pagePreviews.forEach(preview => map.set(preview.pageNumber, preview));
+    return map;
+  }, [pagePreviews]);
+
+  // One card per range the user typed, showing the first and last page of the
+  // span. The JSX that renders this is already gated on range+custom mode.
+  const customRangePreviews = React.useMemo(() => {
+    if (!file) return [];
+
+    const max = file.totalPages;
+    const previews: { label: string; pages: number[] }[] = [];
+
+    for (const entry of customRanges) {
+      for (const token of entry.split(',')) {
+        const part = token.trim();
+        if (!part) continue;
+
+        if (part.includes('-')) {
+          const [startStr, endStr] = part.split('-');
+          const start = parseInt(startStr, 10);
+          const end = parseInt(endStr, 10);
+          if (isNaN(start) || start < 1 || start > max) continue;
+          const pages = [start];
+          if (!isNaN(end) && end > start && end <= max) pages.push(end);
+          previews.push({ label: part, pages });
+        } else {
+          const pageNum = parseInt(part, 10);
+          if (isNaN(pageNum) || pageNum < 1 || pageNum > max) continue;
+          previews.push({ label: part, pages: [pageNum] });
         }
-    } else {
-        const pageNum = parseInt(firstPart, 10);
-        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= file.totalPages) {
-            return [pageNum];
-        }
+      }
     }
-    return [];
-  }, [customRanges, file, splitMode, rangeMode]);
-  
+
+    return previews;
+  }, [customRanges, file]);
+
+  // Drives the "N files from M pages" hint and the merge checkbox description.
+  const customRangeSummary = React.useMemo(() => {
+    if (!file) return { valid: true, files: 0, pages: 0 };
+    const parsed = parseRangeEntries(customRanges, file.totalPages);
+    if (!parsed) return { valid: false, files: 0, pages: 0 };
+    return {
+      valid: true,
+      files: parsed.length,
+      pages: parsed.reduce((count, group) => count + group.length, 0),
+    };
+  }, [customRanges, file]);
+
   const fixedRangeGroups = React.useMemo(() => {
     if (!file || splitMode !== 'range' || rangeMode !== 'fixed' || fixedRangeSize < 1) return [];
     const groups: (PagePreview | { pageNumber: number; dataUrl: null })[][] = [];
@@ -523,13 +607,12 @@ export function PdfSplitter() {
         const group: (PagePreview | { pageNumber: number; dataUrl: null })[] = [];
         for(let j = 0; j < fixedRangeSize && (i + j) < file.totalPages; j++) {
             const pageNum = i + j + 1;
-            const preview = pagePreviews.find(p => p.pageNumber === pageNum);
-            group.push(preview || { pageNumber: pageNum, dataUrl: null, isVisible: false });
+            group.push(previewByPage.get(pageNum) || { pageNumber: pageNum, dataUrl: null });
         }
         groups.push(group);
     }
     return groups;
-  }, [pagePreviews, splitMode, rangeMode, fixedRangeSize, file]);
+  }, [previewByPage, splitMode, rangeMode, fixedRangeSize, file]);
 
 
   if (splitResults.length > 0) {
@@ -637,6 +720,7 @@ export function PdfSplitter() {
                 </div>
             ) : (
             <>
+            <div className="xl:grid xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] xl:items-start xl:gap-10">
             <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
                 <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as any)} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
@@ -651,20 +735,94 @@ export function PdfSplitter() {
                             <RadioGroupItem value="custom" id="r-custom" />
                             <span className="font-semibold">Custom ranges</span>
                         </Label>
-                        <Input 
-                        disabled={rangeMode !== 'custom' || isSplitting}
-                        id="split-ranges" 
-                        value={customRanges} 
-                        onChange={(e) => {
-                            setCustomRanges(e.target.value);
-                            if(splitError) setSplitError(null);
-                        }}
-                        className={cn("mt-1", splitError && rangeMode === 'custom' && "border-destructive focus-visible:ring-destructive")}
-                        placeholder="e.g., 1-3, 5, 8-10"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1.5">
-                        Each range creates a new PDF. Example: <span className="font-mono bg-muted/80 px-1 py-0.5 rounded">1-3, 5, 8-10</span>
+                        <div className="mt-1 space-y-2">
+                          <AnimatePresence initial={false}>
+                            {customRanges.map((entry, index) => (
+                              <motion.div
+                                key={index}
+                                layout
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.18 }}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="w-14 shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
+                                  Range {index + 1}
+                                </span>
+                                <Input
+                                  disabled={rangeMode !== 'custom' || isSplitting}
+                                  id={`split-range-${index}`}
+                                  value={entry}
+                                  onChange={(e) => updateCustomRange(index, e.target.value)}
+                                  className={cn(
+                                    "flex-1",
+                                    splitError && rangeMode === 'custom' && "border-destructive focus-visible:ring-destructive"
+                                  )}
+                                  placeholder={index === 0 ? "e.g. 1-3" : "e.g. 7 or 12-15"}
+                                  aria-label={`Page range ${index + 1}`}
+                                  inputMode="numeric"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-9 w-9 shrink-0 text-muted-foreground/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                                  onClick={() => removeCustomRange(index)}
+                                  disabled={rangeMode !== 'custom' || isSplitting || customRanges.length === 1}
+                                  title={customRanges.length === 1 ? "At least one range is required" : `Remove range ${index + 1}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Remove range {index + 1}</span>
+                                </Button>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addCustomRange}
+                            disabled={rangeMode !== 'custom' || isSplitting}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add range
+                          </Button>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground mt-2">
+                          A single page (<span className="font-mono bg-muted/80 px-1 py-0.5 rounded">7</span>) or a span
+                          (<span className="font-mono bg-muted/80 px-1 py-0.5 rounded">1-3</span>).
+                          {customRangeSummary.valid && customRangeSummary.files > 0 && (
+                            <>
+                              {" "}Right now: <span className="font-semibold text-foreground">{customRangeSummary.files}</span>
+                              {" "}{customRangeSummary.files === 1 ? 'PDF' : 'PDFs'} from
+                              {" "}<span className="font-semibold text-foreground">{customRangeSummary.pages}</span>
+                              {" "}{customRangeSummary.pages === 1 ? 'page' : 'pages'}.
+                            </>
+                          )}
                         </p>
+
+                        <div className="mt-3 flex items-start gap-3 rounded-lg border bg-muted/40 p-3">
+                          <Checkbox
+                            id="merge-custom-ranges"
+                            checked={mergeCustomRanges}
+                            onCheckedChange={(checked) => setMergeCustomRanges(Boolean(checked))}
+                            disabled={rangeMode !== 'custom' || isSplitting}
+                            className="mt-0.5"
+                          />
+                          <div className="grid gap-1 leading-none">
+                            <Label htmlFor="merge-custom-ranges" className="cursor-pointer text-sm font-semibold">
+                              Merge all ranges into a single PDF
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {mergeCustomRanges
+                                ? 'One PDF containing every range, in the order listed above.'
+                                : `Each range becomes its own PDF${customRangeSummary.valid && customRangeSummary.files > 1 ? ' (bundled in a ZIP)' : ''}.`}
+                            </p>
+                          </div>
+                        </div>
                     </div>
                     <div>
                         <Label htmlFor="r-fixed" className="flex items-center space-x-2 mb-2 cursor-pointer">
@@ -703,8 +861,8 @@ export function PdfSplitter() {
                 </TabsContent>
                 </Tabs>
             </div>
-            
-            <div className="mt-6 border-t pt-6">
+
+            <div className="mt-6 border-t pt-6 xl:mt-0 xl:pt-0 xl:border-t-0 xl:border-l xl:pl-10">
                 <Label className="font-semibold text-base">Preview</Label>
                  {isProcessing ? (
                     <div className="flex flex-col justify-center items-center h-48">
@@ -715,33 +873,36 @@ export function PdfSplitter() {
                     <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                         <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
                             {splitMode === 'range' && rangeMode === 'custom' && (
-                                <div className="mt-4 flex items-center justify-center gap-2 sm:gap-4 p-4 bg-muted/50 rounded-lg">
-                                    {customRangePreviewPages.length > 0 ? (
-                                        <>
-                                            <div className="w-1/3 max-w-32">
-                                                <PagePreviewCard
-                                                    pageNumber={customRangePreviewPages[0]}
-                                                    dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[0])?.dataUrl || null}
-                                                    showCheckbox={false}
-                                                />
+                                customRangePreviews.length > 0 ? (
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                                        {customRangePreviews.map((preview, index) => (
+                                            <div key={index} className="rounded-lg border bg-muted/40 p-3">
+                                                <div className="mb-2 flex items-center justify-between gap-2">
+                                                    <span className="truncate font-mono text-xs font-semibold">{preview.label}</span>
+                                                    <span className="shrink-0 text-[11px] text-muted-foreground">
+                                                        {mergeCustomRanges ? `Range ${index + 1}` : `PDF ${index + 1}`}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {preview.pages.map((pageNumber, i) => (
+                                                        <React.Fragment key={pageNumber}>
+                                                            {i > 0 && <Minus className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 text-muted-foreground" />}
+                                                            <div className="w-20 sm:w-24">
+                                                                <PagePreviewCard
+                                                                    pageNumber={pageNumber}
+                                                                    dataUrl={previewByPage.get(pageNumber)?.dataUrl || null}
+                                                                    showCheckbox={false}
+                                                                />
+                                                            </div>
+                                                        </React.Fragment>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            {customRangePreviewPages.length > 1 && (
-                                                <>
-                                                    <Minus className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground shrink-0" />
-                                                    <div className="w-1/3 max-w-32">
-                                                        <PagePreviewCard
-                                                            pageNumber={customRangePreviewPages[1]}
-                                                            dataUrl={pagePreviews.find(p => p.pageNumber === customRangePreviewPages[1])?.dataUrl || null}
-                                                            showCheckbox={false}
-                                                        />
-                                                    </div>
-                                                </>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
+                                )
                             )}
 
                             {splitMode === 'range' && rangeMode === 'fixed' && (
@@ -787,7 +948,7 @@ export function PdfSplitter() {
                                             <Label htmlFor="select-all">Select All</Label>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-4 max-h-96 overflow-y-auto pr-2">
                                         {pagePreviews.map(preview => (
                                             <PagePreviewCard 
                                                 key={preview.pageNumber}
@@ -804,6 +965,7 @@ export function PdfSplitter() {
                         </div>
                     </PageVisibilityContext.Provider>
                 )}
+            </div>
             </div>
             </>
             )}
