@@ -52,9 +52,18 @@ type SplitResult = {
   url: string;
 };
 
+/**
+ * Fallback page shape used until the real one is measured. A hardcoded box is
+ * what made borders look uneven: a Letter page (0.773) letterboxed inside a
+ * 7/10 box (0.700) leaves ~10% of dead space inside the border.
+ */
+const DEFAULT_PAGE_ASPECT = 7 / 10;
+
 type PagePreview = {
   pageNumber: number;
   dataUrl: string | null;
+  /** Rendered width / height, so the card box matches the page exactly. */
+  aspect: number;
 };
 
 /** Suggests a default for a new range row: the first page not covered yet. */
@@ -109,6 +118,46 @@ function parseRangeEntries(entries: string[], max: number): number[][] | null {
   return groups;
 }
 
+type CustomRangePreview = {
+    label: string;
+    /** Pages worth showing: the first and last of the span. */
+    pages: number[];
+    /** How many pages the range actually covers. */
+    pageCount: number;
+};
+
+/**
+ * Renders the first (and last) page of a range as paper-shaped cards, with an
+ * ellipsis between them when the span covers more than those two.
+ */
+const RangeThumbRow = ({ pages, previewByPage, thumbClass }: {
+    pages: number[];
+    previewByPage: Map<number, PagePreview>;
+    thumbClass: string;
+}) => (
+    <div className="flex items-center justify-center gap-3 sm:gap-5">
+        {pages.map((pageNumber, i) => {
+            const preview = previewByPage.get(pageNumber);
+            return (
+                <React.Fragment key={pageNumber}>
+                    {i > 0 && (
+                        <span aria-hidden="true" className="shrink-0 text-xl font-bold leading-none text-muted-foreground/60">&hellip;</span>
+                    )}
+                    <div className={cn("shrink-0", thumbClass)}>
+                        <PagePreviewCard
+                            pageNumber={pageNumber}
+                            dataUrl={preview?.dataUrl || null}
+                            aspect={preview?.aspect}
+                            showCheckbox={false}
+                            className="border-border shadow-sm"
+                        />
+                    </div>
+                </React.Fragment>
+            );
+        })}
+    </div>
+);
+
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -121,7 +170,19 @@ function formatBytes(bytes: number, decimals = 2) {
 const PageVisibilityContext = React.createContext<{ onVisible: (pageNumber: number) => void }>({ onVisible: () => {} });
 const usePageVisibility = () => React.useContext(PageVisibilityContext);
 
-const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle, showCheckbox, className, disabled }: { pageNumber: number, dataUrl: string | null, isSelected?: boolean, onToggle?: (page: number) => void, showCheckbox: boolean, className?: string, disabled?: boolean }) => {
+type PagePreviewCardProps = {
+    pageNumber: number;
+    dataUrl: string | null;
+    /** Rendered page shape; the card box follows it so the border hugs the page. */
+    aspect?: number;
+    isSelected?: boolean;
+    onToggle?: (page: number) => void;
+    showCheckbox: boolean;
+    className?: string;
+    disabled?: boolean;
+};
+
+const PagePreviewCard = React.memo(({ pageNumber, dataUrl, aspect, isSelected, onToggle, showCheckbox, className, disabled }: PagePreviewCardProps) => {
     const ref = useRef<HTMLDivElement>(null);
     const { onVisible } = usePageVisibility();
 
@@ -148,8 +209,9 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
             ref={ref}
             key={pageNumber}
             onClick={!disabled && onToggle ? () => onToggle(pageNumber) : undefined}
+            style={{ aspectRatio: String(aspect ?? DEFAULT_PAGE_ASPECT) }}
             className={cn(
-                "relative rounded-md overflow-hidden border-2 transition-all aspect-[7/10] bg-muted",
+                "relative rounded-md overflow-hidden border-2 transition-all bg-muted",
                 !disabled && onToggle && "cursor-pointer",
                 isSelected ? "border-primary shadow-lg" : "border-transparent",
                 !disabled && onToggle && !isSelected && "hover:border-primary/50",
@@ -158,7 +220,7 @@ const PagePreviewCard = React.memo(({ pageNumber, dataUrl, isSelected, onToggle,
             )}
         >
             {dataUrl ? (
-            <img src={dataUrl} alt={`Page ${pageNumber}`} className="w-full h-full object-contain"/>
+            <img src={dataUrl} alt={`Page ${pageNumber}`} className="block w-full h-full object-contain"/>
             ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs p-2 text-center">
                 <div className="flex flex-col items-center gap-2">
@@ -187,6 +249,8 @@ export function PdfSplitter() {
   const [isSplitting, setIsSplitting] = useState(false);
   const [splitResults, setSplitResults] = useState<SplitResult[]>([]);
   const [pagePreviews, setPagePreviews] = useState<PagePreview[]>([]);
+  // Shape of the document's pages, measured on load.
+  const [pageAspect, setPageAspect] = useState<number>(DEFAULT_PAGE_ASPECT);
 
   const [splitMode, setSplitMode] = useState<"range" | "extract">("range");
   const [rangeMode, setRangeMode] = useState<"custom" | "fixed">("custom");
@@ -207,7 +271,11 @@ export function PdfSplitter() {
   // (or React StrictMode re-running an effect) cannot queue the same page twice.
   const requestedPages = useRef<Set<number>>(new Set());
 
-  const renderPdfPage = useCallback(async (pdfjsDoc: pdfjsLib.PDFDocumentProxy, pageNum: number, currentOperationId: number): Promise<string | null> => {
+  const renderPdfPage = useCallback(async (
+    pdfjsDoc: pdfjsLib.PDFDocumentProxy,
+    pageNum: number,
+    currentOperationId: number
+  ): Promise<{ dataUrl: string; aspect: number } | null> => {
     if (operationId.current !== currentOperationId) return null;
     try {
         const page = await pdfjsDoc.getPage(pageNum);
@@ -226,11 +294,14 @@ export function PdfSplitter() {
             };
             await page.render(renderContext).promise;
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            // Read the ratio back off the canvas (already integer-rounded by the
+            // browser) so the card box and the bitmap agree to the pixel.
+            const aspect = canvas.height > 0 ? canvas.width / canvas.height : DEFAULT_PAGE_ASPECT;
             // Release the backing store; the data URL has already copied it out.
             canvas.width = 0;
             canvas.height = 0;
             if (operationId.current !== currentOperationId) return null;
-            return dataUrl;
+            return { dataUrl, aspect };
         }
     } catch (e) {
         if (operationId.current === currentOperationId) {
@@ -250,6 +321,13 @@ export function PdfSplitter() {
         const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBytes) }).promise;
         const totalPages = pdfjsDoc.numPages;
 
+        // Measure page 1 up front so every placeholder already has the right
+        // shape; without this the grid reflows as thumbnails stream in.
+        const firstViewport = (await pdfjsDoc.getPage(1)).getViewport({ scale: 1 });
+        const docAspect = firstViewport.height > 0
+            ? firstViewport.width / firstViewport.height
+            : DEFAULT_PAGE_ASPECT;
+
         if (operationId.current !== currentOperationId) {
           pdfjsDoc.destroy();
           return;
@@ -263,7 +341,12 @@ export function PdfSplitter() {
         setSplitResults([]);
         setSplitError(null);
         requestedPages.current.clear();
-        setPagePreviews(Array.from({ length: totalPages }, (_, i) => ({ pageNumber: i + 1, dataUrl: null })));
+        setPageAspect(docAspect);
+        setPagePreviews(Array.from({ length: totalPages }, (_, i) => ({
+            pageNumber: i + 1,
+            dataUrl: null,
+            aspect: docAspect,
+        })));
         toast({
           variant: 'success',
           title: "File Uploaded",
@@ -307,10 +390,10 @@ export function PdfSplitter() {
     requestedPages.current.add(pageNumber);
     const currentOperationId = operationId.current;
 
-    renderPdfPage(pdfjsDoc, pageNumber, currentOperationId).then((dataUrl) => {
-      if (!dataUrl || operationId.current !== currentOperationId) return;
+    renderPdfPage(pdfjsDoc, pageNumber, currentOperationId).then((result) => {
+      if (!result || operationId.current !== currentOperationId) return;
       setPagePreviews(prev =>
-        prev.map(p => (p.pageNumber === pageNumber ? { ...p, dataUrl } : p))
+        prev.map(p => (p.pageNumber === pageNumber ? { ...p, dataUrl: result.dataUrl, aspect: result.aspect } : p))
       );
     });
   }, [file, renderPdfPage]);
@@ -562,7 +645,7 @@ export function PdfSplitter() {
     if (!file) return [];
 
     const max = file.totalPages;
-    const previews: { label: string; pages: number[] }[] = [];
+    const previews: CustomRangePreview[] = [];
 
     for (const entry of customRanges) {
       for (const token of entry.split(',')) {
@@ -574,13 +657,16 @@ export function PdfSplitter() {
           const start = parseInt(startStr, 10);
           const end = parseInt(endStr, 10);
           if (isNaN(start) || start < 1 || start > max) continue;
-          const pages = [start];
-          if (!isNaN(end) && end > start && end <= max) pages.push(end);
-          previews.push({ label: part, pages });
+          const endIsValid = !isNaN(end) && end > start && end <= max;
+          previews.push({
+            label: part,
+            pages: endIsValid ? [start, end] : [start],
+            pageCount: endIsValid ? end - start + 1 : 1,
+          });
         } else {
           const pageNum = parseInt(part, 10);
           if (isNaN(pageNum) || pageNum < 1 || pageNum > max) continue;
-          previews.push({ label: part, pages: [pageNum] });
+          previews.push({ label: part, pages: [pageNum], pageCount: 1 });
         }
       }
     }
@@ -607,12 +693,12 @@ export function PdfSplitter() {
         const group: (PagePreview | { pageNumber: number; dataUrl: null })[] = [];
         for(let j = 0; j < fixedRangeSize && (i + j) < file.totalPages; j++) {
             const pageNum = i + j + 1;
-            group.push(previewByPage.get(pageNum) || { pageNumber: pageNum, dataUrl: null });
+            group.push(previewByPage.get(pageNum) || { pageNumber: pageNum, dataUrl: null, aspect: pageAspect });
         }
         groups.push(group);
     }
     return groups;
-  }, [previewByPage, splitMode, rangeMode, fixedRangeSize, file]);
+  }, [previewByPage, splitMode, rangeMode, fixedRangeSize, file, pageAspect]);
 
 
   if (splitResults.length > 0) {
@@ -873,60 +959,85 @@ export function PdfSplitter() {
                     <PageVisibilityContext.Provider value={{ onVisible: onPageVisible }}>
                         <div className={cn(isSplitting && "opacity-70 pointer-events-none")}>
                             {splitMode === 'range' && rangeMode === 'custom' && (
-                                customRangePreviews.length > 0 ? (
-                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                                customRangePreviews.length === 0 ? (
+                                    <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
+                                ) : customRangePreviews.length === 1 ? (
+                                    /* A single range gets the full preview width and a larger page. */
+                                    <div className="mt-4 rounded-lg border bg-muted/40 p-4 sm:p-6">
+                                        <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+                                            <span className="font-mono text-sm font-semibold">{customRangePreviews[0].label}</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                1 PDF &middot; {customRangePreviews[0].pageCount} {customRangePreviews[0].pageCount === 1 ? 'page' : 'pages'}
+                                            </span>
+                                        </div>
+                                        <RangeThumbRow
+                                            pages={customRangePreviews[0].pages}
+                                            previewByPage={previewByPage}
+                                            thumbClass={customRangePreviews[0].pages.length > 1
+                                                ? "w-36 sm:w-48 md:w-56 lg:w-64"
+                                                : "w-44 sm:w-60 md:w-72 lg:w-80"}
+                                        />
+                                    </div>
+                                ) : (
+                                    /* Several ranges: columns reflow to fit the width and the count. */
+                                    <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))]">
                                         {customRangePreviews.map((preview, index) => (
                                             <div key={index} className="rounded-lg border bg-muted/40 p-3">
-                                                <div className="mb-2 flex items-center justify-between gap-2">
+                                                <div className="mb-3 flex items-center justify-between gap-2">
                                                     <span className="truncate font-mono text-xs font-semibold">{preview.label}</span>
                                                     <span className="shrink-0 text-[11px] text-muted-foreground">
-                                                        {mergeCustomRanges ? `Range ${index + 1}` : `PDF ${index + 1}`}
+                                                        {mergeCustomRanges ? `Range ${index + 1}` : `PDF ${index + 1}`} &middot; {preview.pageCount} {preview.pageCount === 1 ? 'page' : 'pages'}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center justify-center gap-2">
-                                                    {preview.pages.map((pageNumber, i) => (
-                                                        <React.Fragment key={pageNumber}>
-                                                            {i > 0 && <Minus className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 text-muted-foreground" />}
-                                                            <div className="w-20 sm:w-24">
-                                                                <PagePreviewCard
-                                                                    pageNumber={pageNumber}
-                                                                    dataUrl={previewByPage.get(pageNumber)?.dataUrl || null}
-                                                                    showCheckbox={false}
-                                                                />
-                                                            </div>
-                                                        </React.Fragment>
-                                                    ))}
-                                                </div>
+                                                <RangeThumbRow
+                                                    pages={preview.pages}
+                                                    previewByPage={previewByPage}
+                                                    thumbClass={preview.pages.length > 1 ? "w-20 sm:w-24" : "w-24 sm:w-28"}
+                                                />
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <p className="text-muted-foreground text-sm py-8 text-center">Enter a valid range to see a preview.</p>
                                 )
                             )}
 
                             {splitMode === 'range' && rangeMode === 'fixed' && (
-                                <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
-                                    <div className="flex w-max space-x-4 p-4">
-                                        {fixedRangeGroups.map((group, groupIndex) => (
-                                            <Card key={groupIndex} className="p-2 shrink-0">
-                                                <CardContent className="p-0">
-                                                    <div className={cn(
-                                                        "grid gap-2 w-max",
-                                                        fixedRangeSize > 1 ? "grid-cols-2" : "grid-cols-1"
-                                                    )}>
-                                                        {group.map(preview => (
-                                                            <PagePreviewCard 
-                                                                key={preview.pageNumber} 
-                                                                {...preview} 
-                                                                showCheckbox={false} 
-                                                                className="w-24"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
+                                <ScrollArea className="w-full whitespace-nowrap rounded-lg border mt-4">
+                                    <div className="flex w-max items-stretch gap-3 p-3 sm:gap-4 sm:p-4">
+                                        {fixedRangeGroups.map((group, groupIndex) => {
+                                            // One row for small groups; otherwise the closest thing to a
+                                            // square. A fixed grid-cols-2 left a hole on every odd group.
+                                            const columns = group.length <= 4
+                                                ? group.length
+                                                : Math.ceil(Math.sqrt(group.length));
+                                            const first = group[0].pageNumber;
+                                            const last = group[group.length - 1].pageNumber;
+                                            return (
+                                                <Card key={groupIndex} className="shrink-0 rounded-xl p-3">
+                                                    <CardContent className="p-0">
+                                                        {/* flex-wrap (not grid) so a partial last row is
+                                                            centred instead of leaving a gap on the right. */}
+                                                        <div
+                                                            className="flex flex-wrap justify-center gap-2"
+                                                            style={{ maxWidth: `calc(${columns} * 6rem + ${columns - 1} * 0.5rem)` }}
+                                                        >
+                                                            {group.map(preview => (
+                                                                <PagePreviewCard
+                                                                    key={preview.pageNumber}
+                                                                    {...preview}
+                                                                    showCheckbox={false}
+                                                                    className="w-24 border-border"
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <div className="mt-2.5 border-t pt-2 text-center">
+                                                            <span className="text-[11px] font-medium text-muted-foreground">
+                                                                PDF {groupIndex + 1} &middot; {first === last ? `Page ${first}` : `Pages ${first}&ndash;${last}`}
+                                                            </span>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            );
+                                        })}
                                     </div>
                                     <ScrollBar orientation="horizontal" />
                                 </ScrollArea>
