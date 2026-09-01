@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronDown, Combine, Scissors, Image as ImageIcon, FileText, RotateCw, Hash, ListOrdered, Code, Pencil, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Droplets, Pilcrow, X, BookCheck } from 'lucide-react';
+import { Menu, ChevronDown, Code, LayoutGrid, Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, ChevronRight, Pilcrow } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -122,7 +122,7 @@ export default function Header() {
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <div className="p-6 pb-4 flex items-center justify-between border-b">
                       <Link href="/" className="flex items-center gap-2" onClick={() => setIsSheetOpen(false)}>
-                          {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+                          {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} unoptimized /> : <div style={{width: 32, height: 32}} />}
                           <h1 className="text-xl font-bold tracking-tight">
                           <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                               PDFusion
@@ -196,7 +196,7 @@ export default function Header() {
         {/* Desktop Logo & Nav */}
         <div className="hidden md:flex items-center gap-4 non-draggable">
             <Link href="/" className="flex items-center gap-2">
-              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} unoptimized /> : <div style={{width: 32, height: 32}} />}
               <h1 className="text-xl font-bold tracking-tight">
                   <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                   PDFusion
@@ -208,7 +208,7 @@ export default function Header() {
         {/* Mobile Center (Logo) */}
          <div className="md:hidden flex items-center justify-center non-draggable">
              <Link href="/" className="flex items-center gap-2">
-              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} /> : <div style={{width: 32, height: 32}} />}
+              {mounted ? <Image src={logoSrc} alt="PDFusion Logo" width={32} height={32} unoptimized /> : <div style={{width: 32, height: 32}} />}
               <h1 className="text-xl font-bold tracking-tight">
                   <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                   PDFusion

@@ -170,13 +170,13 @@ ${values.message}
                     <div className="flex gap-4 items-center justify-center lg:justify-start">
                         <Link href="https://instagram.com/its_garvit__854_" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                         <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                            <Image src="/instagram.svg" alt="Instagram" width={48} height={48} />
+                            <Image src="/instagram.svg" alt="Instagram" width={48} height={48} unoptimized />
                         </div>
                         </Link>
                         <Link href="https://github.com/garvitkumar854" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                         <div className="group w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
                             {mounted ? (
-                               <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={48} height={48} />
+                               <Image src={theme === 'dark' ? "/github-light.svg" : "/github-dark.svg"} alt="GitHub" width={48} height={48} unoptimized />
                             ) : <div className="w-12 h-12" />}
                         </div>
                         </Link>

@@ -69,18 +69,6 @@
       ]
     },
     {
-      "name": "Course Pilot",
-      "short_name": "Course Pilot",
-      "description": "Track your course assignments and deadlines",
-      "url": "/assignment-tracker",
-      "icons": [
-        {
-          "src": "/icons/coursepilot.svg",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
       "name": "Explore More Tools",
       "short_name": "More Tools",
       "description": "Discover other useful utilities",
@@ -147,22 +135,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/screenshot-desktop.png",
-      "type": "image/png",
-      "sizes": "1280x720",
-      "form_factor": "wide",
-      "label": "PDFusion Desktop View"
-    },
-    {
-      "src": "/screenshots/screenshot-mobile.png",
-      "type": "image/png",
-      "sizes": "540x720",
-      "form_factor": "narrow",
-      "label": "PDFusion Mobile View"
     }
   ]
 }

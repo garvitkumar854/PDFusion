@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PDFDocument, PageSizes } from 'pdf-lib';
+import { createPdfBlob } from '@/lib/pdf-blob';
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Checkbox } from "./ui/checkbox";
@@ -292,6 +293,8 @@ export function JpgToPdfConverter() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragItem.current = index;
     e.dataTransfer.effectAllowed = 'move';
+    // Firefox refuses to start a drag unless some data is attached.
+    e.dataTransfer.setData('text/plain', String(index));
     setTimeout(() => setIsDragging(true), 0);
   };
 
@@ -356,9 +359,9 @@ export function JpgToPdfConverter() {
     const pdfDocs: {bytes: Uint8Array, name: string}[] = [];
     const mergedPdf = await PDFDocument.create();
 
-    const getPageSize = () => {
+    const getPageSize = (): [number, number] => {
         if (pageSize === "Fit") return PageSizes.A4; // Placeholder, will be resized
-        let size = pageSize === "A4" ? PageSizes.A4 : PageSizes.Letter;
+        const size = pageSize === "A4" ? PageSizes.A4 : PageSizes.Letter;
         return orientation === 'landscape' ? [size[1], size[0]] : size;
     }
     const effectiveMarginSize = pageSize === 'Fit' ? 'none' : marginSize;
@@ -377,12 +380,12 @@ export function JpgToPdfConverter() {
                     const results: {url: string, filename: string}[] = [];
                     if(mergeIntoOnePdf) {
                         const mergedBytes = await mergedPdf.save();
-                        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+                        const blob = createPdfBlob(mergedBytes);
                         const finalFilename = outputFilename.endsWith('.pdf') ? outputFilename : `${outputFilename}.pdf`;
                         results.push({ url: URL.createObjectURL(blob), filename: finalFilename });
                     } else {
                         if(pdfDocs.length === 1) {
-                            const blob = new Blob([pdfDocs[0].bytes], { type: 'application/pdf' });
+                            const blob = createPdfBlob(pdfDocs[0].bytes);
                             results.push({ url: URL.createObjectURL(blob), filename: pdfDocs[0].name });
                         } else {
                             const zip = new JSZip();
@@ -575,6 +578,9 @@ export function JpgToPdfConverter() {
                  <div className="grid grid-flow-row-dense grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <AnimatePresence>
                         {files.map((imgFile, index) => (
+                            // Animation-only wrapper: framer-motion consumes onDragStart/onDragEnd
+                            // for its own pan gestures, so the native HTML5 drag handlers and the
+                            // card styling live on the inner div.
                             <motion.div
                                 key={imgFile.id}
                                 layout
@@ -582,11 +588,14 @@ export function JpgToPdfConverter() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                            >
+                            <div
                                 draggable={!isConverting}
                                 onDragStart={(e) => handleDragStart(e, index)}
                                 onDragEnter={(e) => handleDragEnter(e, index)}
                                 onDragEnd={handleDragEnd}
                                 onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => e.preventDefault()}
                                 className={cn(
                                     'group relative rounded-lg border-2 bg-muted transition-all duration-300 ease-in-out aspect-[7/10]',
                                     'focus-within:border-primary',
@@ -617,6 +626,7 @@ export function JpgToPdfConverter() {
                                         <X className="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
+                            </div>
                             </motion.div>
                         ))}
                     </AnimatePresence>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,7 @@ import { Textarea } from "./ui/textarea";
 import { Pilcrow, Copy, Check, Wand2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { summarizeText, SummarizeInput } from "@/ai/flows/summarize-flow";
+import { htmlToPlainText, sanitizeHtml } from "@/lib/sanitize-html";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -60,7 +61,8 @@ export function TextSummarizer() {
                 language: summaryLanguage,
             };
             const result = await summarizeText(input);
-            setSummary(result.summary);
+            // The flow returns markdown-rendered HTML for the bullet format.
+            setSummary(sanitizeHtml(result.summary));
             toast({ variant: 'success', title: 'Summary Generated!', description: 'Your text has been successfully summarized.' });
         } catch(e: any) {
             let errorMessage = e.message || 'An unexpected error occurred.';
@@ -73,10 +75,11 @@ export function TextSummarizer() {
         }
     }, [inputText, summaryLength, summaryFormat, summaryTone, summaryAudience, summaryLanguage, toast]);
 
+    const summaryText = useMemo(() => htmlToPlainText(summary), [summary]);
+
     const handleCopy = useCallback(() => {
         if (!summary) return;
-        const plainText = new DOMParser().parseFromString(summary, "text/html").documentElement.textContent || summary;
-        navigator.clipboard.writeText(plainText);
+        navigator.clipboard.writeText(summaryText);
         toast({
             variant: "success",
             title: "Summary Copied!",
@@ -84,7 +87,7 @@ export function TextSummarizer() {
         });
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-    }, [summary, toast]);
+    }, [summary, summaryText, toast]);
     
     const editorPanel = (
          <Card className="shadow-lg h-full flex flex-col">
@@ -140,7 +143,7 @@ export function TextSummarizer() {
                     </AnimatePresence>
                 </ScrollArea>
                 <div className="p-2 border-t flex-shrink-0 flex justify-end items-center">
-                    <WordCounter text={summary} />
+                    <WordCounter text={summaryText} />
                 </div>
             </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { evaluateExpression } from '@/lib/evaluate-expression';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eraser, Percent, History } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -65,8 +66,7 @@ export function Calculator() {
         return "0";
       }
 
-      // eslint-disable-next-line no-new-func
-      const calculatedResult = new Function('return ' + sanitizedExp)();
+      const calculatedResult = evaluateExpression(sanitizedExp);
       if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
         return "Error";
       }

@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { motion } from 'framer-motion'
+import { motion, type HTMLMotionProps } from 'framer-motion'
 
 import { cn } from "@/lib/utils"
 
@@ -59,7 +59,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         whileTap={{ scale: 0.95 }}
-        {...props}
+        // framer-motion redeclares the onDrag* handlers with its own pan-gesture
+        // signature, which is not structurally compatible with React's. This
+        // component never forwards drag handlers, so the cast is safe.
+        {...(props as unknown as HTMLMotionProps<'button'>)}
       />
     )
   }

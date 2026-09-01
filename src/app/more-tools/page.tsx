@@ -2,7 +2,7 @@
 
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, FileText, Pilcrow, BookCheck } from "lucide-react";
+import { Calculator, Currency, QrCode, SlidersHorizontal, LockKeyhole, Lightbulb, Send, Code, Pilcrow } from "lucide-react";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";

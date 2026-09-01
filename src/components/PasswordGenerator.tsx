@@ -315,7 +315,9 @@ export function PasswordGenerator() {
                           <TabsTrigger
                             key={opt.value}
                             value={opt.value}
-                            ref={(el) => (tabsRef.current[i] = el)}
+                            ref={(el) => {
+                              tabsRef.current[i] = el;
+                            }}
                             className={cn(
                               "relative z-10 flex items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer transition-colors text-xs sm:text-sm data-[state=inactive]:bg-transparent",
                               passwordType !== opt.value && "text-muted-foreground hover:text-primary "
