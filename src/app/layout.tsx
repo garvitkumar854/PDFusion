@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ClientLayout from '@/components/ClientLayout';
-import { isAdSenseEnabled, ADSENSE_SCRIPT_SRC } from '@/lib/adsense';
+import { isAdSenseEnabled, ADSENSE_SCRIPT_SRC, ADSENSE_CLIENT } from '@/lib/adsense';
 
 const poppins = Poppins({ 
   subsets: ['latin'], 
@@ -75,6 +75,11 @@ export const metadata: Metadata = {
     ],
     creator: "@its_garvit__854_",
   },
+  // Verifies the site's AdSense account (only present when ads are enabled):
+  // <meta name="google-adsense-account" content="ca-pub-..." />
+  ...(isAdSenseEnabled && {
+    other: { "google-adsense-account": ADSENSE_CLIENT },
+  }),
 };
 
 export const viewport: Viewport = {
