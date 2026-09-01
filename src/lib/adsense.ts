@@ -1,20 +1,27 @@
 /**
  * Google AdSense configuration.
  *
- * Ads are fully opt-in: nothing is rendered or requested unless
- * NEXT_PUBLIC_ADSENSE_CLIENT is set, so the app behaves exactly as before
- * (and stays fast) until you add your publisher ID.
+ * The site's publisher ID ships as a default (DEFAULT_ADSENSE_CLIENT below)
+ * so ads work everywhere without extra setup. To use a different publisher
+ * ID (or to disable ads entirely), set NEXT_PUBLIC_ADSENSE_CLIENT — an empty
+ * string turns ads off; nothing is rendered or requested when no client is
+ * configured.
  *
- * Environment variables (set these in Vercel / your host):
+ * Environment variables (optional overrides, e.g. in Vercel / your host):
  *   NEXT_PUBLIC_ADSENSE_CLIENT  Your publisher ID, e.g. "ca-pub-1234567890123456"
- *                               (a bare numeric ID is accepted and normalised).
+ *                               (a bare numeric ID is accepted and normalised;
+ *                               "" disables ads).
  *   NEXT_PUBLIC_ADSENSE_SLOT_HOME     Ad-unit slot shown on the homepage.
  *   NEXT_PUBLIC_ADSENSE_SLOT_CONTENT  Ad-unit slot shown above the footer on
  *                                     every page.
  *
  * Slot IDs come from AdSense -> Ads -> By ad unit -> the unit's "ad slot" id.
  */
-const rawClient = (process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "").trim();
+const DEFAULT_ADSENSE_CLIENT = "ca-pub-4853497722580911";
+
+const rawClient = (
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? DEFAULT_ADSENSE_CLIENT
+).trim();
 
 /** Normalised publisher ID, always prefixed with "ca-pub-". Empty when unset. */
 export const ADSENSE_CLIENT = rawClient
